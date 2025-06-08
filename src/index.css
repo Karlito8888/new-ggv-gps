@@ -28,7 +28,7 @@
 
 #root > main {
   height: calc(100vh - 120px); /* 60px header + 60px footer */
-  padding: 1rem;
+  /* padding: 1rem; */
 }
 
 .maplibregl-canvas {
@@ -45,7 +45,7 @@
 }
 
 h1 {
-  font-size: 3.2em;
+  font-size: 1.2em;
   line-height: 1.1;
 }
 
