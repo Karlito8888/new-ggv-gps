@@ -1,6 +1,7 @@
 // src / App.jsx;
 
 import { useEffect, useRef, useState, useMemo } from "react";
+import maplibregl from 'maplibre-gl';
 import {
   Map,
   NavigationControl,
@@ -39,20 +40,16 @@ function App() {
   );
 
   const getPolygonCenter = (coords) => {
-    // Calcul du centre géométrique
+    if (!coords || coords.length === 0) return [0, 0];
+    
+    // Calcul simple du centre sans WebMercator
     const center = coords.reduce((acc, [lng, lat]) => {
       acc[0] += lng;
       acc[1] += lat;
       return acc;
     }, [0, 0]).map(sum => sum / coords.length);
 
-    // Conversion en coordonnées WebMercator pour le centrage précis
-    const mercatorCenter = maplibregl.MercatorCoordinate.fromLngLat({
-      lng: center[0],
-      lat: center[1]
-    });
-
-    return [mercatorCenter.x, mercatorCenter.y];
+    return center;
   };
 
   // Mémoization des blocs en GeoJSON avec centres calculés
@@ -294,32 +291,21 @@ function App() {
           {blocksGeoJSON.features.map((block) => {
             if (!block.properties.name) return null;
 
-            // Convertit les coordonnées Mercator back en LngLat
-            const centerLngLat = maplibregl.MercatorCoordinate.fromLngLat({
-              lng: block.properties.center[0],
-              lat: block.properties.center[1]
-            }).toLngLat();
-
             return (
               <Marker
                 key={`block-${block.properties.name}`}
-                longitude={centerLngLat.lng}
-                latitude={centerLngLat.lat}
+                longitude={block.properties.center[0]}
+                latitude={block.properties.center[1]}
                 anchor="center"
               >
                 <div style={{
-                  position: 'absolute',
-                  transform: 'translate(-50%, -50%)',
-                  background: 'rgba(255, 255, 255, 0.7)',
-                  color: '#444',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  color: block.properties.color === '#19744B' ? '#fff' : '#444',
+                  border: `1px solid ${block.properties.color === '#19744B' ? '#19744B' : '#999'}`,
+                  borderRadius: '12px',
                   padding: '2px 6px',
-                  borderRadius: '4px',
-                  border: '1px solid #999',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  fontFamily: "Superclarendon, 'Bookman Old Style', serif",
-                  textShadow: '0 0 2px #fff',
-                  pointerEvents: 'none'
+                  fontSize: '12px',
+                  fontWeight: 'bold'
                 }}>
                   {block.properties.name}
                 </div>
