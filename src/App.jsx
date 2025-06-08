@@ -38,12 +38,25 @@ function App() {
     [userLocation, bearing]
   );
 
-  // Mémoization des blocs en GeoJSON
+  const getPolygonCenter = (coords) => {
+    const [lngs, lats] = coords.reduce((acc, [lng, lat]) => {
+      acc[0].push(lng);
+      acc[1].push(lat);
+      return acc;
+    }, [[], []]);
+    
+    return [
+      (Math.min(...lngs) + Math.max(...lngs)) / 2,
+      (Math.min(...lats) + Math.max(...lats)) / 2
+    ];
+  };
+
+  // Mémoization des blocs en GeoJSON avec centres calculés
   const blocksGeoJSON = useMemo(
     () => ({
       type: "FeatureCollection",
       features: blocks
-        .filter((block) => block.coords.length > 0) // Filtre les blocs sans coordonnées
+        .filter((block) => block.coords.length > 0)
         .map((block) => ({
           type: "Feature",
           geometry: {
@@ -53,6 +66,7 @@ function App() {
           properties: {
             name: block.name || "",
             color: block.color || "#E0DFDF",
+            center: getPolygonCenter(block.coords)
           },
         })),
     }),
@@ -164,20 +178,25 @@ function App() {
         id: "blocks-text",
         type: "symbol",
         source: "blocks",
-        minzoom: 15, // N'affiche le texte qu'à partir d'un certain zoom
-        filter: ["!=", ["get", "name"], ""], // Ignore les blocs sans nom
+        minzoom: 15,
+        filter: ["!=", ["get", "name"], ""],
         layout: {
           "text-field": ["get", "name"],
-          "text-size": 14,
-          "text-font": ["Roboto Regular", "Metropolis Regular"],
-          "text-justify": "center",
+          "text-size": 12,
+          "text-font": ["Arial Unicode MS Bold"],
+          "text-allow-overlap": true,
+          "text-ignore-placement": true,
           "text-anchor": "center",
-          "text-allow-overlap": false,
         },
         paint: {
-          "text-color": "#444",
-          "text-halo-color": "#fff",
-          "text-halo-width": 2,
+          "text-color": [
+            "case",
+            ["==", ["get", "color"], "#19744B"],
+            "#FFFFFF",
+            "#000000"
+          ],
+          "text-halo-color": "#ffffff",
+          "text-halo-width": 1.5,
         },
       });
 
