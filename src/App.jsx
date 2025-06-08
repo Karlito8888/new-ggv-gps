@@ -50,6 +50,7 @@ function App() {
   // Memoize le style de la carte
   const mapStyle = useMemo(() => ({
     version: 8,
+    glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
     sources: {
       osm: {
         type: "raster",
