@@ -39,19 +39,20 @@ function App() {
   );
 
   const getPolygonCenter = (coords) => {
-    const [lngs, lats] = coords.reduce(
-      (acc, [lng, lat]) => {
-        acc[0].push(lng);
-        acc[1].push(lat);
-        return acc;
-      },
-      [[], []]
-    );
+    // Calcul du centre géométrique
+    const center = coords.reduce((acc, [lng, lat]) => {
+      acc[0] += lng;
+      acc[1] += lat;
+      return acc;
+    }, [0, 0]).map(sum => sum / coords.length);
 
-    return [
-      (Math.min(...lngs) + Math.max(...lngs)) / 2,
-      (Math.min(...lats) + Math.max(...lats)) / 2,
-    ];
+    // Conversion en coordonnées WebMercator pour le centrage précis
+    const mercatorCenter = maplibregl.MercatorCoordinate.fromLngLat({
+      lng: center[0],
+      lat: center[1]
+    });
+
+    return [mercatorCenter.x, mercatorCenter.y];
   };
 
   // Mémoization des blocs en GeoJSON avec centres calculés
@@ -210,11 +211,21 @@ function App() {
       setError("Erreur d'affichage des blocs");
     }
 
+    // Met à jour les positions après chaque rendu
+    map.on('render', () => {
+      blocksGeoJSON.features.forEach(block => {
+        if (block.properties.name) {
+          block.properties.center = getPolygonCenter(block.geometry.coordinates[0]);
+        }
+      });
+    });
+
     return () => {
       // Nettoyage robuste
       const map = mapRef.current?.getMap();
       if (map) {
         try {
+          map.off('render');
           if (map.getLayer("blocks-fill")) map.removeLayer("blocks-fill");
           if (map.getLayer("blocks-text")) map.removeLayer("blocks-text");
           if (map.getSource("blocks")) map.removeSource("blocks");
@@ -282,29 +293,33 @@ function App() {
           {/* Affichage des numéros de blocs via Markers React */}
           {blocksGeoJSON.features.map((block) => {
             if (!block.properties.name) return null;
-            
+
+            // Convertit les coordonnées Mercator back en LngLat
+            const centerLngLat = maplibregl.MercatorCoordinate.fromLngLat({
+              lng: block.properties.center[0],
+              lat: block.properties.center[1]
+            }).toLngLat();
+
             return (
               <Marker
                 key={`block-${block.properties.name}`}
-                longitude={block.properties.center[0]}
-                latitude={block.properties.center[1]}
+                longitude={centerLngLat.lng}
+                latitude={centerLngLat.lat}
                 anchor="center"
               >
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  color: block.properties.color === '#19744B' ? '#fff' : '#444',
+                  position: 'absolute',
+                  transform: 'translate(-50%, -50%)',
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  color: '#444',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
                   border: '1px solid #999',
-                  borderRadius: '50%',
                   fontSize: '14px',
                   fontWeight: '600',
                   fontFamily: "Superclarendon, 'Bookman Old Style', serif",
-                  width: '22px',
-                  height: '22px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                   textShadow: '0 0 2px #fff',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                  pointerEvents: 'none'
                 }}>
                   {block.properties.name}
                 </div>
