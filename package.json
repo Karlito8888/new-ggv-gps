@@ -11,10 +11,15 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.8",
+    "@vis.gl/react-maplibre": "^8.0.4",
     "maplibre-gl": "^5.6.0",
+    "path": "^0.12.7",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "tailwindcss": "^4.1.8"
+    "react-map-gl": "^8.0.4",
+    "react-maplibre": "^1.0.0",
+    "tailwindcss": "^4.1.8",
+    "vite-plugin-pwa": "^1.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
