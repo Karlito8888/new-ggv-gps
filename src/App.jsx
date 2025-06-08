@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState, useMemo } from "react";
-import { Map, NavigationControl, GeolocateControl } from "react-map-gl/maplibre";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { Map, NavigationControl, GeolocateControl, Marker, Source, Layer } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { publicPois } from "./data/public-pois";
+import { blocks } from "./data/blocks";
 
 function App() {
   "use memo"; // Utiliser React 19 compiler pour optimiser ce composant
@@ -26,7 +28,7 @@ function App() {
     pitch: 45,
   }), [userLocation, bearing]);
 
-  // Memoize le style de la carte
+  // Memoize le style de la carte avec ajout de glyphs
   const mapStyle = useMemo(() => ({
     version: 8,
     sources: {
@@ -37,6 +39,8 @@ function App() {
         attribution: "© OpenStreetMap contributors",
       },
     },
+    // Ajout de glyphs pour permettre l'affichage du texte
+    glyphs: "https://fonts.openmaptiles.org/{fontstack}/{range}.pbf",
     layers: [
       {
         id: "osm",
@@ -46,6 +50,24 @@ function App() {
     ],
   }), []);
 
+  // Convertir les blocs en GeoJSON
+  const blocksGeoJSON = useMemo(() => {
+    return {
+      type: "FeatureCollection",
+      features: blocks.map((block, index) => ({
+        type: "Feature",
+        properties: {
+          id: index,
+          name: block.name,
+          color: block.color
+        },
+        geometry: {
+          type: "Polygon",
+          coordinates: [block.coords]
+        }
+      }))
+    };
+  }, []);
 
   // Gestion de l'orientation du device
   useEffect(() => {
@@ -97,6 +119,11 @@ function App() {
     }
   }, []);
 
+  // Déplacer la gestion de l'état isMapReady dans un gestionnaire d'événement séparé
+  const handleMapLoad = useCallback(() => {
+    setIsMapReady(true);
+  }, []);
+
   return (
     <>
       <header></header>
@@ -105,9 +132,41 @@ function App() {
           ref={mapRef}
           initialViewState={initialViewState}
           mapStyle={mapStyle}
-          onLoad={() => setIsMapReady(true)}
+          onLoad={handleMapLoad}
           onError={(e) => setError(`Erreur de carte: ${e.error.message || "Erreur inconnue"}`)}
         >
+          {/* Affichage des blocs */}
+          <Source id="blocks-data" type="geojson" data={blocksGeoJSON}>
+            <Layer
+              id="blocks-fill"
+              type="fill"
+              paint={{
+                "fill-color": ["get", "color"],
+                "fill-opacity": 0.7
+              }}
+            />
+            <Layer
+              id="blocks-outline"
+              type="line"
+              paint={{
+                "line-color": "#000",
+                "line-width": 1
+              }}
+            />
+            <Layer
+              id="blocks-label"
+              type="symbol"
+              layout={{
+                "text-field": ["get", "name"],
+                "text-size": 12,
+                "text-allow-overlap": false
+              }}
+              paint={{
+                "text-color": "#000"
+              }}
+            />
+          </Source>
+
           <NavigationControl showCompass showZoom position="top-right" />
           <GeolocateControl
             ref={geolocateControlRef}
@@ -125,6 +184,23 @@ function App() {
             }}
             onError={(err) => setError(`Erreur GPS: ${err.message}`)}
           />
+          
+          {/* Affichage des POIs */}
+          {publicPois.map((poi) => (
+            <Marker 
+              key={poi.name}
+              longitude={poi.coords[0]} 
+              latitude={poi.coords[1]}
+            >
+              <img 
+                src={poi.icon} 
+                alt={poi.name} 
+                style={{ width: '24px', height: '24px' }}
+                title={poi.name}
+              />
+            </Marker>
+          ))}
+          
           {error && (
             <div className="gps-info gps-info-error">
               <p>{error}</p>
