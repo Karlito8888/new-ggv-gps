@@ -293,14 +293,13 @@ function App() {
 
           {/* Affichage des numéros de blocs via Markers React */}
           {blocks.map((block) => {
-            if (!block.name || block.coords.length === 0) return null;
+            // Masquer les numéros si:
+            // 1. Pas de nom OU 
+            // 2. Bloc vert (#19744B)
+            if (!block.name || block.color === "#19744B") return null;
             
             const center = getPolygonCenter(block.coords);
-            const polygonStyle = new Style({
-              fill: new Fill({ color: block.color || "#E0DFDF" }),
-              stroke: new Stroke({ color: "#999", width: 1 })
-            });
-
+            
             return (
               <Marker
                 key={`block-${block.name}`}
@@ -310,8 +309,8 @@ function App() {
               >
                 <div style={{
                   background: 'rgba(255, 255, 255, 0.9)',
-                  color: block.color === '#19744B' ? '#fff' : '#444',
-                  border: `1px solid ${block.color === '#19744B' ? '#19744B' : '#999'}`,
+                  color: '#444',
+                  border: '1px solid #999',
                   borderRadius: '12px',
                   padding: '2px 6px',
                   fontSize: '12px',
