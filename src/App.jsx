@@ -23,17 +23,19 @@ function App() {
   }, []);
 
   return (
-    <>
-      <header>
-        <h1>Ma Carte Interactive</h1>
-      </header>
-      <main>
-        <div ref={mapContainer} className="map-container" />
-      </main>
-      <footer>
-        <p>© {new Date().getFullYear()} Garden Grove Village</p>
-      </footer>
-    </>
+    <div className="app">
+      <div ref={mapContainer} className="map-container" />
+      <button 
+        className="fullscreen-btn"
+        onClick={() => document.body.requestFullscreen()}
+      >
+        Plein écran
+      </button>
+      <div className="gps-info">
+        <span id="speed">Vitesse: 0 km/h</span>
+        <span id="accuracy">Précision: --</span>
+      </div>
+    </div>
   );
 }
 
