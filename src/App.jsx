@@ -67,6 +67,42 @@ function App() {
     return () => map.current?.remove();
   }, []);
 
+  // Gestion de l'orientation du device
+  useEffect(() => {
+    const handleOrientation = (event) => {
+      if (event.alpha !== null) {
+        const newBearing = 360 - event.alpha;
+        setBearing(newBearing);
+        
+        if (map.current) {
+          map.current.setBearing(newBearing);
+        }
+      }
+    };
+
+    if (typeof window !== 'undefined' && window.DeviceOrientationEvent) {
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+          .then(permissionState => {
+            if (permissionState === 'granted') {
+              window.addEventListener('deviceorientation', handleOrientation);
+            } else {
+              setError('Permission pour l\'orientation refusée');
+            }
+          })
+          .catch(console.error);
+      } else {
+        window.addEventListener('deviceorientation', handleOrientation);
+      }
+    } else {
+      setError('L\'orientation du device n\'est pas supportée');
+    }
+
+    return () => {
+      window.removeEventListener('deviceorientation', handleOrientation);
+    };
+  }, []);
+
 
   return (
     <>
