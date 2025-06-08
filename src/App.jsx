@@ -9,6 +9,13 @@ import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import { Polygon } from "ol/geom";
 import Feature from "ol/Feature"; 
+import { blocks } from "./data/blocks";
+import { fromLonLat } from "ol/proj";
+import { Fill, Stroke, Style, Text } from "ol/style";
+import VectorLayer from "ol/layer/Vector";
+import VectorSource from "ol/source/Vector";
+import { Polygon } from "ol/geom";
+import Feature from "ol/Feature"; 
 
 function App() {
   ("use memo"); // Utiliser React 19 compiler pour optimiser ce composant
@@ -101,6 +108,50 @@ function App() {
 
     return () => {
       window.removeEventListener("deviceorientation", handleOrientation);
+    };
+  }, [isMapReady]);
+
+  // Effet pour gérer les blocs vectoriels
+  useEffect(() => {
+    if (!isMapReady || !mapRef.current) return;
+
+    const map = mapRef.current.getMap();
+    const vectorSource = new VectorSource();
+    const vectorLayer = new VectorLayer({
+      source: vectorSource,
+    });
+
+    // Ajoute le layer à la carte
+    map.addLayer(vectorLayer);
+
+    // Transformation des coordonnées et ajout des blocs
+    blocks.forEach((block) => {
+      const transformedCoords = block.coords.map((coord) => fromLonLat(coord));
+      const polygon = new Feature({
+        geometry: new Polygon([transformedCoords]),
+        name: block.name,
+      });
+
+      polygon.setStyle(
+        new Style({
+          fill: new Fill({ color: block.color || "#E0DFDF" }),
+          stroke: new Stroke({ color: "#999", width: 1 }),
+          text: new Text({
+            text: block.name,
+            font: "600 14px Superclarendon, 'Bookman Old Style', serif",
+            fill: new Fill({ color: "#444" }),
+            stroke: new Stroke({ color: "#fff", width: 2 }),
+          }),
+        })
+      );
+      vectorSource.addFeature(polygon);
+    });
+
+    return () => {
+      // Nettoyage
+      if (map && vectorLayer) {
+        map.removeLayer(vectorLayer);
+      }
     };
   }, [isMapReady]);
 
