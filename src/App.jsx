@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Map from "react-map-gl/maplibre";
+import { NavigationControl } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 function App() {
@@ -15,15 +16,15 @@ function App() {
         (position) => {
           setUserLocation({
             latitude: position.coords.latitude,
-            longitude: position.coords.longitude
+            longitude: position.coords.longitude,
           });
         },
-        (error) => {
-          setError('Erreur de géolocalisation');
+        (err) => {
+          setError("Erreur de géolocalisation");
         }
       );
     } else {
-      setError('Géolocalisation non supportée');
+      setError("Géolocalisation non supportée");
     }
   }, []);
 
@@ -33,36 +34,35 @@ function App() {
       if (event.alpha !== null) {
         const newBearing = 360 - event.alpha;
         setBearing(newBearing);
-        
-        if (map.current) {
-          map.current.setBearing(newBearing);
+
+        if (mapRef.current) {
+          mapRef.current.setBearing(newBearing);
         }
       }
     };
 
-    if (typeof window !== 'undefined' && window.DeviceOrientationEvent) {
-      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    if (typeof window !== "undefined" && window.DeviceOrientationEvent) {
+      if (typeof DeviceOrientationEvent.requestPermission === "function") {
         DeviceOrientationEvent.requestPermission()
-          .then(permissionState => {
-            if (permissionState === 'granted') {
-              window.addEventListener('deviceorientation', handleOrientation);
+          .then((permissionState) => {
+            if (permissionState === "granted") {
+              window.addEventListener("deviceorientation", handleOrientation);
             } else {
-              setError('Permission pour l\'orientation refusée');
+              setError("Permission pour l'orientation refusée");
             }
           })
           .catch(console.error);
       } else {
-        window.addEventListener('deviceorientation', handleOrientation);
+        window.addEventListener("deviceorientation", handleOrientation);
       }
     } else {
-      setError('L\'orientation du device n\'est pas supportée');
+      setError("L'orientation du device n'est pas supportée");
     }
 
     return () => {
-      window.removeEventListener('deviceorientation', handleOrientation);
+      window.removeEventListener("deviceorientation", handleOrientation);
     };
   }, []);
-
 
   return (
     <>
@@ -75,7 +75,7 @@ function App() {
             longitude: userLocation?.longitude || 120.95134859887523,
             zoom: 16.5,
             bearing: bearing,
-            pitch: 45
+            pitch: 45,
           }}
           mapStyle={{
             version: 8,
@@ -96,11 +96,8 @@ function App() {
             ],
           }}
         >
-          {error && (
-            <div className="gps-info gps-info-error">
-              {error}
-            </div>
-          )}
+          <NavigationControl showCompass showZoom position="top-right" />
+          {error && <div className="gps-info gps-info-error">{error}</div>}
         </Map>
       </main>
       <footer></footer>
