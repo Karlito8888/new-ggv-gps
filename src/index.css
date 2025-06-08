@@ -27,7 +27,16 @@
 }
 
 #root > main {
+  height: calc(100vh - 120px); /* 60px header + 60px footer */
   padding: 1rem;
+}
+
+.maplibregl-canvas {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
 }
 
 #root > footer {
