@@ -28,7 +28,13 @@
 
 #root > main {
   height: calc(100vh - 120px); /* 60px header + 60px footer */
-  /* padding: 1rem; */
+  padding: 1rem;
+}
+
+.map-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 8px;
 }
 
 .maplibregl-canvas {
@@ -57,7 +63,7 @@ button {
   font-weight: 500;
   font-family: inherit;
   background-color: #1a1a1a;
-  cursor: pointer;
+  cursor: button;
   transition: border-color 0.25s;
 }
 button:hover {

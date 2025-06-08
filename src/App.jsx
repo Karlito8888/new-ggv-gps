@@ -19,9 +19,7 @@ function App() {
     // Ajout des contrôles de navigation
     map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-    return () => {
-      map.current?.remove(); // Nettoyage
-    };
+    return () => map.current?.remove();
   }, []);
 
   return (
@@ -30,14 +28,7 @@ function App() {
         <h1>Ma Carte Interactive</h1>
       </header>
       <main>
-        <div 
-          ref={mapContainer}
-          style={{
-            height: '100%',
-            width: '100%',
-            borderRadius: '8px'
-          }}
-        />
+        <div ref={mapContainer} className="map-container" />
       </main>
       <footer>
         <p>© 2023 Ma Carte</p>
