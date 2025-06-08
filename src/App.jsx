@@ -31,7 +31,7 @@ function App() {
         <div ref={mapContainer} className="map-container" />
       </main>
       <footer>
-        <p>© 2023 Ma Carte</p>
+        <p>© {new Date().getFullYear()} Garden Grove Village</p>
       </footer>
     </>
   );
