@@ -109,19 +109,9 @@ function App() {
         <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />
 
         {/* Overlay avec les infos GPS */}
-        <div
-          style={{
-            position: "absolute",
-            top: "10px",
-            left: "10px",
-            backgroundColor: "rgba(255, 255, 255, 0.8)",
-            padding: "10px",
-            borderRadius: "5px",
-            zIndex: 1,
-          }}
-        >
+        <div className="gps-info">
           {error ? (
-            <p style={{ color: "red" }}>{error}</p>
+            <p className="gps-info-error">{error}</p>
           ) : location ? (
             <>
               <p>Latitude: {location[1].toFixed(6)}</p>
