@@ -8,6 +8,7 @@ function App() {
   const map = useRef(null);
   const [bearing, setBearing] = useState(0);
   const [zoom] = useState(16.5);
+  const [error, setError] = useState(null);
 
   // Initialise la carte
   useEffect(() => {
@@ -72,7 +73,11 @@ function App() {
       <header></header>
       <main style={{ width: "100%", height: "100%", position: "relative" }}>
         <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />
-
+        {error && (
+          <div className="gps-info gps-info-error">
+            {error}
+          </div>
+        )}
       </main>
       <footer></footer>
     </>
