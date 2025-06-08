@@ -1,11 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
+import Map from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 function App() {
   const mapContainer = useRef(null);
   const map = useRef(null);
-  const [zoom] = useState(15);
+  const [bearing, setBearing] = useState(0);
+  const [zoom] = useState(16.5);
 
   // Initialise la carte
   useEffect(() => {
