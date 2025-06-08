@@ -164,7 +164,7 @@ function App() {
         data: blocksGeoJSON,
       });
 
-      // Couche de remplissage avec interaction
+      // Couche de remplissage
       map.addLayer({
         id: "blocks-fill",
         type: "fill",
@@ -172,10 +172,20 @@ function App() {
         paint: {
           "fill-color": ["get", "color"],
           "fill-opacity": 0.8,
-          "fill-outline-color": "#666",
+          "fill-outline-color": "#999",
         },
       });
 
+      // Couche de bordure
+      map.addLayer({
+        id: "blocks-border",
+        type: "line",
+        source: "blocks",
+        paint: {
+          "line-color": "#999",
+          "line-width": 1,
+        },
+      });
 
       // Interactions
       map.on("click", "blocks-fill", (e) => {
@@ -281,17 +291,19 @@ function App() {
                 anchor="center"
               >
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.9)', 
-                  color: block.properties.color === '#19744B' ? '#fff' : '#000',
-                  border: '1px solid #333',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  color: block.properties.color === '#19744B' ? '#fff' : '#444',
+                  border: '1px solid #999',
                   borderRadius: '50%',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  width: '20px',
-                  height: '20px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  fontFamily: "Superclarendon, 'Bookman Old Style', serif",
+                  width: '22px',
+                  height: '22px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  textShadow: '0 0 2px #fff',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                 }}>
                   {block.properties.name}
