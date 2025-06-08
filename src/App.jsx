@@ -176,26 +176,6 @@ function App() {
         },
       });
 
-      // Couche de texte optimisée
-      map.addLayer({
-        id: "blocks-text",
-        type: "symbol",
-        source: "blocks",
-        minzoom: 15,
-        filter: ["!=", ["get", "name"], ""],
-        layout: {
-          // "text-field": ["get", "name"],
-          "text-size": 12,
-          "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"], // Polices de secours
-          "text-allow-overlap": true,
-          "text-ignore-placement": true,
-        },
-        paint: {
-          "text-color": "#000000",
-          "text-halo-color": "#ffffff",
-          "text-halo-width": 1.5,
-        },
-      });
 
       // Interactions
       map.on("click", "blocks-fill", (e) => {
@@ -288,6 +268,37 @@ function App() {
               <button onClick={() => setError(null)}>Fermer</button>
             </div>
           )}
+
+          {/* Affichage des numéros de blocs via Markers React */}
+          {blocksGeoJSON.features.map((block) => {
+            if (!block.properties.name) return null;
+            
+            return (
+              <Marker
+                key={`block-${block.properties.name}`}
+                longitude={block.properties.center[0]}
+                latitude={block.properties.center[1]}
+                anchor="center"
+              >
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.9)', 
+                  color: block.properties.color === '#19744B' ? '#fff' : '#000',
+                  border: '1px solid #333',
+                  borderRadius: '50%',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                  {block.properties.name}
+                </div>
+              </Marker>
+            );
+          })}
         </Map>
       </main>
       <footer></footer>
