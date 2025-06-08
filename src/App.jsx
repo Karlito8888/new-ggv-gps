@@ -1,32 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import Map from "react-map-gl/maplibre";
-import { NavigationControl } from "react-map-gl/maplibre";
+import { NavigationControl, GeolocateControl } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 function App() {
   const mapRef = useRef(null);
+  const geolocateControlRef = useRef();
   const [userLocation, setUserLocation] = useState(null);
   const [bearing, setBearing] = useState(0);
   const [error, setError] = useState(null);
 
-  // Effet pour la géolocalisation
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (err) => {
-          setError("Erreur de géolocalisation");
-        }
-      );
-    } else {
-      setError("Géolocalisation non supportée");
-    }
-  }, []);
 
   // Gestion de l'orientation du device
   useEffect(() => {
@@ -64,6 +47,13 @@ function App() {
     };
   }, []);
 
+  // Effet pour déclencher la géolocalisation automatiquement
+  useEffect(() => {
+    if (geolocateControlRef.current) {
+      geolocateControlRef.current.trigger();
+    }
+  }, []);
+
   return (
     <>
       <header></header>
@@ -97,6 +87,14 @@ function App() {
           }}
         >
           <NavigationControl showCompass showZoom position="top-right" />
+          <GeolocateControl
+            ref={geolocateControlRef}
+            position="top-right"
+            positionOptions={{ enableHighAccuracy: true }}
+            trackUserLocation={true}
+            showUserLocation={true}
+            onError={(err) => setError(err.message)}
+          />
           {error && <div className="gps-info gps-info-error">{error}</div>}
         </Map>
       </main>
