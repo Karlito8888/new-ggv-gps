@@ -1,13 +1,15 @@
-import { useState } from 'react'
-
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <header>
+        {/* Votre contenu d'en-tête */}
+      </header>
+      <main>
+        {/* Votre contenu principal */}
+      </main>
+      <footer>
+        {/* Votre contenu de pied de page */}
+      </footer>
     </>
   )
 }
