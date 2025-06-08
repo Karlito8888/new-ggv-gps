@@ -1,91 +1,141 @@
-import { useState, useEffect, useRef } from 'react';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import { useEffect, useRef, useState } from "react";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 function App() {
   const mapContainer = useRef(null);
   const map = useRef(null);
-  const [position, setPosition] = useState(null);
+  const [location, setLocation] = useState(null);
+  const [accuracy, setAccuracy] = useState(null);
+  const [error, setError] = useState(null);
+  const [zoom] = useState(15);
+  const marker = useRef(null);
 
+  // Initialise la carte
   useEffect(() => {
-    if (map.current) return; // Carte déjà initialisée
-    
+    if (!mapContainer.current) return;
+
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: 'https://demotiles.maplibre.org/style.json',
-      center: [2.3522, 46.6034],
-      zoom: 17,
-      pitch: 60,
-      bearing: 0,
-      antialias: true
-    });
-
-    map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
-
-    map.current.on('load', () => {
-      map.current.addSource('gps-position', {
-        type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: []
-        }
-      });
-
-      map.current.addLayer({
-        id: 'gps-point',
-        type: 'circle',
-        source: 'gps-position',
-        paint: {
-          'circle-radius': 10,
-          'circle-color': '#4285F4'
-        }
-      });
-
-      const watchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          const coords = [pos.coords.longitude, pos.coords.latitude];
-          setPosition(pos.coords);
-          
-          map.current.getSource('gps-position').setData({
-            type: 'FeatureCollection',
-            features: [{
-              type: 'Feature',
-              geometry: { type: 'Point', coordinates: coords }
-            }]
-          });
-
-          map.current.flyTo({
-            center: coords,
-            bearing: pos.coords.heading || 0,
-            pitch: 60,
-            essential: true
-          });
+      style: {
+        version: 8,
+        sources: {
+          osm: {
+            type: "raster",
+            tiles: ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+            tileSize: 256,
+            attribution: "© OpenStreetMap contributors",
+          },
         },
-        (err) => console.error('Erreur GPS:', err),
-        { enableHighAccuracy: true }
-      );
-
-      return () => navigator.geolocation.clearWatch(watchId);
+        layers: [
+          {
+            id: "osm",
+            type: "raster",
+            source: "osm",
+          },
+        ],
+      },
+      center: [120.95134859887523, 14.347872973134175],
+      zoom: zoom,
+      pitch: 45, // Vue 3D inclinée
+      attributionControl: true,
+      rollEnabled: true,
     });
+
+    // Ajoute le contrôle de navigation
+    map.current.addControl(
+      new maplibregl.NavigationControl({
+        visualizePitch: true,
+        visualizeRoll: true,
+        showZoom: true,
+        showCompass: true,
+      }),
+      "top-right"
+    );
 
     return () => map.current?.remove();
   }, []);
 
+  // Gestion de la géolocalisation
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setError("La géolocalisation n'est pas supportée par votre navigateur");
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        setLocation([longitude, latitude]);
+        setAccuracy(accuracy);
+
+        // Centre la carte sur la position
+        if (map.current) {
+          map.current.flyTo({
+            center: [longitude, latitude],
+            essential: true,
+          });
+
+          // Ajoute ou met à jour le marqueur
+          if (!marker.current) {
+            marker.current = new maplibregl.Marker({
+              color: "#FF0000",
+              draggable: false,
+            })
+              .setLngLat([longitude, latitude])
+              .addTo(map.current);
+          } else {
+            marker.current.setLngLat([longitude, latitude]);
+          }
+        }
+      },
+      (err) => {
+        setError(`Erreur de géolocalisation: ${err.message}`);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 5000,
+      }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
   return (
-    <div className="app">
-      <div ref={mapContainer} className="map-container" />
-      <button 
-        className="fullscreen-btn"
-        onClick={() => document.body.requestFullscreen()}
-      >
-        Plein écran
-      </button>
-      <div className="gps-info">
-        <span id="speed">Vitesse: 0 km/h</span>
-        <span id="accuracy">Précision: --</span>
-      </div>
-    </div>
+    <>
+      <header></header>
+      <main style={{ width: "100%", height: "100%", position: "relative" }}>
+        <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />
+
+        {/* Overlay avec les infos GPS */}
+        <div
+          style={{
+            position: "absolute",
+            top: "10px",
+            left: "10px",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            padding: "10px",
+            borderRadius: "5px",
+            zIndex: 1,
+          }}
+        >
+          {error ? (
+            <p style={{ color: "red" }}>{error}</p>
+          ) : location ? (
+            <>
+              <p>Latitude: {location[1].toFixed(6)}</p>
+              <p>Longitude: {location[0].toFixed(6)}</p>
+              <p>Précision: {accuracy?.toFixed(1)} mètres</p>
+            </>
+          ) : (
+            <p>Recherche de votre position...</p>
+          )}
+        </div>
+      </main>
+      <footer></footer>
+    </>
   );
 }
 
-export default App
+export default App;
