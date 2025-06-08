@@ -39,15 +39,18 @@ function App() {
   );
 
   const getPolygonCenter = (coords) => {
-    const [lngs, lats] = coords.reduce((acc, [lng, lat]) => {
-      acc[0].push(lng);
-      acc[1].push(lat);
-      return acc;
-    }, [[], []]);
-    
+    const [lngs, lats] = coords.reduce(
+      (acc, [lng, lat]) => {
+        acc[0].push(lng);
+        acc[1].push(lat);
+        return acc;
+      },
+      [[], []]
+    );
+
     return [
       (Math.min(...lngs) + Math.max(...lngs)) / 2,
-      (Math.min(...lats) + Math.max(...lats)) / 2
+      (Math.min(...lats) + Math.max(...lats)) / 2,
     ];
   };
 
@@ -66,7 +69,7 @@ function App() {
           properties: {
             name: block.name || "",
             color: block.color || "#E0DFDF",
-            center: getPolygonCenter(block.coords)
+            center: getPolygonCenter(block.coords),
           },
         })),
     }),
@@ -181,20 +184,14 @@ function App() {
         minzoom: 15,
         filter: ["!=", ["get", "name"], ""],
         layout: {
-          "text-field": ["get", "name"],
+          // "text-field": ["get", "name"],
           "text-size": 12,
-          "text-font": ["Arial Unicode MS Bold"],
+          "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"], // Polices de secours
           "text-allow-overlap": true,
           "text-ignore-placement": true,
-          "text-anchor": "center",
         },
         paint: {
-          "text-color": [
-            "case",
-            ["==", ["get", "color"], "#19744B"],
-            "#FFFFFF",
-            "#000000"
-          ],
+          "text-color": "#000000",
           "text-halo-color": "#ffffff",
           "text-halo-width": 1.5,
         },
