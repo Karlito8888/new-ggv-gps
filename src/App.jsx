@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import maplibregl from 'maplibre-gl';
+import { Feature } from 'ol';
+import { Polygon } from 'ol/geom';
+import { Style, Fill, Stroke } from 'ol/style';
 import {
   Map,
   NavigationControl,
@@ -27,6 +30,14 @@ function App() {
     longitude: 120.95134859887523,
   };
 
+  // Supprimez également ces couches inutiles puisque nous utilisons OpenLayers pour le calcul uniquement
+  useEffect(() => {
+    if (!isMapReady || !mapRef.current) return;
+    const map = mapRef.current.getMap();
+    if (map.getLayer("blocks-fill")) map.removeLayer("blocks-fill");
+    if (map.getLayer("blocks-border")) map.removeLayer("blocks-border");
+  }, [isMapReady]);
+
   // Memoize les paramètres initiaux de la carte
   const initialViewState = useMemo(
     () => ({
@@ -41,15 +52,8 @@ function App() {
 
   const getPolygonCenter = (coords) => {
     if (!coords || coords.length === 0) return [0, 0];
-    
-    // Calcul simple du centre sans WebMercator
-    const center = coords.reduce((acc, [lng, lat]) => {
-      acc[0] += lng;
-      acc[1] += lat;
-      return acc;
-    }, [0, 0]).map(sum => sum / coords.length);
-
-    return center;
+    const polygon = new Polygon([coords]);
+    return polygon.getInteriorPoint().getCoordinates();
   };
 
   // Mémoization des blocs en GeoJSON avec centres calculés
@@ -288,26 +292,32 @@ function App() {
           )}
 
           {/* Affichage des numéros de blocs via Markers React */}
-          {blocksGeoJSON.features.map((block) => {
-            if (!block.properties.name) return null;
+          {blocks.map((block) => {
+            if (!block.name || block.coords.length === 0) return null;
+            
+            const center = getPolygonCenter(block.coords);
+            const polygonStyle = new Style({
+              fill: new Fill({ color: block.color || "#E0DFDF" }),
+              stroke: new Stroke({ color: "#999", width: 1 })
+            });
 
             return (
               <Marker
-                key={`block-${block.properties.name}`}
-                longitude={block.properties.center[0]}
-                latitude={block.properties.center[1]}
+                key={`block-${block.name}`}
+                longitude={center[0]}
+                latitude={center[1]}
                 anchor="center"
               >
                 <div style={{
                   background: 'rgba(255, 255, 255, 0.9)',
-                  color: block.properties.color === '#19744B' ? '#fff' : '#444',
-                  border: `1px solid ${block.properties.color === '#19744B' ? '#19744B' : '#999'}`,
+                  color: block.color === '#19744B' ? '#fff' : '#444',
+                  border: `1px solid ${block.color === '#19744B' ? '#19744B' : '#999'}`,
                   borderRadius: '12px',
                   padding: '2px 6px',
                   fontSize: '12px',
                   fontWeight: 'bold'
                 }}>
-                  {block.properties.name}
+                  {block.name}
                 </div>
               </Marker>
             );
