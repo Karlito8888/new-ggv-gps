@@ -1,70 +1,30 @@
 import { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
 import Map from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 function App() {
-  const mapContainer = useRef(null);
-  const map = useRef(null);
+  const mapRef = useRef(null);
+  const [userLocation, setUserLocation] = useState(null);
   const [bearing, setBearing] = useState(0);
-  const [zoom] = useState(16.5);
   const [error, setError] = useState(null);
 
-  // Initialise la carte
+  // Effet pour la géolocalisation
   useEffect(() => {
-    if (!mapContainer.current) return;
-
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      style: {
-        version: 8,
-        sources: {
-          osm: {
-            type: "raster",
-            tiles: ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            tileSize: 256,
-            attribution: "© OpenStreetMap contributors",
-          },
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
         },
-        layers: [
-          {
-            id: "osm",
-            type: "raster",
-            source: "osm",
-          },
-        ],
-      },
-      center: [120.95134859887523, 14.347872973134175],
-      zoom: zoom,
-      pitch: 45, // Vue 3D inclinée
-      attributionControl: true,
-      rollEnabled: true,
-    });
-
-    // Ajoute les contrôles
-    map.current.addControl(
-      new maplibregl.NavigationControl({
-        visualizePitch: true,
-        visualizeRoll: true,
-        showZoom: true,
-        showCompass: true,
-      }),
-      "top-right"
-    );
-
-    map.current.addControl(
-      new maplibregl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true
-        },
-        trackUserLocation: true,
-        showUserLocation: true,
-        showAccuracyCircle: true
-      }),
-      "top-right"
-    );
-
-    return () => map.current?.remove();
+        (error) => {
+          setError('Erreur de géolocalisation');
+        }
+      );
+    } else {
+      setError('Géolocalisation non supportée');
+    }
   }, []);
 
   // Gestion de l'orientation du device
@@ -108,12 +68,40 @@ function App() {
     <>
       <header></header>
       <main style={{ width: "100%", height: "100%", position: "relative" }}>
-        <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />
-        {error && (
-          <div className="gps-info gps-info-error">
-            {error}
-          </div>
-        )}
+        <Map
+          ref={mapRef}
+          initialViewState={{
+            latitude: userLocation?.latitude || 14.347872973134175,
+            longitude: userLocation?.longitude || 120.95134859887523,
+            zoom: 16.5,
+            bearing: bearing,
+            pitch: 45
+          }}
+          mapStyle={{
+            version: 8,
+            sources: {
+              osm: {
+                type: "raster",
+                tiles: ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+                tileSize: 256,
+                attribution: "© OpenStreetMap contributors",
+              },
+            },
+            layers: [
+              {
+                id: "osm",
+                type: "raster",
+                source: "osm",
+              },
+            ],
+          }}
+        >
+          {error && (
+            <div className="gps-info gps-info-error">
+              {error}
+            </div>
+          )}
+        </Map>
       </main>
       <footer></footer>
     </>
