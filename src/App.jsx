@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { Map, NavigationControl, GeolocateControl, Marker } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { publicPois } from "./data/public-pois";
+import { blocks } from "./data/blocks";
 
 
 function App() {
@@ -27,6 +28,24 @@ function App() {
     bearing: bearing,
     pitch: 45,
   }), [userLocation, bearing]);
+
+  // Mémoization des blocs en GeoJSON
+  const blocksGeoJSON = useMemo(() => ({
+    type: 'FeatureCollection',
+    features: blocks
+      .filter(block => block.coords.length > 0) // Filtre les blocs sans coordonnées
+      .map(block => ({
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [block.coords]
+        },
+        properties: {
+          name: block.name || '',
+          color: block.color || '#E0DFDF'
+        }
+      }))
+  }), []);
 
   // Memoize le style de la carte
   const mapStyle = useMemo(() => ({
@@ -98,6 +117,92 @@ function App() {
       geolocateControlRef.current.trigger();
     }
   }, []);
+
+  // Gestion des blocs vectoriels
+  useEffect(() => {
+    if (!isMapReady || !mapRef.current) return;
+
+    const map = mapRef.current.getMap();
+    
+    try {
+      // Source unique pour tous les blocs
+      map.addSource('blocks', {
+        type: 'geojson', 
+        data: blocksGeoJSON
+      });
+
+      // Couche de remplissage avec interaction
+      map.addLayer({
+        id: 'blocks-fill',
+        type: 'fill',
+        source: 'blocks',
+        paint: {
+          'fill-color': ['get', 'color'],
+          'fill-opacity': 0.8,
+          'fill-outline-color': '#666'
+        }
+      });
+
+      // Couche de texte optimisée
+      map.addLayer({
+        id: 'blocks-text',
+        type: 'symbol',
+        source: 'blocks',
+        minzoom: 15, // N'affiche le texte qu'à partir d'un certain zoom
+        filter: ['!=', ['get', 'name'], ''], // Ignore les blocs sans nom
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-size': 14,
+          'text-font': ['Arial Unicode MS Bold', 'Arial Bold'],
+          'text-justify': 'center',
+          'text-anchor': 'center', 
+          'text-allow-overlap': false
+        },
+        paint: {
+          'text-color': '#444',
+          'text-halo-color': '#fff',
+          'text-halo-width': 2
+        }
+      });
+
+      // Interactions
+      map.on('click', 'blocks-fill', (e) => {
+        if (e.features[0].properties.name) {
+          new maplibregl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(`Bloc <strong>${e.features[0].properties.name}</strong>`)
+            .addTo(map);
+        }
+      });
+
+      // Changement du curseur au survol
+      map.on('mouseenter', 'blocks-fill', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.on('mouseleave', 'blocks-fill', () => {
+        map.getCanvas().style.cursor = '';
+      });
+
+    } catch (error) {
+      console.error("Erreur lors du chargement des blocs:", error);
+      setError("Erreur d'affichage des blocs");
+    }
+
+    return () => {
+      // Nettoyage robuste
+      const map = mapRef.current?.getMap();
+      if (map) {
+        try {
+          if (map.getLayer('blocks-fill')) map.removeLayer('blocks-fill');
+          if (map.getLayer('blocks-text')) map.removeLayer('blocks-text');
+          if (map.getSource('blocks')) map.removeSource('blocks');
+        } catch (cleanupError) {
+          console.error("Erreur de nettoyage:", cleanupError);
+        }
+      }
+    };
+  }, [isMapReady, blocksGeoJSON]);
 
   return (
     <>
