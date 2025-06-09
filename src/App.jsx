@@ -18,7 +18,7 @@ import LocationPermissionModal from "./components/LocationPermissionModal";
 import WelcomeModal from "./components/WelcomeModal";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModal from "./components/ArrivalModal";
-import { createRoute, createDirectRoute, VILLAGE_EXIT_COORDS } from "./lib/navigation";
+import { createRoute, createDirectRoute, initDirectionsService, VILLAGE_EXIT_COORDS } from "./lib/navigation";
 import "./App.css";
 
 function App() {
@@ -292,6 +292,9 @@ function App() {
     if (!isMapReady || !mapRef.current) return;
 
     const map = mapRef.current.getMap();
+    
+    // Initialise le service de directions
+    initDirectionsService(map);
 
     try {
       // Source unique pour tous les blocs
