@@ -17,7 +17,7 @@ export default defineConfig({
       // ▶ Manifeste dynamique
       manifest: {
         name: "MyGGV|GPS",
-        short_name: "MyGGV/GPS",
+        short_name: "MyGGV|GPS",
         description: "GPS pour Garden Grove Village",
         theme_color: "#50AA61",
         background_color: "#FFFFFF",

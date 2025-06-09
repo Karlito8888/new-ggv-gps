@@ -308,13 +308,14 @@ function App() {
                 anchor="center"
               >
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.9)',
+                  background: 'rgba(255, 255, 255, 0.7)',
                   color: '#444',
                   border: '1px solid #999',
-                  borderRadius: '12px',
+                  borderRadius: '50%',
                   padding: '2px 6px',
                   fontSize: '12px',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  fontStyle: 'italic',
                 }}>
                   {block.name}
                 </div>
