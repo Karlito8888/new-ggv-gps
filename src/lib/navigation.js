@@ -1,55 +1,59 @@
-// Coordonnées de sortie du village
-export const VILLAGE_EXIT_COORDS = [120.951863, 14.350980];
+// Village exit coordinates
+export const VILLAGE_EXIT_COORDS = [120.951863, 14.35098];
 
-// Distance minimale pour considérer qu'on est arrivé (en mètres)
+// Minimum distance to consider arrival (in meters)
 export const ARRIVAL_THRESHOLD = 10;
 
-// Calcule la distance entre deux points en mètres (formule haversine)
+// Calculate distance between two points in meters (haversine formula)
 export function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371000; // Rayon de la Terre en mètres
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const R = 6371000; // Earth radius in meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
 
-// Calcule l'angle de direction (bearing) entre deux points
+// Calculate direction angle (bearing) between two points
 export function calculateBearing(lat1, lon1, lat2, lon2) {
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const lat1Rad = lat1 * Math.PI / 180;
-  const lat2Rad = lat2 * Math.PI / 180;
-  
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const lat1Rad = (lat1 * Math.PI) / 180;
+  const lat2Rad = (lat2 * Math.PI) / 180;
+
   const y = Math.sin(dLon) * Math.cos(lat2Rad);
-  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - 
-            Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
-  
-  let bearing = Math.atan2(y, x) * 180 / Math.PI;
+  const x =
+    Math.cos(lat1Rad) * Math.sin(lat2Rad) -
+    Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+
+  let bearing = (Math.atan2(y, x) * 180) / Math.PI;
   bearing = (bearing + 360) % 360;
-  
+
   return bearing;
 }
 
-// Convertit l'angle en direction cardinale
+// Convert angle to cardinal direction
 export function bearingToDirection(bearing) {
   const directions = [
-    { name: 'Nord', icon: '↑' },
-    { name: 'Nord-Est', icon: '↗' },
-    { name: 'Est', icon: '→' },
-    { name: 'Sud-Est', icon: '↘' },
-    { name: 'Sud', icon: '↓' },
-    { name: 'Sud-Ouest', icon: '↙' },
-    { name: 'Ouest', icon: '←' },
-    { name: 'Nord-Ouest', icon: '↖' }
+    { name: "North", icon: "↑" },
+    { name: "North-East", icon: "↗" },
+    { name: "East", icon: "→" },
+    { name: "South-East", icon: "↘" },
+    { name: "South", icon: "↓" },
+    { name: "South-West", icon: "↙" },
+    { name: "West", icon: "←" },
+    { name: "North-West", icon: "↖" },
   ];
-  
+
   const index = Math.round(bearing / 45) % 8;
   return directions[index];
 }
 
-// Formate la distance pour l'affichage
+// Format distance for display
 export function formatDistance(distance) {
   if (distance < 1000) {
     return `${Math.round(distance)}m`;
@@ -58,126 +62,136 @@ export function formatDistance(distance) {
   }
 }
 
-// Vérifie si l'utilisateur est arrivé à destination
+// Check if user has arrived at destination
 export function hasArrived(userLat, userLon, destLat, destLon) {
   const distance = calculateDistance(userLat, userLon, destLat, destLon);
   return distance <= ARRIVAL_THRESHOLD;
 }
 
-// Crée un itinéraire en utilisant OSRM avec fallback
+// Create route using OSRM with fallback
 export async function createRoute(startLat, startLon, endLat, endLon) {
   try {
-    // Timeout de 3 secondes pour éviter les blocages
+    // 3-second timeout to avoid blocking
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
+
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson`;
-    
-    const response = await fetch(osrmUrl, { 
+
+    const response = await fetch(osrmUrl, {
       signal: controller.signal,
       headers: {
-        'Accept': 'application/json'
-      }
+        Accept: "application/json",
+      },
     });
-    
+
     clearTimeout(timeoutId);
-    
+
     if (!response.ok) {
       throw new Error(`OSRM API error: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     if (!data.routes || data.routes.length === 0) {
-      throw new Error('Aucun itinéraire trouvé');
+      throw new Error("No route found");
     }
-    
+
     const route = data.routes[0];
-    
+
     return {
-      type: 'FeatureCollection',
-      features: [{
-        type: 'Feature',
-        geometry: route.geometry,
-        properties: {
-          distance: route.distance,
-          duration: route.duration,
-          steps: route.legs[0]?.steps || [],
-          source: 'osrm'
-        }
-      }]
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: route.geometry,
+          properties: {
+            distance: route.distance,
+            duration: route.duration,
+            steps: route.legs[0]?.steps || [],
+            source: "osrm",
+          },
+        },
+      ],
     };
   } catch (error) {
-    console.warn('Erreur OSRM, utilisation route directe:', error);
-    // Fallback vers route directe en cas d'erreur
+    console.warn("OSRM error, using direct route:", error);
+    // Fallback to direct route in case of error
     return createDirectRoute(startLat, startLon, endLat, endLon);
   }
 }
 
-// Fallback: Crée un itinéraire simple en ligne droite
+// Fallback: Creates a simple straight-line route
 export function createDirectRoute(startLat, startLon, endLat, endLon) {
   return {
-    type: 'FeatureCollection',
-    features: [{
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: [
-          [startLon, startLat],
-          [endLon, endLat]
-        ]
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [startLon, startLat],
+            [endLon, endLat],
+          ],
+        },
+        properties: {
+          distance: calculateDistance(startLat, startLon, endLat, endLon),
+          source: "direct",
+        },
       },
-      properties: {
-        distance: calculateDistance(startLat, startLon, endLat, endLon),
-        source: 'direct'
-      }
-    }]
+    ],
   };
 }
 
-// Calcule les instructions de navigation
-export function getNavigationInstructions(userLat, userLon, destLat, destLon, deviceBearing = 0) {
+// Calculate navigation instructions
+export function getNavigationInstructions(
+  userLat,
+  userLon,
+  destLat,
+  destLon,
+  deviceBearing = 0
+) {
   const distance = calculateDistance(userLat, userLon, destLat, destLon);
   const bearing = calculateBearing(userLat, userLon, destLat, destLon);
   const direction = bearingToDirection(bearing);
-  
-  // Calcule l'angle relatif par rapport à l'orientation du device
+
+  // Calculate relative angle compared to device orientation
   let relativeBearing = bearing - deviceBearing;
   if (relativeBearing < 0) relativeBearing += 360;
   if (relativeBearing > 360) relativeBearing -= 360;
-  
-  let instruction = '';
+
+  let instruction = "";
   if (distance <= ARRIVAL_THRESHOLD) {
-    instruction = 'Vous êtes arrivé !';
+    instruction = "You have arrived!";
   } else if (distance < 50) {
-    instruction = `Destination à ${formatDistance(distance)}`;
+    instruction = `Destination in ${formatDistance(distance)}`;
   } else {
-    // Instructions basées sur l'angle relatif
+    // Instructions based on relative angle
     if (relativeBearing < 15 || relativeBearing > 345) {
-      instruction = 'Continuez tout droit';
+      instruction = "Continue straight ahead";
     } else if (relativeBearing >= 15 && relativeBearing <= 75) {
-      instruction = 'Tournez légèrement à droite';
+      instruction = "Turn slightly right";
     } else if (relativeBearing > 75 && relativeBearing <= 105) {
-      instruction = 'Tournez à droite';
+      instruction = "Turn right";
     } else if (relativeBearing > 105 && relativeBearing <= 165) {
-      instruction = 'Tournez fortement à droite';
+      instruction = "Turn sharply right";
     } else if (relativeBearing > 165 && relativeBearing <= 195) {
-      instruction = 'Faites demi-tour';
+      instruction = "Turn around";
     } else if (relativeBearing > 195 && relativeBearing <= 255) {
-      instruction = 'Tournez fortement à gauche';
+      instruction = "Turn sharply left";
     } else if (relativeBearing > 255 && relativeBearing <= 285) {
-      instruction = 'Tournez à gauche';
+      instruction = "Turn left";
     } else {
-      instruction = 'Tournez légèrement à gauche';
+      instruction = "Turn slightly left";
     }
   }
-  
+
   return {
     instruction,
     distance: formatDistance(distance),
     bearing,
     direction,
     relativeBearing,
-    rawDistance: distance
+    rawDistance: distance,
   };
 }

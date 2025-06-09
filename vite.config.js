@@ -13,12 +13,12 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          maps: ['maplibre-gl', 'ol'],
-          supabase: ['@supabase/supabase-js']
-        }
-      }
-    }
+          vendor: ["react", "react-dom"],
+          maps: ["maplibre-gl", "ol"],
+          supabase: ["@supabase/supabase-js"],
+        },
+      },
+    },
   },
   plugins: [
     react(),
@@ -26,7 +26,7 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
-      
+
       // Configuration optimisée pour Netlify
       manifest: {
         name: "MyGGV|GPS",
@@ -42,53 +42,62 @@ export default defineConfig({
           {
             src: "/icons/icon-16x16.png",
             sizes: "16x16",
-            type: "image/png"
+            type: "image/png",
           },
           {
             src: "/icons/icon-32x32.png",
             sizes: "32x32",
-            type: "image/png"
+            type: "image/png",
           },
           {
             src: "/icons/icon-48x48.png",
             sizes: "48x48",
-            type: "image/png"
+            type: "image/png",
           },
           {
             src: "/icons/icon-72x72.png",
             sizes: "72x72",
-            type: "image/png"
+            type: "image/png",
           },
           {
             src: "/icons/icon-96x96.png",
             sizes: "96x96",
-            type: "image/png"
+            type: "image/png",
           },
           {
             src: "/icons/icon-144x144.png",
             sizes: "144x144",
-            type: "image/png"
+            type: "image/png",
           },
           {
             src: "/icons/icon-192x192.png",
             sizes: "192x192",
             type: "image/png",
-            purpose: "any maskable"
+            purpose: "any maskable",
           },
           {
             src: "/icons/icon-512x512.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "any maskable"
-          }
+            purpose: "any maskable",
+          },
         ],
         categories: ["navigation", "travel", "utilities"],
-        lang: "fr-FR"
+        lang: "fr-FR",
       },
 
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,woff2,jpg,jpeg}"],
         runtimeCaching: [
+          // Fichiers critiques (NetworkFirst)
+          {
+            urlPattern: /\.(js|css|html)$/,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "core-assets",
+              networkTimeoutSeconds: 5,
+            },
+          },
           // Cache des assets statiques
           {
             urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif|webp)$/,
@@ -97,9 +106,9 @@ export default defineConfig({
               cacheName: "images",
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 jours
-              }
-            }
+                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 jours
+              },
+            },
           },
           // Cache des tuiles OpenStreetMap
           {
@@ -109,9 +118,9 @@ export default defineConfig({
               cacheName: "osm-tiles",
               expiration: {
                 maxEntries: 200,
-                maxAgeSeconds: 7 * 24 * 60 * 60 // 7 jours
-              }
-            }
+                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 jours
+              },
+            },
           },
           // Cache Supabase API avec NetworkFirst
           {
@@ -122,36 +131,36 @@ export default defineConfig({
               networkTimeoutSeconds: 5,
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 5 * 60 // 5 minutes
-              }
-            }
-          }
+                maxAgeSeconds: 5 * 60, // 5 minutes
+              },
+            },
+          },
         ],
         cleanupOutdatedCaches: true,
         skipWaiting: true,
-        clientsClaim: true
+        clientsClaim: true,
       },
 
       includeAssets: ["icons/*.png", "markers/*.png"],
       devOptions: {
         enabled: true, // Activé pour développement local
-        type: "module"
-      }
-    })
+        type: "module",
+      },
+    }),
   ],
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL('./src', import.meta.url))
-    }
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
   },
   preview: {
     port: 5173,
     strictPort: true,
-    host: true
+    host: true,
   },
   server: {
     port: 5173,
     strictPort: true,
-    host: true
-  }
+    host: true,
+  },
 });;

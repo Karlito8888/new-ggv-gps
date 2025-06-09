@@ -35,6 +35,7 @@ function App() {
   const [error, setError] = useState(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [route, setRoute] = useState(null);
+  const [mapType, setMapType] = useState('osm'); // 'osm' ou 'satellite'
 
   // Coordonnées par défaut (Garden Grove Village)
   const DEFAULT_COORDS = {
@@ -208,7 +209,6 @@ function App() {
   const mapStyle = useMemo(
     () => ({
       version: 8,
-      // glyphs: "/fonts/{fontstack}/{range}.pbf",
       sources: {
         osm: {
           type: "raster",
@@ -216,16 +216,22 @@ function App() {
           tileSize: 256,
           attribution: "© OpenStreetMap contributors",
         },
+        satellite: {
+          type: "raster",
+          tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+          tileSize: 256,
+          attribution: "© Esri",
+        },
       },
       layers: [
         {
-          id: "osm",
+          id: "base-layer",
           type: "raster",
-          source: "osm",
+          source: mapType,
         },
       ],
     }),
-    []
+    [mapType]
   );
 
   // Gestion de l'orientation du device pour navigation GPS
@@ -391,6 +397,26 @@ function App() {
               />
             </>
           )}
+
+          {/* Bouton de basculement de carte */}
+          <div className="map-type-switcher">
+            <button
+              onClick={() => setMapType(mapType === 'osm' ? 'satellite' : 'osm')}
+              className="map-type-button"
+              title={mapType === 'osm' ? 'Vue satellite' : 'Vue carte'}
+            >
+              {mapType === 'osm' ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.5 12.0C17.5 12.8 17.4 13.5 17.2 14.2L19.9 16.0C21.0 15.1 21.8 13.9 22.2 12.5H17.5ZM12.0 2.0C6.5 2.0 2.0 6.5 2.0 12.0S6.5 22.0 12.0 22.0S22.0 17.5 22.0 12.0S17.5 2.0 12.0 2.0ZM12.0 20.0C7.6 20.0 4.0 16.4 4.0 12.0S7.6 4.0 12.0 4.0S20.0 7.6 20.0 12.0S16.4 20.0 12.0 20.0Z"/>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M1 11l7-8 4 4 4-4 7 8v10H1V11z"/>
+                  <path d="M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/>
+                </svg>
+              )}
+            </button>
+          </div>
 
           {/* Affichage de l'itinéraire */}
           {route && (
