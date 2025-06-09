@@ -18,7 +18,7 @@ import LocationPermissionModal from "./components/LocationPermissionModal";
 import WelcomeModal from "./components/WelcomeModal";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModal from "./components/ArrivalModal";
-import { createRoute, createDirectRoute, initDirectionsService, VILLAGE_EXIT_COORDS } from "./lib/navigation";
+import { createRoute, initMapLibreDirections, cleanupDirections, VILLAGE_EXIT_COORDS } from "./lib/navigation";
 import "./App.css";
 
 function App() {
@@ -66,12 +66,22 @@ function App() {
     // Créer l'itinéraire si on a la position utilisateur
     if (userLocation) {
       try {
-        const routeData = await createRoute(
+        const map = mapRef.current?.getMap();
+        const routeResult = await createRoute(
           userLocation.latitude,
           userLocation.longitude,
           dest.coordinates[1],
-          dest.coordinates[0]
+          dest.coordinates[0],
+          map // Passer l'instance map pour MapLibre Directions
         );
+        
+        // Assurer le format FeatureCollection pour MapLibre
+        const routeData = {
+          type: 'FeatureCollection',
+          features: routeResult.type === 'Feature' ? [routeResult] : routeResult.features || []
+        };
+        
+        console.log("📍 Route créée:", routeData);
         setRoute(routeData);
       } catch (error) {
         console.error('Erreur création route:', error);
@@ -102,12 +112,21 @@ function App() {
     
     if (userLocation) {
       try {
-        const routeData = await createRoute(
+        const map = mapRef.current?.getMap();
+        const routeResult = await createRoute(
           userLocation.latitude,
           userLocation.longitude,
           VILLAGE_EXIT_COORDS[1],
-          VILLAGE_EXIT_COORDS[0]
+          VILLAGE_EXIT_COORDS[0],
+          map // Passer l'instance map pour MapLibre Directions
         );
+        
+        // Assurer le format FeatureCollection pour MapLibre
+        const routeData = {
+          type: 'FeatureCollection',
+          features: routeResult.type === 'Feature' ? [routeResult] : routeResult.features || []
+        };
+        
         setRoute(routeData);
       } catch (error) {
         console.error('Erreur création route sortie:', error);
@@ -130,12 +149,20 @@ function App() {
           
           // Mettre à jour l'itinéraire si on a une destination
           if (destination) {
+            const map = mapRef.current?.getMap();
             createRoute(
               newLocation.latitude,
               newLocation.longitude,
               destination.coordinates[1],
-              destination.coordinates[0]
-            ).then(routeData => {
+              destination.coordinates[0],
+              map // Passer l'instance map pour MapLibre Directions
+            ).then(routeResult => {
+              // Assurer le format FeatureCollection pour MapLibre
+              const routeData = {
+                type: 'FeatureCollection',
+                features: routeResult.type === 'Feature' ? [routeResult] : routeResult.features || []
+              };
+              
               setRoute(routeData);
             }).catch(error => {
               console.error('Erreur mise à jour route:', error);
@@ -155,13 +182,15 @@ function App() {
     }
   };
 
-  // Nettoyage du suivi de position
+  // Nettoyage du suivi de position et directions
   useEffect(() => {
     return () => {
       if (watchId.current) {
         navigator.geolocation.clearWatch(watchId.current);
         watchId.current = null;
       }
+      // Nettoyer l'instance MapLibre Directions
+      cleanupDirections();
     };
   }, []);
 
@@ -293,8 +322,10 @@ function App() {
 
     const map = mapRef.current.getMap();
     
-    // Initialise le service de directions
-    initDirectionsService(map);
+    // Initialise MapLibre Directions si pas déjà fait
+    if (map) {
+      initMapLibreDirections(map);
+    }
 
     try {
       // Source unique pour tous les blocs
@@ -359,15 +390,14 @@ function App() {
     });
 
     return () => {
-      // Nettoyage robuste
-      const currentMapRef = mapRef.current;
-      const map = currentMapRef?.getMap();
-      if (map) {
+      // Nettoyage robuste - capturer la référence au moment de la création
+      const currentMap = map;
+      if (currentMap) {
         try {
-          map.off('render');
-          if (map.getLayer("blocks-fill")) map.removeLayer("blocks-fill");
-          if (map.getLayer("blocks-text")) map.removeLayer("blocks-text");
-          if (map.getSource("blocks")) map.removeSource("blocks");
+          currentMap.off('render');
+          if (currentMap.getLayer("blocks-fill")) currentMap.removeLayer("blocks-fill");
+          if (currentMap.getLayer("blocks-text")) currentMap.removeLayer("blocks-text");
+          if (currentMap.getSource("blocks")) currentMap.removeSource("blocks");
         } catch (cleanupError) {
           console.error("Erreur de nettoyage:", cleanupError);
         }
