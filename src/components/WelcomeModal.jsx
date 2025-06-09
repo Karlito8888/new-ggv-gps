@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import "./WelcomeModal.css";
 
 const WelcomeModal = ({ onDestinationSelected, onCancel }) => {
   const [blockNumber, setBlockNumber] = useState("");
@@ -58,7 +59,7 @@ const WelcomeModal = ({ onDestinationSelected, onCancel }) => {
         return;
       }
 
-      if (!data.coordinates || data.coordinates.length !== 2) {
+      if (!data.coordinates || !data.coordinates.coordinates || data.coordinates.coordinates.length !== 2) {
         setError("Invalid coordinates for this destination");
         return;
       }
@@ -66,7 +67,7 @@ const WelcomeModal = ({ onDestinationSelected, onCancel }) => {
       onDestinationSelected({
         blockNumber: parseInt(blockNumber),
         lotNumber: parseInt(lotNumber),
-        coordinates: data.coordinates,
+        coordinates: data.coordinates.coordinates,
         address: data.address || `Block ${blockNumber}, Lot ${lotNumber}`,
         data: data,
       });
@@ -83,12 +84,7 @@ const WelcomeModal = ({ onDestinationSelected, onCancel }) => {
       <div className="welcome-modal">
         <div className="modal-content">
           <div className="modal-icon">
-            <svg
-              className="icon"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -105,9 +101,7 @@ const WelcomeModal = ({ onDestinationSelected, onCancel }) => {
 
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-group">
-            <label htmlFor="block" className="form-label">
-              Block Number
-            </label>
+            <label htmlFor="block" className="form-label">Block Number</label>
             <select
               id="block"
               value={blockNumber}
@@ -117,17 +111,13 @@ const WelcomeModal = ({ onDestinationSelected, onCancel }) => {
             >
               <option value="">Select a block</option>
               {availableBlocks.map((block) => (
-                <option key={block} value={block}>
-                  Block {block}
-                </option>
+                <option key={block} value={block}>Block {block}</option>
               ))}
             </select>
           </div>
 
           <div className="form-group">
-            <label htmlFor="lot" className="form-label">
-              Lot Number
-            </label>
+            <label htmlFor="lot" className="form-label">Lot Number</label>
             <input
               type="number"
               id="lot"

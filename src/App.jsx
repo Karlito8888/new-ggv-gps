@@ -18,7 +18,8 @@ import LocationPermissionModal from "./components/LocationPermissionModal";
 import WelcomeModal from "./components/WelcomeModal";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModal from "./components/ArrivalModal";
-import { createDirectRoute, VILLAGE_EXIT_COORDS } from "./lib/navigation";
+import { createRoute, createDirectRoute, VILLAGE_EXIT_COORDS } from "./lib/navigation";
+import "./App.css";
 
 function App() {
   "use memo"; // Utiliser React 19 compiler pour optimiser ce composant
@@ -57,19 +58,24 @@ function App() {
     setNavigationState('welcome'); // Permettre quand même l'utilisation
   };
 
-  const handleDestinationSelected = (dest) => {
+  const handleDestinationSelected = async (dest) => {
     setDestination(dest);
     setNavigationState('navigating');
     
     // Créer l'itinéraire si on a la position utilisateur
     if (userLocation) {
-      const routeData = createDirectRoute(
-        userLocation.latitude,
-        userLocation.longitude,
-        dest.coordinates[1],
-        dest.coordinates[0]
-      );
-      setRoute(routeData);
+      try {
+        const routeData = await createRoute(
+          userLocation.latitude,
+          userLocation.longitude,
+          dest.coordinates[1],
+          dest.coordinates[0]
+        );
+        setRoute(routeData);
+      } catch (error) {
+        console.error('Erreur création route:', error);
+        setError('Erreur lors du calcul de l\'itinéraire');
+      }
     }
   };
 
@@ -83,7 +89,7 @@ function App() {
     setNavigationState('welcome');
   };
 
-  const handleExitVillage = () => {
+  const handleExitVillage = async () => {
     const exitDestination = {
       blockNumber: 'Sortie',
       lotNumber: 'Village',
@@ -94,13 +100,18 @@ function App() {
     setNavigationState('navigating');
     
     if (userLocation) {
-      const routeData = createDirectRoute(
-        userLocation.latitude,
-        userLocation.longitude,
-        VILLAGE_EXIT_COORDS[1],
-        VILLAGE_EXIT_COORDS[0]
-      );
-      setRoute(routeData);
+      try {
+        const routeData = await createRoute(
+          userLocation.latitude,
+          userLocation.longitude,
+          VILLAGE_EXIT_COORDS[1],
+          VILLAGE_EXIT_COORDS[0]
+        );
+        setRoute(routeData);
+      } catch (error) {
+        console.error('Erreur création route sortie:', error);
+        setError('Erreur lors du calcul de l\'itinéraire de sortie');
+      }
     }
   };
 
@@ -118,13 +129,16 @@ function App() {
           
           // Mettre à jour l'itinéraire si on a une destination
           if (destination) {
-            const routeData = createDirectRoute(
+            createRoute(
               newLocation.latitude,
               newLocation.longitude,
               destination.coordinates[1],
               destination.coordinates[0]
-            );
-            setRoute(routeData);
+            ).then(routeData => {
+              setRoute(routeData);
+            }).catch(error => {
+              console.error('Erreur mise à jour route:', error);
+            });
           }
         },
         (error) => {
@@ -401,8 +415,8 @@ function App() {
               anchor="bottom"
             >
               <div className="destination-marker">
-                <div className="w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                <div className="destination-marker-pin">
+                  <div className="destination-marker-center"></div>
                 </div>
               </div>
             </Marker>
@@ -419,8 +433,8 @@ function App() {
                 className="user-location-marker"
                 style={{ transform: `rotate(${bearing}deg)` }}
               >
-                <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg">
-                  <div className="w-0 h-0 border-l-2 border-r-2 border-b-4 border-transparent border-b-blue-500 absolute -top-1 left-1/2 transform -translate-x-1/2"></div>
+                <div className="user-location-pin">
+                  <div className="user-location-arrow"></div>
                 </div>
               </div>
             </Marker>
@@ -455,16 +469,7 @@ function App() {
                 latitude={center[1]}
                 anchor="center"
               >
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.7)',
-                  color: '#444',
-                  border: '1px solid #999',
-                  borderRadius: '50%',
-                  padding: '2px 6px',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  fontStyle: 'italic',
-                }}>
+                <div className="block-label">
                   {block.name}
                 </div>
               </Marker>
@@ -484,11 +489,11 @@ function App() {
 
         {/* Messages d'erreur */}
         {error && (
-          <div className="absolute bottom-4 left-4 right-4 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <div className="error-notification">
             <p>{error}</p>
             <button 
               onClick={() => setError(null)}
-              className="mt-2 bg-red-500 text-white px-3 py-1 rounded text-sm"
+              className="error-notification-button"
             >
               Fermer
             </button>

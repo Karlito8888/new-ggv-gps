@@ -64,7 +64,57 @@ export function hasArrived(userLat, userLon, destLat, destLon) {
   return distance <= ARRIVAL_THRESHOLD;
 }
 
-// Crée un itinéraire simple en ligne droite (à améliorer avec routing)
+// Crée un itinéraire en utilisant OSRM avec fallback
+export async function createRoute(startLat, startLon, endLat, endLon) {
+  try {
+    // Timeout de 3 secondes pour éviter les blocages
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson`;
+    
+    const response = await fetch(osrmUrl, { 
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`OSRM API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.routes || data.routes.length === 0) {
+      throw new Error('Aucun itinéraire trouvé');
+    }
+    
+    const route = data.routes[0];
+    
+    return {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        geometry: route.geometry,
+        properties: {
+          distance: route.distance,
+          duration: route.duration,
+          steps: route.legs[0]?.steps || [],
+          source: 'osrm'
+        }
+      }]
+    };
+  } catch (error) {
+    console.warn('Erreur OSRM, utilisation route directe:', error);
+    // Fallback vers route directe en cas d'erreur
+    return createDirectRoute(startLat, startLon, endLat, endLon);
+  }
+}
+
+// Fallback: Crée un itinéraire simple en ligne droite
 export function createDirectRoute(startLat, startLon, endLat, endLon) {
   return {
     type: 'FeatureCollection',
@@ -78,7 +128,8 @@ export function createDirectRoute(startLat, startLon, endLat, endLon) {
         ]
       },
       properties: {
-        distance: calculateDistance(startLat, startLon, endLat, endLon)
+        distance: calculateDistance(startLat, startLon, endLat, endLon),
+        source: 'direct'
       }
     }]
   };

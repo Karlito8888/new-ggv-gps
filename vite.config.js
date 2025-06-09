@@ -134,7 +134,7 @@ export default defineConfig({
 
       includeAssets: ["icons/*.png", "markers/*.png"],
       devOptions: {
-        enabled: false, // Désactiver en dev pour Netlify
+        enabled: true, // Activé pour développement local
         type: "module"
       }
     })
@@ -145,11 +145,12 @@ export default defineConfig({
     }
   },
   preview: {
-    port: 3000,
-    strictPort: true
+    port: 5173,
+    strictPort: true,
+    host: true
   },
   server: {
-    port: 3000,
+    port: 5173,
     strictPort: true,
     host: true
   }

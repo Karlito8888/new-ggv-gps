@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./ArrivalModal.css";
 
 const ArrivalModal = ({
   destination,
@@ -14,12 +15,12 @@ const ArrivalModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 text-center">
-        <div className="mb-6">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+    <div className="arrival-modal-overlay">
+      <div className="arrival-modal">
+        <div className="modal-content">
+          <div className="modal-icon">
             <svg
-              className="w-8 h-8 text-green-600"
+              className="icon"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -32,31 +33,31 @@ const ArrivalModal = ({
               />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
+          <h2 className="modal-title">
             Destination reached!
           </h2>
-          <p className="text-gray-600 text-sm mb-4">
+          <p className="modal-description">
             You have arrived at your destination:
           </p>
-          <div className="bg-gray-50 rounded-lg p-3 mb-4">
-            <p className="font-semibold text-gray-900">
+          <div className="destination-info">
+            <p className="destination-title">
               Block {destination.blockNumber}, Lot {destination.lotNumber}
             </p>
             {destination.address && (
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="destination-address">
                 {destination.address}
               </p>
             )}
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="button-group">
           <button
             onClick={onNewDestination}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+            className="button button-primary"
           >
             <svg
-              className="w-5 h-5 mr-2"
+              className="button-icon"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -74,17 +75,17 @@ const ArrivalModal = ({
           <button
             onClick={handleExitVillage}
             disabled={isExiting}
-            className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+            className="button button-secondary"
           >
             {isExiting ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                <div className="spinner"></div>
                 Navigating to exit...
               </>
             ) : (
               <>
                 <svg
-                  className="w-5 h-5 mr-2"
+                  className="button-icon"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -103,13 +104,13 @@ const ArrivalModal = ({
 
           <button
             onClick={onClose}
-            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+            className="button button-tertiary"
           >
             Close
           </button>
         </div>
 
-        <p className="text-xs text-gray-500 mt-4">
+        <p className="modal-footer">
           Thank you for using MyGGV|GPS for your navigation!
         </p>
       </div>

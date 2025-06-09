@@ -1,0 +1,152 @@
+.arrival-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.arrival-modal {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 28rem;
+  width: 100%;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.arrival-modal .modal-content {
+  margin-bottom: 1.5rem;
+}
+
+.arrival-modal .modal-icon {
+  width: 4rem;
+  height: 4rem;
+  background-color: #dcfce7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.arrival-modal .icon {
+  width: 2rem;
+  height: 2rem;
+  color: #16a34a;
+}
+
+.arrival-modal .modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.arrival-modal .modal-description {
+  color: #4b5563;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.arrival-modal .destination-info {
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.arrival-modal .destination-title {
+  font-weight: 600;
+  color: #111827;
+}
+
+.arrival-modal .destination-address {
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin-top: 0.25rem;
+}
+
+.arrival-modal .button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.arrival-modal .button {
+  width: 100%;
+  font-weight: 500;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+}
+
+.arrival-modal .button-primary {
+  background-color: #2563eb;
+  color: white;
+}
+
+.arrival-modal .button-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.arrival-modal .button-secondary {
+  background-color: #ea580c;
+  color: white;
+}
+
+.arrival-modal .button-secondary:hover {
+  background-color: #c2410c;
+}
+
+.arrival-modal .button-secondary:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.arrival-modal .button-tertiary {
+  background-color: #f3f4f6;
+  color: #374151;
+  padding: 0.5rem 1rem;
+}
+
+.arrival-modal .button-tertiary:hover {
+  background-color: #e5e7eb;
+}
+
+.arrival-modal .button-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.arrival-modal .spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.arrival-modal .modal-footer {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 1rem;
+}
