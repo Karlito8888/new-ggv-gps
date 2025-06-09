@@ -1,0 +1,178 @@
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
+
+const WelcomeModal = ({ onDestinationSelected, onCancel }) => {
+  const [blockNumber, setBlockNumber] = useState("");
+  const [lotNumber, setLotNumber] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [availableBlocks, setAvailableBlocks] = useState([]);
+
+  useEffect(() => {
+    fetchAvailableBlocks();
+  }, []);
+
+  const fetchAvailableBlocks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("locations")
+        .select("block")
+        .order("block");
+
+      if (error) throw error;
+
+      const uniqueBlocks = [...new Set(data.map((item) => item.block))];
+      setAvailableBlocks(uniqueBlocks.sort((a, b) => a - b));
+    } catch (error) {
+      console.error("Error while loading blocks:", error);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!blockNumber || !lotNumber) {
+      setError("Please select a block number and enter a lot number");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const { data, error } = await supabase
+        .from("locations")
+        .select("*")
+        .eq("block", parseInt(blockNumber))
+        .eq("lot", parseInt(lotNumber))
+        .single();
+
+      if (error) {
+        if (error.code === "PGRST116") {
+          setError(
+            `No destination found for block ${blockNumber}, lot ${lotNumber}`
+          );
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      if (!data.coordinates || data.coordinates.length !== 2) {
+        setError("Invalid coordinates for this destination");
+        return;
+      }
+
+      onDestinationSelected({
+        blockNumber: parseInt(blockNumber),
+        lotNumber: parseInt(lotNumber),
+        coordinates: data.coordinates,
+        address: data.address || `Block ${blockNumber}, Lot ${lotNumber}`,
+        data: data,
+      });
+    } catch (error) {
+      console.error("Error while searching for destination:", error);
+      setError("Connection error. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="welcome-modal-overlay">
+      <div className="welcome-modal">
+        <div className="modal-content">
+          <div className="modal-icon">
+            <svg
+              className="icon"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6"
+              />
+            </svg>
+          </div>
+          <h2 className="modal-title">Welcome to MyGGV|GPS</h2>
+          <p className="modal-description">
+            Where would you like to go in Garden Grove Village?
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="modal-form">
+          <div className="form-group">
+            <label htmlFor="block" className="form-label">
+              Block Number
+            </label>
+            <select
+              id="block"
+              value={blockNumber}
+              onChange={(e) => setBlockNumber(e.target.value)}
+              className="form-input"
+              required
+            >
+              <option value="">Select a block</option>
+              {availableBlocks.map((block) => (
+                <option key={block} value={block}>
+                  Block {block}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="lot" className="form-label">
+              Lot Number
+            </label>
+            <input
+              type="number"
+              id="lot"
+              value={lotNumber}
+              onChange={(e) => setLotNumber(e.target.value)}
+              placeholder="Ex: 123"
+              min="1"
+              className="form-input"
+              required
+            />
+          </div>
+
+          {error && (
+            <div className="error-message">
+              <p>{error}</p>
+            </div>
+          )}
+
+          <div className="modal-actions">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="modal-button secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading || !blockNumber || !lotNumber}
+              className="modal-button primary"
+            >
+              {isLoading ? (
+                <>
+                  <div className="spinner"></div>
+                  Navigating...
+                </>
+              ) : (
+                "Start Navigation"
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default WelcomeModal;

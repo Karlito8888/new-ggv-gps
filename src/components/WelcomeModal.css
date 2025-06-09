@@ -1,0 +1,152 @@
+.welcome-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.welcome-modal {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 32rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.welcome-modal .modal-content {
+  margin-bottom: 2rem;
+}
+
+.welcome-modal .modal-icon {
+  width: 4rem;
+  height: 4rem;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.welcome-modal .icon {
+  width: 2rem;
+  height: 2rem;
+  color: #3b82f6;
+}
+
+.welcome-modal .modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.welcome-modal .modal-description {
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.welcome-modal .modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.welcome-modal .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.welcome-modal .form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  text-align: left;
+}
+
+.welcome-modal .form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.welcome-modal .form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.welcome-modal .error-message {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+.welcome-modal .modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.welcome-modal .modal-button {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome-modal .modal-button.primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.welcome-modal .modal-button.primary:hover {
+  background-color: #2563eb;
+}
+
+.welcome-modal .modal-button.primary:disabled {
+  background-color: #9ca3af;
+}
+
+.welcome-modal .modal-button.secondary {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.welcome-modal .modal-button.secondary:hover {
+  background-color: #e5e7eb;
+}
+
+.welcome-modal .spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
