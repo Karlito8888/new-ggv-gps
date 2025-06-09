@@ -1,0 +1,18 @@
+# SPA Fallback pour React Router
+/*    /index.html   200
+
+# PWA files avec cache optimal
+/sw.js    /sw.js   200
+/manifest.webmanifest    /manifest.webmanifest   200
+
+# Assets statiques avec cache long terme
+/icons/*    /icons/:splat   200
+/markers/*    /markers/:splat   200
+
+# API Proxy pour éviter les problèmes CORS (si nécessaire)
+/api/*    https://wlrrruemchacgyypexsu.supabase.co/rest/v1/:splat   200
+
+# Sécurité - Bloquer l'accès aux fichiers sensibles
+/.env    /404.html   404
+/package.json    /404.html   404
+/vite.config.js    /404.html   404

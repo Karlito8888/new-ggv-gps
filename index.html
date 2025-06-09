@@ -9,19 +9,19 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
 
-    <!-- Informations de base -->
+    <!-- Basic information -->
     <title>MyGGV | GPS</title>
     <meta
       name="description"
-      content="Application GPS open-source pour naviguer dans Garden Grove Village avec précision et facilité"
+      content="Open-source GPS application to navigate Garden Grove Village with precision and ease"
     />
     <meta
       name="keywords"
-      content="GPS, Garden Grove Village, navigation, open-source, carte, itinéraire"
+      content="GPS, Garden Grove Village, navigation, open-source, map, route"
     />
     <meta name="author" content="MyGGV Team" />
 
-    <!-- Favicon et icônes -->
+    <!-- Favicon and icons -->
     <link
       rel="icon"
       type="image/png"
@@ -66,49 +66,49 @@
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://myggv-gps.netlify.com/" />
-    <meta property="og:title" content="MyGGV - GPS pour Garden Grove Village" />
+    <meta property="og:url" content="https://myggv-gps.netlify.app/" />
+    <meta property="og:title" content="MyGGV - GPS for Garden Grove Village" />
     <meta
       property="og:description"
-      content="Application GPS open-source pour naviguer dans Garden Grove Village avec précision et facilité"
+      content="Open-source GPS application to navigate Garden Grove Village with precision and ease"
     />
     <meta
       property="og:image"
-      content="https://myggv-gps.netlify.com/icons/icon-512x512.png"
+      content="https://myggv-gps.netlify.app/icons/icon-512x512.png"
     />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://myggv-gps.netlify.com/" />
+    <meta property="twitter:url" content="https://myggv-gps.netlify.app/" />
     <meta
       property="twitter:title"
-      content="MyGGV - GPS pour Garden Grove Village"
+      content="MyGGV - GPS for Garden Grove Village"
     />
     <meta
       property="twitter:description"
-      content="Application GPS open-source pour naviguer dans Garden Grove Village avec précision et facilité"
+      content="Open-source GPS application to navigate Garden Grove Village with precision and ease"
     />
     <meta
       property="twitter:image"
-      content="https://myggv-gps.netlify.com/icons/icon-512x512.png"
+      content="https://myggv-gps.netlify.app/icons/icon-512x512.png"
     />
 
-    <!-- Préchargement des ressources critiques -->
+    <!-- Preloading critical resources -->
     <link rel="preconnect" href="https://a.tile.openstreetmap.org" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Suppression du préchargement de la police qui n'existe pas -->
+    <!-- Removed preloading of non-existent font -->
 
     <!-- Styles -->
     <link rel="stylesheet" href="/src/index.css" />
 
-    <!-- Géolocalisation et permissions -->
+    <!-- Geolocation and permissions -->
     <meta
       http-equiv="Permissions-Policy"
       content="geolocation=*, accelerometer=*, gyroscope=*"
     />
 
-    <!-- Sécurité -->
+    <!-- Security -->
     <!-- <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; connect-src 'self' https://a.tile.openstreetmap.org https://demotiles.maplibre.org; img-src 'self' data: https://a.tile.openstreetmap.org https://demotiles.maplibre.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://demotiles.maplibre.org; manifest-src 'self';"
@@ -117,21 +117,21 @@
   <body>
     <div id="root"></div>
 
-    <!-- Fallback pour JavaScript désactivé -->
+    <!-- Fallback for disabled JavaScript -->
     <noscript>
       <div style="padding: 20px; text-align: center">
-        <h1>JavaScript est nécessaire</h1>
+        <h1>JavaScript is required</h1>
         <p>
-          Cette application GPS nécessite JavaScript pour fonctionner. Veuillez
-          l'activer dans les paramètres de votre navigateur.
+          This GPS application requires JavaScript to function. Please enable it
+          in your browser settings.
         </p>
       </div>
     </noscript>
 
-    <!-- Script principal -->
+    <!-- Main script -->
     <script type="module" src="/src/main.jsx"></script>
 
-    <!-- Détection hors ligne avec nonce -->
+    <!-- Offline detection with nonce -->
     <script>
       window.addEventListener("load", () => {
         function updateOnlineStatus() {
@@ -150,7 +150,7 @@
             statusElement.style.display = "none";
           } else {
             statusElement.textContent =
-              "Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées.";
+              "You are offline. Some features may be limited.";
             statusElement.style.backgroundColor = "#f44336";
             statusElement.style.color = "white";
           }

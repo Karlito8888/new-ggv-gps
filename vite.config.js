@@ -6,65 +6,151 @@ import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
   publicDir: "public",
+  base: "/", // Important pour Netlify
+  build: {
+    outDir: "dist",
+    sourcemap: false, // Désactiver pour production
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          maps: ['maplibre-gl', 'ol'],
+          supabase: ['@supabase/supabase-js']
+        }
+      }
+    }
+  },
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
-      // ▶ Configuration de base
+      registerType: "autoUpdate",
       injectRegister: "auto",
-      registerType: "prompt",
-
-      // ▶ Manifeste dynamique
+      
+      // Configuration optimisée pour Netlify
       manifest: {
         name: "MyGGV|GPS",
         short_name: "MyGGV|GPS",
-        description: "GPS pour Garden Grove Village",
+        description: "GPS for Garden Grove Village",
         theme_color: "#50AA61",
         background_color: "#FFFFFF",
         display: "standalone",
-        orientation: "any",
+        orientation: "portrait",
         start_url: "/",
+        scope: "/",
         icons: [
+          {
+            src: "/icons/icon-16x16.png",
+            sizes: "16x16",
+            type: "image/png"
+          },
+          {
+            src: "/icons/icon-32x32.png",
+            sizes: "32x32",
+            type: "image/png"
+          },
+          {
+            src: "/icons/icon-48x48.png",
+            sizes: "48x48",
+            type: "image/png"
+          },
+          {
+            src: "/icons/icon-72x72.png",
+            sizes: "72x72",
+            type: "image/png"
+          },
+          {
+            src: "/icons/icon-96x96.png",
+            sizes: "96x96",
+            type: "image/png"
+          },
+          {
+            src: "/icons/icon-144x144.png",
+            sizes: "144x144",
+            type: "image/png"
+          },
           {
             src: "/icons/icon-192x192.png",
             sizes: "192x192",
             type: "image/png",
-            purpose: "any maskable",
+            purpose: "any maskable"
           },
           {
             src: "/icons/icon-512x512.png",
             sizes: "512x512",
             type: "image/png",
-          },
+            purpose: "any maskable"
+          }
         ],
+        categories: ["navigation", "travel", "utilities"],
+        lang: "fr-FR"
       },
 
-      // ▶ Stratégies avancées
       workbox: {
-        globPatterns: ["**/*.{js,css,html,png,svg,woff2}"],
+        globPatterns: ["**/*.{js,css,html,png,svg,woff2,jpg,jpeg}"],
         runtimeCaching: [
+          // Cache des assets statiques
           {
-            urlPattern: /\.(?:js|css|html|json|png|jpg|jpeg|svg|woff2)$/,
+            urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif|webp)$/,
             handler: "CacheFirst",
             options: {
-              cacheName: "static-assets",
-              expiration: { maxEntries: 50 },
-            },
+              cacheName: "images",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 jours
+              }
+            }
           },
+          // Cache des tuiles OpenStreetMap
+          {
+            urlPattern: /^https:\/\/[a-z]\.tile\.openstreetmap\.org/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "osm-tiles",
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 7 * 24 * 60 * 60 // 7 jours
+              }
+            }
+          },
+          // Cache Supabase API avec NetworkFirst
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co/,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "supabase-api",
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 5 * 60 // 5 minutes
+              }
+            }
+          }
         ],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true
       },
 
-      // ▶ iOS spécifique
-      includeAssets: ["icons/*.png", "splashscreens/iphone*.png"],
+      includeAssets: ["icons/*.png", "markers/*.png"],
       devOptions: {
-        enabled: true,
-        type: "module",
-      },
-    }),
+        enabled: false, // Désactiver en dev pour Netlify
+        type: "module"
+      }
+    })
   ],
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL('./src', import.meta.url)),
-    },
+      "@": fileURLToPath(new URL('./src', import.meta.url))
+    }
   },
+  preview: {
+    port: 3000,
+    strictPort: true
+  },
+  server: {
+    port: 3000,
+    strictPort: true,
+    host: true
+  }
 });;
