@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState, useMemo } from "react";
-import maplibregl from 'maplibre-gl';
-import { Feature } from 'ol';
-import { Polygon } from 'ol/geom';
-import { Style, Fill, Stroke } from 'ol/style';
+import maplibregl from "maplibre-gl";
+import { Feature } from "ol";
+import { Polygon } from "ol/geom";
+import { Style, Fill, Stroke } from "ol/style";
 import {
   Map,
   NavigationControl,
   GeolocateControl,
   Marker,
   Source,
-  Layer
+  Layer,
 } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { publicPois } from "./data/public-pois";
@@ -18,8 +18,16 @@ import LocationPermissionModal from "./components/LocationPermissionModal";
 import WelcomeModal from "./components/WelcomeModal";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModal from "./components/ArrivalModal";
-import { createRoute, initMapLibreDirections, cleanupDirections, VILLAGE_EXIT_COORDS } from "./lib/navigation";
+import {
+  createRoute,
+  initMapLibreDirections,
+  cleanupDirections,
+  VILLAGE_EXIT_COORDS,
+} from "./lib/navigation";
+import { BsLayersHalf } from "react-icons/bs";
 import "./App.css";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 function App() {
   "use memo"; // Utiliser React 19 compiler pour optimiser ce composant
@@ -28,14 +36,14 @@ function App() {
   const watchId = useRef(null);
 
   // États de navigation
-  const [navigationState, setNavigationState] = useState('permission'); // permission, welcome, navigating, arrived
+  const [navigationState, setNavigationState] = useState("permission"); // permission, welcome, navigating, arrived
   const [userLocation, setUserLocation] = useState(null);
   const [destination, setDestination] = useState(null);
   const [bearing, setBearing] = useState(0);
   const [error, setError] = useState(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [route, setRoute] = useState(null);
-  const [mapType, setMapType] = useState('osm'); // 'osm' ou 'satellite'
+  const [mapType, setMapType] = useState("osm"); // 'osm' ou 'satellite'
 
   // Coordonnées par défaut (Garden Grove Village)
   const DEFAULT_COORDS = {
@@ -48,21 +56,21 @@ function App() {
     setUserLocation({
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
-      accuracy: position.coords.accuracy
+      accuracy: position.coords.accuracy,
     });
-    setNavigationState('welcome');
+    setNavigationState("welcome");
     startLocationTracking();
   };
 
   const handleLocationPermissionDenied = (errorMessage) => {
     setError(errorMessage);
-    setNavigationState('welcome'); // Permettre quand même l'utilisation
+    setNavigationState("welcome"); // Permettre quand même l'utilisation
   };
 
   const handleDestinationSelected = async (dest) => {
     setDestination(dest);
-    setNavigationState('navigating');
-    
+    setNavigationState("navigating");
+
     // Créer l'itinéraire si on a la position utilisateur
     if (userLocation) {
       try {
@@ -74,42 +82,45 @@ function App() {
           dest.coordinates[0],
           map // Passer l'instance map pour MapLibre Directions
         );
-        
+
         // Assurer le format FeatureCollection pour MapLibre
         const routeData = {
-          type: 'FeatureCollection',
-          features: routeResult.type === 'Feature' ? [routeResult] : routeResult.features || []
+          type: "FeatureCollection",
+          features:
+            routeResult.type === "Feature"
+              ? [routeResult]
+              : routeResult.features || [],
         };
-        
+
         console.log("📍 Route créée:", routeData);
         setRoute(routeData);
       } catch (error) {
-        console.error('Erreur création route:', error);
-        setError('Erreur lors du calcul de l\'itinéraire');
+        console.error("Erreur création route:", error);
+        setError("Erreur lors du calcul de l'itinéraire");
       }
     }
   };
 
   const handleArrival = () => {
-    setNavigationState('arrived');
+    setNavigationState("arrived");
   };
 
   const handleNewDestination = () => {
     setDestination(null);
     setRoute(null);
-    setNavigationState('welcome');
+    setNavigationState("welcome");
   };
 
   const handleExitVillage = async () => {
     const exitDestination = {
-      blockNumber: 'Sortie',
-      lotNumber: 'Village',
+      blockNumber: "Sortie",
+      lotNumber: "Village",
       coordinates: VILLAGE_EXIT_COORDS,
-      address: 'Sortie de Garden Grove Village'
+      address: "Sortie de Garden Grove Village",
     };
     setDestination(exitDestination);
-    setNavigationState('navigating');
-    
+    setNavigationState("navigating");
+
     if (userLocation) {
       try {
         const map = mapRef.current?.getMap();
@@ -120,17 +131,20 @@ function App() {
           VILLAGE_EXIT_COORDS[0],
           map // Passer l'instance map pour MapLibre Directions
         );
-        
+
         // Assurer le format FeatureCollection pour MapLibre
         const routeData = {
-          type: 'FeatureCollection',
-          features: routeResult.type === 'Feature' ? [routeResult] : routeResult.features || []
+          type: "FeatureCollection",
+          features:
+            routeResult.type === "Feature"
+              ? [routeResult]
+              : routeResult.features || [],
         };
-        
+
         setRoute(routeData);
       } catch (error) {
-        console.error('Erreur création route sortie:', error);
-        setError('Erreur lors du calcul de l\'itinéraire de sortie');
+        console.error("Erreur création route sortie:", error);
+        setError("Erreur lors du calcul de l'itinéraire de sortie");
       }
     }
   };
@@ -143,10 +157,10 @@ function App() {
           const newLocation = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy
+            accuracy: position.coords.accuracy,
           };
           setUserLocation(newLocation);
-          
+
           // Mettre à jour l'itinéraire si on a une destination
           if (destination) {
             const map = mapRef.current?.getMap();
@@ -156,27 +170,32 @@ function App() {
               destination.coordinates[1],
               destination.coordinates[0],
               map // Passer l'instance map pour MapLibre Directions
-            ).then(routeResult => {
-              // Assurer le format FeatureCollection pour MapLibre
-              const routeData = {
-                type: 'FeatureCollection',
-                features: routeResult.type === 'Feature' ? [routeResult] : routeResult.features || []
-              };
-              
-              setRoute(routeData);
-            }).catch(error => {
-              console.error('Erreur mise à jour route:', error);
-            });
+            )
+              .then((routeResult) => {
+                // Assurer le format FeatureCollection pour MapLibre
+                const routeData = {
+                  type: "FeatureCollection",
+                  features:
+                    routeResult.type === "Feature"
+                      ? [routeResult]
+                      : routeResult.features || [],
+                };
+
+                setRoute(routeData);
+              })
+              .catch((error) => {
+                console.error("Erreur mise à jour route:", error);
+              });
           }
         },
         (error) => {
-          console.error('Erreur de suivi GPS:', error);
-          setError('Erreur de suivi GPS: ' + error.message);
+          console.error("Erreur de suivi GPS:", error);
+          setError("Erreur de suivi GPS: " + error.message);
         },
         {
           enableHighAccuracy: true,
           timeout: 5000,
-          maximumAge: 1000
+          maximumAge: 1000,
         }
       );
     }
@@ -199,11 +218,17 @@ function App() {
     () => ({
       latitude: userLocation?.latitude || DEFAULT_COORDS.latitude,
       longitude: userLocation?.longitude || DEFAULT_COORDS.longitude,
-      zoom: navigationState === 'navigating' ? 18 : 16.5,
+      zoom: navigationState === "navigating" ? 18 : 16.5,
       bearing: bearing,
-      pitch: navigationState === 'navigating' ? 60 : 45,
+      pitch: navigationState === "navigating" ? 60 : 45,
     }),
-    [userLocation, bearing, navigationState, DEFAULT_COORDS.latitude, DEFAULT_COORDS.longitude]
+    [
+      userLocation,
+      bearing,
+      navigationState,
+      DEFAULT_COORDS.latitude,
+      DEFAULT_COORDS.longitude,
+    ]
   );
 
   const getPolygonCenter = (coords) => {
@@ -247,7 +272,9 @@ function App() {
         },
         satellite: {
           type: "raster",
-          tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+          tiles: [
+            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+          ],
           tileSize: 256,
           attribution: "© Esri",
         },
@@ -266,14 +293,14 @@ function App() {
   // Gestion de l'orientation du device pour navigation GPS
   useEffect(() => {
     const handleOrientation = (event) => {
-      if (event.alpha !== null && navigationState === 'navigating') {
+      if (event.alpha !== null && navigationState === "navigating") {
         const newBearing = 360 - event.alpha;
         setBearing(newBearing);
 
         if (mapRef.current && isMapReady) {
           mapRef.current.easeTo({
             bearing: newBearing,
-            duration: 300
+            duration: 300,
           });
         }
       }
@@ -297,7 +324,11 @@ function App() {
       }
     };
 
-    if (typeof window !== "undefined" && window.DeviceOrientationEvent && navigationState === 'navigating') {
+    if (
+      typeof window !== "undefined" &&
+      window.DeviceOrientationEvent &&
+      navigationState === "navigating"
+    ) {
       requestOrientationPermission();
     }
 
@@ -308,10 +339,10 @@ function App() {
 
   // Centrer la carte sur l'utilisateur pendant la navigation
   useEffect(() => {
-    if (mapRef.current && userLocation && navigationState === 'navigating') {
+    if (mapRef.current && userLocation && navigationState === "navigating") {
       mapRef.current.easeTo({
         center: [userLocation.longitude, userLocation.latitude],
-        duration: 1000
+        duration: 1000,
       });
     }
   }, [userLocation, navigationState]);
@@ -321,7 +352,7 @@ function App() {
     if (!isMapReady || !mapRef.current) return;
 
     const map = mapRef.current.getMap();
-    
+
     // Initialise MapLibre Directions si pas déjà fait
     if (map) {
       initMapLibreDirections(map);
@@ -381,10 +412,12 @@ function App() {
     }
 
     // Met à jour les positions après chaque rendu
-    map.on('render', () => {
-      blocksGeoJSON.features.forEach(block => {
+    map.on("render", () => {
+      blocksGeoJSON.features.forEach((block) => {
         if (block.properties.name) {
-          block.properties.center = getPolygonCenter(block.geometry.coordinates[0]);
+          block.properties.center = getPolygonCenter(
+            block.geometry.coordinates[0]
+          );
         }
       });
     });
@@ -394,9 +427,11 @@ function App() {
       const currentMap = map;
       if (currentMap) {
         try {
-          currentMap.off('render');
-          if (currentMap.getLayer("blocks-fill")) currentMap.removeLayer("blocks-fill");
-          if (currentMap.getLayer("blocks-text")) currentMap.removeLayer("blocks-text");
+          currentMap.off("render");
+          if (currentMap.getLayer("blocks-fill"))
+            currentMap.removeLayer("blocks-fill");
+          if (currentMap.getLayer("blocks-text"))
+            currentMap.removeLayer("blocks-text");
           if (currentMap.getSource("blocks")) currentMap.removeSource("blocks");
         } catch (cleanupError) {
           console.error("Erreur de nettoyage:", cleanupError);
@@ -407,6 +442,7 @@ function App() {
 
   return (
     <>
+      <Header />
       <main style={{ width: "100%", height: "100%", position: "relative" }}>
         <Map
           ref={mapRef}
@@ -418,27 +454,29 @@ function App() {
           }
         >
           {/* Contrôles de carte conditionnels */}
-          {navigationState !== 'navigating' && (
-            <>
-              <NavigationControl showCompass showZoom position="top-right" />
-              <GeolocateControl
-                ref={geolocateControlRef}
-                position="top-right"
-                positionOptions={{ enableHighAccuracy: true, timeout: 6000 }}
-                trackUserLocation={true}
-                showUserLocation={true}
-              />
-            </>
-          )}
+          {/* {navigationState !== 'navigating' && ( */}
+          <>
+            <NavigationControl showCompass showZoom position="bottom-right" />
+            <GeolocateControl
+              ref={geolocateControlRef}
+              position="bottom-right"
+              positionOptions={{ enableHighAccuracy: true, timeout: 6000 }}
+              trackUserLocation={true}
+              showUserLocation={true}
+            />
+          </>
+          {/* )} */}
 
           {/* Bouton de basculement de carte */}
           <div className="map-type-switcher">
             <button
-              onClick={() => setMapType(mapType === 'osm' ? 'satellite' : 'osm')}
+              onClick={() =>
+                setMapType(mapType === "osm" ? "satellite" : "osm")
+              }
               className="map-type-button"
-              title={mapType === 'osm' ? 'Vue satellite' : 'Vue carte'}
+              title={mapType === "osm" ? "Vue satellite" : "Vue carte"}
             >
-              {mapType === 'osm' ? (
+              {/* {mapType === 'osm' ? (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M17.5 12.0C17.5 12.8 17.4 13.5 17.2 14.2L19.9 16.0C21.0 15.1 21.8 13.9 22.2 12.5H17.5ZM12.0 2.0C6.5 2.0 2.0 6.5 2.0 12.0S6.5 22.0 12.0 22.0S22.0 17.5 22.0 12.0S17.5 2.0 12.0 2.0ZM12.0 20.0C7.6 20.0 4.0 16.4 4.0 12.0S7.6 4.0 12.0 4.0S20.0 7.6 20.0 12.0S16.4 20.0 12.0 20.0Z"/>
                 </svg>
@@ -447,7 +485,8 @@ function App() {
                   <path d="M1 11l7-8 4 4 4-4 7 8v10H1V11z"/>
                   <path d="M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/>
                 </svg>
-              )}
+              )} */}
+              <BsLayersHalf size={19} />
             </button>
           </div>
 
@@ -458,9 +497,9 @@ function App() {
                 id="route-line"
                 type="line"
                 paint={{
-                  'line-color': '#3b82f6',
-                  'line-width': 4,
-                  'line-opacity': 0.8
+                  "line-color": "#3b82f6",
+                  "line-width": 4,
+                  "line-opacity": 0.8,
                 }}
               />
             </Source>
@@ -482,13 +521,13 @@ function App() {
           )}
 
           {/* Marker de position utilisateur */}
-          {userLocation && navigationState === 'navigating' && (
+          {userLocation && navigationState === "navigating" && (
             <Marker
               longitude={userLocation.longitude}
               latitude={userLocation.latitude}
               anchor="center"
             >
-              <div 
+              <div
                 className="user-location-marker"
                 style={{ transform: `rotate(${bearing}deg)` }}
               >
@@ -500,44 +539,44 @@ function App() {
           )}
 
           {/* Affichage des POIs seulement quand on n'est pas en navigation */}
-          {navigationState !== 'navigating' && publicPois.map((poi) => (
-            <Marker
-              key={poi.name}
-              longitude={poi.coords[0]}
-              latitude={poi.coords[1]}
-            >
-              <img
-                src={poi.icon}
-                alt={poi.name}
-                style={{ width: "100%", height: "auto" }}
-                title={poi.name}
-              />
-            </Marker>
-          ))}
+          {navigationState === "navigating" &&
+            publicPois.map((poi) => (
+              <Marker
+                key={poi.name}
+                longitude={poi.coords[0]}
+                latitude={poi.coords[1]}
+              >
+                <img
+                  src={poi.icon}
+                  alt={poi.name}
+                  style={{ width: "50px", height: "auto" }}
+                  title={poi.name}
+                />
+              </Marker>
+            ))}
 
           {/* Affichage des numéros de blocs seulement quand on n'est pas en navigation */}
-          {navigationState !== 'navigating' && blocks.map((block) => {
-            if (!block.name || block.color === "#19744B") return null;
-            
-            const center = getPolygonCenter(block.coords);
-            
-            return (
-              <Marker
-                key={`block-${block.name}`}
-                longitude={center[0]}
-                latitude={center[1]}
-                anchor="center"
-              >
-                <div className="block-label">
-                  {block.name}
-                </div>
-              </Marker>
-            );
-          })}
+          {navigationState === "navigating" &&
+            blocks.map((block) => {
+              if (!block.name || block.color === "#19744B") return null;
+
+              const center = getPolygonCenter(block.coords);
+
+              return (
+                <Marker
+                  key={`block-${block.name}`}
+                  longitude={center[0]}
+                  latitude={center[1]}
+                  anchor="center"
+                >
+                  <div className="block-label">{block.name}</div>
+                </Marker>
+              );
+            })}
         </Map>
 
         {/* Interface de navigation */}
-        {navigationState === 'navigating' && userLocation && destination && (
+        {navigationState === "navigating" && userLocation && destination && (
           <NavigationDisplay
             userLocation={userLocation}
             destination={destination}
@@ -550,7 +589,7 @@ function App() {
         {error && (
           <div className="error-notification">
             <p>{error}</p>
-            <button 
+            <button
               onClick={() => setError(null)}
               className="error-notification-button"
             >
@@ -561,28 +600,29 @@ function App() {
       </main>
 
       {/* Modales */}
-      {navigationState === 'permission' && (
+      {navigationState === "permission" && (
         <LocationPermissionModal
           onPermissionGranted={handleLocationPermissionGranted}
           onPermissionDenied={handleLocationPermissionDenied}
         />
       )}
 
-      {navigationState === 'welcome' && (
+      {navigationState === "welcome" && (
         <WelcomeModal
           onDestinationSelected={handleDestinationSelected}
-          onCancel={() => setNavigationState('permission')}
+          onCancel={() => setNavigationState("permission")}
         />
       )}
 
-      {navigationState === 'arrived' && destination && (
+      {navigationState === "arrived" && destination && (
         <ArrivalModal
           destination={destination}
           onNewDestination={handleNewDestination}
           onExitVillage={handleExitVillage}
-          onClose={() => setNavigationState('navigating')}
+          onClose={() => setNavigationState("navigating")}
         />
       )}
+      <Footer />
     </>
   );
 }

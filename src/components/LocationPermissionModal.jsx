@@ -45,7 +45,7 @@ const LocationPermissionModal = ({
             <svg
               className="icon"
               fill="none"
-              stroke="currentColor"
+              stroke="#f4f4f4"
               viewBox="0 0 24 24"
             >
               <path
@@ -80,10 +80,10 @@ const LocationPermissionModal = ({
               Requesting...
             </>
           ) : (
-            "Allow Location Access"
+            // "Allow Location Access"
+            "OK"
           )}
         </button>
-
         <p className="modal-footer">
           Your location will only be used for navigation within the village.
         </p>

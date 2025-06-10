@@ -1,0 +1,7 @@
+.footer {
+  background: linear-gradient(135deg, var(--color-yellow), var(--color-green));
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

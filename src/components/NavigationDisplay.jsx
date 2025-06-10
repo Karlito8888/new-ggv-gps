@@ -117,13 +117,13 @@ const NavigationDisplay = ({
       </div>
 
       {/* GPS accuracy information */}
-      {userLocation.accuracy && (
+      {/* {userLocation.accuracy && (
         <div className="accuracy-info">
           <p className="accuracy-text">
             GPS accuracy: ±{Math.round(userLocation.accuracy)}m
           </p>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

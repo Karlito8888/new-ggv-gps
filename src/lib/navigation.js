@@ -266,25 +266,26 @@ export async function createRoute(
   map = null
 ) {
   console.log("🚀 Création de route avec fallback en cascade");
-  
+
   const services = [
     {
-      name: "OSRM (OpenStreetMap.de)", 
-      fn: () => tryOSRM(startLat, startLon, endLat, endLon)
+      name: "OSRM (OpenStreetMap.de)",
+      fn: () => tryOSRM(startLat, startLon, endLat, endLon),
     },
     // Désactivé temporairement car timeout trop fréquent
     // {
-    //   name: "MapLibre Directions", 
+    //   name: "MapLibre Directions",
     //   fn: () => map ? tryMapLibreDirections(startLat, startLon, endLat, endLon, map) : Promise.reject(new Error("No map instance"))
     // },
     {
-      name: "OpenRouteService", 
-      fn: () => tryORS(startLat, startLon, endLat, endLon)
+      name: "OpenRouteService",
+      fn: () => tryORS(startLat, startLon, endLat, endLon),
     },
     {
-      name: "Direct Route", 
-      fn: () => Promise.resolve(createDirectRoute(startLat, startLon, endLat, endLon))
-    }
+      name: "Direct Route",
+      fn: () =>
+        Promise.resolve(createDirectRoute(startLat, startLon, endLat, endLon)),
+    },
   ];
 
   for (const [index, service] of services.entries()) {
@@ -295,7 +296,7 @@ export async function createRoute(
       return result;
     } catch (error) {
       console.warn(`❌ ${service.name} échoué:`, error.message);
-      
+
       // Si c'est le dernier service, on force le succès
       if (index === services.length - 1) {
         console.log("🔄 Forçage de la route directe en dernier recours");
@@ -303,7 +304,7 @@ export async function createRoute(
       }
     }
   }
-  
+
   // Ne devrait jamais arriver, mais sécurité
   return createDirectRoute(startLat, startLon, endLat, endLon);
 }

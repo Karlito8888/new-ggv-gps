@@ -40,7 +40,7 @@ body,
 
 #root > header {
   grid-area: head;
-  background: #242424;
+  /* background: #242424; */
   padding: 1rem;
 }
 
@@ -100,7 +100,7 @@ h1 {
 
 #root > footer {
   grid-area: foot;
-  background: #242424;
+  /* background: #242424; */
   padding: 1rem;
 }
 

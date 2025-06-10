@@ -48,9 +48,9 @@
 }
 
 .block-label {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.2);
   color: #444;
-  border: 1px solid #999;
+  /* border: 1px solid #999; */
   border-radius: 50%;
   padding: 2px 6px;
   font-size: 12px;
@@ -94,17 +94,18 @@
 /* Map Type Switcher */
 .map-type-switcher {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 1000;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 10px;
+  z-index: 1;
 }
 
 .map-type-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 29px;
+  height: 29px;
   background: white;
   border: 2px solid rgba(0, 0, 0, 0.1);
   border-radius: 8px;
