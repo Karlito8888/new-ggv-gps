@@ -5,7 +5,6 @@ const ArrivalModal = ({
   destination,
   onNewDestination,
   onExitVillage,
-  onClose,
 }) => {
   const [isExiting, setIsExiting] = useState(false);
 
@@ -41,7 +40,10 @@ const ArrivalModal = ({
           </p> */}
           <div className="destination-info">
             <p className="destination-title">
-              Block {destination.blockNumber}, Lot {destination.lotNumber}
+              {destination.blockNumber && destination.lotNumber 
+                ? `Block ${destination.blockNumber}, Lot ${destination.lotNumber}`
+                : destination.address || "Village Exit"
+              }
             </p>
             {/* {destination.address && (
               <p className="destination-address">

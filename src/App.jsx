@@ -117,7 +117,7 @@ function App() {
       blockNumber: "",
       lotNumber: "",
       coordinates: VILLAGE_EXIT_COORDS,
-      address: "Garden Grove Village Exit",
+      address: "Salamat po, ingat",
     };
     setDestination(exitDestination);
     setNavigationState("navigating");
