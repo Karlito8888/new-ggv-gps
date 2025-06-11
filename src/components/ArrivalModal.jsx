@@ -36,9 +36,9 @@ const ArrivalModal = ({
           <h2 className="modal-title">
             Destination reached !
           </h2>
-          <p className="modal-description">
+          {/* <p className="modal-description">
             You have arrived at your destination:
-          </p>
+          </p> */}
           <div className="destination-info">
             <p className="destination-title">
               Block {destination.blockNumber}, Lot {destination.lotNumber}
@@ -101,17 +101,10 @@ const ArrivalModal = ({
               </>
             )}
           </button>
-
-          <button
-            onClick={onClose}
-            className="button button-tertiary"
-          >
-            Close
-          </button>
         </div>
 
         <p className="modal-footer">
-          Thank you for using MyGGV|GPS for your navigation!
+          Thank you for using MyGGV|GPS !
         </p>
       </div>
     </div>
