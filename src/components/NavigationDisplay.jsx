@@ -67,13 +67,15 @@ const NavigationDisplay = ({
             </div>
           </div>
 
-          <div className="destination-info">
-            <p className="destination-label">Destination</p>
-            <p className="destination-block">
-              Block {destination.blockNumber}
-            </p>
-            <p className="destination-lot">Lot {destination.lotNumber}</p>
-          </div>
+          {destination.blockNumber && destination.lotNumber && (
+            <div className="destination-info">
+              <p className="destination-label">Destination</p>
+              <p className="destination-block">
+                Block {destination.blockNumber}
+              </p>
+              <p className="destination-lot">Lot {destination.lotNumber}</p>
+            </div>
+          )}
         </div>
       </div>
 
