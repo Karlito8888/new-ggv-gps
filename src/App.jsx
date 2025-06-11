@@ -6,7 +6,6 @@ import { Style, Fill, Stroke } from "ol/style";
 import {
   Map,
   NavigationControl,
-  GeolocateControl,
   Marker,
   Source,
   Layer,
@@ -32,7 +31,6 @@ import Footer from "./components/Footer";
 function App() {
   "use memo"; // Utiliser React 19 compiler pour optimiser ce composant
   const mapRef = useRef(null);
-  const geolocateControlRef = useRef();
   const watchId = useRef(null);
 
   // États de navigation
@@ -44,6 +42,7 @@ function App() {
   const [isMapReady, setIsMapReady] = useState(false);
   const [route, setRoute] = useState(null);
   const [mapType, setMapType] = useState("osm"); // 'osm' ou 'satellite'
+  const [orientationPermissionGranted, setOrientationPermissionGranted] = useState(false);
 
   // Coordonnées par défaut (Garden Grove Village)
   const DEFAULT_COORDS = {
@@ -60,11 +59,15 @@ function App() {
     });
     setNavigationState("welcome");
     startLocationTracking();
+    // Demander la permission d'orientation dès maintenant
+    requestDeviceOrientationPermission();
   };
 
   const handleLocationPermissionDenied = (errorMessage) => {
     setError(errorMessage);
     setNavigationState("welcome"); // Permettre quand même l'utilisation
+    // Demander quand même la permission d'orientation
+    requestDeviceOrientationPermission();
   };
 
   const handleDestinationSelected = async (dest) => {
@@ -74,13 +77,11 @@ function App() {
     // Créer l'itinéraire si on a la position utilisateur
     if (userLocation) {
       try {
-        const map = mapRef.current?.getMap();
         const routeResult = await createRoute(
           userLocation.latitude,
           userLocation.longitude,
           dest.coordinates[1],
-          dest.coordinates[0],
-          map // Passer l'instance map pour MapLibre Directions
+          dest.coordinates[0]
         );
 
         // Assurer le format FeatureCollection pour MapLibre
@@ -113,23 +114,21 @@ function App() {
 
   const handleExitVillage = async () => {
     const exitDestination = {
-      blockNumber: "Sortie",
-      lotNumber: "Village",
+      blockNumber: "",
+      lotNumber: "",
       coordinates: VILLAGE_EXIT_COORDS,
-      address: "Sortie de Garden Grove Village",
+      address: "Garden Grove Village Exit",
     };
     setDestination(exitDestination);
     setNavigationState("navigating");
 
     if (userLocation) {
       try {
-        const map = mapRef.current?.getMap();
         const routeResult = await createRoute(
           userLocation.latitude,
           userLocation.longitude,
           VILLAGE_EXIT_COORDS[1],
-          VILLAGE_EXIT_COORDS[0],
-          map // Passer l'instance map pour MapLibre Directions
+          VILLAGE_EXIT_COORDS[0]
         );
 
         // Assurer le format FeatureCollection pour MapLibre
@@ -163,13 +162,11 @@ function App() {
 
           // Mettre à jour l'itinéraire si on a une destination
           if (destination) {
-            const map = mapRef.current?.getMap();
             createRoute(
               newLocation.latitude,
               newLocation.longitude,
               destination.coordinates[1],
-              destination.coordinates[0],
-              map // Passer l'instance map pour MapLibre Directions
+              destination.coordinates[0]
             )
               .then((routeResult) => {
                 // Assurer le format FeatureCollection pour MapLibre
@@ -290,52 +287,56 @@ function App() {
     [mapType]
   );
 
+  // Fonction pour demander la permission d'orientation du device
+  const requestDeviceOrientationPermission = async () => {
+    try {
+      if (typeof DeviceOrientationEvent.requestPermission === "function") {
+        const permissionState = await DeviceOrientationEvent.requestPermission();
+        if (permissionState === "granted") {
+          setOrientationPermissionGranted(true);
+          console.log("Permission d'orientation accordée");
+        } else {
+          console.warn("Permission pour l'orientation refusée");
+        }
+      } else {
+        // Pour les navigateurs qui ne nécessitent pas de permission explicite
+        setOrientationPermissionGranted(true);
+      }
+    } catch (err) {
+      console.error("Erreur demande permission orientation:", err);
+    }
+  };
+
   // Gestion de l'orientation du device pour navigation GPS
   useEffect(() => {
     const handleOrientation = (event) => {
-      if (event.alpha !== null && navigationState === "navigating") {
+      if (event.alpha !== null && navigationState === "navigating" && orientationPermissionGranted) {
         const newBearing = 360 - event.alpha;
         setBearing(newBearing);
 
+        // Mise à jour de l'orientation de la carte avec moins de fréquence pour éviter les conflits
         if (mapRef.current && isMapReady) {
           mapRef.current.easeTo({
             bearing: newBearing,
-            duration: 300,
+            duration: 500, // Augmenté pour plus de fluidité
           });
         }
-      }
-    };
-
-    const requestOrientationPermission = async () => {
-      try {
-        if (typeof DeviceOrientationEvent.requestPermission === "function") {
-          const permissionState =
-            await DeviceOrientationEvent.requestPermission();
-          if (permissionState === "granted") {
-            window.addEventListener("deviceorientation", handleOrientation);
-          } else {
-            console.warn("Permission pour l'orientation refusée");
-          }
-        } else {
-          window.addEventListener("deviceorientation", handleOrientation);
-        }
-      } catch (err) {
-        console.error("Erreur d'orientation:", err);
       }
     };
 
     if (
       typeof window !== "undefined" &&
       window.DeviceOrientationEvent &&
+      orientationPermissionGranted &&
       navigationState === "navigating"
     ) {
-      requestOrientationPermission();
+      window.addEventListener("deviceorientation", handleOrientation, { passive: true });
     }
 
     return () => {
       window.removeEventListener("deviceorientation", handleOrientation);
     };
-  }, [isMapReady, navigationState]);
+  }, [isMapReady, navigationState, orientationPermissionGranted]);
 
   // Centrer la carte sur l'utilisateur pendant la navigation
   useEffect(() => {
@@ -452,20 +453,43 @@ function App() {
           onError={(e) =>
             setError(`Erreur de carte: ${e.error.message || "Erreur inconnue"}`)
           }
+          // Assurer que les interactions tactiles restent fonctionnelles
+          interactiveLayerIds={navigationState === "navigating" ? [] : undefined}
+          touchZoomRotate={true}
+          doubleClickZoom={true}
+          dragPan={true}
+          dragRotate={navigationState !== "navigating"}
+          scrollZoom={true}
+          touchPitch={true}
         >
-          {/* Contrôles de carte conditionnels */}
-          {/* {navigationState !== 'navigating' && ( */}
-          <>
-            <NavigationControl showCompass showZoom position="bottom-right" />
-            <GeolocateControl
-              ref={geolocateControlRef}
-              position="bottom-right"
-              positionOptions={{ enableHighAccuracy: true, timeout: 6000 }}
-              trackUserLocation={true}
-              showUserLocation={true}
-            />
-          </>
-          {/* )} */}
+          {/* Contrôles de carte - toujours disponibles */}
+          <NavigationControl 
+            showCompass={navigationState !== "navigating"} 
+            showZoom 
+            position="bottom-right" 
+          />
+          
+          {/* Bouton de recentrage personnalisé */}
+          <div className="geolocate-control-custom">
+            <button
+              onClick={() => {
+                if (userLocation && mapRef.current) {
+                  mapRef.current.easeTo({
+                    center: [userLocation.longitude, userLocation.latitude],
+                    zoom: 18,
+                    duration: 1000
+                  });
+                }
+              }}
+              className="geolocate-button"
+              title="Recentrer sur ma position"
+              disabled={!userLocation}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+              </svg>
+            </button>
+          </div>
 
           {/* Bouton de basculement de carte */}
           <div className="map-type-switcher">

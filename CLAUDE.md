@@ -6,8 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Development**: `npm run dev` - Start Vite development server
 - **Build**: `npm run build` - Build for production
+- **Build (Netlify)**: `npm run build:netlify` - Build with linting and Netlify checks
 - **Lint**: `npm run lint` - Run ESLint
+- **Lint Fix**: `npm run lint:fix` - Run ESLint with auto-fix
 - **Preview**: `npm run preview` - Preview production build
+- **Serve**: `npm run serve` - Serve on port 3000
 
 ## Architecture Overview
 
@@ -39,13 +42,28 @@ This is a React + Vite GPS application for Garden Grove Village (MyGGV|GPS) buil
 - Key states: `userLocation`, `bearing`, `isMapReady`, `error`
 - Memoized map style and GeoJSON data for performance
 
+#### Navigation System
+- Navigation logic in `src/lib/navigation.js` with multiple routing fallbacks
+- Uses OSRM (OpenStreetMap routing) as primary, OpenRoute Service as fallback
+- Supports walking profile with turn-by-turn directions
+- Arrival detection with 10m threshold (`ARRIVAL_THRESHOLD`)
+
 #### Environment Configuration
 - Supabase connection via environment variables (`VITE_SUPABASE_*`)
 - Google API and OpenRoute service keys configured
 - PWA manifest configured for "MyGGV|GPS" branding
+- All environment variables listed in `netlify.toml`
+
+#### Deployment
+- Configured for Netlify deployment with optimized build process
+- PWA service worker with strategic caching for offline functionality
+- Custom headers for security and performance in `netlify.toml`
+- Chunk splitting: vendor (React), maps (MapLibre/OpenLayers), Supabase
 
 ### File Structure Notes
-- Map logic centralized in `App.jsx`
-- Data files separated in `src/data/`
+- Map logic centralized in `App.jsx` with React 19 compiler optimization
+- Navigation logic in `src/lib/navigation.js` with routing service integration
+- Data files separated in `src/data/` (blocks.js, public-pois.js)
 - Supabase client in `src/lib/supabase.js`
 - Path alias `@` points to `src/` directory
+- Component modals handle different navigation states (permission, welcome, arrival)

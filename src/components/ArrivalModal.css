@@ -1,22 +1,23 @@
 .arrival-modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.75);
+  background-color: rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
-  padding: 1rem;
+  padding: 2rem;
 }
 
 .arrival-modal {
-  background-color: white;
-  border-radius: 0.5rem;
+  background: linear-gradient(135deg, var(--color-green), var(--color-yellow));
+  border-radius: 1rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  max-width: 28rem;
+  max-width: 32rem;
   width: 100%;
-  padding: 1.5rem;
+  padding: 2rem;
   text-align: center;
+  letter-spacing: 1px !important;
 }
 
 .arrival-modal .modal-content {
@@ -26,7 +27,7 @@
 .arrival-modal .modal-icon {
   width: 4rem;
   height: 4rem;
-  background-color: #dcfce7;
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -37,24 +38,29 @@
 .arrival-modal .icon {
   width: 2rem;
   height: 2rem;
-  color: #16a34a;
+  color: var(--color-white);
 }
 
 .arrival-modal .modal-title {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-white);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
   margin-bottom: 0.5rem;
 }
 
 .arrival-modal .modal-description {
-  color: #4b5563;
-  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1.5;
   margin-bottom: 1rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .arrival-modal .destination-info {
-  background-color: #f9fafb;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.5);
   border-radius: 0.5rem;
   padding: 0.75rem;
   margin-bottom: 1rem;
@@ -62,65 +68,59 @@
 
 .arrival-modal .destination-title {
   font-weight: 600;
-  color: #111827;
+  color: var(--color-white);
 }
 
 .arrival-modal .destination-address {
   font-size: 0.875rem;
-  color: #4b5563;
+  color: rgba(255, 255, 255, 0.9);
   margin-top: 0.25rem;
 }
 
 .arrival-modal .button-group {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .arrival-modal .button {
   width: 100%;
-  font-weight: 500;
-  padding: 0.75rem 1rem;
+  font-weight: 600;
+  padding: 1rem;
   border-radius: 0.5rem;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   cursor: pointer;
+  font-size: 1rem;
 }
 
 .arrival-modal .button-primary {
-  background-color: #2563eb;
-  color: white;
+  background-color: var(--color-white);
+  color: var(--color-green);
 }
 
 .arrival-modal .button-primary:hover {
-  background-color: #1d4ed8;
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
 .arrival-modal .button-secondary {
-  background-color: #ea580c;
-  color: white;
+  background-color: transparent;
+  color: var(--color-white);
+  border: 2px solid var(--color-white);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .arrival-modal .button-secondary:hover {
-  background-color: #c2410c;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .arrival-modal .button-secondary:disabled {
-  background-color: #9ca3af;
+  background-color: #d1d5db;
   cursor: not-allowed;
-}
-
-.arrival-modal .button-tertiary {
-  background-color: #f3f4f6;
-  color: #374151;
-  padding: 0.5rem 1rem;
-}
-
-.arrival-modal .button-tertiary:hover {
-  background-color: #e5e7eb;
+  color: #6b7280;
 }
 
 .arrival-modal .button-icon {
@@ -130,13 +130,13 @@
 }
 
 .arrival-modal .spinner {
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid white;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--color-green);
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-right: 0.5rem;
+  margin-right: 0.75rem;
 }
 
 @keyframes spin {
@@ -147,6 +147,6 @@
 
 .arrival-modal .modal-footer {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.7);
   margin-top: 1rem;
 }

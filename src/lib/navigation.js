@@ -122,53 +122,6 @@ export function createDirectRoute(startLat, startLon, endLat, endLon) {
   };
 }
 
-// Try MapLibre Directions first
-async function tryMapLibreDirections(startLat, startLon, endLat, endLon, map) {
-  if (!directions && map) {
-    directions = initMapLibreDirections(map);
-  }
-
-  return new Promise((resolve, reject) => {
-    if (!directions) {
-      reject(new Error("MapLibre Directions not initialized"));
-      return;
-    }
-
-    directions.setWaypoints([
-      [startLon, startLat],
-      [endLon, endLat],
-    ]);
-
-    // Listen for route changes
-    const onRoute = (e) => {
-      if (e.route && e.route.length > 0) {
-        const primaryRoute = e.route[0];
-        resolve({
-          type: "Feature",
-          geometry: {
-            type: "LineString",
-            coordinates: primaryRoute.geometry.coordinates,
-          },
-          properties: {
-            distance: primaryRoute.distance,
-            duration: primaryRoute.duration,
-            steps: primaryRoute.legs[0]?.steps || [],
-            source: "maplibre-directions",
-          },
-        });
-        directions.off("route", onRoute);
-      }
-    };
-
-    directions.on("route", onRoute);
-
-    // Timeout fallback
-    setTimeout(() => {
-      directions.off("route", onRoute);
-      reject(new Error("MapLibre Directions timeout"));
-    }, ROUTING_CONFIG.TIMEOUT);
-  });
-}
 
 // Try OSRM routing service
 async function tryOSRM(startLat, startLon, endLat, endLon) {
@@ -262,8 +215,7 @@ export async function createRoute(
   startLat,
   startLon,
   endLat,
-  endLon,
-  map = null
+  endLon
 ) {
   console.log("🚀 Création de route avec fallback en cascade");
 
