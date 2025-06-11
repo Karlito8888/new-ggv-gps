@@ -34,7 +34,7 @@ const ArrivalModal = ({
             </svg>
           </div>
           <h2 className="modal-title">
-            Destination reached!
+            Destination reached !
           </h2>
           <p className="modal-description">
             You have arrived at your destination:
@@ -43,11 +43,11 @@ const ArrivalModal = ({
             <p className="destination-title">
               Block {destination.blockNumber}, Lot {destination.lotNumber}
             </p>
-            {destination.address && (
+            {/* {destination.address && (
               <p className="destination-address">
                 {destination.address}
               </p>
-            )}
+            )} */}
           </div>
         </div>
 
@@ -69,7 +69,7 @@ const ArrivalModal = ({
                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
               />
             </svg>
-            New destination in the village
+            New destination ?
           </button>
 
           <button
