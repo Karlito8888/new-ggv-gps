@@ -61,6 +61,13 @@ h1 {
   line-height: 1.1;
 }
 
+p {
+  text-decoration: none;
+  border: none;
+  border-bottom: none;
+}
+
+
 
 /* Overlay d'info GPS */
 .gps-info {
