@@ -8,10 +8,9 @@
 }
 
 .navigation-panel {
-  background-color: white;
+  background-color: var(--color-white);
   border-radius: 0.5rem;
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   padding: 1rem;
   margin-bottom: 0.75rem;
   pointer-events: auto;
@@ -36,7 +35,7 @@
 .direction-icon {
   width: 2rem;
   height: 2rem;
-  background-color: #dbeafe;
+  /* background-color: #dbeafe; */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -90,8 +89,7 @@
 .compass {
   background-color: white;
   border-radius: 50%;
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   padding: 0.75rem;
   pointer-events: auto;
 }

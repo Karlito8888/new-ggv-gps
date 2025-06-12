@@ -28,18 +28,25 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import stopLogo from "./assets/img/stop.png";
 import "./App.css";
+import { useAvailableBlocks } from "./hooks/useAvailableBlocks";
 
 function App() {
   "use memo"; // Utiliser React 19 compiler pour optimiser ce composant
   const mapRef = useRef(null);
   const watchId = useRef(null);
+  const {
+    availableBlocks,
+    isLoading,
+    error: blocksError,
+    setError,
+  } = useAvailableBlocks();
+  const [geolocationError, setGeolocationError] = useState(null); // Nouvel état pour les erreurs de géolocalisation
 
   // États de navigation
   const [navigationState, setNavigationState] = useState("permission"); // permission, welcome, navigating, arrived
   const [userLocation, setUserLocation] = useState(null);
   const [destination, setDestination] = useState(null);
   const [bearing, setBearing] = useState(0);
-  const [error, setError] = useState(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [route, setRoute] = useState(null);
   const [mapType, setMapType] = useState("osm"); // 'osm' ou 'satellite'
@@ -66,8 +73,8 @@ function App() {
   };
 
   const handleLocationPermissionDenied = (errorMessage) => {
-    setError(errorMessage);
-    setNavigationState("welcome"); // Permettre quand même l'utilisation
+    setGeolocationError(errorMessage);
+    setNavigationState("welcome");
     // Supprimer la demande automatique d'orientation
   };
 
@@ -98,7 +105,7 @@ function App() {
         setRoute(routeData);
       } catch (error) {
         console.error("Erreur création route:", error);
-        setError("Erreur lors du calcul de l'itinéraire");
+        setGeolocationError("Erreur lors du calcul de l'itinéraire");
       }
     }
   };
@@ -144,7 +151,7 @@ function App() {
         setRoute(routeData);
       } catch (error) {
         console.error("Erreur création route sortie:", error);
-        setError("Erreur lors du calcul de l'itinéraire de sortie");
+        setGeolocationError("Erreur lors du calcul de l'itinéraire de sortie");
       }
     }
   };
@@ -188,7 +195,7 @@ function App() {
         },
         (error) => {
           console.error("Erreur de suivi GPS:", error);
-          setError("Erreur de suivi GPS: " + error.message);
+          setGeolocationError("Erreur de suivi GPS: " + error.message);
         },
         {
           enableHighAccuracy: true,
@@ -321,7 +328,7 @@ function App() {
       // Activer la boussole
       const granted = await requestDeviceOrientationPermission();
       if (!granted) {
-        setError(
+        setGeolocationError(
           "Permission d'orientation refusée. La boussole ne fonctionnera pas."
         );
       }
@@ -425,39 +432,20 @@ function App() {
         },
       });
 
-      // Interactions
-      map.on("click", "blocks-fill", (e) => {
-        if (e.features[0].properties.name) {
-          new maplibregl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(`Bloc <strong>${e.features[0].properties.name}</strong>`)
-            .addTo(map);
-        }
-      });
-
-      // Changement du curseur au survol
-      map.on("mouseenter", "blocks-fill", () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-
-      map.on("mouseleave", "blocks-fill", () => {
-        map.getCanvas().style.cursor = "";
+      // Met à jour les positions après chaque rendu
+      map.on("render", () => {
+        blocksGeoJSON.features.forEach((block) => {
+          if (block.properties.name) {
+            block.properties.center = getPolygonCenter(
+              block.geometry.coordinates[0]
+            );
+          }
+        });
       });
     } catch (error) {
       console.error("Erreur lors du chargement des blocs:", error);
-      setError("Erreur d'affichage des blocs");
+      setGeolocationError("Erreur d'affichage des blocs");
     }
-
-    // Met à jour les positions après chaque rendu
-    map.on("render", () => {
-      blocksGeoJSON.features.forEach((block) => {
-        if (block.properties.name) {
-          block.properties.center = getPolygonCenter(
-            block.geometry.coordinates[0]
-          );
-        }
-      });
-    });
 
     return () => {
       // Nettoyage robuste - capturer la référence au moment de la création
@@ -487,7 +475,9 @@ function App() {
           mapStyle={mapStyle}
           onLoad={() => setIsMapReady(true)}
           onError={(e) =>
-            setError(`Erreur de carte: ${e.error.message || "Erreur inconnue"}`)
+            setGeolocationError(
+              `Erreur de carte: ${e.error.message || "Erreur inconnue"}`
+            )
           }
           // Assurer que les interactions tactiles restent fonctionnelles
           interactiveLayerIds={
@@ -543,7 +533,7 @@ function App() {
               className="map-type-button"
               title={mapType === "osm" ? "Vue satellite" : "Vue carte"}
             >
-              <BsLayersHalf size={19} />
+              <BsLayersHalf size={25} />
             </button>
           </div>
 
@@ -617,23 +607,7 @@ function App() {
               <button
                 onClick={handleNewDestination}
                 className="new-destination-button"
-                // title="Nouvelle destination"
               >
-                {/* <svg
-                  className="button-icon"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  width="20"
-                  height="20"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                </svg> */}
                 <img src={stopLogo} alt="Nouvelle destination" />
               </button>
             </div>
@@ -736,11 +710,14 @@ function App() {
         )}
 
         {/* Messages d'erreur */}
-        {error && (
+        {(geolocationError || blocksError) && (
           <div className="error-notification">
-            <p>{error}</p>
+            <p>{geolocationError || blocksError}</p>
             <button
-              onClick={() => setError(null)}
+              onClick={() => {
+                if (geolocationError) setGeolocationError(null);
+                if (blocksError) setError(null);
+              }}
               className="error-notification-button"
             >
               Fermer
@@ -761,6 +738,7 @@ function App() {
         <WelcomeModal
           onDestinationSelected={handleDestinationSelected}
           onCancel={() => setNavigationState("permission")}
+          availableBlocks={availableBlocks}
         />
       )}
 

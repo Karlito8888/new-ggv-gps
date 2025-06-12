@@ -1,34 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import ggvLogo from "../assets/img/ggv.png";
 import "./WelcomeModal.css";
 
-const WelcomeModal = ({ onDestinationSelected, onCancel }) => {
+const WelcomeModal = ({
+  onDestinationSelected,
+  onCancel,
+  availableBlocks = [],
+}) => {
   const [blockNumber, setBlockNumber] = useState("");
   const [lotNumber, setLotNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [availableBlocks, setAvailableBlocks] = useState([]);
-
-  useEffect(() => {
-    fetchAvailableBlocks();
-  }, []);
-
-  const fetchAvailableBlocks = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("locations")
-        .select("block")
-        .order("block");
-
-      if (error) throw error;
-
-      const uniqueBlocks = [...new Set(data.map((item) => item.block))];
-      setAvailableBlocks(uniqueBlocks.sort((a, b) => a - b));
-    } catch (error) {
-      console.error("Error while loading blocks:", error);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
