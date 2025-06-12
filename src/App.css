@@ -8,7 +8,8 @@
   background-color: #ef4444;
   border-radius: 50%;
   border: 2px solid white;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -31,7 +32,8 @@
   background-color: #3b82f6;
   border-radius: 50%;
   border: 2px solid white;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   position: relative;
 }
 
@@ -94,37 +96,28 @@
 /* Map Type Switcher */
 .map-type-switcher {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 30%;
   right: 10px;
   z-index: 1;
 }
 
 .map-type-button {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  color: #333;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 29px;
-  height: 29px;
-  background: white;
-  border: 2px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.2s ease;
-  color: #333;
 }
 
 .map-type-button:hover {
-  background: #f8f9fa;
-  border-color: rgba(0, 0, 0, 0.2);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.map-type-button:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Geolocate Control Custom */
@@ -166,4 +159,61 @@
   opacity: 0.5;
   cursor: not-allowed;
   background: #f5f5f5;
+}
+
+/* Contrôle boussole */
+.compass-control {
+  position: absolute;
+  top: 40%;
+  right: 10px;
+  z-index: 1;
+}
+
+.compass-button {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 36px;
+  height: 36px;
+}
+
+.compass-button:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.compass-button.active {
+  background: rgba(59, 130, 246, 0.9);
+  color: white;
+}
+
+.compass-button.active:hover {
+  background: rgba(59, 130, 246, 1);
+}
+
+.compass-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compass-status-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }

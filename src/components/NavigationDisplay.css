@@ -10,7 +10,8 @@
 .navigation-panel {
   background-color: white;
   border-radius: 0.5rem;
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   padding: 1rem;
   margin-bottom: 0.75rem;
   pointer-events: auto;
@@ -89,7 +90,8 @@
 .compass {
   background-color: white;
   border-radius: 50%;
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   padding: 0.75rem;
   pointer-events: auto;
 }
@@ -191,4 +193,28 @@
   border-radius: 0.25rem;
   padding: 0.25rem 0.5rem;
   display: inline-block;
+}
+
+/* Overlay pour boussole inactive */
+.compass-inactive-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.compass-inactive-text {
+  color: white;
+  font-size: 10px;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+  padding: 4px;
 }

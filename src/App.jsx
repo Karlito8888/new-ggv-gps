@@ -42,7 +42,9 @@ function App() {
   const [isMapReady, setIsMapReady] = useState(false);
   const [route, setRoute] = useState(null);
   const [mapType, setMapType] = useState("osm"); // 'osm' ou 'satellite'
-  const [orientationPermissionGranted, setOrientationPermissionGranted] = useState(false);
+  const [orientationPermissionGranted, setOrientationPermissionGranted] =
+    useState(false);
+  const [isOrientationActive, setIsOrientationActive] = useState(false);
 
   // Coordonnées par défaut (Garden Grove Village)
   const DEFAULT_COORDS = {
@@ -59,15 +61,13 @@ function App() {
     });
     setNavigationState("welcome");
     startLocationTracking();
-    // Demander la permission d'orientation dès maintenant
-    requestDeviceOrientationPermission();
+    // Supprimer la demande automatique d'orientation
   };
 
   const handleLocationPermissionDenied = (errorMessage) => {
     setError(errorMessage);
     setNavigationState("welcome"); // Permettre quand même l'utilisation
-    // Demander quand même la permission d'orientation
-    requestDeviceOrientationPermission();
+    // Supprimer la demande automatique d'orientation
   };
 
   const handleDestinationSelected = async (dest) => {
@@ -291,31 +291,59 @@ function App() {
   const requestDeviceOrientationPermission = async () => {
     try {
       if (typeof DeviceOrientationEvent.requestPermission === "function") {
-        const permissionState = await DeviceOrientationEvent.requestPermission();
+        const permissionState =
+          await DeviceOrientationEvent.requestPermission();
         if (permissionState === "granted") {
           setOrientationPermissionGranted(true);
+          setIsOrientationActive(true);
           console.log("Permission d'orientation accordée");
+          return true;
         } else {
           console.warn("Permission pour l'orientation refusée");
+          return false;
         }
       } else {
         // Pour les navigateurs qui ne nécessitent pas de permission explicite
         setOrientationPermissionGranted(true);
+        setIsOrientationActive(true);
+        return true;
       }
     } catch (err) {
       console.error("Erreur demande permission orientation:", err);
+      return false;
+    }
+  };
+
+  // Fonction pour basculer l'état de la boussole
+  const toggleCompass = async () => {
+    if (!isOrientationActive) {
+      // Activer la boussole
+      const granted = await requestDeviceOrientationPermission();
+      if (!granted) {
+        setError(
+          "Permission d'orientation refusée. La boussole ne fonctionnera pas."
+        );
+      }
+    } else {
+      // Désactiver la boussole
+      setIsOrientationActive(false);
+      setBearing(0); // Remettre à zéro l'orientation
     }
   };
 
   // Gestion de l'orientation du device pour navigation GPS
   useEffect(() => {
     const handleOrientation = (event) => {
-      if (event.alpha !== null && navigationState === "navigating" && orientationPermissionGranted) {
+      if (
+        event.alpha !== null &&
+        isOrientationActive &&
+        orientationPermissionGranted
+      ) {
         const newBearing = 360 - event.alpha;
         setBearing(newBearing);
 
         // Mise à jour de l'orientation de la carte avec moins de fréquence pour éviter les conflits
-        if (mapRef.current && isMapReady) {
+        if (mapRef.current && isMapReady && navigationState === "navigating") {
           mapRef.current.easeTo({
             bearing: newBearing,
             duration: 500, // Augmenté pour plus de fluidité
@@ -327,16 +355,23 @@ function App() {
     if (
       typeof window !== "undefined" &&
       window.DeviceOrientationEvent &&
-      orientationPermissionGranted &&
-      navigationState === "navigating"
+      isOrientationActive &&
+      orientationPermissionGranted
     ) {
-      window.addEventListener("deviceorientation", handleOrientation, { passive: true });
+      window.addEventListener("deviceorientation", handleOrientation, {
+        passive: true,
+      });
     }
 
     return () => {
       window.removeEventListener("deviceorientation", handleOrientation);
     };
-  }, [isMapReady, navigationState, orientationPermissionGranted]);
+  }, [
+    isMapReady,
+    navigationState,
+    orientationPermissionGranted,
+    isOrientationActive,
+  ]);
 
   // Centrer la carte sur l'utilisateur pendant la navigation
   useEffect(() => {
@@ -454,7 +489,9 @@ function App() {
             setError(`Erreur de carte: ${e.error.message || "Erreur inconnue"}`)
           }
           // Assurer que les interactions tactiles restent fonctionnelles
-          interactiveLayerIds={navigationState === "navigating" ? [] : undefined}
+          interactiveLayerIds={
+            navigationState === "navigating" ? [] : undefined
+          }
           touchZoomRotate={true}
           doubleClickZoom={true}
           dragPan={true}
@@ -463,12 +500,12 @@ function App() {
           touchPitch={true}
         >
           {/* Contrôles de carte - toujours disponibles */}
-          <NavigationControl 
-            showCompass={navigationState !== "navigating"} 
-            showZoom 
-            position="bottom-right" 
+          <NavigationControl
+            showCompass={navigationState !== "navigating"}
+            showZoom
+            position="bottom-right"
           />
-          
+
           {/* Bouton de recentrage personnalisé */}
           <div className="geolocate-control-custom">
             <button
@@ -477,7 +514,7 @@ function App() {
                   mapRef.current.easeTo({
                     center: [userLocation.longitude, userLocation.latitude],
                     zoom: 18,
-                    duration: 1000
+                    duration: 1000,
                   });
                 }
               }}
@@ -485,8 +522,13 @@ function App() {
               title="Recentrer sur ma position"
               disabled={!userLocation}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
               </svg>
             </button>
           </div>
@@ -500,17 +542,62 @@ function App() {
               className="map-type-button"
               title={mapType === "osm" ? "Vue satellite" : "Vue carte"}
             >
-              {/* {mapType === 'osm' ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.5 12.0C17.5 12.8 17.4 13.5 17.2 14.2L19.9 16.0C21.0 15.1 21.8 13.9 22.2 12.5H17.5ZM12.0 2.0C6.5 2.0 2.0 6.5 2.0 12.0S6.5 22.0 12.0 22.0S22.0 17.5 22.0 12.0S17.5 2.0 12.0 2.0ZM12.0 20.0C7.6 20.0 4.0 16.4 4.0 12.0S7.6 4.0 12.0 4.0S20.0 7.6 20.0 12.0S16.4 20.0 12.0 20.0Z"/>
-                </svg>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M1 11l7-8 4 4 4-4 7 8v10H1V11z"/>
-                  <path d="M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/>
-                </svg>
-              )} */}
               <BsLayersHalf size={19} />
+            </button>
+          </div>
+
+          {/* Bouton boussole pour l'orientation */}
+          <div className="compass-control">
+            <button
+              onClick={toggleCompass}
+              className={`compass-button ${
+                isOrientationActive ? "active" : ""
+              }`}
+              title={
+                isOrientationActive
+                  ? "Désactiver la boussole"
+                  : "Activer la boussole"
+              }
+            >
+              <div
+                className="compass-icon"
+                style={{
+                  transform: isOrientationActive
+                    ? `rotate(${bearing}deg)`
+                    : "rotate(0deg)",
+                  transition: "transform 0.3s ease",
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="1"
+                    fill="none"
+                  />
+                  <path d="M12 2 L14 8 L12 6 L10 8 Z" fill="red" />
+                  <path d="M12 22 L10 16 L12 18 L14 16 Z" fill="currentColor" />
+                  <text
+                    x="12"
+                    y="5"
+                    textAnchor="middle"
+                    fontSize="8"
+                    fill="red"
+                  >
+                    N
+                  </text>
+                </svg>
+              </div>
+              {isOrientationActive && (
+                <div className="compass-status-dot"></div>
+              )}
             </button>
           </div>
 
@@ -606,6 +693,7 @@ function App() {
             destination={destination}
             deviceBearing={bearing}
             onArrival={handleArrival}
+            isOrientationActive={isOrientationActive}
           />
         )}
 

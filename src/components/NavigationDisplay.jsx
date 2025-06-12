@@ -7,6 +7,7 @@ const NavigationDisplay = ({
   destination,
   deviceBearing,
   onArrival,
+  isOrientationActive = false,
 }) => {
   const [instructions, setInstructions] = useState(null);
   const [hasTriggeredArrival, setHasTriggeredArrival] = useState(false);
@@ -19,7 +20,7 @@ const NavigationDisplay = ({
       userLocation.longitude,
       destination.coordinates[1],
       destination.coordinates[0],
-      deviceBearing
+      isOrientationActive ? deviceBearing : 0
     );
 
     setInstructions(navInstructions);
@@ -42,6 +43,7 @@ const NavigationDisplay = ({
     deviceBearing,
     onArrival,
     hasTriggeredArrival,
+    isOrientationActive,
   ]);
 
   if (!instructions || !destination) return null;
@@ -59,9 +61,7 @@ const NavigationDisplay = ({
                 </span>
               </div>
               <div>
-                <p className="instruction-text">
-                  {instructions.instruction}
-                </p>
+                <p className="instruction-text">{instructions.instruction}</p>
                 <p className="distance-text">{instructions.distance}</p>
               </div>
             </div>
@@ -87,7 +87,9 @@ const NavigationDisplay = ({
             <div
               className="compass-ring"
               style={{
-                transform: `rotate(${-deviceBearing}deg)`,
+                transform: isOrientationActive
+                  ? `rotate(${-deviceBearing}deg)`
+                  : "rotate(0deg)",
                 transition: "transform 0.3s ease",
               }}
             >
@@ -114,6 +116,13 @@ const NavigationDisplay = ({
             <div className="compass-center">
               <div className="center-dot"></div>
             </div>
+
+            {/* Indication si l'orientation n'est pas active */}
+            {!isOrientationActive && (
+              <div className="compass-inactive-overlay">
+                <div className="compass-inactive-text">Activez la boussole</div>
+              </div>
+            )}
           </div>
         </div>
       </div>
