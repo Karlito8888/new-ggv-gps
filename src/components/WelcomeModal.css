@@ -95,7 +95,7 @@
   width: 100%;
   height: 60px !important;
   padding: 1rem !important;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: var(--color-white);
   border: 2px solid transparent;
   border-radius: 0.5rem;
   font-size: 1rem;
@@ -104,7 +104,7 @@
 
 .welcome-modal .form-input:focus {
   outline: none;
-  border-color: var(--color-white);
+  border: 3px solid #87B459;
   background-color: white;
 }
 
@@ -160,12 +160,9 @@
   color: var(--color-green);
 }
 
-.welcome-modal .modal-button.primary:hover {
-  background-color: rgba(255, 255, 255, 0.9);
-}
-
 .welcome-modal .modal-button.primary:disabled {
   background-color: #d1d5db;
+  opacity: 0.5;
   cursor: not-allowed;
   color: #6b7280;
 }

@@ -71,21 +71,6 @@ const WelcomeModal = ({
     <div className="welcome-modal-overlay">
       <div className="welcome-modal">
         <div className="modal-content">
-          {/* <div className="modal-icon">
-            <svg
-              className="icon"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6"
-              />
-            </svg>
-          </div> */}
           <h2 className="modal-title">Welcome to</h2>
           <img
             src={ggvLogo}
@@ -93,7 +78,9 @@ const WelcomeModal = ({
             className="modal-logo"
           />
           <p className="modal-description">
-            Where would you like to go in Garden Grove Village?
+            Where would you like to go
+            <br />
+            in Garden Grove Village?
           </p>
         </div>
 
@@ -102,7 +89,7 @@ const WelcomeModal = ({
             <label htmlFor="block" className="form-label">
               Block Number
             </label>
-            <select
+            {/* <select
               id="block"
               value={blockNumber}
               onChange={(e) => setBlockNumber(e.target.value)}
@@ -110,6 +97,22 @@ const WelcomeModal = ({
               required
             >
               <option value="">Select a block</option>
+              {availableBlocks.map((block) => (
+                <option key={block} value={block}>
+                  Block {block}
+                </option>
+              ))}
+            </select> */}
+            <select
+              id="block"
+              value={blockNumber}
+              onChange={(e) => setBlockNumber(e.target.value)}
+              className="select select-ghost form-input"
+              required
+            >
+              <option value="" disabled={true}>
+                Select a block
+              </option>
               {availableBlocks.map((block) => (
                 <option key={block} value={block}>
                   Block {block}
