@@ -63,6 +63,7 @@
   color: var(--color-green);
   font-weight: 600;
   padding: 1rem 1.5rem;
+  border: 3px solid #A0B755;
   border-radius: 0.5rem;
   transition: all 0.2s;
   display: flex;

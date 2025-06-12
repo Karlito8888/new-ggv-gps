@@ -107,7 +107,8 @@ const WelcomeModal = ({
               id="block"
               value={blockNumber}
               onChange={(e) => setBlockNumber(e.target.value)}
-              className="select select-ghost form-input"
+              className="form-input"
+              style={{ border: "3px solid #8EB458" }}
               required
             >
               <option value="" disabled={true}>
@@ -133,6 +134,7 @@ const WelcomeModal = ({
               placeholder="Ex: 123"
               min="1"
               className="form-input"
+              style={{ border: "3px solid #A2B855" }}
               required
             />
           </div>
