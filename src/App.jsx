@@ -24,9 +24,10 @@ import {
   VILLAGE_EXIT_COORDS,
 } from "./lib/navigation";
 import { BsLayersHalf } from "react-icons/bs";
-import "./App.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import stopLogo from "./assets/img/stop.png";
+import "./App.css";
 
 function App() {
   "use memo"; // Utiliser React 19 compiler pour optimiser ce composant
@@ -117,7 +118,7 @@ function App() {
       blockNumber: "",
       lotNumber: "",
       coordinates: VILLAGE_EXIT_COORDS,
-      address: "Salamat po, ingat",
+      address: "Salamat po !\n🙏 Ingat 🙏",
     };
     setDestination(exitDestination);
     setNavigationState("navigating");
@@ -559,47 +560,84 @@ function App() {
                   : "Activer la boussole"
               }
             >
-              <div
-                className="compass-icon"
-                style={{
-                  transform: isOrientationActive
-                    ? `rotate(${bearing}deg)`
-                    : "rotate(0deg)",
-                  transition: "transform 0.3s ease",
-                }}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
+              <div className="compass-face-mini">
+                {/* Compass ring with cardinal points */}
+                <div
+                  className="compass-ring-mini"
+                  style={{
+                    transform: isOrientationActive
+                      ? `rotate(${-bearing}deg)`
+                      : "rotate(0deg)",
+                    transition: "transform 0.3s ease",
+                  }}
                 >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                    fill="none"
-                  />
-                  <path d="M12 2 L14 8 L12 6 L10 8 Z" fill="red" />
-                  <path d="M12 22 L10 16 L12 18 L14 16 Z" fill="currentColor" />
-                  <text
-                    x="12"
-                    y="5"
-                    textAnchor="middle"
-                    fontSize="8"
-                    fill="red"
-                  >
+                  {/* Cardinal points */}
+                  <div className="cardinal-point-mini cardinal-north-mini">
                     N
-                  </text>
-                </svg>
+                  </div>
+                  <div className="cardinal-point-mini cardinal-east-mini">
+                    E
+                  </div>
+                  <div className="cardinal-point-mini cardinal-south-mini">
+                    S
+                  </div>
+                  <div className="cardinal-point-mini cardinal-west-mini">
+                    W
+                  </div>
+                </div>
+
+                {/* North indicator (always points up) */}
+                <div className="north-indicator">
+                  <div className="north-arrow"></div>
+                </div>
+
+                {/* Center dot */}
+                <div className="compass-center-mini">
+                  <div className="center-dot-mini"></div>
+                </div>
+
+                {/* Status indicator */}
+                {isOrientationActive && (
+                  <div className="compass-status-dot"></div>
+                )}
+
+                {/* Inactive overlay */}
+                {!isOrientationActive && (
+                  <div className="compass-inactive-overlay-mini">
+                    <div className="compass-inactive-icon">⊕</div>
+                  </div>
+                )}
               </div>
-              {isOrientationActive && (
-                <div className="compass-status-dot"></div>
-              )}
             </button>
           </div>
+
+          {/* Bouton nouvelle destination pendant la navigation */}
+          {navigationState === "navigating" && (
+            <div className="new-destination-control">
+              <button
+                onClick={handleNewDestination}
+                className="new-destination-button"
+                // title="Nouvelle destination"
+              >
+                {/* <svg
+                  className="button-icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                </svg> */}
+                <img src={stopLogo} alt="Nouvelle destination" />
+              </button>
+            </div>
+          )}
 
           {/* Affichage de l'itinéraire */}
           {route && (
