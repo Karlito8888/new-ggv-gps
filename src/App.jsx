@@ -731,9 +731,9 @@ function App() {
                 id="traveled-route-line"
                 type="line"
                 paint={{
-                  "line-color": "#10b981",
+                  "line-color": "#f3c549",
                   "line-width": 3,
-                  "line-opacity": 0.6,
+                  "line-opacity": 1,
                   "line-dasharray": [2, 2],
                 }}
               />
