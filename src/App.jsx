@@ -63,6 +63,8 @@ function App() {
   const [orientationPermissionGranted, setOrientationPermissionGranted] =
     useState(false);
   const [isOrientationActive, setIsOrientationActive] = useState(false);
+  const [compassCalibration, setCompassCalibration] = useState(0);
+  const [needsCalibration, setNeedsCalibration] = useState(false);
 
   // Coordonnées par défaut (Garden Grove Village)
   const DEFAULT_COORDS = {
@@ -396,7 +398,9 @@ function App() {
         if (permissionState === "granted") {
           setOrientationPermissionGranted(true);
           setIsOrientationActive(true);
-          console.log("Permission d'orientation accordée");
+          console.log(
+            "🧭 Permission d'orientation accordée - True North disponible"
+          );
           return true;
         } else {
           console.warn("Permission pour l'orientation refusée");
@@ -406,6 +410,18 @@ function App() {
         // Pour les navigateurs qui ne nécessitent pas de permission explicite
         setOrientationPermissionGranted(true);
         setIsOrientationActive(true);
+
+        // Vérifier si deviceorientationabsolute est disponible
+        if ("ondeviceorientationabsolute" in window) {
+          console.log(
+            "🧭 DeviceOrientationAbsolute disponible - True North OK"
+          );
+        } else {
+          console.warn(
+            "⚠️ DeviceOrientationAbsolute non disponible - orientation relative"
+          );
+        }
+
         return true;
       }
     } catch (err) {
@@ -429,6 +445,31 @@ function App() {
       // Désactiver la boussole
       setIsOrientationActive(false);
       setBearing(0); // Remettre à zéro l'orientation
+      setCompassCalibration(0); // Reset calibration
+      setNeedsCalibration(false);
+    }
+  };
+
+  // Fonction de calibration manuelle de la boussole
+  const calibrateCompass = () => {
+    if (bearing !== null) {
+      // L'utilisateur pointe vers le nord et appuie sur "Calibrer"
+      const calibrationOffset = -bearing;
+      setCompassCalibration(calibrationOffset);
+      setNeedsCalibration(false);
+      console.log(
+        "🧭 Boussole calibrée manuellement, offset:",
+        calibrationOffset
+      );
+
+      // Feedback visuel temporaire
+      const button = document.querySelector(".calibrate-button");
+      if (button) {
+        button.textContent = "✅ Calibré !";
+        setTimeout(() => {
+          button.textContent = "🧭 Calibrer Nord";
+        }, 2000);
+      }
     }
   };
 
@@ -440,13 +481,48 @@ function App() {
         isOrientationActive &&
         orientationPermissionGranted
       ) {
-        const newBearing = 360 - event.alpha;
-        setBearing(newBearing);
+        let trueNorthBearing = 0;
+
+        // 🎯 SOLUTION 1: iOS Safari - webkitCompassHeading donne le vrai nord
+        if (event.webkitCompassHeading !== undefined) {
+          trueNorthBearing = event.webkitCompassHeading;
+          console.log("🧭 iOS Compass Heading (True North):", trueNorthBearing);
+        }
+        // 🎯 SOLUTION 2: Android/autres - deviceorientationabsolute avec event.absolute
+        else if (event.absolute === true) {
+          trueNorthBearing = 360 - event.alpha;
+          console.log(
+            "🧭 Absolute Orientation (True North):",
+            trueNorthBearing
+          );
+        }
+        // ⚠️ FALLBACK: Orientation relative (pas le vrai nord)
+        else {
+          trueNorthBearing = 360 - event.alpha;
+          setNeedsCalibration(true);
+          console.warn("⚠️ Using relative orientation - not true north!");
+        }
+
+        // Appliquer la calibration manuelle si nécessaire
+        const calibratedBearing =
+          (trueNorthBearing + compassCalibration + 360) % 360;
+
+        // Debug logs pour validation
+        console.log("🔍 Debug Compass:", {
+          alpha: event.alpha,
+          absolute: event.absolute,
+          webkitCompassHeading: event.webkitCompassHeading,
+          calculatedBearing: trueNorthBearing,
+          calibratedBearing: calibratedBearing,
+          calibrationOffset: compassCalibration,
+        });
+
+        setBearing(calibratedBearing);
 
         // Mise à jour de l'orientation de la carte avec moins de fréquence pour éviter les conflits
         if (mapRef.current && isMapReady && navigationState === "navigating") {
           mapRef.current.easeTo({
-            bearing: newBearing,
+            bearing: calibratedBearing,
             duration: 500, // Augmenté pour plus de fluidité
           });
         }
@@ -459,12 +535,31 @@ function App() {
       isOrientationActive &&
       orientationPermissionGranted
     ) {
-      window.addEventListener("deviceorientation", handleOrientation, {
-        passive: true,
-      });
+      // 🎯 PRIORITÉ 1: Essayer deviceorientationabsolute (vrai nord)
+      if ("ondeviceorientationabsolute" in window) {
+        console.log("🧭 Using deviceorientationabsolute for true north");
+        window.addEventListener(
+          "deviceorientationabsolute",
+          handleOrientation,
+          {
+            passive: true,
+          }
+        );
+      }
+      // 🎯 PRIORITÉ 2: Fallback vers deviceorientation standard
+      else {
+        console.log("🧭 Using deviceorientation (may be relative)");
+        window.addEventListener("deviceorientation", handleOrientation, {
+          passive: true,
+        });
+      }
     }
 
     return () => {
+      window.removeEventListener(
+        "deviceorientationabsolute",
+        handleOrientation
+      );
       window.removeEventListener("deviceorientation", handleOrientation);
     };
   }, [
@@ -686,6 +781,11 @@ function App() {
                   <div className="compass-status-dot"></div>
                 )}
 
+                {/* Calibration needed indicator */}
+                {needsCalibration && isOrientationActive && (
+                  <div className="compass-calibration-needed">⚠️</div>
+                )}
+
                 {/* Inactive overlay */}
                 {!isOrientationActive && (
                   <div className="compass-inactive-overlay-mini">
@@ -695,6 +795,19 @@ function App() {
               </div>
             </button>
           </div>
+
+          {/* Bouton de calibration de la boussole */}
+          {needsCalibration && isOrientationActive && (
+            <div className="compass-calibration-control">
+              <button
+                onClick={calibrateCompass}
+                className="calibrate-button"
+                title="Pointez vers le nord géographique et appuyez pour calibrer"
+              >
+                🧭 Calibrer Nord
+              </button>
+            </div>
+          )}
 
           {/* Bouton nouvelle destination pendant la navigation */}
           {navigationState === "navigating" && (
