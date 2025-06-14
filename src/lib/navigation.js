@@ -7,9 +7,9 @@ export const VILLAGE_EXIT_COORDS = [120.951863, 14.35098];
 export const ARRIVAL_THRESHOLD = 10;
 
 // Route deviation and recalculation thresholds
-export const ROUTE_DEVIATION_THRESHOLD = 25; // meters
-export const MIN_RECALCULATION_INTERVAL = 10000; // 10 seconds
-export const MIN_MOVEMENT_THRESHOLD = 5; // meters
+export const ROUTE_DEVIATION_THRESHOLD = 30; // meters - automatic recalculation threshold
+export const MIN_RECALCULATION_INTERVAL = 15000; // 15 seconds - prevent too frequent recalculations
+export const MIN_MOVEMENT_THRESHOLD = 10; // meters - minimum movement for route updates
 
 // Configuration constants
 const ROUTING_CONFIG = {
@@ -145,12 +145,15 @@ export function isUserOffRoute(
     }
   }
 
-  console.log(
-    `🛣️ User distance from route: ${minDistance.toFixed(
-      1
-    )}m (threshold: ${threshold}m)`
-  );
-  return minDistance > threshold;
+  const isOffRoute = minDistance > threshold;
+  if (isOffRoute) {
+    console.log(
+      `🛣️ User is off-route: ${minDistance.toFixed(
+        1
+      )}m from route (threshold: ${threshold}m)`
+    );
+  }
+  return isOffRoute;
 }
 
 // Check if route should be recalculated based on various conditions
@@ -162,9 +165,9 @@ export function shouldRecalculateRoute(
 ) {
   const now = Date.now();
 
-  // Force recalculation if requested
+  // Force recalculation if requested (for manual triggers)
   if (forceRecalculation) {
-    console.log("🔄 Force recalculation requested");
+    console.log("🔄 Manual recalculation requested");
     return true;
   }
 
@@ -204,7 +207,7 @@ export function shouldRecalculateRoute(
     const isOffRoute = isUserOffRoute(userLat, userLon, routeGeometry);
 
     if (isOffRoute) {
-      console.log("🚨 User is off-route, recalculation needed");
+      console.log("🚨 User is off-route, automatic recalculation triggered");
       return true;
     }
   }
@@ -648,7 +651,7 @@ export function shouldUpdateRemainingRoute(
   userLon,
   currentRoute,
   lastUpdatePosition,
-  threshold = 15
+  threshold = 20
 ) {
   if (!lastUpdatePosition) {
     return true; // First update

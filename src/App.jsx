@@ -17,7 +17,7 @@ import LocationPermissionModal from "./components/LocationPermissionModal";
 import WelcomeModal from "./components/WelcomeModal";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModal from "./components/ArrivalModal";
-import OffRouteIndicator from "./components/OffRouteIndicator";
+
 import {
   createRoute,
   initMapLibreDirections,
@@ -47,7 +47,7 @@ function App() {
     error: blocksError,
     setError,
   } = useAvailableBlocks();
-  const [geolocationError, setGeolocationError] = useState(null); // Nouvel état pour les erreurs de géolocalisation
+  // Geolocation errors are now logged to console only
 
   // États de navigation
   const [navigationState, setNavigationState] = useState("permission"); // permission, welcome, navigating, arrived
@@ -83,7 +83,7 @@ function App() {
   };
 
   const handleLocationPermissionDenied = (errorMessage) => {
-    setGeolocationError(errorMessage);
+    console.error("Location permission denied:", errorMessage);
     setNavigationState("welcome");
     // Supprimer la demande automatique d'orientation
   };
@@ -126,7 +126,7 @@ function App() {
         updateRecalculationState(userLocation.latitude, userLocation.longitude);
       } catch (error) {
         console.error("Erreur création route:", error);
-        setGeolocationError("Erreur lors du calcul de l'itinéraire");
+        // Error logged to console only - not shown to user
       }
     }
   };
@@ -142,42 +142,6 @@ function App() {
     setTraveledRoute(null);
     setLastRouteUpdatePosition(null);
     setNavigationState("welcome");
-  };
-
-  const handleManualRecalculation = async () => {
-    if (!userLocation || !destination) return;
-
-    try {
-      console.log("🔄 Manual recalculation requested");
-      const routeResult = await createRoute(
-        userLocation.latitude,
-        userLocation.longitude,
-        destination.coordinates[1],
-        destination.coordinates[0]
-      );
-
-      // Assurer le format FeatureCollection pour MapLibre
-      const routeData = {
-        type: "FeatureCollection",
-        features:
-          routeResult.type === "Feature"
-            ? [routeResult]
-            : routeResult.features || [],
-      };
-
-      setRoute(routeData);
-      setOriginalRoute(routeData); // Update original route too
-      setLastRouteUpdatePosition({
-        lat: userLocation.latitude,
-        lon: userLocation.longitude,
-      });
-
-      // Update recalculation state after manual recalculation
-      updateRecalculationState(userLocation.latitude, userLocation.longitude);
-    } catch (error) {
-      console.error("Erreur recalcul manuel:", error);
-      setGeolocationError("Erreur lors du recalcul de l'itinéraire");
-    }
   };
 
   const handleExitVillage = async () => {
@@ -222,7 +186,7 @@ function App() {
         updateRecalculationState(userLocation.latitude, userLocation.longitude);
       } catch (error) {
         console.error("Erreur création route sortie:", error);
-        setGeolocationError("Erreur lors du calcul de l'itinéraire de sortie");
+        // Error logged to console only - not shown to user
       }
     }
   };
@@ -250,7 +214,7 @@ function App() {
 
             if (shouldRecalc) {
               console.log(
-                "🔄 Smart recalculation triggered - user is off route"
+                "🔄 Automatic recalculation triggered - user is off route"
               );
               createRoute(
                 newLocation.latitude,
@@ -323,7 +287,7 @@ function App() {
         },
         (error) => {
           console.error("Erreur de suivi GPS:", error);
-          setGeolocationError("Erreur de suivi GPS: " + error.message);
+          // Error logged to console only - not shown to user
         },
         {
           enableHighAccuracy: true,
@@ -456,9 +420,10 @@ function App() {
       // Activer la boussole
       const granted = await requestDeviceOrientationPermission();
       if (!granted) {
-        setGeolocationError(
+        console.warn(
           "Permission d'orientation refusée. La boussole ne fonctionnera pas."
         );
+        // Error logged to console only - not shown to user
       }
     } else {
       // Désactiver la boussole
@@ -572,7 +537,7 @@ function App() {
       });
     } catch (error) {
       console.error("Erreur lors du chargement des blocs:", error);
-      setGeolocationError("Erreur d'affichage des blocs");
+      // Error logged to console only - not shown to user
     }
 
     return () => {
@@ -602,11 +567,13 @@ function App() {
           initialViewState={initialViewState}
           mapStyle={mapStyle}
           onLoad={() => setIsMapReady(true)}
-          onError={(e) =>
-            setGeolocationError(
-              `Erreur de carte: ${e.error.message || "Erreur inconnue"}`
-            )
-          }
+          onError={(e) => {
+            console.error(
+              "Erreur de carte:",
+              e.error.message || "Erreur inconnue"
+            );
+            // Error logged to console only - not shown to user
+          }}
           // Assurer que les interactions tactiles restent fonctionnelles
           interactiveLayerIds={
             navigationState === "navigating" ? [] : undefined
@@ -742,26 +709,6 @@ function App() {
             </div>
           )}
 
-          {/* Bouton de recalcul manuel */}
-          {navigationState === "navigating" && (
-            <div className="manual-recalc-control">
-              <button
-                onClick={handleManualRecalculation}
-                className="manual-recalc-button"
-                title="Recalculer l'itinéraire"
-              >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
-                </svg>
-              </button>
-            </div>
-          )}
-
           {/* Affichage de l'itinéraire restant */}
           {route && (
             <Source id="route" type="geojson" data={route}>
@@ -874,30 +821,8 @@ function App() {
           />
         )}
 
-        {/* Indicateur de déviation de route */}
-        {navigationState === "navigating" && userLocation && route && (
-          <OffRouteIndicator
-            userLocation={userLocation}
-            route={route}
-            onRecalculateRequest={handleManualRecalculation}
-          />
-        )}
-
-        {/* Messages d'erreur */}
-        {(geolocationError || blocksError) && (
-          <div className="error-notification">
-            <p>{geolocationError || blocksError}</p>
-            <button
-              onClick={() => {
-                if (geolocationError) setGeolocationError(null);
-                if (blocksError) setError(null);
-              }}
-              className="error-notification-button"
-            >
-              Fermer
-            </button>
-          </div>
-        )}
+        {/* Messages d'erreur - Hidden from users */}
+        {/* Error messages are logged to console only */}
       </main>
 
       {/* Modales */}
