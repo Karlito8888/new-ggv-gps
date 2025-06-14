@@ -6,6 +6,11 @@ export const VILLAGE_EXIT_COORDS = [120.951863, 14.35098];
 // Minimum distance to consider arrival (in meters)
 export const ARRIVAL_THRESHOLD = 10;
 
+// Route deviation and recalculation thresholds
+export const ROUTE_DEVIATION_THRESHOLD = 25; // meters
+export const MIN_RECALCULATION_INTERVAL = 10000; // 10 seconds
+export const MIN_MOVEMENT_THRESHOLD = 5; // meters
+
 // Configuration constants
 const ROUTING_CONFIG = {
   DIRECTIONS_OPTIONS: {
@@ -24,6 +29,10 @@ const ROUTING_CONFIG = {
 
 // Initialize MapLibre Directions
 let directions = null;
+
+// Route recalculation state
+let lastRecalculationTime = 0;
+let lastRecalculationPosition = null;
 
 export function initMapLibreDirections(map) {
   directions = new MapLibreGlDirections(map, {
@@ -56,6 +65,165 @@ export function calculateDistance(lat1, lon1, lat2, lon2) {
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+}
+
+// Calculate the shortest distance from a point to a line segment
+export function pointToLineDistance(
+  pointLat,
+  pointLon,
+  line1Lat,
+  line1Lon,
+  line2Lat,
+  line2Lon
+) {
+  const A = pointLat - line1Lat;
+  const B = pointLon - line1Lon;
+  const C = line2Lat - line1Lat;
+  const D = line2Lon - line1Lon;
+
+  const dot = A * C + B * D;
+  const lenSq = C * C + D * D;
+
+  if (lenSq === 0) {
+    // Line segment is actually a point
+    return calculateDistance(pointLat, pointLon, line1Lat, line1Lon);
+  }
+
+  let param = dot / lenSq;
+
+  let xx, yy;
+  if (param < 0) {
+    xx = line1Lat;
+    yy = line1Lon;
+  } else if (param > 1) {
+    xx = line2Lat;
+    yy = line2Lon;
+  } else {
+    xx = line1Lat + param * C;
+    yy = line1Lon + param * D;
+  }
+
+  return calculateDistance(pointLat, pointLon, xx, yy);
+}
+
+// Check if user has deviated from the route
+export function isUserOffRoute(
+  userLat,
+  userLon,
+  routeGeometry,
+  threshold = ROUTE_DEVIATION_THRESHOLD
+) {
+  if (
+    !routeGeometry ||
+    !routeGeometry.coordinates ||
+    routeGeometry.coordinates.length < 2
+  ) {
+    return false; // Can't determine if off-route without valid route
+  }
+
+  const coordinates = routeGeometry.coordinates;
+  let minDistance = Infinity;
+
+  // Check distance to each segment of the route
+  for (let i = 0; i < coordinates.length - 1; i++) {
+    const [lon1, lat1] = coordinates[i];
+    const [lon2, lat2] = coordinates[i + 1];
+
+    const distance = pointToLineDistance(
+      userLat,
+      userLon,
+      lat1,
+      lon1,
+      lat2,
+      lon2
+    );
+    minDistance = Math.min(minDistance, distance);
+
+    // Early exit if we're close enough to the route
+    if (minDistance <= threshold) {
+      return false;
+    }
+  }
+
+  console.log(
+    `🛣️ User distance from route: ${minDistance.toFixed(
+      1
+    )}m (threshold: ${threshold}m)`
+  );
+  return minDistance > threshold;
+}
+
+// Check if route should be recalculated based on various conditions
+export function shouldRecalculateRoute(
+  userLat,
+  userLon,
+  currentRoute,
+  forceRecalculation = false
+) {
+  const now = Date.now();
+
+  // Force recalculation if requested
+  if (forceRecalculation) {
+    console.log("🔄 Force recalculation requested");
+    return true;
+  }
+
+  // Don't recalculate too frequently
+  if (now - lastRecalculationTime < MIN_RECALCULATION_INTERVAL) {
+    console.log(
+      `⏱️ Recalculation cooldown active (${(
+        (now - lastRecalculationTime) /
+        1000
+      ).toFixed(1)}s ago)`
+    );
+    return false;
+  }
+
+  // Check if user has moved significantly since last recalculation
+  if (lastRecalculationPosition) {
+    const movementDistance = calculateDistance(
+      userLat,
+      userLon,
+      lastRecalculationPosition.lat,
+      lastRecalculationPosition.lon
+    );
+
+    if (movementDistance < MIN_MOVEMENT_THRESHOLD) {
+      console.log(
+        `📍 Insufficient movement for recalculation (${movementDistance.toFixed(
+          1
+        )}m)`
+      );
+      return false;
+    }
+  }
+
+  // Check if user is off the current route
+  if (currentRoute && currentRoute.features && currentRoute.features[0]) {
+    const routeGeometry = currentRoute.features[0].geometry;
+    const isOffRoute = isUserOffRoute(userLat, userLon, routeGeometry);
+
+    if (isOffRoute) {
+      console.log("🚨 User is off-route, recalculation needed");
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// Update recalculation state
+export function updateRecalculationState(userLat, userLon) {
+  lastRecalculationTime = Date.now();
+  lastRecalculationPosition = { lat: userLat, lon: userLon };
+  console.log("📊 Recalculation state updated");
+}
+
+// Reset recalculation state (useful when starting new navigation)
+export function resetRecalculationState() {
+  lastRecalculationTime = 0;
+  lastRecalculationPosition = null;
+  console.log("🔄 Recalculation state reset");
 }
 
 // Calculate direction angle (bearing) between two points
@@ -121,7 +289,6 @@ export function createDirectRoute(startLat, startLon, endLat, endLon) {
     },
   };
 }
-
 
 // Try OSRM routing service
 async function tryOSRM(startLat, startLon, endLat, endLon) {
@@ -211,12 +378,7 @@ async function tryORS(startLat, startLon, endLat, endLon) {
 }
 
 // Main route creation function with fallback logic
-export async function createRoute(
-  startLat,
-  startLon,
-  endLat,
-  endLon
-) {
+export async function createRoute(startLat, startLon, endLat, endLon) {
   console.log("🚀 Création de route avec fallback en cascade");
 
   const services = [
@@ -316,4 +478,279 @@ export function cleanupDirections() {
     directions.remove();
     directions = null;
   }
+}
+
+// Find the closest point on the route to the user's current position
+export function findClosestPointOnRoute(userLat, userLon, routeGeometry) {
+  if (
+    !routeGeometry ||
+    !routeGeometry.coordinates ||
+    routeGeometry.coordinates.length < 2
+  ) {
+    return null;
+  }
+
+  const coordinates = routeGeometry.coordinates;
+  let closestPoint = null;
+  let minDistance = Infinity;
+  let segmentIndex = 0;
+  let positionOnSegment = 0;
+
+  // Check each segment of the route
+  for (let i = 0; i < coordinates.length - 1; i++) {
+    const [lon1, lat1] = coordinates[i];
+    const [lon2, lat2] = coordinates[i + 1];
+
+    // Calculate closest point on this segment
+    const A = userLat - lat1;
+    const B = userLon - lon1;
+    const C = lat2 - lat1;
+    const D = lon2 - lon1;
+
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+
+    let param = -1;
+    if (lenSq !== 0) {
+      param = dot / lenSq;
+    }
+
+    let xx, yy;
+    if (param < 0) {
+      xx = lat1;
+      yy = lon1;
+      param = 0;
+    } else if (param > 1) {
+      xx = lat2;
+      yy = lon2;
+      param = 1;
+    } else {
+      xx = lat1 + param * C;
+      yy = lon1 + param * D;
+    }
+
+    const distance = calculateDistance(userLat, userLon, xx, yy);
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestPoint = [yy, xx]; // [lon, lat]
+      segmentIndex = i;
+      positionOnSegment = param;
+    }
+  }
+
+  return {
+    point: closestPoint,
+    segmentIndex,
+    positionOnSegment,
+    distance: minDistance,
+  };
+}
+
+// Create a route with only the remaining portion (from user position to destination)
+export function createRemainingRoute(userLat, userLon, originalRoute) {
+  if (!originalRoute || !originalRoute.features || !originalRoute.features[0]) {
+    return originalRoute;
+  }
+
+  const routeFeature = originalRoute.features[0];
+  const routeGeometry = routeFeature.geometry;
+
+  if (
+    !routeGeometry ||
+    !routeGeometry.coordinates ||
+    routeGeometry.coordinates.length < 2
+  ) {
+    return originalRoute;
+  }
+
+  const closestPointInfo = findClosestPointOnRoute(
+    userLat,
+    userLon,
+    routeGeometry
+  );
+
+  if (!closestPointInfo) {
+    return originalRoute;
+  }
+
+  const {
+    point: closestPoint,
+    segmentIndex,
+    positionOnSegment,
+  } = closestPointInfo;
+  const coordinates = routeGeometry.coordinates;
+
+  // Create new coordinates array starting from the closest point
+  const remainingCoordinates = [];
+
+  // Add the closest point as the starting point
+  remainingCoordinates.push(closestPoint);
+
+  // If we're not at the end of the current segment, add the end of current segment
+  if (positionOnSegment < 1 && segmentIndex < coordinates.length - 1) {
+    remainingCoordinates.push(coordinates[segmentIndex + 1]);
+  }
+
+  // Add all remaining segments
+  for (let i = segmentIndex + 2; i < coordinates.length; i++) {
+    remainingCoordinates.push(coordinates[i]);
+  }
+
+  // If the remaining route is too short, keep the original
+  if (remainingCoordinates.length < 2) {
+    return originalRoute;
+  }
+
+  // Calculate remaining distance
+  let remainingDistance = 0;
+  for (let i = 0; i < remainingCoordinates.length - 1; i++) {
+    const [lon1, lat1] = remainingCoordinates[i];
+    const [lon2, lat2] = remainingCoordinates[i + 1];
+    remainingDistance += calculateDistance(lat1, lon1, lat2, lon2);
+  }
+
+  // Create new route feature with remaining coordinates
+  const remainingRoute = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        geometry: {
+          type: "LineString",
+          coordinates: remainingCoordinates,
+        },
+        properties: {
+          ...routeFeature.properties,
+          distance: remainingDistance,
+          isRemainingRoute: true,
+          originalDistance:
+            routeFeature.properties?.distance || remainingDistance,
+        },
+      },
+    ],
+  };
+
+  console.log(
+    `🛣️ Route updated: ${formatDistance(
+      remainingDistance
+    )} remaining (was ${formatDistance(
+      routeFeature.properties?.distance || 0
+    )})`
+  );
+
+  return remainingRoute;
+}
+
+// Check if the route should be updated (user has progressed significantly)
+export function shouldUpdateRemainingRoute(
+  userLat,
+  userLon,
+  currentRoute,
+  lastUpdatePosition,
+  threshold = 15
+) {
+  if (!lastUpdatePosition) {
+    return true; // First update
+  }
+
+  const movementDistance = calculateDistance(
+    userLat,
+    userLon,
+    lastUpdatePosition.lat,
+    lastUpdatePosition.lon
+  );
+
+  // Update if user has moved significantly forward
+  if (movementDistance >= threshold) {
+    console.log(
+      `📍 User moved ${formatDistance(
+        movementDistance
+      )}, updating remaining route`
+    );
+    return true;
+  }
+
+  return false;
+}
+
+// Create a route showing the traveled portion (from start to user position)
+export function createTraveledRoute(userLat, userLon, originalRoute) {
+  if (!originalRoute || !originalRoute.features || !originalRoute.features[0]) {
+    return null;
+  }
+
+  const routeFeature = originalRoute.features[0];
+  const routeGeometry = routeFeature.geometry;
+
+  if (
+    !routeGeometry ||
+    !routeGeometry.coordinates ||
+    routeGeometry.coordinates.length < 2
+  ) {
+    return null;
+  }
+
+  const closestPointInfo = findClosestPointOnRoute(
+    userLat,
+    userLon,
+    routeGeometry
+  );
+
+  if (!closestPointInfo) {
+    return null;
+  }
+
+  const {
+    point: closestPoint,
+    segmentIndex,
+    positionOnSegment,
+  } = closestPointInfo;
+  const coordinates = routeGeometry.coordinates;
+
+  // Create coordinates array from start to the closest point
+  const traveledCoordinates = [];
+
+  // Add all segments up to the current segment
+  for (let i = 0; i <= segmentIndex; i++) {
+    traveledCoordinates.push(coordinates[i]);
+  }
+
+  // Add the closest point as the end point (if not already at segment start)
+  if (positionOnSegment > 0) {
+    traveledCoordinates.push(closestPoint);
+  }
+
+  // Need at least 2 points for a line
+  if (traveledCoordinates.length < 2) {
+    return null;
+  }
+
+  // Calculate traveled distance
+  let traveledDistance = 0;
+  for (let i = 0; i < traveledCoordinates.length - 1; i++) {
+    const [lon1, lat1] = traveledCoordinates[i];
+    const [lon2, lat2] = traveledCoordinates[i + 1];
+    traveledDistance += calculateDistance(lat1, lon1, lat2, lon2);
+  }
+
+  // Create traveled route feature
+  const traveledRoute = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        geometry: {
+          type: "LineString",
+          coordinates: traveledCoordinates,
+        },
+        properties: {
+          distance: traveledDistance,
+          isTraveledRoute: true,
+        },
+      },
+    ],
+  };
+
+  return traveledRoute;
 }

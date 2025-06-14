@@ -17,10 +17,17 @@ import LocationPermissionModal from "./components/LocationPermissionModal";
 import WelcomeModal from "./components/WelcomeModal";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModal from "./components/ArrivalModal";
+import OffRouteIndicator from "./components/OffRouteIndicator";
 import {
   createRoute,
   initMapLibreDirections,
   cleanupDirections,
+  shouldRecalculateRoute,
+  updateRecalculationState,
+  resetRecalculationState,
+  createRemainingRoute,
+  shouldUpdateRemainingRoute,
+  createTraveledRoute,
   VILLAGE_EXIT_COORDS,
 } from "./lib/navigation";
 import { BsLayersHalf } from "react-icons/bs";
@@ -49,6 +56,9 @@ function App() {
   const [bearing, setBearing] = useState(0);
   const [isMapReady, setIsMapReady] = useState(false);
   const [route, setRoute] = useState(null);
+  const [originalRoute, setOriginalRoute] = useState(null); // Store the complete original route
+  const [traveledRoute, setTraveledRoute] = useState(null); // Store the traveled portion
+  const [lastRouteUpdatePosition, setLastRouteUpdatePosition] = useState(null); // Track last position when route was updated
   const [mapType, setMapType] = useState("osm"); // 'osm' ou 'satellite'
   const [orientationPermissionGranted, setOrientationPermissionGranted] =
     useState(false);
@@ -82,6 +92,9 @@ function App() {
     setDestination(dest);
     setNavigationState("navigating");
 
+    // Reset recalculation state for new navigation
+    resetRecalculationState();
+
     // Créer l'itinéraire si on a la position utilisateur
     if (userLocation) {
       try {
@@ -103,6 +116,14 @@ function App() {
 
         console.log("📍 Route créée:", routeData);
         setRoute(routeData);
+        setOriginalRoute(routeData); // Store the complete route
+        setLastRouteUpdatePosition({
+          lat: userLocation.latitude,
+          lon: userLocation.longitude,
+        });
+
+        // Update recalculation state after successful route creation
+        updateRecalculationState(userLocation.latitude, userLocation.longitude);
       } catch (error) {
         console.error("Erreur création route:", error);
         setGeolocationError("Erreur lors du calcul de l'itinéraire");
@@ -117,7 +138,46 @@ function App() {
   const handleNewDestination = () => {
     setDestination(null);
     setRoute(null);
+    setOriginalRoute(null);
+    setTraveledRoute(null);
+    setLastRouteUpdatePosition(null);
     setNavigationState("welcome");
+  };
+
+  const handleManualRecalculation = async () => {
+    if (!userLocation || !destination) return;
+
+    try {
+      console.log("🔄 Manual recalculation requested");
+      const routeResult = await createRoute(
+        userLocation.latitude,
+        userLocation.longitude,
+        destination.coordinates[1],
+        destination.coordinates[0]
+      );
+
+      // Assurer le format FeatureCollection pour MapLibre
+      const routeData = {
+        type: "FeatureCollection",
+        features:
+          routeResult.type === "Feature"
+            ? [routeResult]
+            : routeResult.features || [],
+      };
+
+      setRoute(routeData);
+      setOriginalRoute(routeData); // Update original route too
+      setLastRouteUpdatePosition({
+        lat: userLocation.latitude,
+        lon: userLocation.longitude,
+      });
+
+      // Update recalculation state after manual recalculation
+      updateRecalculationState(userLocation.latitude, userLocation.longitude);
+    } catch (error) {
+      console.error("Erreur recalcul manuel:", error);
+      setGeolocationError("Erreur lors du recalcul de l'itinéraire");
+    }
   };
 
   const handleExitVillage = async () => {
@@ -129,6 +189,9 @@ function App() {
     };
     setDestination(exitDestination);
     setNavigationState("navigating");
+
+    // Reset recalculation state for exit navigation
+    resetRecalculationState();
 
     if (userLocation) {
       try {
@@ -149,6 +212,14 @@ function App() {
         };
 
         setRoute(routeData);
+        setOriginalRoute(routeData); // Store the complete route for exit
+        setLastRouteUpdatePosition({
+          lat: userLocation.latitude,
+          lon: userLocation.longitude,
+        });
+
+        // Update recalculation state after successful route creation
+        updateRecalculationState(userLocation.latitude, userLocation.longitude);
       } catch (error) {
         console.error("Erreur création route sortie:", error);
         setGeolocationError("Erreur lors du calcul de l'itinéraire de sortie");
@@ -168,29 +239,86 @@ function App() {
           };
           setUserLocation(newLocation);
 
-          // Mettre à jour l'itinéraire si on a une destination
-          if (destination) {
-            createRoute(
+          // Smart route management if we have a destination
+          if (destination && originalRoute) {
+            // Check if we need to recalculate the entire route (user is off-route)
+            const shouldRecalc = shouldRecalculateRoute(
               newLocation.latitude,
               newLocation.longitude,
-              destination.coordinates[1],
-              destination.coordinates[0]
-            )
-              .then((routeResult) => {
-                // Assurer le format FeatureCollection pour MapLibre
-                const routeData = {
-                  type: "FeatureCollection",
-                  features:
-                    routeResult.type === "Feature"
-                      ? [routeResult]
-                      : routeResult.features || [],
-                };
+              route
+            );
 
-                setRoute(routeData);
-              })
-              .catch((error) => {
-                console.error("Erreur mise à jour route:", error);
-              });
+            if (shouldRecalc) {
+              console.log(
+                "🔄 Smart recalculation triggered - user is off route"
+              );
+              createRoute(
+                newLocation.latitude,
+                newLocation.longitude,
+                destination.coordinates[1],
+                destination.coordinates[0]
+              )
+                .then((routeResult) => {
+                  // Assurer le format FeatureCollection pour MapLibre
+                  const routeData = {
+                    type: "FeatureCollection",
+                    features:
+                      routeResult.type === "Feature"
+                        ? [routeResult]
+                        : routeResult.features || [],
+                  };
+
+                  setRoute(routeData);
+                  setOriginalRoute(routeData); // Update original route
+                  setLastRouteUpdatePosition({
+                    lat: newLocation.latitude,
+                    lon: newLocation.longitude,
+                  });
+
+                  // Update recalculation state after successful recalculation
+                  updateRecalculationState(
+                    newLocation.latitude,
+                    newLocation.longitude
+                  );
+                })
+                .catch((error) => {
+                  console.error("Erreur mise à jour route:", error);
+                });
+            } else {
+              // Check if we should update the remaining route (progressive route trimming)
+              const shouldUpdateRemaining = shouldUpdateRemainingRoute(
+                newLocation.latitude,
+                newLocation.longitude,
+                originalRoute,
+                lastRouteUpdatePosition
+              );
+
+              if (shouldUpdateRemaining) {
+                console.log(
+                  "✂️ Updating remaining route - trimming traveled portion"
+                );
+                const remainingRoute = createRemainingRoute(
+                  newLocation.latitude,
+                  newLocation.longitude,
+                  originalRoute
+                );
+
+                const traveledPortion = createTraveledRoute(
+                  newLocation.latitude,
+                  newLocation.longitude,
+                  originalRoute
+                );
+
+                setRoute(remainingRoute);
+                setTraveledRoute(traveledPortion);
+                setLastRouteUpdatePosition({
+                  lat: newLocation.latitude,
+                  lon: newLocation.longitude,
+                });
+              } else {
+                console.log("📍 Position updated, no route changes needed");
+              }
+            }
           }
         },
         (error) => {
@@ -607,13 +735,34 @@ function App() {
               <button
                 onClick={handleNewDestination}
                 className="new-destination-button"
+                title="Nouvelle destination"
               >
                 <img src={stopLogo} alt="Nouvelle destination" />
               </button>
             </div>
           )}
 
-          {/* Affichage de l'itinéraire */}
+          {/* Bouton de recalcul manuel */}
+          {navigationState === "navigating" && (
+            <div className="manual-recalc-control">
+              <button
+                onClick={handleManualRecalculation}
+                className="manual-recalc-button"
+                title="Recalculer l'itinéraire"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Affichage de l'itinéraire restant */}
           {route && (
             <Source id="route" type="geojson" data={route}>
               <Layer
@@ -623,6 +772,22 @@ function App() {
                   "line-color": "#3b82f6",
                   "line-width": 4,
                   "line-opacity": 0.8,
+                }}
+              />
+            </Source>
+          )}
+
+          {/* Affichage de la partie parcourue */}
+          {traveledRoute && (
+            <Source id="traveled-route" type="geojson" data={traveledRoute}>
+              <Layer
+                id="traveled-route-line"
+                type="line"
+                paint={{
+                  "line-color": "#10b981",
+                  "line-width": 3,
+                  "line-opacity": 0.6,
+                  "line-dasharray": [2, 2],
                 }}
               />
             </Source>
@@ -706,6 +871,15 @@ function App() {
             deviceBearing={bearing}
             onArrival={handleArrival}
             isOrientationActive={isOrientationActive}
+          />
+        )}
+
+        {/* Indicateur de déviation de route */}
+        {navigationState === "navigating" && userLocation && route && (
+          <OffRouteIndicator
+            userLocation={userLocation}
+            route={route}
+            onRecalculateRequest={handleManualRecalculation}
           />
         )}
 
