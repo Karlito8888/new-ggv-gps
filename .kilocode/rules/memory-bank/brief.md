@@ -8,7 +8,11 @@ Créer une application web progressive qui guide les visiteurs depuis leur posit
 
 ## Contraintes techniques
 - Utiliser uniquement des outils 100% libres et open source
-- Préférer MapLibre GL JS et OpenLayers pour les cartes
+- Préférer MapLibre GL JS (uniquement) et OpenLayers pour les cartes
 - Pas de TypeScript
 - Utiliser Tailwind uniquement avec DaisyUI et shadcn/ui
 - Interface en anglais
+
+Trois mots d'ordre : - DRY
+                     - KISS
+                     - Minimaliste
