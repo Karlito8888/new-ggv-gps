@@ -21,6 +21,7 @@ import DebugConsole from "./components/DebugConsole";
 import {
   createRoute,
   initMapLibreDirections,
+  updateNavigationRoute,
   cleanupDirections,
   shouldRecalculateRoute,
   updateRecalculationState,
@@ -53,18 +54,12 @@ function App() {
   const [navigationState, setNavigationState] = useState("permission"); // permission, welcome, navigating, arrived
   const [userLocation, setUserLocation] = useState(null);
   const [destination, setDestination] = useState(null);
-  const [deviceBearing, setDeviceBearing] = useState(0); // Renommé pour clarifier
   const [isMapReady, setIsMapReady] = useState(false);
   const [route, setRoute] = useState(null);
   const [originalRoute, setOriginalRoute] = useState(null); // Store the complete original route
   const [traveledRoute, setTraveledRoute] = useState(null); // Store the traveled portion
   const [lastRouteUpdatePosition, setLastRouteUpdatePosition] = useState(null); // Track last position when route was updated
   const [mapType, setMapType] = useState("osm"); // 'osm' ou 'satellite'
-  const [orientationPermissionGranted, setOrientationPermissionGranted] =
-    useState(false);
-  const [isOrientationActive, setIsOrientationActive] = useState(false);
-  const [compassCalibration, setCompassCalibration] = useState(0);
-  const [needsCalibration, setNeedsCalibration] = useState(false);
 
   // Coordonnées par défaut (Garden Grove Village)
   const DEFAULT_COORDS = {
@@ -97,9 +92,19 @@ function App() {
     // Reset recalculation state for new navigation
     resetRecalculationState();
 
-    // Créer l'itinéraire si on a la position utilisateur
+    // Créer l'itinéraire avec MapLibre native bearings
     if (userLocation) {
       try {
+        // Use MapLibre native route creation with bearings
+        updateNavigationRoute(
+          userLocation.latitude,
+          userLocation.longitude,
+          dest.coordinates[1],
+          dest.coordinates[0],
+          0 // Device bearing will be handled by BearingsControl
+        );
+
+        // Also create traditional route for display
         const routeResult = await createRoute(
           userLocation.latitude,
           userLocation.longitude,
@@ -116,7 +121,6 @@ function App() {
               : routeResult.features || [],
         };
 
-        // console.log("📍 Route créée:", routeData);
         setRoute(routeData);
         setOriginalRoute(routeData); // Store the complete route
         setLastRouteUpdatePosition({
@@ -126,6 +130,8 @@ function App() {
 
         // Update recalculation state after successful route creation
         updateRecalculationState(userLocation.latitude, userLocation.longitude);
+        
+        console.log("🎯 Navigation créée avec MapLibre bearings natifs");
       } catch (error) {
         console.error("Erreur création route:", error);
         // Error logged to console only - not shown to user
@@ -161,6 +167,16 @@ function App() {
 
     if (userLocation) {
       try {
+        // Use MapLibre native route creation with bearings
+        updateNavigationRoute(
+          userLocation.latitude,
+          userLocation.longitude,
+          VILLAGE_EXIT_COORDS[1],
+          VILLAGE_EXIT_COORDS[0],
+          0 // Device bearing will be handled by BearingsControl
+        );
+
+        // Also create traditional route for display
         const routeResult = await createRoute(
           userLocation.latitude,
           userLocation.longitude,
@@ -186,6 +202,8 @@ function App() {
 
         // Update recalculation state after successful route creation
         updateRecalculationState(userLocation.latitude, userLocation.longitude);
+        
+        console.log("🚪 Route de sortie créée avec MapLibre bearings natifs");
       } catch (error) {
         console.error("Erreur création route sortie:", error);
         // Error logged to console only - not shown to user
@@ -318,12 +336,11 @@ function App() {
       latitude: userLocation?.latitude || DEFAULT_COORDS.latitude,
       longitude: userLocation?.longitude || DEFAULT_COORDS.longitude,
       zoom: navigationState === "navigating" ? 18 : 16.5,
-      bearing: deviceBearing,
+      bearing: 0, // MapLibre BearingsControl will handle bearing
       pitch: navigationState === "navigating" ? 60 : 45,
     }),
     [
       userLocation,
-      deviceBearing,
       navigationState,
       DEFAULT_COORDS.latitude,
       DEFAULT_COORDS.longitude,
@@ -389,186 +406,7 @@ function App() {
     [mapType]
   );
 
-  // Fonction pour demander la permission d'orientation du device
-  const requestDeviceOrientationPermission = async () => {
-    try {
-      if (typeof DeviceOrientationEvent.requestPermission === "function") {
-        const permissionState =
-          await DeviceOrientationEvent.requestPermission();
-        if (permissionState === "granted") {
-          setOrientationPermissionGranted(true);
-          setIsOrientationActive(true);
-          console.log(
-            "🧭 Permission d'orientation accordée - True North disponible"
-          );
-          return true;
-        } else {
-          console.warn("Permission pour l'orientation refusée");
-          return false;
-        }
-      } else {
-        // Pour les navigateurs qui ne nécessitent pas de permission explicite
-        setOrientationPermissionGranted(true);
-        setIsOrientationActive(true);
-
-        // Vérifier si deviceorientationabsolute est disponible
-        if ("ondeviceorientationabsolute" in window) {
-          console.log(
-            "🧭 DeviceOrientationAbsolute disponible - True North OK"
-          );
-        } else {
-          console.warn(
-            "⚠️ DeviceOrientationAbsolute non disponible - orientation relative"
-          );
-        }
-
-        return true;
-      }
-    } catch (err) {
-      console.error("Erreur demande permission orientation:", err);
-      return false;
-    }
-  };
-
-  // Fonction pour basculer l'état de la boussole
-  const toggleCompass = async () => {
-    if (!isOrientationActive) {
-      // Activer la boussole
-      const granted = await requestDeviceOrientationPermission();
-      if (!granted) {
-        console.warn(
-          "Permission d'orientation refusée. La boussole ne fonctionnera pas."
-        );
-        // Error logged to console only - not shown to user
-      }
-    } else {
-      // Désactiver la boussole
-      setIsOrientationActive(false);
-      setDeviceBearing(0); // Remettre à zéro l'orientation
-      setCompassCalibration(0); // Reset calibration
-      setNeedsCalibration(false);
-    }
-  };
-
-  // Fonction de calibration manuelle de la boussole
-  const calibrateCompass = () => {
-    if (deviceBearing !== null) {
-      // L'utilisateur pointe vers le nord et appuie sur "Calibrer"
-      const calibrationOffset = -deviceBearing;
-      setCompassCalibration(calibrationOffset);
-      setNeedsCalibration(false);
-      console.log(
-        "🧭 Boussole calibrée manuellement, offset:",
-        calibrationOffset
-      );
-
-      // Feedback visuel temporaire
-      const button = document.querySelector(".calibrate-button");
-      if (button) {
-        button.textContent = "✅ Calibré !";
-        setTimeout(() => {
-          button.textContent = "🧭 Calibrer Nord";
-        }, 2000);
-      }
-    }
-  };
-
-  // Gestion de l'orientation du device pour navigation GPS
-  useEffect(() => {
-    const handleOrientation = (event) => {
-      if (
-        event.alpha !== null &&
-        isOrientationActive &&
-        orientationPermissionGranted
-      ) {
-        let trueNorthBearing = 0;
-
-        // 🎯 SOLUTION 1: iOS Safari - webkitCompassHeading donne le vrai nord
-        if (event.webkitCompassHeading !== undefined) {
-          trueNorthBearing = event.webkitCompassHeading;
-          console.log("🧭 iOS Compass Heading (True North):", trueNorthBearing);
-        }
-        // 🎯 SOLUTION 2: Android/autres - deviceorientationabsolute avec event.absolute
-        else if (event.absolute === true) {
-          trueNorthBearing = 360 - event.alpha;
-          console.log(
-            "🧭 Absolute Orientation (True North):",
-            trueNorthBearing
-          );
-        }
-        // ⚠️ FALLBACK: Orientation relative (pas le vrai nord)
-        else {
-          trueNorthBearing = 360 - event.alpha;
-          setNeedsCalibration(true);
-          console.warn("⚠️ Using relative orientation - not true north!");
-        }
-
-        // Appliquer la calibration manuelle si nécessaire
-        const calibratedBearing =
-          (trueNorthBearing + compassCalibration + 360) % 360;
-
-        // Debug logs pour validation
-        console.log("🔍 Debug Compass:", {
-          alpha: event.alpha,
-          absolute: event.absolute,
-          webkitCompassHeading: event.webkitCompassHeading,
-          calculatedBearing: trueNorthBearing,
-          calibratedBearing: calibratedBearing,
-          calibrationOffset: compassCalibration,
-        });
-
-        setDeviceBearing(calibratedBearing);
-
-        // Mise à jour de l'orientation de la carte avec moins de fréquence pour éviter les conflits
-        if (mapRef.current && isMapReady && navigationState === "navigating") {
-          mapRef.current.easeTo({
-            bearing: calibratedBearing,
-            duration: 500, // Augmenté pour plus de fluidité
-          });
-        }
-      }
-    };
-
-    if (
-      typeof window !== "undefined" &&
-      window.DeviceOrientationEvent &&
-      isOrientationActive &&
-      orientationPermissionGranted
-    ) {
-      // 🎯 PRIORITÉ 1: Essayer deviceorientationabsolute (vrai nord)
-      if ("ondeviceorientationabsolute" in window) {
-        console.log("🧭 Using deviceorientationabsolute for true north");
-        window.addEventListener(
-          "deviceorientationabsolute",
-          handleOrientation,
-          {
-            passive: true,
-          }
-        );
-      }
-      // 🎯 PRIORITÉ 2: Fallback vers deviceorientation standard
-      else {
-        console.log("🧭 Using deviceorientation (may be relative)");
-        window.addEventListener("deviceorientation", handleOrientation, {
-          passive: true,
-        });
-      }
-    }
-
-    return () => {
-      window.removeEventListener(
-        "deviceorientationabsolute",
-        handleOrientation
-      );
-      window.removeEventListener("deviceorientation", handleOrientation);
-    };
-  }, [
-    isMapReady,
-    navigationState,
-    orientationPermissionGranted,
-    isOrientationActive,
-    compassCalibration,
-  ]);
+  // MapLibre BearingsControl handles all compass functionality natively
 
   // Centrer la carte sur l'utilisateur pendant la navigation
   useEffect(() => {
@@ -684,12 +522,7 @@ function App() {
           scrollZoom={true}
           touchPitch={true}
         >
-          {/* Contrôles de carte - toujours disponibles */}
-          <NavigationControl
-            showCompass={navigationState !== "navigating"}
-            showZoom
-            position="bottom-right"
-          />
+          {/* Contrôles de carte natifs gérés par MapLibre */}
 
           {/* Bouton de recentrage personnalisé */}
           <div className="geolocate-control-custom">
@@ -731,87 +564,7 @@ function App() {
             </button>
           </div>
 
-          {/* Bouton boussole pour l'orientation */}
-          <div className="compass-control">
-            <button
-              onClick={toggleCompass}
-              className={`compass-button ${
-                isOrientationActive ? "active" : ""
-              }`}
-              title={
-                isOrientationActive
-                  ? "Désactiver la boussole"
-                  : "Activer la boussole"
-              }
-            >
-              <div className="compass-face-mini">
-                {/* Compass ring with cardinal points */}
-                <div
-                  className="compass-ring-mini"
-                  style={{
-                    transform: isOrientationActive
-                      ? `rotate(${-deviceBearing}deg)`
-                      : "rotate(0deg)",
-                    transition: "transform 0.3s ease",
-                  }}
-                >
-                  {/* Cardinal points */}
-                  <div className="cardinal-point-mini cardinal-north-mini">
-                    N
-                  </div>
-                  <div className="cardinal-point-mini cardinal-east-mini">
-                    E
-                  </div>
-                  <div className="cardinal-point-mini cardinal-south-mini">
-                    S
-                  </div>
-                  <div className="cardinal-point-mini cardinal-west-mini">
-                    W
-                  </div>
-                </div>
-
-                {/* North indicator (always points up) */}
-                <div className="north-indicator">
-                  <div className="north-arrow"></div>
-                </div>
-
-                {/* Center dot */}
-                <div className="compass-center-mini">
-                  <div className="center-dot-mini"></div>
-                </div>
-
-                {/* Status indicator */}
-                {isOrientationActive && (
-                  <div className="compass-status-dot"></div>
-                )}
-
-                {/* Calibration needed indicator */}
-                {needsCalibration && isOrientationActive && (
-                  <div className="compass-calibration-needed">⚠️</div>
-                )}
-
-                {/* Inactive overlay */}
-                {!isOrientationActive && (
-                  <div className="compass-inactive-overlay-mini">
-                    <div className="compass-inactive-icon">⊕</div>
-                  </div>
-                )}
-              </div>
-            </button>
-          </div>
-
-          {/* Bouton de calibration de la boussole */}
-          {needsCalibration && isOrientationActive && (
-            <div className="compass-calibration-control">
-              <button
-                onClick={calibrateCompass}
-                className="calibrate-button"
-                title="Pointez vers le nord géographique et appuyez pour calibrer"
-              >
-                🧭 Calibrer Nord
-              </button>
-            </div>
-          )}
+          {/* MapLibre BearingsControl provides native compass functionality */}
 
           {/* Bouton nouvelle destination pendant la navigation */}
           {navigationState === "navigating" && (
@@ -879,10 +632,7 @@ function App() {
               latitude={userLocation.latitude}
               anchor="center"
             >
-              <div
-                className="user-location-marker"
-                style={{ transform: `rotate(${deviceBearing}deg)` }}
-              >
+              <div className="user-location-marker">
                 <div className="user-location-pin">
                   <div className="user-location-arrow"></div>
                 </div>
@@ -932,9 +682,9 @@ function App() {
           <NavigationDisplay
             userLocation={userLocation}
             destination={destination}
-            deviceBearing={deviceBearing}
+            deviceBearing={0} // MapLibre BearingsControl handles bearing
             onArrival={handleArrival}
-            isOrientationActive={isOrientationActive}
+            isOrientationActive={false} // MapLibre BearingsControl handles orientation
           />
         )}
 

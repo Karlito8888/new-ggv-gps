@@ -9,8 +9,6 @@ import * as routeServices from './routeServices.js';
 import * as routeManagement from './routeManagement.js';
 import * as navigationInstructions from './navigationInstructions.js';
 import * as mapLibreIntegration from './mapLibreIntegration.js';
-import * as bearingManager from './bearingManager.js';
-import * as bearingsIntegration from './bearingsIntegration.js';
 
 // Re-export constants
 export {
@@ -59,31 +57,15 @@ export {
   getNavigationInstructions,
 } from './navigationInstructions.js';
 
-// Re-export MapLibre integration
+// Re-export modern MapLibre integration with native bearings
 export {
   initMapLibreDirections,
+  updateNavigationRoute,
+  syncDeviceBearing,
   cleanupDirections,
   getDirections,
+  getBearingsControl,
 } from './mapLibreIntegration.js';
-
-// Re-export bearing management
-export {
-  bearingManager,
-  BearingManager,
-  BEARING_TYPES,
-  updateDeviceBearing,
-  updateDestinationBearing,
-  getDeviceBearing,
-  getDestinationBearing,
-  getRelativeBearing,
-} from './bearingManager.js';
-
-// Re-export bearings integration
-export {
-  BEARINGS_CONTROL_CONFIG,
-  initBearingsControl,
-  syncDeviceBearingWithWaypoints,
-} from './bearingsIntegration.js';
 
 // Legacy compatibility - keep the same API for existing components
 // This ensures that existing imports continue to work without changes
@@ -113,10 +95,4 @@ export default {
   
   // MapLibre Integration
   ...mapLibreIntegration,
-  
-  // Bearing Management
-  ...bearingManager,
-  
-  // Bearings Integration
-  ...bearingsIntegration,
 };

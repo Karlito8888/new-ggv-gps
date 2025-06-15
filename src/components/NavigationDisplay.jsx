@@ -5,9 +5,7 @@ import "./NavigationDisplay.css";
 const NavigationDisplay = ({
   userLocation,
   destination,
-  deviceBearing,
   onArrival,
-  isOrientationActive = false,
 }) => {
   const [instructions, setInstructions] = useState(null);
   const [hasTriggeredArrival, setHasTriggeredArrival] = useState(false);
@@ -19,8 +17,7 @@ const NavigationDisplay = ({
       userLocation.latitude,
       userLocation.longitude,
       destination.coordinates[1],
-      destination.coordinates[0],
-      isOrientationActive ? deviceBearing : 0
+      destination.coordinates[0]
     );
 
     setInstructions(navInstructions);
@@ -40,10 +37,8 @@ const NavigationDisplay = ({
   }, [
     userLocation,
     destination,
-    deviceBearing,
     onArrival,
     hasTriggeredArrival,
-    isOrientationActive,
   ]);
 
   if (!instructions || !destination) return null;
@@ -78,63 +73,6 @@ const NavigationDisplay = ({
           )}
         </div>
       </div>
-
-      {/* Direction indicator with compass */}
-      <div className="compass-container">
-        <div className="compass">
-          <div className="compass-face">
-            {/* Compass background */}
-            <div
-              className="compass-ring"
-              style={{
-                transform: isOrientationActive
-                  ? `rotate(${-deviceBearing}deg)`
-                  : "rotate(0deg)",
-                transition: "transform 0.3s ease",
-              }}
-            >
-              {/* Cardinal points */}
-              <div className="cardinal-point cardinal-north">N</div>
-              <div className="cardinal-point cardinal-east">E</div>
-              <div className="cardinal-point cardinal-south">S</div>
-              <div className="cardinal-point cardinal-west">W</div>
-            </div>
-
-            {/* Direction arrow to destination */}
-            <div
-              className="direction-arrow"
-              style={{
-                transform: `rotate(${instructions.relativeBearing}deg)`,
-                transition: "transform 0.3s ease",
-              }}
-            >
-              <div className="arrow-line"></div>
-              <div className="arrow-head"></div>
-            </div>
-
-            {/* Compass center */}
-            <div className="compass-center">
-              <div className="center-dot"></div>
-            </div>
-
-            {/* Indication si l'orientation n'est pas active */}
-            {!isOrientationActive && (
-              <div className="compass-inactive-overlay">
-                <div className="compass-inactive-text">Activez la boussole</div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* GPS accuracy information */}
-      {/* {userLocation.accuracy && (
-        <div className="accuracy-info">
-          <p className="accuracy-text">
-            GPS accuracy: ±{Math.round(userLocation.accuracy)}m
-          </p>
-        </div>
-      )} */}
     </div>
   );
 };

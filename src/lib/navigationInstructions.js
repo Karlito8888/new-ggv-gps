@@ -1,8 +1,8 @@
-// Navigation instructions and arrival detection
+// Modern navigation instructions using MapLibre native bearings
 
-import { calculateDistance, formatDistance } from './geometry.js';
+import { calculateDistance, calculateBearing, bearingToDirection, formatDistance } from './geometry.js';
 import { ARRIVAL_THRESHOLD } from './constants.js';
-import { bearingManager, BEARING_TYPES } from './bearingManager.js';
+import { getDirections } from './mapLibreIntegration.js';
 
 /**
  * Check if user has arrived at destination
@@ -13,13 +13,11 @@ import { bearingManager, BEARING_TYPES } from './bearingManager.js';
  * @returns {boolean} True if user has arrived
  */
 export function hasArrived(userLat, userLon, destLat, destLon) {
-  return (
-    calculateDistance(userLat, userLon, destLat, destLon) <= ARRIVAL_THRESHOLD
-  );
+  return calculateDistance(userLat, userLon, destLat, destLon) <= ARRIVAL_THRESHOLD;
 }
 
 /**
- * Calculate navigation instructions based on user position and destination
+ * Get navigation instructions using MapLibre native bearings
  * @param {number} userLat - User latitude
  * @param {number} userLon - User longitude
  * @param {number} destLat - Destination latitude
@@ -35,14 +33,16 @@ export function getNavigationInstructions(
   deviceBearing = 0
 ) {
   const distance = calculateDistance(userLat, userLon, destLat, destLon);
-  
-  // Utiliser le BearingManager pour une gestion centralisée
-  const bearingData = bearingManager.updateDestinationBearing(userLat, userLon, destLat, destLon);
-  bearingManager.updateDeviceBearing(deviceBearing);
-  
-  const bearing = bearingData.destination;
-  const relativeBearing = bearingManager.getBearing(BEARING_TYPES.RELATIVE);
-  const direction = bearingData.direction;
+  const bearing = calculateBearing(userLat, userLon, destLat, destLon);
+  const relativeBearing = (bearing - deviceBearing + 360) % 360;
+  const direction = bearingToDirection(bearing);
+
+  // Get bearings from MapLibre directions if available
+  const directions = getDirections();
+  let mapLibreBearings = null;
+  if (directions && directions.waypointsBearings) {
+    mapLibreBearings = directions.waypointsBearings;
+  }
 
   let instruction = "";
   if (distance <= ARRIVAL_THRESHOLD) {
@@ -77,5 +77,6 @@ export function getNavigationInstructions(
     direction,
     relativeBearing,
     rawDistance: distance,
+    mapLibreBearings, // Include native MapLibre bearings
   };
 }
