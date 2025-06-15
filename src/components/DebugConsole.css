@@ -1,0 +1,321 @@
+/* Debug Console Styles */
+
+/* Bouton toggle en haut à gauche */
+.debug-console-toggle {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+  pointer-events: auto;
+  opacity: 0;
+}
+
+.debug-toggle-button {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.debug-toggle-button:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.debug-toggle-button.active {
+  background: #3b82f6;
+}
+
+.debug-toggle-button.active:hover {
+  background: #2563eb;
+}
+
+/* Badge de compteur */
+.debug-badge {
+  background: #ef4444;
+  color: white;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 16px;
+  text-align: center;
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Panel de la console */
+.debug-console-panel {
+  position: fixed;
+  top: 60px;
+  left: 10px;
+  width: calc(100vw - 20px);
+  max-width: 500px;
+  height: calc(100vh - 120px);
+  max-height: calc(100vh - 120px);
+  min-height: 200px;
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid #374151;
+  border-radius: 12px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header de la console */
+.debug-console-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(55, 65, 81, 0.8);
+  border-bottom: 1px solid #4b5563;
+  border-radius: 12px 12px 0 0;
+}
+
+.debug-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.debug-title {
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.debug-count {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.debug-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.debug-header-actions button {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.debug-header-actions button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.debug-header-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.debug-close-button:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #ef4444 !important;
+}
+
+/* Contenu de la console */
+.debug-console-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Scrollbar personnalisée */
+.debug-console-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.debug-console-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.debug-console-content::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+}
+
+.debug-console-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.7);
+}
+
+/* État vide */
+.debug-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #9ca3af;
+  text-align: center;
+  padding: 20px;
+}
+
+.debug-empty p {
+  margin: 8px 0;
+}
+
+.debug-empty-hint {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* Entrées de log */
+.debug-log {
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  border-left: 3px solid;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.debug-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.debug-timestamp {
+  color: #9ca3af;
+  font-size: 10px;
+}
+
+.debug-type {
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Types de logs */
+.debug-log.debug-log {
+  border-left-color: #3b82f6;
+}
+
+.debug-type-log {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.debug-log.debug-warn {
+  border-left-color: #f59e0b;
+}
+
+.debug-type-warn {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.debug-log.debug-error {
+  border-left-color: #ef4444;
+}
+
+.debug-type-error {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.debug-log.debug-info {
+  border-left-color: #10b981;
+}
+
+.debug-type-info {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+
+/* Message de log */
+.debug-message {
+  color: #e5e7eb;
+  word-break: break-word;
+}
+
+.debug-message pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .debug-console-panel {
+    width: calc(100vw - 20px);
+    /* height: 50vh; */
+    /* max-height: 300px; */
+  }
+  
+  .debug-toggle-button {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  
+  .debug-console-content {
+    font-size: 11px;
+  }
+  
+  .debug-title {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .debug-console-panel {
+    top: 50px;
+    left: 5px;
+    width: calc(100vw - 10px);
+    /* height: 45vh; */
+  }
+  
+  .debug-console-toggle {
+    top: 5px;
+    left: 5px;
+  }
+}

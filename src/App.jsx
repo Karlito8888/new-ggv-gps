@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, useMemo } from "react";
-import maplibregl from "maplibre-gl";
 import { Feature } from "ol";
 import { Polygon } from "ol/geom";
 import { Style, Fill, Stroke } from "ol/style";
@@ -17,6 +16,7 @@ import LocationPermissionModal from "./components/LocationPermissionModal";
 import WelcomeModal from "./components/WelcomeModal";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModal from "./components/ArrivalModal";
+import DebugConsole from "./components/DebugConsole";
 
 import {
   createRoute,
@@ -43,9 +43,9 @@ function App() {
   const watchId = useRef(null);
   const {
     availableBlocks,
-    isLoading,
-    error: blocksError,
-    setError,
+    isLoading: _isLoading,
+    error: _blocksError,
+    setError: _setError,
   } = useAvailableBlocks();
   // Geolocation errors are now logged to console only
 
@@ -116,7 +116,7 @@ function App() {
               : routeResult.features || [],
         };
 
-        console.log("📍 Route créée:", routeData);
+        // console.log("📍 Route créée:", routeData);
         setRoute(routeData);
         setOriginalRoute(routeData); // Store the complete route
         setLastRouteUpdatePosition({
@@ -567,6 +567,7 @@ function App() {
     navigationState,
     orientationPermissionGranted,
     isOrientationActive,
+    compassCalibration,
   ]);
 
   // Centrer la carte sur l'utilisateur pendant la navigation
@@ -657,6 +658,9 @@ function App() {
     <>
       <Header />
       <main style={{ width: "100%", height: "100%", position: "relative" }}>
+        {/* Console de débogage mobile */}
+        <DebugConsole />
+        
         <Map
           ref={mapRef}
           initialViewState={initialViewState}
