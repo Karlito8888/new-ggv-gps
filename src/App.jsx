@@ -53,7 +53,7 @@ function App() {
   const [navigationState, setNavigationState] = useState("permission"); // permission, welcome, navigating, arrived
   const [userLocation, setUserLocation] = useState(null);
   const [destination, setDestination] = useState(null);
-  const [bearing, setBearing] = useState(0);
+  const [deviceBearing, setDeviceBearing] = useState(0); // Renommé pour clarifier
   const [isMapReady, setIsMapReady] = useState(false);
   const [route, setRoute] = useState(null);
   const [originalRoute, setOriginalRoute] = useState(null); // Store the complete original route
@@ -318,12 +318,12 @@ function App() {
       latitude: userLocation?.latitude || DEFAULT_COORDS.latitude,
       longitude: userLocation?.longitude || DEFAULT_COORDS.longitude,
       zoom: navigationState === "navigating" ? 18 : 16.5,
-      bearing: bearing,
+      bearing: deviceBearing,
       pitch: navigationState === "navigating" ? 60 : 45,
     }),
     [
       userLocation,
-      bearing,
+      deviceBearing,
       navigationState,
       DEFAULT_COORDS.latitude,
       DEFAULT_COORDS.longitude,
@@ -444,7 +444,7 @@ function App() {
     } else {
       // Désactiver la boussole
       setIsOrientationActive(false);
-      setBearing(0); // Remettre à zéro l'orientation
+      setDeviceBearing(0); // Remettre à zéro l'orientation
       setCompassCalibration(0); // Reset calibration
       setNeedsCalibration(false);
     }
@@ -452,9 +452,9 @@ function App() {
 
   // Fonction de calibration manuelle de la boussole
   const calibrateCompass = () => {
-    if (bearing !== null) {
+    if (deviceBearing !== null) {
       // L'utilisateur pointe vers le nord et appuie sur "Calibrer"
-      const calibrationOffset = -bearing;
+      const calibrationOffset = -deviceBearing;
       setCompassCalibration(calibrationOffset);
       setNeedsCalibration(false);
       console.log(
@@ -517,7 +517,7 @@ function App() {
           calibrationOffset: compassCalibration,
         });
 
-        setBearing(calibratedBearing);
+        setDeviceBearing(calibratedBearing);
 
         // Mise à jour de l'orientation de la carte avec moins de fréquence pour éviter les conflits
         if (mapRef.current && isMapReady && navigationState === "navigating") {
@@ -750,7 +750,7 @@ function App() {
                   className="compass-ring-mini"
                   style={{
                     transform: isOrientationActive
-                      ? `rotate(${-bearing}deg)`
+                      ? `rotate(${-deviceBearing}deg)`
                       : "rotate(0deg)",
                     transition: "transform 0.3s ease",
                   }}
@@ -881,7 +881,7 @@ function App() {
             >
               <div
                 className="user-location-marker"
-                style={{ transform: `rotate(${bearing}deg)` }}
+                style={{ transform: `rotate(${deviceBearing}deg)` }}
               >
                 <div className="user-location-pin">
                   <div className="user-location-arrow"></div>
@@ -932,7 +932,7 @@ function App() {
           <NavigationDisplay
             userLocation={userLocation}
             destination={destination}
-            deviceBearing={bearing}
+            deviceBearing={deviceBearing}
             onArrival={handleArrival}
             isOrientationActive={isOrientationActive}
           />

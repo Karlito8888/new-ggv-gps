@@ -1,7 +1,8 @@
 // Navigation instructions and arrival detection
 
-import { calculateDistance, calculateBearing, bearingToDirection, formatDistance } from './geometry.js';
+import { calculateDistance, formatDistance } from './geometry.js';
 import { ARRIVAL_THRESHOLD } from './constants.js';
+import { bearingManager, BEARING_TYPES } from './bearingManager.js';
 
 /**
  * Check if user has arrived at destination
@@ -34,9 +35,14 @@ export function getNavigationInstructions(
   deviceBearing = 0
 ) {
   const distance = calculateDistance(userLat, userLon, destLat, destLon);
-  const bearing = calculateBearing(userLat, userLon, destLat, destLon);
-  const relativeBearing = (bearing - deviceBearing + 360) % 360;
-  const direction = bearingToDirection(bearing);
+  
+  // Utiliser le BearingManager pour une gestion centralisée
+  const bearingData = bearingManager.updateDestinationBearing(userLat, userLon, destLat, destLon);
+  bearingManager.updateDeviceBearing(deviceBearing);
+  
+  const bearing = bearingData.destination;
+  const relativeBearing = bearingManager.getBearing(BEARING_TYPES.RELATIVE);
+  const direction = bearingData.direction;
 
   let instruction = "";
   if (distance <= ARRIVAL_THRESHOLD) {
