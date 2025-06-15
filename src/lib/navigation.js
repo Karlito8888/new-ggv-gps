@@ -64,7 +64,6 @@ export {
   syncDeviceBearing,
   cleanupDirections,
   getDirections,
-  getBearingsControl,
 } from './mapLibreIntegration.js';
 
 // Legacy compatibility - keep the same API for existing components

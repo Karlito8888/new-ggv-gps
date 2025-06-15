@@ -1,12 +1,11 @@
 // Modern MapLibre GL JS integration with native bearings support
 
-import MapLibreGlDirections, { BearingsControl, LoadingIndicatorControl } from "@maplibre/maplibre-gl-directions";
+import MapLibreGlDirections, { LoadingIndicatorControl } from "@maplibre/maplibre-gl-directions";
 import { NavigationControl } from 'maplibre-gl';
 import { ROUTING_CONFIG } from './constants.js';
 
 // Modern directions instance with bearings support
 let directions = null;
-let bearingsControl = null;
 let loadingIndicator = null;
 
 /**
@@ -39,20 +38,10 @@ export function initMapLibreDirections(map) {
     },
   });
 
-  // Add native BearingsControl (replaces custom compass)
-  bearingsControl = new BearingsControl(directions, {
-    defaultEnabled: true,
-    respectMapBearing: true,
-    imageSize: 40,
-    angleDefault: 0,
-    degreesDefault: 45,
-  });
-
   // Add loading indicator
   loadingIndicator = new LoadingIndicatorControl(directions);
 
   // Add controls to map
-  map.addControl(bearingsControl, 'top-right');
   map.addControl(loadingIndicator, 'top-left');
   
   // Add permanent compass control (always visible)
@@ -125,7 +114,6 @@ export function cleanupDirections() {
     directions.clear();
     directions = null;
   }
-  bearingsControl = null;
   loadingIndicator = null;
   console.log('🧹 MapLibre Directions cleaned up');
 }
@@ -136,12 +124,4 @@ export function cleanupDirections() {
  */
 export function getDirections() {
   return directions;
-}
-
-/**
- * Get bearings control instance
- * @returns {Object|null} BearingsControl instance
- */
-export function getBearingsControl() {
-  return bearingsControl;
 }
