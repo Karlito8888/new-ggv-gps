@@ -1,0 +1,129 @@
+@import url("https://fonts.googleapis.com/css2?family=Madimi+One&display=swap");
+@import "tailwindcss";
+
+:root {
+  --color-white: #f4f4f4;
+  --color-green: #50aa61;
+  --color-yellow: #f3c549;
+  --color-black: #121212;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height */
+  height: 100svh; /* Small viewport height */
+}
+
+#root {
+  display: grid;
+  grid-template-rows: 60px 1fr 60px;
+  grid-template-areas: 
+  "head"
+  "main" 
+  "foot";
+}
+
+#root > header {
+  grid-area: head;
+  /* background: #242424; */
+  padding: 1rem;
+}
+
+#root > main {
+  grid-area: main;
+  height: 100%;
+  max-height: 100%;
+}
+
+.map-container {
+  height: 100%;
+  width: 100%;
+}
+
+
+h1 {
+  font-size: 1.2em;
+  line-height: 1.1;
+}
+
+p {
+  text-decoration: none;
+  border: none;
+  border-bottom: none;
+}
+
+
+
+/* Overlay d'info GPS */
+.gps-info {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-black);
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 10;
+  font-size: 14px;
+}
+
+.gps-info p {
+  margin: 5px 0;
+}
+
+.gps-info-error {
+  color: red;
+  font-weight: bold;
+}
+
+/* Bouton plein écran */
+.fullscreen-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+#root > footer {
+  grid-area: foot;
+  /* background: #242424; */
+  padding: 1rem;
+}
+
+/* Responsive mobile */
+@media (max-width: 768px) {
+  .gps-info {
+    bottom: 10px;
+    left: 10px;
+    padding: 8px;
+    font-size: 12px;
+  }
+  
+  .fullscreen-btn {
+    top: 10px;
+    right: 10px;
+  }
+}
+
+

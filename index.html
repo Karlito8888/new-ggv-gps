@@ -1,0 +1,171 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <!-- Basic information -->
+    <title>MyGGV | GPS</title>
+    <meta
+      name="description"
+      content="Open-source GPS application to navigate Garden Grove Village with precision and ease"
+    />
+    <meta
+      name="keywords"
+      content="GPS, Garden Grove Village, navigation, open-source, map, route"
+    />
+    <meta name="author" content="MyGGV Team" />
+
+    <!-- Favicon and icons -->
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/icons/icon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/icons/icon-16x16.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/icons/icon-180x180.png"
+    />
+    <!-- <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#50AA61" /> -->
+
+    <!-- PWA settings -->
+    <meta name="theme-color" content="#50AA61" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="MyGGV | GPS" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- iOS splash screens -->
+    <!-- <link rel="apple-touch-startup-image" href="/splashscreens/iphone5_splash.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/iphone6_splash.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/iphoneplus_splash.png" media="(device-width: 621px) and (device-height: 1104px) and (-webkit-device-pixel-ratio: 3)" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/iphonex_splash.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/iphonexr_splash.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/iphonexsmax_splash.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/ipad_splash.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/ipadpro1_splash.png" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/ipadpro2_splash.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/ipadpro3_splash.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" /> -->
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://myggv-gps.netlify.app/" />
+    <meta property="og:title" content="MyGGV - GPS for Garden Grove Village" />
+    <meta
+      property="og:description"
+      content="Open-source GPS application to navigate Garden Grove Village with precision and ease"
+    />
+    <meta
+      property="og:image"
+      content="https://myggv-gps.netlify.app/icons/icon-512x512.png"
+    />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://myggv-gps.netlify.app/" />
+    <meta
+      property="twitter:title"
+      content="MyGGV - GPS for Garden Grove Village"
+    />
+    <meta
+      property="twitter:description"
+      content="Open-source GPS application to navigate Garden Grove Village with precision and ease"
+    />
+    <meta
+      property="twitter:image"
+      content="https://myggv-gps.netlify.app/icons/icon-512x512.png"
+    />
+
+    <!-- Preloading critical resources -->
+    <link rel="preconnect" href="https://a.tile.openstreetmap.org" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Removed preloading of non-existent font -->
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/src/index.css" />
+
+    <!-- Geolocation and permissions -->
+    <meta
+      http-equiv="Permissions-Policy"
+      content="geolocation=*, accelerometer=*, gyroscope=*"
+    />
+
+    <!-- Security -->
+    <!-- <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; connect-src 'self' https://a.tile.openstreetmap.org https://demotiles.maplibre.org; img-src 'self' data: https://a.tile.openstreetmap.org https://demotiles.maplibre.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://demotiles.maplibre.org; manifest-src 'self';"
+    /> -->
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- Fallback for disabled JavaScript -->
+    <noscript>
+      <div style="padding: 20px; text-align: center">
+        <h1>JavaScript is required</h1>
+        <p>
+          This GPS application requires JavaScript to function. Please enable it
+          in your browser settings.
+        </p>
+      </div>
+    </noscript>
+
+    <!-- Main script -->
+    <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Offline detection with nonce -->
+    <script>
+      window.addEventListener("load", () => {
+        function updateOnlineStatus() {
+          const statusElement = document.createElement("div");
+          statusElement.id = "connection-status";
+          statusElement.style.position = "fixed";
+          statusElement.style.bottom = "0";
+          statusElement.style.left = "0";
+          statusElement.style.right = "0";
+          statusElement.style.padding = "10px";
+          statusElement.style.textAlign = "center";
+          statusElement.style.zIndex = "9999";
+
+          if (navigator.onLine) {
+            statusElement.textContent = "";
+            statusElement.style.display = "none";
+          } else {
+            statusElement.textContent =
+              "You are offline. Some features may be limited.";
+            statusElement.style.backgroundColor = "#f44336";
+            statusElement.style.color = "white";
+          }
+
+          const existingElement = document.getElementById("connection-status");
+          if (existingElement) {
+            document.body.removeChild(existingElement);
+          }
+          document.body.appendChild(statusElement);
+        }
+
+        window.addEventListener("online", updateOnlineStatus);
+        window.addEventListener("offline", updateOnlineStatus);
+        updateOnlineStatus();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,39 @@
+# Headers globaux pour PWA
+/*
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Headers spécifiques pour PWA
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: public, max-age=86400
+
+# Service Worker avec cache court pour mises à jour
+/sw.js
+  Content-Type: application/javascript
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Assets statiques avec cache long terme
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/markers/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Assets JS/CSS avec cache optimisé
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML avec cache court pour mises à jour
+/*.html
+  Cache-Control: public, max-age=86400
+
+# Permissions pour géolocalisation (HTTPS requis)
+/*
+  Permissions-Policy: geolocation=(self), camera=(), microphone=()
+
+# HTTPS Strict Transport Security
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
