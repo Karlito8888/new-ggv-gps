@@ -7,9 +7,12 @@ export const VILLAGE_EXIT_COORDS = [120.951863, 14.35098];
 export const ARRIVAL_THRESHOLD = 10;
 
 // Route deviation and recalculation thresholds
-export const ROUTE_DEVIATION_THRESHOLD = 30; // meters - automatic recalculation threshold
-export const MIN_RECALCULATION_INTERVAL = 15000; // 15 seconds - prevent too frequent recalculations
-export const MIN_MOVEMENT_THRESHOLD = 10; // meters - minimum movement for route updates
+export const ROUTE_DEVIATION_THRESHOLD = 25; // meters - automatic recalculation threshold (réduit pour plus de réactivité)
+export const SIGNIFICANT_DEVIATION_THRESHOLD = 40; // meters - for detecting intentional route changes (réduit)
+export const MIN_RECALCULATION_INTERVAL = 8000; // 8 seconds - prevent too frequent recalculations (réduit)
+export const MIN_MOVEMENT_THRESHOLD = 8; // meters - minimum movement for route updates (réduit)
+export const DIRECTION_CHANGE_THRESHOLD = 35; // degrees - significant direction change (réduit pour plus de sensibilité)
+export const PERSISTENT_DEVIATION_TIME = 6000; // 6 seconds - time to confirm intentional deviation (réduit)
 
 // Configuration constants
 const ROUTING_CONFIG = {
@@ -33,6 +36,11 @@ let directions = null;
 // Route recalculation state
 let lastRecalculationTime = 0;
 let lastRecalculationPosition = null;
+
+// Persistent deviation tracking
+let deviationStartTime = null;
+let lastUserDirection = null;
+let _consecutiveDeviations = 0;
 
 export function initMapLibreDirections(map) {
   directions = new MapLibreGlDirections(map, {
@@ -156,12 +164,138 @@ export function isUserOffRoute(
   return isOffRoute;
 }
 
+// Detect if user is approaching an intersection or decision point
+export function isApproachingDecisionPoint(userLat, userLon, routeGeometry, lookAheadDistance = 50) {
+  if (!routeGeometry || !routeGeometry.coordinates || routeGeometry.coordinates.length < 3) {
+    return false;
+  }
+
+  const coordinates = routeGeometry.coordinates;
+  const userPosition = findClosestPointOnRoute(userLat, userLon, routeGeometry);
+  
+  if (!userPosition) return false;
+
+  const { segmentIndex } = userPosition;
+  
+  // Look ahead in the route for significant direction changes (potential intersections)
+  let totalDistance = 0;
+  for (let i = segmentIndex; i < coordinates.length - 2 && totalDistance < lookAheadDistance; i++) {
+    const [lon1, lat1] = coordinates[i];
+    const [lon2, lat2] = coordinates[i + 1];
+    const [lon3, lat3] = coordinates[i + 2];
+    
+    totalDistance += calculateDistance(lat1, lon1, lat2, lon2);
+    
+    // Calculate the angle between consecutive segments
+    const bearing1 = calculateBearing(lat1, lon1, lat2, lon2);
+    const bearing2 = calculateBearing(lat2, lon2, lat3, lon3);
+    const angleDiff = Math.abs(bearing2 - bearing1);
+    const normalizedAngle = Math.min(angleDiff, 360 - angleDiff);
+    
+    // If there's a significant turn ahead (>30°), consider it a decision point
+    if (normalizedAngle > 30) {
+      console.log(`🛣️ Decision point detected ahead: ${normalizedAngle.toFixed(1)}° turn in ${totalDistance.toFixed(1)}m`);
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// Detect if user has intentionally changed route direction
+export function detectIntentionalRouteChange(
+  userLat,
+  userLon,
+  currentRoute,
+  previousLat = null,
+  previousLon = null
+) {
+  if (!currentRoute || !currentRoute.features || !currentRoute.features[0]) {
+    return false;
+  }
+
+  const now = Date.now();
+  const routeGeometry = currentRoute.features[0].geometry;
+  const isOffRoute = isUserOffRoute(userLat, userLon, routeGeometry, SIGNIFICANT_DEVIATION_THRESHOLD);
+  const isNearDecisionPoint = isApproachingDecisionPoint(userLat, userLon, routeGeometry);
+
+  // Calculate user's current direction if we have previous position
+  let currentUserDirection = null;
+  if (previousLat && previousLon) {
+    currentUserDirection = calculateBearing(previousLat, previousLon, userLat, userLon);
+  }
+
+  // Check for significant deviation
+  if (isOffRoute) {
+    _consecutiveDeviations++;
+    
+    // Start tracking deviation time
+    if (!deviationStartTime) {
+      deviationStartTime = now;
+      console.log("🚨 Started tracking route deviation");
+    }
+
+    // Reduce required time if near a decision point (intersection/turn)
+    const requiredTime = isNearDecisionPoint ? PERSISTENT_DEVIATION_TIME / 2 : PERSISTENT_DEVIATION_TIME;
+    
+    // Check if deviation has persisted long enough to be considered intentional
+    const deviationDuration = now - deviationStartTime;
+    if (deviationDuration >= requiredTime) {
+      console.log(`🛣️ Intentional route change detected after ${(deviationDuration / 1000).toFixed(1)}s ${isNearDecisionPoint ? '(near intersection)' : ''}`);
+      
+      // Reset tracking
+      deviationStartTime = null;
+      _consecutiveDeviations = 0;
+      return true;
+    }
+
+    // Check for significant direction change (more sensitive near decision points)
+    if (lastUserDirection && currentUserDirection) {
+      const directionChange = Math.abs(currentUserDirection - lastUserDirection);
+      const normalizedChange = Math.min(directionChange, 360 - directionChange);
+      const threshold = isNearDecisionPoint ? DIRECTION_CHANGE_THRESHOLD * 0.7 : DIRECTION_CHANGE_THRESHOLD;
+      
+      if (normalizedChange >= threshold) {
+        console.log(`🔄 Significant direction change detected: ${normalizedChange.toFixed(1)}° ${isNearDecisionPoint ? '(near intersection)' : ''}`);
+        deviationStartTime = null;
+        _consecutiveDeviations = 0;
+        return true;
+      }
+    }
+
+    // Quick detection for major deviations (>75m from route)
+    const currentDistance = isUserOffRoute(userLat, userLon, routeGeometry, 1000); // Get actual distance
+    if (currentDistance && deviationDuration >= 3000) { // 3 seconds for major deviations
+      console.log(`🚨 Major route deviation detected: user is far from original route`);
+      deviationStartTime = null;
+      _consecutiveDeviations = 0;
+      return true;
+    }
+  } else {
+    // User is back on route, reset deviation tracking
+    if (deviationStartTime) {
+      console.log("✅ User back on route, resetting deviation tracking");
+      deviationStartTime = null;
+      _consecutiveDeviations = 0;
+    }
+  }
+
+  // Update last direction
+  if (currentUserDirection !== null) {
+    lastUserDirection = currentUserDirection;
+  }
+
+  return false;
+}
+
 // Check if route should be recalculated based on various conditions
 export function shouldRecalculateRoute(
   userLat,
   userLon,
   currentRoute,
-  forceRecalculation = false
+  forceRecalculation = false,
+  previousLat = null,
+  previousLon = null
 ) {
   const now = Date.now();
 
@@ -201,7 +335,21 @@ export function shouldRecalculateRoute(
     }
   }
 
-  // Check if user is off the current route
+  // Check for intentional route changes first
+  const intentionalChange = detectIntentionalRouteChange(
+    userLat,
+    userLon,
+    currentRoute,
+    previousLat,
+    previousLon
+  );
+
+  if (intentionalChange) {
+    console.log("🛣️ Intentional route change detected, triggering recalculation");
+    return true;
+  }
+
+  // Check if user is off the current route (standard deviation)
   if (currentRoute && currentRoute.features && currentRoute.features[0]) {
     const routeGeometry = currentRoute.features[0].geometry;
     const isOffRoute = isUserOffRoute(userLat, userLon, routeGeometry);
@@ -226,6 +374,9 @@ export function updateRecalculationState(userLat, userLon) {
 export function resetRecalculationState() {
   lastRecalculationTime = 0;
   lastRecalculationPosition = null;
+  deviationStartTime = null;
+  lastUserDirection = null;
+  _consecutiveDeviations = 0;
   console.log("🔄 Recalculation state reset");
 }
 
@@ -332,6 +483,50 @@ async function tryOSRM(startLat, startLon, endLat, endLon) {
   };
 }
 
+// Try MapLibre Directions
+async function tryMapLibreDirections(startLat, startLon, endLat, endLon, map) {
+  if (!directions || !map) {
+    throw new Error("MapLibre Directions not initialized or no map instance");
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    10000 // 10 seconds timeout for MapLibre
+  );
+
+  try {
+    // Set origin and destination
+    await directions.setOrigin([startLon, startLat]);
+    await directions.setDestination([endLon, endLat]);
+    
+    // Get the route
+    const routes = directions.getRoutes();
+    
+    clearTimeout(timeoutId);
+    
+    if (!routes || routes.length === 0) {
+      throw new Error("MapLibre Directions returned no routes");
+    }
+
+    const route = routes[0];
+    
+    return {
+      type: "Feature",
+      geometry: route.geometry,
+      properties: {
+        distance: route.distance || calculateDistance(startLat, startLon, endLat, endLon),
+        duration: route.duration || Math.round((route.distance || calculateDistance(startLat, startLon, endLat, endLon)) / ROUTING_CONFIG.WALKING_SPEED),
+        steps: route.legs?.[0]?.steps || [],
+        source: "maplibre-directions",
+      },
+    };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
 // Try OpenRouteService as fallback
 async function tryORS(startLat, startLon, endLat, endLon) {
   const apiKey = import.meta.env.VITE_OPENROUTE_API_KEY;
@@ -381,7 +576,7 @@ async function tryORS(startLat, startLon, endLat, endLon) {
 }
 
 // Main route creation function with fallback logic
-export async function createRoute(startLat, startLon, endLat, endLon) {
+export async function createRoute(startLat, startLon, endLat, endLon, map = null) {
   console.log("🚀 Création de route avec fallback en cascade");
 
   const services = [
@@ -389,11 +584,10 @@ export async function createRoute(startLat, startLon, endLat, endLon) {
       name: "OSRM (OpenStreetMap.de)",
       fn: () => tryOSRM(startLat, startLon, endLat, endLon),
     },
-    // Désactivé temporairement car timeout trop fréquent
-    // {
-    //   name: "MapLibre Directions",
-    //   fn: () => map ? tryMapLibreDirections(startLat, startLon, endLat, endLon, map) : Promise.reject(new Error("No map instance"))
-    // },
+    {
+      name: "MapLibre Directions",
+      fn: () => map ? tryMapLibreDirections(startLat, startLon, endLat, endLon, map) : Promise.reject(new Error("No map instance"))
+    },
     {
       name: "OpenRouteService",
       fn: () => tryORS(startLat, startLon, endLat, endLon),
@@ -407,7 +601,7 @@ export async function createRoute(startLat, startLon, endLat, endLon) {
 
   for (const [index, service] of services.entries()) {
     try {
-      console.log(`📍 Tentative ${index + 1}/4: ${service.name}`);
+      console.log(`📍 Tentative ${index + 1}/${services.length}: ${service.name}`);
       const result = await service.fn();
       console.log(`✅ Succès avec ${service.name}:`, result.properties?.source);
       return result;

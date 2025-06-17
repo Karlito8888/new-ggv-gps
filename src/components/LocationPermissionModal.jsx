@@ -81,7 +81,7 @@ const LocationPermissionModal = ({
             </>
           ) : (
             // "Allow Location Access"
-            "OKu"
+            "OK"
           )}
         </button>
         <p className="modal-footer">

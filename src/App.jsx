@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from "react";
-import maplibregl from "maplibre-gl";
-import { Feature } from "ol";
 import { Polygon } from "ol/geom";
-import { Style, Fill, Stroke } from "ol/style";
 import {
   Map,
   NavigationControl,
@@ -43,15 +40,16 @@ function App() {
   const watchId = useRef(null);
   const {
     availableBlocks,
-    isLoading,
-    error: blocksError,
-    setError,
+    isLoading: _isLoading,
+    error: _blocksError,
+    setError: _setError,
   } = useAvailableBlocks();
   // Geolocation errors are now logged to console only
 
   // États de navigation
   const [navigationState, setNavigationState] = useState("permission"); // permission, welcome, navigating, arrived
   const [userLocation, setUserLocation] = useState(null);
+  const [previousUserLocation, setPreviousUserLocation] = useState(null); // Track previous position for direction changes
   const [destination, setDestination] = useState(null);
   const [bearing, setBearing] = useState(0);
   const [isMapReady, setIsMapReady] = useState(false);
@@ -104,7 +102,8 @@ function App() {
           userLocation.latitude,
           userLocation.longitude,
           dest.coordinates[1],
-          dest.coordinates[0]
+          dest.coordinates[0],
+          mapRef.current?.getMap()
         );
 
         // Assurer le format FeatureCollection pour MapLibre
@@ -165,7 +164,8 @@ function App() {
           userLocation.latitude,
           userLocation.longitude,
           VILLAGE_EXIT_COORDS[1],
-          VILLAGE_EXIT_COORDS[0]
+          VILLAGE_EXIT_COORDS[0],
+          mapRef.current?.getMap()
         );
 
         // Assurer le format FeatureCollection pour MapLibre
@@ -203,6 +203,9 @@ function App() {
             longitude: position.coords.longitude,
             accuracy: position.coords.accuracy,
           };
+          
+          // Store previous location before updating
+          setPreviousUserLocation(userLocation);
           setUserLocation(newLocation);
 
           // Smart route management if we have a destination
@@ -211,7 +214,10 @@ function App() {
             const shouldRecalc = shouldRecalculateRoute(
               newLocation.latitude,
               newLocation.longitude,
-              route
+              route,
+              false, // not forced
+              previousUserLocation?.latitude,
+              previousUserLocation?.longitude
             );
 
             if (shouldRecalc) {
@@ -222,7 +228,8 @@ function App() {
                 newLocation.latitude,
                 newLocation.longitude,
                 destination.coordinates[1],
-                destination.coordinates[0]
+                destination.coordinates[0],
+                mapRef.current?.getMap()
               )
                 .then((routeResult) => {
                   // Assurer le format FeatureCollection pour MapLibre
@@ -567,6 +574,7 @@ function App() {
     navigationState,
     orientationPermissionGranted,
     isOrientationActive,
+    compassCalibration,
   ]);
 
   // Centrer la carte sur l'utilisateur pendant la navigation
@@ -821,6 +829,7 @@ function App() {
               </button>
             </div>
           )}
+
 
           {/* Affichage de l'itinéraire restant */}
           {route && (
