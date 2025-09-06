@@ -1,4 +1,10 @@
 import MapLibreGlDirections from "@maplibre/maplibre-gl-directions";
+import {
+  calculateDistance,
+  calculateBearing,
+  formatDistance,
+  bearingToDirection
+} from "../utils/geoUtils";
 
 // Village exit coordinates
 export const VILLAGE_EXIT_COORDS = [120.951863, 14.35098];
@@ -60,20 +66,7 @@ export function initMapLibreDirections(map) {
   return directions;
 }
 
-// Calculate distance between two points in meters (haversine formula)
-export function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371000; // Earth radius in meters
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
+// calculateDistance is now imported from geoUtils
 
 // Calculate the shortest distance from a point to a line segment
 export function pointToLineDistance(
@@ -380,42 +373,9 @@ export function resetRecalculationState() {
   console.log("🔄 Recalculation state reset");
 }
 
-// Calculate direction angle (bearing) between two points
-export function calculateBearing(lat1, lon1, lat2, lon2) {
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const lat1Rad = (lat1 * Math.PI) / 180;
-  const lat2Rad = (lat2 * Math.PI) / 180;
+// calculateBearing is now imported from geoUtils
 
-  const y = Math.sin(dLon) * Math.cos(lat2Rad);
-  const x =
-    Math.cos(lat1Rad) * Math.sin(lat2Rad) -
-    Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
-
-  let bearing = (Math.atan2(y, x) * 180) / Math.PI;
-  return (bearing + 360) % 360; // Normalize to 0-360
-}
-
-// Convert angle to cardinal direction
-export function bearingToDirection(bearing) {
-  const directions = [
-    { name: "North", icon: "↑" },
-    { name: "North-East", icon: "↗" },
-    { name: "East", icon: "→" },
-    { name: "South-East", icon: "↘" },
-    { name: "South", icon: "↓" },
-    { name: "South-West", icon: "↙" },
-    { name: "West", icon: "←" },
-    { name: "North-West", icon: "↖" },
-  ];
-  return directions[Math.round(bearing / 45) % 8];
-}
-
-// Format distance for display
-export function formatDistance(distance) {
-  return distance < 1000
-    ? `${Math.round(distance)}m`
-    : `${(distance / 1000).toFixed(1)}km`;
-}
+// bearingToDirection and formatDistance are now imported from geoUtils
 
 // Check if user has arrived at destination
 export function hasArrived(userLat, userLon, destLat, destLon) {

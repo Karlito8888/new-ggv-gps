@@ -1,12 +1,19 @@
 import { useState } from "react";
-import "./LocationPermissionModal.css";
 import ggvLogo from "../assets/img/ggv.png";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "./ui/dialog";
+import Button from "./ui/button";
 
-const LocationPermissionModal = ({
+const LocationPermissionModalNew = ({
+  isOpen,
   onPermissionGranted,
   onPermissionDenied,
 }) => {
-  const [isVisible, setIsVisible] = useState(true);
   const [isRequesting, setIsRequesting] = useState(false);
 
   const requestLocationPermission = async () => {
@@ -17,16 +24,9 @@ const LocationPermissionModal = ({
         throw new Error("Geolocation is not supported by this browser");
       }
 
-      const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        });
-      });
-
-      setIsVisible(false);
-      onPermissionGranted(position);
+      // Juste vérifier que la géolocalisation est disponible
+      // Le GeolocateControl gérera la demande de permission et l'obtention de la position
+      onPermissionGranted();
     } catch (error) {
       console.error("Geolocation error:", error);
       onPermissionDenied(error.message);
@@ -35,12 +35,10 @@ const LocationPermissionModal = ({
     }
   };
 
-  if (!isVisible) return null;
-
   return (
-    <div className="location-permission-modal-overlay">
-      <div className="location-permission-modal">
-        <div className="modal-content">
+    <Dialog open={isOpen} onOpenChange={() => {}}>
+      <DialogContent className="location-permission-modal">
+        <DialogHeader className="modal-content">
           <div className="modal-icon">
             <svg
               className="icon"
@@ -62,14 +60,14 @@ const LocationPermissionModal = ({
               />
             </svg>
           </div>
-          <h2 className="modal-title">Location Permission</h2>
-          <p className="modal-description">
+          <DialogTitle className="modal-title">Location Permission</DialogTitle>
+          <DialogDescription className="modal-description">
             MyGGV | GPS needs access to your location to provide accurate
             navigation within Garden Grove Village.
-          </p>
-        </div>
+          </DialogDescription>
+        </DialogHeader>
 
-        <button
+        <Button
           onClick={requestLocationPermission}
           disabled={isRequesting}
           className="modal-button"
@@ -80,10 +78,9 @@ const LocationPermissionModal = ({
               Requesting...
             </>
           ) : (
-            // "Allow Location Access"
             "OK"
           )}
-        </button>
+        </Button>
         <p className="modal-footer">
           Your location will only be used for navigation within the village.
         </p>
@@ -92,9 +89,9 @@ const LocationPermissionModal = ({
           alt="Garden Grove Village Logo"
           className="modal-logo"
         />
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
-export default LocationPermissionModal;
+export default LocationPermissionModalNew;

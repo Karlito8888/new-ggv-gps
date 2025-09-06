@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { getNavigationInstructions, hasArrived } from "../lib/navigation";
-import "./NavigationDisplay.css";
 
 const NavigationDisplay = ({
   userLocation,

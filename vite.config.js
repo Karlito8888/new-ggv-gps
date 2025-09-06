@@ -143,7 +143,7 @@ export default defineConfig({
 
       includeAssets: ["icons/*.png", "markers/*.png"],
       devOptions: {
-        enabled: true, // Activé pour développement local
+        enabled: false, // Désactivé pour développement local (évite les logs Workbox)
         type: "module",
       },
     }),

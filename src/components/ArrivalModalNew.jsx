@@ -1,7 +1,13 @@
 import { useState } from "react";
-import "./ArrivalModal.css";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import Button from "./ui/button";
 
-const ArrivalModal = ({ destination, onNewDestination, onExitVillage }) => {
+const ArrivalModalNew = ({ isOpen, destination, onNewDestination, onExitVillage }) => {
   const [isExiting, setIsExiting] = useState(false);
 
   const handleExitVillage = () => {
@@ -10,9 +16,9 @@ const ArrivalModal = ({ destination, onNewDestination, onExitVillage }) => {
   };
 
   return (
-    <div className="arrival-modal-overlay">
-      <div className="arrival-modal">
-        <div className="modal-content">
+    <Dialog open={isOpen} onOpenChange={() => {}}>
+      <DialogContent className="arrival-modal">
+        <DialogHeader className="modal-content">
           <div className="modal-icon">
             <svg
               className="icon"
@@ -28,10 +34,8 @@ const ArrivalModal = ({ destination, onNewDestination, onExitVillage }) => {
               />
             </svg>
           </div>
-          <h2 className="modal-title">Destination reached !</h2>
-          {/* <p className="modal-description">
-            You have arrived at your destination:
-          </p> */}
+          <DialogTitle className="modal-title">Destination reached !</DialogTitle>
+          
           {destination.blockNumber && destination.lotNumber ? (
             <>
               <div className="destination-info">
@@ -41,7 +45,7 @@ const ArrivalModal = ({ destination, onNewDestination, onExitVillage }) => {
               </div>
 
               <div className="button-group">
-                <button
+                <Button
                   onClick={onNewDestination}
                   className="button button-primary"
                 >
@@ -59,11 +63,12 @@ const ArrivalModal = ({ destination, onNewDestination, onExitVillage }) => {
                     />
                   </svg>
                   New destination ?
-                </button>
+                </Button>
 
-                <button
+                <Button
                   onClick={handleExitVillage}
                   disabled={isExiting}
+                  variant="outline"
                   className="button button-secondary"
                 >
                   {isExiting ? (
@@ -89,7 +94,7 @@ const ArrivalModal = ({ destination, onNewDestination, onExitVillage }) => {
                       Exit the village
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </>
           ) : destination.address ? (
@@ -98,10 +103,10 @@ const ArrivalModal = ({ destination, onNewDestination, onExitVillage }) => {
             </div>
           ) : null}
           <p className="modal-footer">Thank you for using MyGGV|GPS !</p>
-        </div>
-      </div>
-    </div>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
   );
 };
 
-export default ArrivalModal;
+export default ArrivalModalNew;

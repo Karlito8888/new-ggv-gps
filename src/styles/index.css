@@ -1,0 +1,3 @@
+/* Point d'entrée principal pour tous les styles */
+@import "./globals.css";      /* globals.css contient déjà variables.css */
+@import "./components.css";   /* contient maintenant map-controls.css */

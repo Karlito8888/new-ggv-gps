@@ -1,0 +1,81 @@
+/* Imports - Variables en premier pour Tailwind */
+@import "./variables.css";
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Madimi+One&display=swap");
+
+/* Reset global */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Layout principal */
+html,
+body,
+#root {
+  height: 100%;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height */
+  height: 100svh; /* Small viewport height */
+}
+
+#root {
+  display: grid;
+  grid-template-rows: 60px 1fr 60px;
+  grid-template-areas: 
+  "head"
+  "main" 
+  "foot";
+}
+
+#root > header {
+  grid-area: head;
+  padding: 1rem;
+}
+
+#root > main {
+  grid-area: main;
+  height: 100%;
+  max-height: 100%;
+}
+
+#root > footer {
+  grid-area: foot;
+  padding: 1rem;
+}
+
+/* Conteneur de carte */
+.map-container {
+  height: 100%;
+  width: 100%;
+}
+
+/* Typographie */
+h1 {
+  font-size: 1.2em;
+  line-height: 1.1;
+}
+
+p {
+  text-decoration: none;
+  border: none;
+  border-bottom: none;
+}
+
+/* Responsive mobile */
+@media (max-width: 768px) {
+  .gps-info {
+    bottom: 10px;
+    left: 10px;
+    padding: 8px;
+    font-size: 12px;
+  }
+  
+  .fullscreen-btn {
+    top: 10px;
+    right: 10px;
+  }
+}

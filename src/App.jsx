@@ -1,8 +1,12 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import useSmoothedLocation from "./hooks/useSmoothedLocation";
+import useAdaptiveGPS from "./hooks/useAdaptiveGPS";
+import useAdaptivePitch from "./hooks/useAdaptivePitch";
 import { Polygon } from "ol/geom";
 import {
   Map,
   NavigationControl,
+  GeolocateControl,
   Marker,
   Source,
   Layer,
@@ -10,10 +14,11 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css";
 import { publicPois } from "./data/public-pois";
 import { blocks } from "./data/blocks";
-import LocationPermissionModal from "./components/LocationPermissionModal";
-import WelcomeModal from "./components/WelcomeModal";
+import LocationPermissionModalNew from "./components/LocationPermissionModalNew";
+import WelcomeModalMobile from "./components/WelcomeModalMobile";
 import NavigationDisplay from "./components/NavigationDisplay";
-import ArrivalModal from "./components/ArrivalModal";
+import ArrivalModalNew from "./components/ArrivalModalNew";
+import NavigationAlerts from "./components/NavigationAlerts";
 
 import {
   createRoute,
@@ -31,38 +36,69 @@ import { BsLayersHalf } from "react-icons/bs";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import stopLogo from "./assets/img/stop.png";
-import "./App.css";
-import { useAvailableBlocks } from "./hooks/useAvailableBlocks";
+import { useAvailableBlocks } from "./hooks/useLocations";
+import { cleanupDirectionIcons } from "./utils/mapIcons";
+import {
+  applyOptimalTransition,
+  shouldTransition,
+} from "./utils/mapTransitions";
+
+// Constantes de configuration
+const GEOLOCATION_CONFIG = {
+  TIMEOUT: 10000,
+  MAX_AGE: 300000,
+  RETRY_DELAY: 1000,
+  MIN_ACCURACY_DESKTOP: 5000,
+};
 
 function App() {
-  "use memo"; // Utiliser React 19 compiler pour optimiser ce composant
+  // ========================================
+  // REFS ET HOOKS DE DONNÉES
+  // ========================================
   const mapRef = useRef(null);
-  const watchId = useRef(null);
-  const {
-    availableBlocks,
-    isLoading: _isLoading,
-    error: _blocksError,
-    setError: _setError,
-  } = useAvailableBlocks();
-  // Geolocation errors are now logged to console only
+  const geolocateControlRef = useRef(null);
+  const { data: availableBlocks = [] } = useAvailableBlocks();
 
-  // États de navigation
+  // ========================================
+  // ÉTATS DE NAVIGATION
+  // ========================================
   const [navigationState, setNavigationState] = useState("permission"); // permission, welcome, navigating, arrived
-  const [userLocation, setUserLocation] = useState(null);
-  const [previousUserLocation, setPreviousUserLocation] = useState(null); // Track previous position for direction changes
+  const [rawUserLocation, setRawUserLocation] = useState(null);
+  const [previousUserLocation, setPreviousUserLocation] = useState(null);
+
+  // ========================================
+  // HOOKS DE TRAITEMENT GPS
+  // ========================================
+  const {
+    location: userLocation,
+    speed,
+    speedKmh,
+  } = useSmoothedLocation(rawUserLocation, {
+    maxJumpDistance: 50,
+    minAccuracy: GEOLOCATION_CONFIG.MIN_ACCURACY_DESKTOP,
+    smoothingFactor: 0.3,
+    maxSpeed: 50,
+  });
+
+  // Optimisation GPS adaptative pour économiser la batterie
+  const { gpsOptions, fitBoundsOptions } = useAdaptiveGPS(
+    speed,
+    navigationState === "navigating"
+  );
+
+  // Pitch adaptatif selon vitesse et contexte
+  const { pitch: adaptivePitch, pitchMode } = useAdaptivePitch(
+    speedKmh,
+    navigationState,
+    navigationState === "navigating"
+  ); // Track previous position for direction changes
   const [destination, setDestination] = useState(null);
-  const [bearing, setBearing] = useState(0);
   const [isMapReady, setIsMapReady] = useState(false);
   const [route, setRoute] = useState(null);
   const [originalRoute, setOriginalRoute] = useState(null); // Store the complete original route
   const [traveledRoute, setTraveledRoute] = useState(null); // Store the traveled portion
   const [lastRouteUpdatePosition, setLastRouteUpdatePosition] = useState(null); // Track last position when route was updated
   const [mapType, setMapType] = useState("osm"); // 'osm' ou 'satellite'
-  const [orientationPermissionGranted, setOrientationPermissionGranted] =
-    useState(false);
-  const [isOrientationActive, setIsOrientationActive] = useState(false);
-  const [compassCalibration, setCompassCalibration] = useState(0);
-  const [needsCalibration, setNeedsCalibration] = useState(false);
 
   // Coordonnées par défaut (Garden Grove Village)
   const DEFAULT_COORDS = {
@@ -70,65 +106,117 @@ function App() {
     longitude: 120.95134859887523,
   };
 
+  // ========================================
+  // HANDLERS ET FONCTIONS UTILITAIRES
+  // ========================================
+  const getCurrentPosition = () => {
+    if (!userLocation && navigator.geolocation) {
+      console.log("📍 Récupération position actuelle...");
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log("📍 Position actuelle récupérée:", position);
+          const newRawLocation = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          };
+          console.log(
+            "📍 Coordonnées:",
+            newRawLocation.latitude,
+            newRawLocation.longitude,
+            "±" + newRawLocation.accuracy + "m"
+          );
+          setRawUserLocation(newRawLocation);
+        },
+        (error) => {
+          console.error("❌ Erreur récupération position:", error);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: GEOLOCATION_CONFIG.TIMEOUT,
+          maximumAge: GEOLOCATION_CONFIG.MAX_AGE,
+        }
+      );
+    }
+  };
+
   // Gestionnaires d'événements pour les modales
-  const handleLocationPermissionGranted = (position) => {
-    setUserLocation({
-      latitude: position.coords.latitude,
-      longitude: position.coords.longitude,
-      accuracy: position.coords.accuracy,
-    });
+  const handleLocationPermissionGranted = () => {
+    console.log("🔓 Permission géolocalisation accordée");
     setNavigationState("welcome");
-    startLocationTracking();
-    // Supprimer la demande automatique d'orientation
+
+    // Déclencher le GeolocateControl pour obtenir la position
+    if (geolocateControlRef.current) {
+      console.log("🎯 Déclenchement GeolocateControl...");
+      geolocateControlRef.current.trigger();
+
+      // Récupérer la position actuelle après un délai
+      setTimeout(getCurrentPosition, GEOLOCATION_CONFIG.RETRY_DELAY);
+    } else {
+      console.warn("⚠️ GeolocateControl ref non disponible");
+    }
   };
 
   const handleLocationPermissionDenied = (errorMessage) => {
     console.error("Location permission denied:", errorMessage);
     setNavigationState("welcome");
-    // Supprimer la demande automatique d'orientation
   };
 
   const handleDestinationSelected = async (dest) => {
+    console.log("🎯 Destination sélectionnée:", dest);
+    console.log(
+      "📍 Position utilisateur disponible:",
+      userLocation ? "OUI" : "NON"
+    );
+
     setDestination(dest);
     setNavigationState("navigating");
 
     // Reset recalculation state for new navigation
     resetRecalculationState();
 
+    // Attendre que la position utilisateur soit disponible
+    if (!userLocation) {
+      console.log("⏳ Attente de la position utilisateur...");
+      // La route sera créée automatiquement dans useEffect quand userLocation sera disponible
+      return;
+    }
+
     // Créer l'itinéraire si on a la position utilisateur
-    if (userLocation) {
-      try {
-        const routeResult = await createRoute(
-          userLocation.latitude,
-          userLocation.longitude,
-          dest.coordinates[1],
-          dest.coordinates[0],
-          mapRef.current?.getMap()
-        );
+    console.log("🚀 Tentative création route...");
+    console.log("📍 De:", userLocation.latitude, userLocation.longitude);
+    console.log("📍 Vers:", dest.coordinates[1], dest.coordinates[0]);
+    try {
+      const routeResult = await createRoute(
+        userLocation.latitude,
+        userLocation.longitude,
+        dest.coordinates[1],
+        dest.coordinates[0],
+        mapRef.current?.getMap()
+      );
 
-        // Assurer le format FeatureCollection pour MapLibre
-        const routeData = {
-          type: "FeatureCollection",
-          features:
-            routeResult.type === "Feature"
-              ? [routeResult]
-              : routeResult.features || [],
-        };
+      // Assurer le format FeatureCollection pour MapLibre
+      const routeData = {
+        type: "FeatureCollection",
+        features:
+          routeResult.type === "Feature"
+            ? [routeResult]
+            : routeResult.features || [],
+      };
 
-        console.log("📍 Route créée:", routeData);
-        setRoute(routeData);
-        setOriginalRoute(routeData); // Store the complete route
-        setLastRouteUpdatePosition({
-          lat: userLocation.latitude,
-          lon: userLocation.longitude,
-        });
+      console.log("📍 Route créée:", routeData);
+      setRoute(routeData);
+      setOriginalRoute(routeData); // Store the complete route
+      setLastRouteUpdatePosition({
+        lat: userLocation.latitude,
+        lon: userLocation.longitude,
+      });
 
-        // Update recalculation state after successful route creation
-        updateRecalculationState(userLocation.latitude, userLocation.longitude);
-      } catch (error) {
-        console.error("Erreur création route:", error);
-        // Error logged to console only - not shown to user
-      }
+      // Update recalculation state after successful route creation
+      updateRecalculationState(userLocation.latitude, userLocation.longitude);
+    } catch (error) {
+      console.error("❌ Erreur création route:", error);
+      // Error logged to console only - not shown to user
     }
   };
 
@@ -193,129 +281,150 @@ function App() {
     }
   };
 
-  // Suivi de position en temps réel
-  const startLocationTracking = () => {
-    if (navigator.geolocation && !watchId.current) {
-      watchId.current = navigator.geolocation.watchPosition(
-        (position) => {
-          const newLocation = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-          };
-          
-          // Store previous location before updating
-          setPreviousUserLocation(userLocation);
-          setUserLocation(newLocation);
+  // Gestionnaires pour les événements du GeolocateControl
+  const handleGeolocate = useCallback(
+    (e) => {
+      console.log("📍 Position GPS reçue:", e);
+      const position = e.data || e; // L'événement peut être dans e.data ou directement dans e
+      if (!position || !position.coords) {
+        console.warn("⚠️ Position GPS invalide:", position);
+        return;
+      }
+      console.log(
+        "📍 Coordonnées:",
+        position.coords.latitude,
+        position.coords.longitude,
+        "±" + position.coords.accuracy + "m"
+      );
+      const newRawLocation = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+      };
 
-          // Smart route management if we have a destination
-          if (destination && originalRoute) {
-            // Check if we need to recalculate the entire route (user is off-route)
-            const shouldRecalc = shouldRecalculateRoute(
-              newLocation.latitude,
-              newLocation.longitude,
-              route,
-              false, // not forced
-              previousUserLocation?.latitude,
-              previousUserLocation?.longitude
+      console.log("📍 GPS Heading non disponible");
+
+      // Store previous location before updating
+      setPreviousUserLocation(userLocation);
+      setRawUserLocation(newRawLocation); // Le hook useSmoothedLocation se chargera du filtrage
+
+      // Smart route management if we have a destination
+      if (destination && originalRoute) {
+        // Check if we need to recalculate the entire route (user is off-route)
+        const shouldRecalc = shouldRecalculateRoute(
+          newRawLocation.latitude,
+          newRawLocation.longitude,
+          route,
+          false, // not forced
+          previousUserLocation?.latitude,
+          previousUserLocation?.longitude
+        );
+
+        if (shouldRecalc) {
+          console.log(
+            "🔄 Automatic recalculation triggered - user is off route"
+          );
+          createRoute(
+            newRawLocation.latitude,
+            newRawLocation.longitude,
+            destination.coordinates[1],
+            destination.coordinates[0],
+            mapRef.current?.getMap()
+          )
+            .then((routeResult) => {
+              // Assurer le format FeatureCollection pour MapLibre
+              const routeData = {
+                type: "FeatureCollection",
+                features:
+                  routeResult.type === "Feature"
+                    ? [routeResult]
+                    : routeResult.features || [],
+              };
+
+              setRoute(routeData);
+              setOriginalRoute(routeData); // Update original route
+              setLastRouteUpdatePosition({
+                lat: newRawLocation.latitude,
+                lon: newRawLocation.longitude,
+              });
+
+              // Update recalculation state after successful recalculation
+              updateRecalculationState(
+                newRawLocation.latitude,
+                newRawLocation.longitude
+              );
+            })
+            .catch((error) => {
+              console.error("Erreur mise à jour route:", error);
+            });
+        } else {
+          // Check if we should update the remaining route (progressive route trimming)
+          const shouldUpdateRemaining = shouldUpdateRemainingRoute(
+            newRawLocation.latitude,
+            newRawLocation.longitude,
+            originalRoute,
+            lastRouteUpdatePosition
+          );
+
+          if (shouldUpdateRemaining) {
+            console.log(
+              "✂️ Updating remaining route - trimming traveled portion"
+            );
+            const remainingRoute = createRemainingRoute(
+              newRawLocation.latitude,
+              newRawLocation.longitude,
+              originalRoute
             );
 
-            if (shouldRecalc) {
-              console.log(
-                "🔄 Automatic recalculation triggered - user is off route"
-              );
-              createRoute(
-                newLocation.latitude,
-                newLocation.longitude,
-                destination.coordinates[1],
-                destination.coordinates[0],
-                mapRef.current?.getMap()
-              )
-                .then((routeResult) => {
-                  // Assurer le format FeatureCollection pour MapLibre
-                  const routeData = {
-                    type: "FeatureCollection",
-                    features:
-                      routeResult.type === "Feature"
-                        ? [routeResult]
-                        : routeResult.features || [],
-                  };
+            const traveledPortion = createTraveledRoute(
+              newRawLocation.latitude,
+              newRawLocation.longitude,
+              originalRoute
+            );
 
-                  setRoute(routeData);
-                  setOriginalRoute(routeData); // Update original route
-                  setLastRouteUpdatePosition({
-                    lat: newLocation.latitude,
-                    lon: newLocation.longitude,
-                  });
-
-                  // Update recalculation state after successful recalculation
-                  updateRecalculationState(
-                    newLocation.latitude,
-                    newLocation.longitude
-                  );
-                })
-                .catch((error) => {
-                  console.error("Erreur mise à jour route:", error);
-                });
-            } else {
-              // Check if we should update the remaining route (progressive route trimming)
-              const shouldUpdateRemaining = shouldUpdateRemainingRoute(
-                newLocation.latitude,
-                newLocation.longitude,
-                originalRoute,
-                lastRouteUpdatePosition
-              );
-
-              if (shouldUpdateRemaining) {
-                console.log(
-                  "✂️ Updating remaining route - trimming traveled portion"
-                );
-                const remainingRoute = createRemainingRoute(
-                  newLocation.latitude,
-                  newLocation.longitude,
-                  originalRoute
-                );
-
-                const traveledPortion = createTraveledRoute(
-                  newLocation.latitude,
-                  newLocation.longitude,
-                  originalRoute
-                );
-
-                setRoute(remainingRoute);
-                setTraveledRoute(traveledPortion);
-                setLastRouteUpdatePosition({
-                  lat: newLocation.latitude,
-                  lon: newLocation.longitude,
-                });
-              } else {
-                console.log("📍 Position updated, no route changes needed");
-              }
-            }
+            setRoute(remainingRoute);
+            setTraveledRoute(traveledPortion);
+            setLastRouteUpdatePosition({
+              lat: newRawLocation.latitude,
+              lon: newRawLocation.longitude,
+            });
+          } else {
+            console.log("📍 Position updated, no route changes needed");
           }
-        },
-        (error) => {
-          console.error("Erreur de suivi GPS:", error);
-          // Error logged to console only - not shown to user
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 1000,
         }
-      );
-    }
-  };
-
-  // Nettoyage du suivi de position et directions
-  useEffect(() => {
-    return () => {
-      if (watchId.current) {
-        navigator.geolocation.clearWatch(watchId.current);
-        watchId.current = null;
       }
+    },
+    [
+      userLocation,
+      destination,
+      originalRoute,
+      route,
+      previousUserLocation,
+      lastRouteUpdatePosition,
+    ]
+  );
+
+  const handleGeolocateError = useCallback((e) => {
+    console.error("❌ Erreur géolocalisation:", e.data);
+    console.error("❌ Code erreur:", e.data?.code);
+    console.error("❌ Message:", e.data?.message);
+  }, []);
+
+  // Nettoyage des directions et icônes
+  useEffect(() => {
+    const currentMapRef = mapRef.current;
+
+    return () => {
       // Nettoyer l'instance MapLibre Directions
       cleanupDirections();
+
+      // Nettoyer les icônes de direction
+      if (currentMapRef) {
+        const map = currentMapRef.getMap();
+        if (map) {
+          cleanupDirectionIcons(map);
+        }
+      }
     };
   }, []);
 
@@ -325,13 +434,13 @@ function App() {
       latitude: userLocation?.latitude || DEFAULT_COORDS.latitude,
       longitude: userLocation?.longitude || DEFAULT_COORDS.longitude,
       zoom: navigationState === "navigating" ? 18 : 16.5,
-      bearing: bearing,
-      pitch: navigationState === "navigating" ? 60 : 45,
+      bearing: 0, // Bearing fixe - la boussole native gère l'orientation
+      pitch: adaptivePitch, // Utiliser le pitch adaptatif
     }),
     [
       userLocation,
-      bearing,
       navigationState,
+      adaptivePitch, // Ajouter le pitch adaptatif aux dépendances
       DEFAULT_COORDS.latitude,
       DEFAULT_COORDS.longitude,
     ]
@@ -383,6 +492,7 @@ function App() {
           ],
           tileSize: 256,
           attribution: "© Esri",
+          maxzoom: 18.4, // Limitation du zoom pour éviter la pixellisation
         },
       },
       layers: [
@@ -396,198 +506,48 @@ function App() {
     [mapType]
   );
 
-  // Fonction pour demander la permission d'orientation du device
-  const requestDeviceOrientationPermission = async () => {
-    try {
-      if (typeof DeviceOrientationEvent.requestPermission === "function") {
-        const permissionState =
-          await DeviceOrientationEvent.requestPermission();
-        if (permissionState === "granted") {
-          setOrientationPermissionGranted(true);
-          setIsOrientationActive(true);
-          console.log(
-            "🧭 Permission d'orientation accordée - True North disponible"
-          );
-          return true;
-        } else {
-          console.warn("Permission pour l'orientation refusée");
-          return false;
-        }
-      } else {
-        // Pour les navigateurs qui ne nécessitent pas de permission explicite
-        setOrientationPermissionGranted(true);
-        setIsOrientationActive(true);
-
-        // Vérifier si deviceorientationabsolute est disponible
-        if ("ondeviceorientationabsolute" in window) {
-          console.log(
-            "🧭 DeviceOrientationAbsolute disponible - True North OK"
-          );
-        } else {
-          console.warn(
-            "⚠️ DeviceOrientationAbsolute non disponible - orientation relative"
-          );
-        }
-
-        return true;
-      }
-    } catch (err) {
-      console.error("Erreur demande permission orientation:", err);
-      return false;
-    }
-  };
-
-  // Fonction pour basculer l'état de la boussole
-  const toggleCompass = async () => {
-    if (!isOrientationActive) {
-      // Activer la boussole
-      const granted = await requestDeviceOrientationPermission();
-      if (!granted) {
-        console.warn(
-          "Permission d'orientation refusée. La boussole ne fonctionnera pas."
-        );
-        // Error logged to console only - not shown to user
-      }
-    } else {
-      // Désactiver la boussole
-      setIsOrientationActive(false);
-      setBearing(0); // Remettre à zéro l'orientation
-      setCompassCalibration(0); // Reset calibration
-      setNeedsCalibration(false);
-    }
-  };
-
-  // Fonction de calibration manuelle de la boussole
-  const calibrateCompass = () => {
-    if (bearing !== null) {
-      // L'utilisateur pointe vers le nord et appuie sur "Calibrer"
-      const calibrationOffset = -bearing;
-      setCompassCalibration(calibrationOffset);
-      setNeedsCalibration(false);
-      console.log(
-        "🧭 Boussole calibrée manuellement, offset:",
-        calibrationOffset
-      );
-
-      // Feedback visuel temporaire
-      const button = document.querySelector(".calibrate-button");
-      if (button) {
-        button.textContent = "✅ Calibré !";
-        setTimeout(() => {
-          button.textContent = "🧭 Calibrer Nord";
-        }, 2000);
-      }
-    }
-  };
-
-  // Gestion de l'orientation du device pour navigation GPS
+  // Mise à jour dynamique du pitch avec transitions optimales
   useEffect(() => {
-    const handleOrientation = (event) => {
-      if (
-        event.alpha !== null &&
-        isOrientationActive &&
-        orientationPermissionGranted
-      ) {
-        let trueNorthBearing = 0;
+    if (mapRef.current && isMapReady) {
+      const map = mapRef.current.getMap();
 
-        // 🎯 SOLUTION 1: iOS Safari - webkitCompassHeading donne le vrai nord
-        if (event.webkitCompassHeading !== undefined) {
-          trueNorthBearing = event.webkitCompassHeading;
-          console.log("🧭 iOS Compass Heading (True North):", trueNorthBearing);
-        }
-        // 🎯 SOLUTION 2: Android/autres - deviceorientationabsolute avec event.absolute
-        else if (event.absolute === true) {
-          trueNorthBearing = 360 - event.alpha;
-          console.log(
-            "🧭 Absolute Orientation (True North):",
-            trueNorthBearing
-          );
-        }
-        // ⚠️ FALLBACK: Orientation relative (pas le vrai nord)
-        else {
-          trueNorthBearing = 360 - event.alpha;
-          setNeedsCalibration(true);
-          console.warn("⚠️ Using relative orientation - not true north!");
-        }
-
-        // Appliquer la calibration manuelle si nécessaire
-        const calibratedBearing =
-          (trueNorthBearing + compassCalibration + 360) % 360;
-
-        // Debug logs pour validation
-        console.log("🔍 Debug Compass:", {
-          alpha: event.alpha,
-          absolute: event.absolute,
-          webkitCompassHeading: event.webkitCompassHeading,
-          calculatedBearing: trueNorthBearing,
-          calibratedBearing: calibratedBearing,
-          calibrationOffset: compassCalibration,
-        });
-
-        setBearing(calibratedBearing);
-
-        // Mise à jour de l'orientation de la carte avec moins de fréquence pour éviter les conflits
-        if (mapRef.current && isMapReady && navigationState === "navigating") {
-          mapRef.current.easeTo({
-            bearing: calibratedBearing,
-            duration: 500, // Augmenté pour plus de fluidité
-          });
-        }
-      }
-    };
-
-    if (
-      typeof window !== "undefined" &&
-      window.DeviceOrientationEvent &&
-      isOrientationActive &&
-      orientationPermissionGranted
-    ) {
-      // 🎯 PRIORITÉ 1: Essayer deviceorientationabsolute (vrai nord)
-      if ("ondeviceorientationabsolute" in window) {
-        console.log("🧭 Using deviceorientationabsolute for true north");
-        window.addEventListener(
-          "deviceorientationabsolute",
-          handleOrientation,
-          {
-            passive: true,
-          }
+      // Utiliser shouldTransition pour vérifier si une mise à jour est nécessaire
+      if (shouldTransition(map.getPitch(), adaptivePitch, 2)) {
+        console.log(
+          `🎥 Updating pitch: ${map.getPitch().toFixed(1)}° → ${adaptivePitch}°`
         );
-      }
-      // 🎯 PRIORITÉ 2: Fallback vers deviceorientation standard
-      else {
-        console.log("🧭 Using deviceorientation (may be relative)");
-        window.addEventListener("deviceorientation", handleOrientation, {
-          passive: true,
+
+        // Utiliser les transitions optimales
+        applyOptimalTransition(map, {
+          pitch: adaptivePitch,
+          speed: speedKmh,
+          source: "adaptive-pitch",
+          context: pitchMode === "cinematic" ? "cinematic" : "navigation",
+        }).catch((error) => {
+          console.error("Erreur lors de la transition de pitch:", error);
         });
       }
     }
+  }, [adaptivePitch, pitchMode, speedKmh, mapRef, isMapReady]);
 
-    return () => {
-      window.removeEventListener(
-        "deviceorientationabsolute",
-        handleOrientation
-      );
-      window.removeEventListener("deviceorientation", handleOrientation);
-    };
-  }, [
-    isMapReady,
-    navigationState,
-    orientationPermissionGranted,
-    isOrientationActive,
-    compassCalibration,
-  ]);
-
-  // Centrer la carte sur l'utilisateur pendant la navigation
+  // Configuration des événements du GeolocateControl
   useEffect(() => {
-    if (mapRef.current && userLocation && navigationState === "navigating") {
-      mapRef.current.easeTo({
-        center: [userLocation.longitude, userLocation.latitude],
-        duration: 1000,
-      });
-    }
-  }, [userLocation, navigationState]);
+    if (geolocateControlRef.current) {
+      const geolocateControl = geolocateControlRef.current;
 
-  // Gestion des blocs vectoriels
+      // Ajouter les gestionnaires d'événements
+      geolocateControl.on("geolocate", handleGeolocate);
+      geolocateControl.on("error", handleGeolocateError);
+
+      return () => {
+        // Nettoyer les gestionnaires d'événements
+        geolocateControl.off("geolocate", handleGeolocate);
+        geolocateControl.off("error", handleGeolocateError);
+      };
+    }
+  }, [handleGeolocate, handleGeolocateError]);
+
+  // Gestion initiale des blocs - une seule fois au chargement
   useEffect(() => {
     if (!isMapReady || !mapRef.current) return;
 
@@ -598,68 +558,187 @@ function App() {
       initMapLibreDirections(map);
     }
 
-    try {
-      // Source unique pour tous les blocs
-      map.addSource("blocks", {
-        type: "geojson",
-        data: blocksGeoJSON,
-      });
-
-      // Couche de remplissage
-      map.addLayer({
-        id: "blocks-fill",
-        type: "fill",
-        source: "blocks",
-        paint: {
-          "fill-color": ["get", "color"],
-          "fill-opacity": 0.8,
-          "fill-outline-color": "#999",
-        },
-      });
-
-      // Couche de bordure
-      map.addLayer({
-        id: "blocks-border",
-        type: "line",
-        source: "blocks",
-        paint: {
-          "line-color": "#999",
-          "line-width": 1,
-        },
-      });
-
-      // Met à jour les positions après chaque rendu
-      map.on("render", () => {
-        blocksGeoJSON.features.forEach((block) => {
-          if (block.properties.name) {
-            block.properties.center = getPolygonCenter(
-              block.geometry.coordinates[0]
-            );
-          }
-        });
-      });
-    } catch (error) {
-      console.error("Erreur lors du chargement des blocs:", error);
-      // Error logged to console only - not shown to user
-    }
-
     return () => {
-      // Nettoyage robuste - capturer la référence au moment de la création
+      // Nettoyage global
       const currentMap = map;
       if (currentMap) {
         try {
           currentMap.off("render");
           if (currentMap.getLayer("blocks-fill"))
             currentMap.removeLayer("blocks-fill");
-          if (currentMap.getLayer("blocks-text"))
-            currentMap.removeLayer("blocks-text");
+          if (currentMap.getLayer("blocks-border"))
+            currentMap.removeLayer("blocks-border");
           if (currentMap.getSource("blocks")) currentMap.removeSource("blocks");
         } catch (cleanupError) {
           console.error("Erreur de nettoyage:", cleanupError);
         }
       }
     };
-  }, [isMapReady, blocksGeoJSON]);
+  }, [isMapReady]);
+
+  // Créer automatiquement la route quand userLocation devient disponible
+  useEffect(() => {
+    if (
+      userLocation &&
+      destination &&
+      navigationState === "navigating" &&
+      !route
+    ) {
+      console.log(
+        "🚀 Position utilisateur disponible - création automatique de la route"
+      );
+      console.log("📍 De:", userLocation.latitude, userLocation.longitude);
+      console.log(
+        "📍 Vers:",
+        destination.coordinates[1],
+        destination.coordinates[0]
+      );
+
+      const createRouteAsync = async () => {
+        try {
+          const routeResult = await createRoute(
+            userLocation.latitude,
+            userLocation.longitude,
+            destination.coordinates[1],
+            destination.coordinates[0],
+            mapRef.current?.getMap()
+          );
+
+          if (routeResult) {
+            console.log(
+              "✅ Route créée automatiquement avec succès:",
+              routeResult
+            );
+            console.log(
+              "📊 Coordonnées route:",
+              routeResult.features?.[0]?.geometry?.coordinates?.length,
+              "points"
+            );
+            setRoute(routeResult);
+            setOriginalRoute(routeResult);
+          } else {
+            console.error("❌ Échec de la création automatique de route");
+          }
+        } catch (error) {
+          console.error("❌ Erreur création automatique route:", error);
+        }
+      };
+
+      createRouteAsync();
+    }
+  }, [userLocation, destination, navigationState, route]);
+
+  // Surveillance du zoom de la carte
+  useEffect(() => {
+    if (mapRef.current && isMapReady) {
+      const map = mapRef.current.getMap();
+
+      const handleZoomChange = () => {
+        const currentZoom = map.getZoom();
+        console.log("🔍 Zoom actuel:", currentZoom.toFixed(2));
+      };
+
+      // Log initial du zoom
+      handleZoomChange();
+
+      // Écouter les changements de zoom
+      map.on("zoom", handleZoomChange);
+      map.on("zoomend", () => {
+        const finalZoom = map.getZoom();
+        console.log("🔍 Zoom final:", finalZoom.toFixed(2));
+      });
+
+      // Cleanup
+      return () => {
+        map.off("zoom", handleZoomChange);
+        map.off("zoomend", handleZoomChange);
+      };
+    }
+  }, [isMapReady]);
+
+  // Gestion des polygones de blocs - UNIQUEMENT en mode OSM
+  useEffect(() => {
+    if (mapRef.current && isMapReady) {
+      const map = mapRef.current.getMap();
+
+      const manageBlockPolygons = () => {
+        try {
+          if (mapType === "osm") {
+            // Mode OSM : ajouter les polygones
+            if (!map.getSource("blocks")) {
+              // Ajouter la source blocks
+              map.addSource("blocks", {
+                type: "geojson",
+                data: blocksGeoJSON,
+              });
+            }
+
+            // Ajouter les couches de polygones si elles n'existent pas
+            if (!map.getLayer("blocks-fill")) {
+              map.addLayer({
+                id: "blocks-fill",
+                type: "fill",
+                source: "blocks",
+                paint: {
+                  "fill-color": ["get", "color"],
+                  "fill-opacity": 0.8,
+                  "fill-outline-color": "#999",
+                },
+              });
+            }
+
+            if (!map.getLayer("blocks-border")) {
+              map.addLayer({
+                id: "blocks-border",
+                type: "line",
+                source: "blocks",
+                paint: {
+                  "line-color": "#999",
+                  "line-width": 1,
+                  "line-opacity": 1.0,
+                },
+              });
+            }
+
+            console.log("🗺️ Polygones des blocs affichés (mode OSM)");
+          } else {
+            // Mode satellite : supprimer les polygones
+            if (map.getLayer("blocks-fill")) {
+              map.removeLayer("blocks-fill");
+            }
+            if (map.getLayer("blocks-border")) {
+              map.removeLayer("blocks-border");
+            }
+            if (map.getSource("blocks")) {
+              map.removeSource("blocks");
+            }
+            console.log("🗺️ Polygones des blocs masqués (mode satellite)");
+          }
+        } catch (error) {
+          console.error("❌ Erreur lors de la gestion des polygones:", error);
+        }
+      };
+
+      // Si le style est déjà chargé, gérer immédiatement
+      if (map.isStyleLoaded()) {
+        manageBlockPolygons();
+      } else {
+        // Sinon, attendre que le style soit chargé
+        map.once('styledata', manageBlockPolygons);
+      }
+    }
+  }, [mapType, isMapReady, blocksGeoJSON]); // Déclenché à chaque changement de mapType
+
+  // Debug des états de route
+  console.log("🗺️ État routes:", {
+    route: route ? `${route.features?.length} features` : "null",
+    traveledRoute: traveledRoute
+      ? `${traveledRoute.features?.length} features`
+      : "null",
+    navigationState,
+    userLocation: userLocation ? "présent" : "absent",
+    destination: destination ? "présent" : "absent",
+  });
 
   return (
     <>
@@ -689,38 +768,24 @@ function App() {
           touchPitch={true}
         >
           {/* Contrôles de carte - toujours disponibles */}
+          {/* Contrôles de navigation - boussole toujours visible */}
           <NavigationControl
-            showCompass={navigationState !== "navigating"}
+            showCompass={true}
             showZoom
             position="bottom-right"
           />
 
-          {/* Bouton de recentrage personnalisé */}
-          <div className="geolocate-control-custom">
-            <button
-              onClick={() => {
-                if (userLocation && mapRef.current) {
-                  mapRef.current.easeTo({
-                    center: [userLocation.longitude, userLocation.latitude],
-                    zoom: 18,
-                    duration: 1000,
-                  });
-                }
-              }}
-              className="geolocate-button"
-              title="Recentrer sur ma position"
-              disabled={!userLocation}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
-              </svg>
-            </button>
-          </div>
+          {/* GeolocateControl optimisé avec gestion adaptative de la batterie */}
+          <GeolocateControl
+            ref={geolocateControlRef}
+            positionOptions={gpsOptions}
+            fitBoundsOptions={fitBoundsOptions}
+            trackUserLocation={true}
+            showUserLocation={true}
+            showUserHeading={true}
+            showAccuracyCircle={true} // Afficher le cercle de précision
+            position="bottom-right"
+          />
 
           {/* Bouton de basculement de carte */}
           <div className="map-type-switcher">
@@ -735,88 +800,6 @@ function App() {
             </button>
           </div>
 
-          {/* Bouton boussole pour l'orientation */}
-          <div className="compass-control">
-            <button
-              onClick={toggleCompass}
-              className={`compass-button ${
-                isOrientationActive ? "active" : ""
-              }`}
-              title={
-                isOrientationActive
-                  ? "Désactiver la boussole"
-                  : "Activer la boussole"
-              }
-            >
-              <div className="compass-face-mini">
-                {/* Compass ring with cardinal points */}
-                <div
-                  className="compass-ring-mini"
-                  style={{
-                    transform: isOrientationActive
-                      ? `rotate(${-bearing}deg)`
-                      : "rotate(0deg)",
-                    transition: "transform 0.3s ease",
-                  }}
-                >
-                  {/* Cardinal points */}
-                  <div className="cardinal-point-mini cardinal-north-mini">
-                    N
-                  </div>
-                  <div className="cardinal-point-mini cardinal-east-mini">
-                    E
-                  </div>
-                  <div className="cardinal-point-mini cardinal-south-mini">
-                    S
-                  </div>
-                  <div className="cardinal-point-mini cardinal-west-mini">
-                    W
-                  </div>
-                </div>
-
-                {/* North indicator (always points up) */}
-                <div className="north-indicator">
-                  <div className="north-arrow"></div>
-                </div>
-
-                {/* Center dot */}
-                <div className="compass-center-mini">
-                  <div className="center-dot-mini"></div>
-                </div>
-
-                {/* Status indicator */}
-                {isOrientationActive && (
-                  <div className="compass-status-dot"></div>
-                )}
-
-                {/* Calibration needed indicator */}
-                {needsCalibration && isOrientationActive && (
-                  <div className="compass-calibration-needed">⚠️</div>
-                )}
-
-                {/* Inactive overlay */}
-                {!isOrientationActive && (
-                  <div className="compass-inactive-overlay-mini">
-                    <div className="compass-inactive-icon">⊕</div>
-                  </div>
-                )}
-              </div>
-            </button>
-          </div>
-
-          {/* Bouton de calibration de la boussole */}
-          {needsCalibration && isOrientationActive && (
-            <div className="compass-calibration-control">
-              <button
-                onClick={calibrateCompass}
-                className="calibrate-button"
-                title="Pointez vers le nord géographique et appuyez pour calibrer"
-              >
-                🧭 Calibrer Nord
-              </button>
-            </div>
-          )}
-
           {/* Bouton nouvelle destination pendant la navigation */}
           {navigationState === "navigating" && (
             <div className="new-destination-control">
@@ -830,35 +813,229 @@ function App() {
             </div>
           )}
 
-
-          {/* Affichage de l'itinéraire restant */}
+          {/* Affichage de l'itinéraire restant avec styles avancés */}
           {route && (
-            <Source id="route" type="geojson" data={route}>
-              <Layer
-                id="route-line"
-                type="line"
-                paint={{
-                  "line-color": "#3b82f6",
-                  "line-width": 4,
-                  "line-opacity": 0.8,
-                }}
-              />
-            </Source>
+            <>
+              {console.log("🗺️ Affichage route:", route)}
+              <Source id="route" type="geojson" data={route}>
+                {/* Couche d'ombre pour effet de profondeur */}
+                <Layer
+                  id="route-line-shadow"
+                  type="line"
+                  paint={{
+                    "line-color": "#000000",
+                    "line-width": [
+                      "interpolate",
+                      ["exponential", 1.5],
+                      ["zoom"],
+                      10,
+                      8, // Zoom 10: 8px (ombre)
+                      15,
+                      10, // Zoom 15: 10px
+                      20,
+                      16, // Zoom 20: 16px
+                    ],
+                    "line-opacity": 0.2,
+                    "line-blur": 2,
+                  }}
+                  layout={{
+                    "line-cap": "round",
+                    "line-join": "round",
+                  }}
+                />
+                {/* Couche de fond (outline) pour meilleur contraste */}
+                <Layer
+                  id="route-line-casing"
+                  type="line"
+                  paint={{
+                    "line-color": [
+                      "interpolate",
+                      ["linear"],
+                      ["zoom"],
+                      10,
+                      "#1e40af", // Bleu foncé aux petits zooms
+                      15,
+                      "#1d4ed8", // Bleu plus intense
+                      20,
+                      "#1e3a8a", // Bleu très foncé aux gros zooms
+                    ],
+                    "line-width": [
+                      "interpolate",
+                      ["exponential", 1.5],
+                      ["zoom"],
+                      10,
+                      6, // Zoom 10: 6px (outline)
+                      15,
+                      8, // Zoom 15: 8px
+                      20,
+                      14, // Zoom 20: 14px
+                    ],
+                    "line-opacity": 0.8,
+                  }}
+                  layout={{
+                    "line-cap": "round",
+                    "line-join": "round",
+                  }}
+                />
+                {/* Couche principale de la route avec transitions fluides */}
+                <Layer
+                  id="route-line"
+                  type="line"
+                  paint={{
+                    "line-color": [
+                      "interpolate",
+                      ["linear"],
+                      ["zoom"],
+                      10,
+                      navigationState === "navigating" ? "#3b82f6" : "#60a5fa", // Plus vif en navigation
+                      15,
+                      navigationState === "navigating" ? "#2563eb" : "#3b82f6",
+                      20,
+                      navigationState === "navigating" ? "#1d4ed8" : "#2563eb",
+                    ],
+                    "line-width": [
+                      "interpolate",
+                      ["exponential", 1.5],
+                      ["zoom"],
+                      10,
+                      navigationState === "navigating" ? 4 : 3, // Plus épais en navigation
+                      15,
+                      navigationState === "navigating" ? 6 : 5,
+                      20,
+                      navigationState === "navigating" ? 12 : 10,
+                    ],
+                    "line-opacity": [
+                      "interpolate",
+                      ["linear"],
+                      ["zoom"],
+                      10,
+                      navigationState === "navigating" ? 0.9 : 0.8,
+                      15,
+                      navigationState === "navigating" ? 0.95 : 0.9,
+                      20,
+                      1.0,
+                    ],
+                  }}
+                  layout={{
+                    "line-cap": "round",
+                    "line-join": "round",
+                  }}
+                />
+                {/* Flèches directionnelles pour la route - TEMPORAIREMENT DÉSACTIVÉES */}
+              </Source>
+            </>
           )}
 
-          {/* Affichage de la partie parcourue */}
+          {/* Affichage de la partie parcourue avec styles avancés */}
           {traveledRoute && (
             <Source id="traveled-route" type="geojson" data={traveledRoute}>
+              {/* Couche d'ombre pour la route parcourue */}
+              <Layer
+                id="traveled-route-line-shadow"
+                type="line"
+                paint={{
+                  "line-color": "#000000",
+                  "line-width": [
+                    "interpolate",
+                    ["exponential", 1.5],
+                    ["zoom"],
+                    10,
+                    7, // Zoom 10: 7px (ombre)
+                    15,
+                    9, // Zoom 15: 9px
+                    20,
+                    14, // Zoom 20: 14px
+                  ],
+                  "line-opacity": 0.15,
+                  "line-blur": 1.5,
+                  "line-dasharray": [3, 3],
+                }}
+                layout={{
+                  "line-cap": "round",
+                  "line-join": "round",
+                }}
+              />
+              {/* Couche de fond pour la route parcourue */}
+              <Layer
+                id="traveled-route-line-casing"
+                type="line"
+                paint={{
+                  "line-color": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    10,
+                    "#d97706", // Orange foncé
+                    15,
+                    "#c2410c", // Orange plus intense
+                    20,
+                    "#9a3412", // Orange très foncé
+                  ],
+                  "line-width": [
+                    "interpolate",
+                    ["exponential", 1.5],
+                    ["zoom"],
+                    10,
+                    5, // Zoom 10: 5px (outline)
+                    15,
+                    7, // Zoom 15: 7px
+                    20,
+                    12, // Zoom 20: 12px
+                  ],
+                  "line-opacity": 0.8,
+                  "line-dasharray": [3, 3],
+                }}
+                layout={{
+                  "line-cap": "round",
+                  "line-join": "round",
+                }}
+              />
+              {/* Couche principale de la route parcourue avec transitions */}
               <Layer
                 id="traveled-route-line"
                 type="line"
                 paint={{
-                  "line-color": "#f3c549",
-                  "line-width": 3,
+                  "line-color": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    10,
+                    "#f59e0b", // Orange standard
+                    15,
+                    "#f97316", // Orange plus vif
+                    20,
+                    "#ea580c", // Orange profond
+                  ],
+                  "line-width": [
+                    "interpolate",
+                    ["exponential", 1.5],
+                    ["zoom"],
+                    10,
+                    2.5, // Zoom 10: 2.5px
+                    15,
+                    4, // Zoom 15: 4px
+                    20,
+                    8, // Zoom 20: 8px
+                  ],
                   "line-opacity": 1,
-                  "line-dasharray": [2, 2],
+                  "line-dasharray": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    10,
+                    ["literal", [2, 2]], // Tirets courts aux petits zooms
+                    15,
+                    ["literal", [3, 2]], // Tirets moyens
+                    20,
+                    ["literal", [4, 3]], // Tirets longs aux gros zooms
+                  ],
+                }}
+                layout={{
+                  "line-cap": "round",
+                  "line-join": "round",
                 }}
               />
+              {/* Flèches directionnelles pour la route parcourue - TEMPORAIREMENT DÉSACTIVÉES */}
             </Source>
           )}
 
@@ -877,59 +1054,41 @@ function App() {
             </Marker>
           )}
 
-          {/* Marker de position utilisateur */}
-          {userLocation && navigationState === "navigating" && (
+          {/* Le marqueur utilisateur est maintenant géré par showUserLocation du GeolocateControl */}
+
+          {/* Affichage des POIs - toujours visibles */}
+          {publicPois.map((poi) => (
             <Marker
-              longitude={userLocation.longitude}
-              latitude={userLocation.latitude}
-              anchor="center"
+              key={poi.name}
+              longitude={poi.coords[0]}
+              latitude={poi.coords[1]}
             >
-              <div
-                className="user-location-marker"
-                style={{ transform: `rotate(${bearing}deg)` }}
-              >
-                <div className="user-location-pin">
-                  <div className="user-location-arrow"></div>
-                </div>
-              </div>
+              <img
+                src={poi.icon}
+                alt={poi.name}
+                style={{ width: "50px", height: "auto" }}
+                title={poi.name}
+              />
             </Marker>
-          )}
+          ))}
 
-          {/* Affichage des POIs seulement quand on n'est pas en navigation */}
-          {navigationState === "navigating" &&
-            publicPois.map((poi) => (
+          {/* Affichage des numéros de blocs - toujours visibles */}
+          {blocks.map((block) => {
+            if (!block.name || block.color === "#19744B") return null;
+
+            const center = getPolygonCenter(block.coords);
+
+            return (
               <Marker
-                key={poi.name}
-                longitude={poi.coords[0]}
-                latitude={poi.coords[1]}
+                key={`block-${block.name}`}
+                longitude={center[0]}
+                latitude={center[1]}
+                anchor="center"
               >
-                <img
-                  src={poi.icon}
-                  alt={poi.name}
-                  style={{ width: "50px", height: "auto" }}
-                  title={poi.name}
-                />
+                <div className="block-label">{block.name}</div>
               </Marker>
-            ))}
-
-          {/* Affichage des numéros de blocs seulement quand on n'est pas en navigation */}
-          {navigationState === "navigating" &&
-            blocks.map((block) => {
-              if (!block.name || block.color === "#19744B") return null;
-
-              const center = getPolygonCenter(block.coords);
-
-              return (
-                <Marker
-                  key={`block-${block.name}`}
-                  longitude={center[0]}
-                  latitude={center[1]}
-                  anchor="center"
-                >
-                  <div className="block-label">{block.name}</div>
-                </Marker>
-              );
-            })}
+            );
+          })}
         </Map>
 
         {/* Interface de navigation */}
@@ -937,9 +1096,9 @@ function App() {
           <NavigationDisplay
             userLocation={userLocation}
             destination={destination}
-            deviceBearing={bearing}
+            deviceBearing={0}
             onArrival={handleArrival}
-            isOrientationActive={isOrientationActive}
+            isOrientationActive={false}
           />
         )}
 
@@ -948,29 +1107,36 @@ function App() {
       </main>
 
       {/* Modales */}
-      {navigationState === "permission" && (
-        <LocationPermissionModal
-          onPermissionGranted={handleLocationPermissionGranted}
-          onPermissionDenied={handleLocationPermissionDenied}
-        />
-      )}
+      <LocationPermissionModalNew
+        isOpen={navigationState === "permission"}
+        onPermissionGranted={handleLocationPermissionGranted}
+        onPermissionDenied={handleLocationPermissionDenied}
+      />
 
-      {navigationState === "welcome" && (
-        <WelcomeModal
-          onDestinationSelected={handleDestinationSelected}
-          onCancel={() => setNavigationState("permission")}
-          availableBlocks={availableBlocks}
-        />
-      )}
+      <WelcomeModalMobile
+        isOpen={navigationState === "welcome"}
+        onDestinationSelected={handleDestinationSelected}
+        onCancel={() => setNavigationState("permission")}
+        availableBlocks={availableBlocks}
+      />
 
-      {navigationState === "arrived" && destination && (
-        <ArrivalModal
+      {destination && (
+        <ArrivalModalNew
+          isOpen={navigationState === "arrived"}
           destination={destination}
           onNewDestination={handleNewDestination}
           onExitVillage={handleExitVillage}
-          onClose={() => setNavigationState("navigating")}
         />
       )}
+
+      {/* Alertes de navigation intelligentes */}
+      <NavigationAlerts
+        userLocation={userLocation}
+        route={route}
+        speedKmh={speedKmh}
+        isNavigating={navigationState === "navigating"}
+      />
+
       <Footer />
     </>
   );

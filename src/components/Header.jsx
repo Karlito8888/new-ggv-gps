@@ -1,5 +1,4 @@
 import ggvLogo from "../assets/img/ggv.png";
-import "./Header.css";
 
 function Header() {
   return (
