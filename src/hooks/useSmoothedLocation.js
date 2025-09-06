@@ -39,15 +39,15 @@ const useSmoothedLocation = (rawLocation, options = {}) => {
   // Validation de la position
   const isValidPosition = useCallback((location, previousLoc) => {
     // Vérifier la précision
-    console.log("🔍 Vérification précision:", location.accuracy, "vs seuil", minAccuracy);
+    console.log("🔍 Accuracy check:", location.accuracy, "vs threshold", minAccuracy);
     if (location.accuracy > minAccuracy) {
-      console.log("❌ Position rejetée: précision trop faible", location.accuracy, ">", minAccuracy);
+      console.log("❌ Position rejected: accuracy too low", location.accuracy, ">", minAccuracy);
       return false;
     }
 
     // Si c'est la première position, l'accepter
     if (!previousLoc) {
-      console.log("✅ Première position acceptée");
+      console.log("✅ First position accepted");
       return true;
     }
 
@@ -68,13 +68,13 @@ const useSmoothedLocation = (rawLocation, options = {}) => {
 
     // Rejeter si la vitesse est irréaliste
     if (calculatedSpeed > maxSpeed) {
-      console.log(`GPS: Vitesse irréaliste rejetée: ${calculatedSpeed.toFixed(1)} m/s`);
+      console.log(`GPS: Unrealistic speed rejected: ${calculatedSpeed.toFixed(1)} m/s`);
       return false;
     }
 
     // Rejeter si le saut est trop important sans mouvement logique
     if (distance > maxJumpDistance && calculatedSpeed < 1) {
-      console.log(`GPS: Saut suspect rejeté: ${distance.toFixed(1)}m à ${calculatedSpeed.toFixed(1)} m/s`);
+      console.log(`GPS: Suspicious jump rejected: ${distance.toFixed(1)}m at ${calculatedSpeed.toFixed(1)} m/s`);
       return false;
     }
 
@@ -101,7 +101,7 @@ const useSmoothedLocation = (rawLocation, options = {}) => {
   }, [smoothingFactor]);
 
   useEffect(() => {
-    console.log("🔍 useSmoothedLocation reçoit:", rawLocation);
+    console.log("🔍 useSmoothedLocation receives:", rawLocation);
     if (!rawLocation) {
       setSmoothedLocation(null);
       setSpeed(0);

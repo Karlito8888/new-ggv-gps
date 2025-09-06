@@ -24,7 +24,7 @@ const NavigationDisplay = ({
 
     setInstructions(navInstructions);
 
-    // Vérifier l'arrivée
+    // Check arrival
     const arrived = hasArrived(
       userLocation.latitude,
       userLocation.longitude,

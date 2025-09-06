@@ -24,8 +24,8 @@ const LocationPermissionModalNew = ({
         throw new Error("Geolocation is not supported by this browser");
       }
 
-      // Juste vérifier que la géolocalisation est disponible
-      // Le GeolocateControl gérera la demande de permission et l'obtention de la position
+      // Just check that geolocation is available
+      // GeolocateControl will handle permission request and position acquisition
       onPermissionGranted();
     } catch (error) {
       console.error("Geolocation error:", error);

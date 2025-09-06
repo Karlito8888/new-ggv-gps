@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Script de vérification de compatibilité Netlify
- * Exécute des checks avant déploiement
+ * Netlify compatibility check script
+ * Run checks before deployment
  */
 
 import fs from 'fs';
@@ -12,11 +12,11 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 
-console.log('🔍 Vérification de compatibilité Netlify...\n');
+console.log('🔍 Netlify compatibility check...\n');
 
 const checks = [];
 
-// Vérifier la présence des fichiers essentiels
+// Check for essential files
 const requiredFiles = [
   'netlify.toml',
   'public/_redirects',
@@ -26,7 +26,7 @@ const requiredFiles = [
   'dist/sw.js'
 ];
 
-console.log('📁 Vérification des fichiers requis:');
+console.log('📁 Checking required files:');
 requiredFiles.forEach(file => {
   const filePath = path.join(rootDir, file);
   const exists = fs.existsSync(filePath);
@@ -34,23 +34,23 @@ requiredFiles.forEach(file => {
   checks.push({ name: file, status: exists });
 });
 
-// Vérifier la configuration package.json
-console.log('\n📦 Vérification package.json:');
+// Check package.json configuration
+console.log('\n📦 Checking package.json:');
 const packagePath = path.join(rootDir, 'package.json');
 if (fs.existsSync(packagePath)) {
   const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
   
   const hasNodeVersion = pkg.engines?.node;
-  console.log(`  ${hasNodeVersion ? '✅' : '⚠️'} Version Node.js spécifiée: ${hasNodeVersion || 'Non définie'}`);
+  console.log(`  ${hasNodeVersion ? '✅' : '⚠️'} Node.js version specified: ${hasNodeVersion || 'Not defined'}`);
   
   const hasBuildScript = pkg.scripts?.build;
-  console.log(`  ${hasBuildScript ? '✅' : '❌'} Script build: ${hasBuildScript || 'Manquant'}`);
+  console.log(`  ${hasBuildScript ? '✅' : '❌'} Build script: ${hasBuildScript || 'Missing'}`);
   
   checks.push({ name: 'package.json config', status: hasNodeVersion && hasBuildScript });
 }
 
-// Vérifier les icônes PWA
-console.log('\n🎨 Vérification des icônes PWA:');
+// Check PWA icons
+console.log('\n🎨 Checking PWA icons:');
 const iconSizes = ['16x16', '32x32', '48x48', '72x72', '96x96', '144x144', '192x192', '512x512'];
 iconSizes.forEach(size => {
   const iconPath = path.join(rootDir, 'public', 'icons', `icon-${size}.png`);
@@ -59,8 +59,8 @@ iconSizes.forEach(size => {
   if (!exists) checks.push({ name: `icon-${size}.png`, status: false });
 });
 
-// Vérifier les variables d'environnement
-console.log('\n🔐 Variables d\'environnement:');
+// Check environment variables
+console.log('\n🔐 Environment variables:');
 const envVars = [
   'VITE_SUPABASE_URL',
   'VITE_SUPABASE_ANON_KEY',
@@ -69,11 +69,11 @@ const envVars = [
 
 envVars.forEach(varName => {
   const exists = (typeof process !== 'undefined' && process.env && process.env[varName]) !== undefined;
-  console.log(`  ${exists ? '✅' : '⚠️'} ${varName}: ${exists ? 'Définie' : 'Non définie (à configurer sur Netlify)'}`);
+  console.log(`  ${exists ? '✅' : '⚠️'} ${varName}: ${exists ? 'Defined' : 'Not defined (configure on Netlify)'}`);
 });
 
-// Vérifier la configuration Vite
-console.log('\n⚙️ Configuration Vite:');
+// Check Vite configuration
+console.log('\n⚙️ Vite configuration:');
 const viteConfigPath = path.join(rootDir, 'vite.config.js');
 if (fs.existsSync(viteConfigPath)) {
   const viteConfig = fs.readFileSync(viteConfigPath, 'utf8');
@@ -82,29 +82,29 @@ if (fs.existsSync(viteConfigPath)) {
   console.log(`  ${hasBase ? '✅' : '⚠️'} Configuration base path`);
   
   const hasPWA = viteConfig.includes('VitePWA');
-  console.log(`  ${hasPWA ? '✅' : '❌'} Plugin PWA configuré`);
+  console.log(`  ${hasPWA ? '✅' : '❌'} PWA plugin configured`);
   
   const hasManualChunks = viteConfig.includes('manualChunks');
-  console.log(`  ${hasManualChunks ? '✅' : '⚠️'} Optimisation chunks`);
+  console.log(`  ${hasManualChunks ? '✅' : '⚠️'} Chunks optimization`);
 }
 
-// Résumé
-console.log('\n📊 Résumé:');
+// Summary
+console.log('\n📊 Summary:');
 const failedChecks = checks.filter(check => !check.status);
 const passedChecks = checks.filter(check => check.status);
 
-console.log(`✅ Checks réussis: ${passedChecks.length}`);
-console.log(`❌ Checks échoués: ${failedChecks.length}`);
+console.log(`✅ Passed checks: ${passedChecks.length}`);
+console.log(`❌ Failed checks: ${failedChecks.length}`);
 
 if (failedChecks.length > 0) {
-  console.log('\n🚨 Problèmes détectés:');
+  console.log('\n🚨 Issues detected:');
   failedChecks.forEach(check => {
     console.log(`  - ${check.name}`);
   });
-  console.log('\n💡 Voir NETLIFY_DEPLOYMENT.md pour résoudre ces problèmes.');
+  console.log('\n💡 See NETLIFY_DEPLOYMENT.md to resolve these issues.');
   if (typeof process !== 'undefined' && process.exit) process.exit(1);
 } else {
-  console.log('\n🎉 Toutes les vérifications sont passées !');
-  console.log('✅ Prêt pour déploiement sur Netlify');
+  console.log('\n🎉 All checks passed!');
+  console.log('✅ Ready for Netlify deployment');
   if (typeof process !== 'undefined' && process.exit) process.exit(0);
 }

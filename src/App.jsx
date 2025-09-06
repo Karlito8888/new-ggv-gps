@@ -19,6 +19,8 @@ import WelcomeModalMobile from "./components/WelcomeModalMobile";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModalNew from "./components/ArrivalModalNew";
 import NavigationAlerts from "./components/NavigationAlerts";
+import OrientationToggle from "./components/OrientationToggle";
+import useDeviceOrientation from "./hooks/useDeviceOrientation";
 
 import {
   createRoute,
@@ -53,21 +55,21 @@ const GEOLOCATION_CONFIG = {
 
 function App() {
   // ========================================
-  // REFS ET HOOKS DE DONNÉES
+  // REFS AND DATA HOOKS
   // ========================================
   const mapRef = useRef(null);
   const geolocateControlRef = useRef(null);
   const { data: availableBlocks = [] } = useAvailableBlocks();
 
   // ========================================
-  // ÉTATS DE NAVIGATION
+  // NAVIGATION STATES
   // ========================================
   const [navigationState, setNavigationState] = useState("permission"); // permission, welcome, navigating, arrived
   const [rawUserLocation, setRawUserLocation] = useState(null);
   const [previousUserLocation, setPreviousUserLocation] = useState(null);
 
   // ========================================
-  // HOOKS DE TRAITEMENT GPS
+  // GPS PROCESSING HOOKS
   // ========================================
   const {
     location: userLocation,
@@ -80,13 +82,13 @@ function App() {
     maxSpeed: 50,
   });
 
-  // Optimisation GPS adaptative pour économiser la batterie
+  // Adaptive GPS optimization for battery saving
   const { gpsOptions, fitBoundsOptions } = useAdaptiveGPS(
     speed,
     navigationState === "navigating"
   );
 
-  // Pitch adaptatif selon vitesse et contexte
+  // Adaptive pitch based on speed and context
   const { pitch: adaptivePitch, pitchMode } = useAdaptivePitch(
     speedKmh,
     navigationState,
@@ -99,29 +101,37 @@ function App() {
   const [traveledRoute, setTraveledRoute] = useState(null); // Store the traveled portion
   const [lastRouteUpdatePosition, setLastRouteUpdatePosition] = useState(null); // Track last position when route was updated
   const [mapType, setMapType] = useState("osm"); // 'osm' ou 'satellite'
+  const [orientationEnabled, setOrientationEnabled] = useState(false);
 
-  // Coordonnées par défaut (Garden Grove Village)
+  // Device orientation hook - only enabled during navigation
+  const { compass, isActive } = useDeviceOrientation({
+    enabled: orientationEnabled && navigationState === "navigating",
+    smoothingFactor: 0.8,
+    throttleMs: 100
+  });
+
+  // Default coordinates (Garden Grove Village)
   const DEFAULT_COORDS = {
     latitude: 14.347872973134175,
     longitude: 120.95134859887523,
   };
 
   // ========================================
-  // HANDLERS ET FONCTIONS UTILITAIRES
+  // HANDLERS AND UTILITY FUNCTIONS
   // ========================================
   const getCurrentPosition = () => {
     if (!userLocation && navigator.geolocation) {
-      console.log("📍 Récupération position actuelle...");
+      console.log("📍 Getting current position...");
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log("📍 Position actuelle récupérée:", position);
+          console.log("📍 Current position retrieved:", position);
           const newRawLocation = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
             accuracy: position.coords.accuracy,
           };
           console.log(
-            "📍 Coordonnées:",
+            "📍 Coordinates:",
             newRawLocation.latitude,
             newRawLocation.longitude,
             "±" + newRawLocation.accuracy + "m"
@@ -129,7 +139,7 @@ function App() {
           setRawUserLocation(newRawLocation);
         },
         (error) => {
-          console.error("❌ Erreur récupération position:", error);
+          console.error("❌ Error retrieving position:", error);
         },
         {
           enableHighAccuracy: false,
@@ -140,17 +150,17 @@ function App() {
     }
   };
 
-  // Gestionnaires d'événements pour les modales
+  // Event handlers for modals
   const handleLocationPermissionGranted = () => {
-    console.log("🔓 Permission géolocalisation accordée");
+    console.log("🔓 Geolocation permission granted");
     setNavigationState("welcome");
 
-    // Déclencher le GeolocateControl pour obtenir la position
+    // Trigger GeolocateControl to get position
     if (geolocateControlRef.current) {
-      console.log("🎯 Déclenchement GeolocateControl...");
+      console.log("🎯 Triggering GeolocateControl...");
       geolocateControlRef.current.trigger();
 
-      // Récupérer la position actuelle après un délai
+      // Get current position after delay
       setTimeout(getCurrentPosition, GEOLOCATION_CONFIG.RETRY_DELAY);
     } else {
       console.warn("⚠️ GeolocateControl ref non disponible");
@@ -163,7 +173,7 @@ function App() {
   };
 
   const handleDestinationSelected = async (dest) => {
-    console.log("🎯 Destination sélectionnée:", dest);
+    console.log("🎯 Destination selected:", dest);
     console.log(
       "📍 Position utilisateur disponible:",
       userLocation ? "OUI" : "NON"
@@ -175,15 +185,15 @@ function App() {
     // Reset recalculation state for new navigation
     resetRecalculationState();
 
-    // Attendre que la position utilisateur soit disponible
+    // Wait for user position to be available
     if (!userLocation) {
       console.log("⏳ Attente de la position utilisateur...");
-      // La route sera créée automatiquement dans useEffect quand userLocation sera disponible
+      // Route will be automatically created in useEffect when userLocation becomes available
       return;
     }
 
-    // Créer l'itinéraire si on a la position utilisateur
-    console.log("🚀 Tentative création route...");
+    // Create route if we have user position
+    console.log("🚀 Attempting route creation...");
     console.log("📍 De:", userLocation.latitude, userLocation.longitude);
     console.log("📍 Vers:", dest.coordinates[1], dest.coordinates[0]);
     try {
@@ -195,7 +205,7 @@ function App() {
         mapRef.current?.getMap()
       );
 
-      // Assurer le format FeatureCollection pour MapLibre
+      // Ensure FeatureCollection format for MapLibre
       const routeData = {
         type: "FeatureCollection",
         features:
@@ -204,7 +214,7 @@ function App() {
             : routeResult.features || [],
       };
 
-      console.log("📍 Route créée:", routeData);
+      console.log("📍 Route created:", routeData);
       setRoute(routeData);
       setOriginalRoute(routeData); // Store the complete route
       setLastRouteUpdatePosition({
@@ -215,7 +225,7 @@ function App() {
       // Update recalculation state after successful route creation
       updateRecalculationState(userLocation.latitude, userLocation.longitude);
     } catch (error) {
-      console.error("❌ Erreur création route:", error);
+      console.error("❌ Route creation error:", error);
       // Error logged to console only - not shown to user
     }
   };
@@ -256,7 +266,7 @@ function App() {
           mapRef.current?.getMap()
         );
 
-        // Assurer le format FeatureCollection pour MapLibre
+        // Ensure FeatureCollection format for MapLibre
         const routeData = {
           type: "FeatureCollection",
           features:
@@ -275,23 +285,23 @@ function App() {
         // Update recalculation state after successful route creation
         updateRecalculationState(userLocation.latitude, userLocation.longitude);
       } catch (error) {
-        console.error("Erreur création route sortie:", error);
+        console.error("Exit route creation error:", error);
         // Error logged to console only - not shown to user
       }
     }
   };
 
-  // Gestionnaires pour les événements du GeolocateControl
+  // Event handlers for GeolocateControl events
   const handleGeolocate = useCallback(
     (e) => {
-      console.log("📍 Position GPS reçue:", e);
-      const position = e.data || e; // L'événement peut être dans e.data ou directement dans e
+      console.log("📍 GPS position received:", e);
+      const position = e.data || e; // Event can be in e.data or directly in e
       if (!position || !position.coords) {
         console.warn("⚠️ Position GPS invalide:", position);
         return;
       }
       console.log(
-        "📍 Coordonnées:",
+        "📍 Coordinates:",
         position.coords.latitude,
         position.coords.longitude,
         "±" + position.coords.accuracy + "m"
@@ -332,7 +342,7 @@ function App() {
             mapRef.current?.getMap()
           )
             .then((routeResult) => {
-              // Assurer le format FeatureCollection pour MapLibre
+              // Ensure FeatureCollection format for MapLibre
               const routeData = {
                 type: "FeatureCollection",
                 features:
@@ -355,7 +365,7 @@ function App() {
               );
             })
             .catch((error) => {
-              console.error("Erreur mise à jour route:", error);
+              console.error("Route update error:", error);
             });
         } else {
           // Check if we should update the remaining route (progressive route trimming)
@@ -405,20 +415,20 @@ function App() {
   );
 
   const handleGeolocateError = useCallback((e) => {
-    console.error("❌ Erreur géolocalisation:", e.data);
-    console.error("❌ Code erreur:", e.data?.code);
+    console.error("❌ Geolocation error:", e.data);
+    console.error("❌ Error code:", e.data?.code);
     console.error("❌ Message:", e.data?.message);
   }, []);
 
-  // Nettoyage des directions et icônes
+  // Cleanup directions and icons
   useEffect(() => {
     const currentMapRef = mapRef.current;
 
     return () => {
-      // Nettoyer l'instance MapLibre Directions
+      // Clean up MapLibre Directions instance
       cleanupDirections();
 
-      // Nettoyer les icônes de direction
+      // Clean up direction icons
       if (currentMapRef) {
         const map = currentMapRef.getMap();
         if (map) {
@@ -428,19 +438,19 @@ function App() {
     };
   }, []);
 
-  // Memoize les paramètres initiaux de la carte
+  // Memoize initial map parameters
   const initialViewState = useMemo(
     () => ({
       latitude: userLocation?.latitude || DEFAULT_COORDS.latitude,
       longitude: userLocation?.longitude || DEFAULT_COORDS.longitude,
       zoom: navigationState === "navigating" ? 18 : 16.5,
-      bearing: 0, // Bearing fixe - la boussole native gère l'orientation
-      pitch: adaptivePitch, // Utiliser le pitch adaptatif
+      bearing: 0, // Fixed bearing - native compass handles orientation
+      pitch: adaptivePitch, // Use adaptive pitch
     }),
     [
       userLocation,
       navigationState,
-      adaptivePitch, // Ajouter le pitch adaptatif aux dépendances
+      adaptivePitch, // Add adaptive pitch to dependencies
       DEFAULT_COORDS.latitude,
       DEFAULT_COORDS.longitude,
     ]
@@ -452,7 +462,7 @@ function App() {
     return polygon.getInteriorPoint().getCoordinates();
   };
 
-  // Mémoization des blocs en GeoJSON avec centres calculés
+  // Memoization of blocks in GeoJSON with calculated centers
   const blocksGeoJSON = useMemo(
     () => ({
       type: "FeatureCollection",
@@ -474,7 +484,7 @@ function App() {
     []
   );
 
-  // Memoize le style de la carte
+  // Memoize map style
   const mapStyle = useMemo(
     () => ({
       version: 8,
@@ -492,7 +502,7 @@ function App() {
           ],
           tileSize: 256,
           attribution: "© Esri",
-          maxzoom: 18.4, // Limitation du zoom pour éviter la pixellisation
+          maxzoom: 18.4, // Zoom limitation to avoid pixelation
         },
       },
       layers: [
@@ -506,60 +516,110 @@ function App() {
     [mapType]
   );
 
-  // Mise à jour dynamique du pitch avec transitions optimales
+  // Dynamic pitch update with optimal transitions
   useEffect(() => {
     if (mapRef.current && isMapReady) {
       const map = mapRef.current.getMap();
 
-      // Utiliser shouldTransition pour vérifier si une mise à jour est nécessaire
+      // Use shouldTransition to check if update is needed
       if (shouldTransition(map.getPitch(), adaptivePitch, 2)) {
         console.log(
           `🎥 Updating pitch: ${map.getPitch().toFixed(1)}° → ${adaptivePitch}°`
         );
 
-        // Utiliser les transitions optimales
+        // Use optimal transitions
         applyOptimalTransition(map, {
           pitch: adaptivePitch,
           speed: speedKmh,
           source: "adaptive-pitch",
           context: pitchMode === "cinematic" ? "cinematic" : "navigation",
         }).catch((error) => {
-          console.error("Erreur lors de la transition de pitch:", error);
+          console.error("Error during pitch transition:", error);
         });
       }
     }
   }, [adaptivePitch, pitchMode, speedKmh, mapRef, isMapReady]);
 
-  // Configuration des événements du GeolocateControl
+  // Device orientation effect - update map bearing with device compass
+  useEffect(() => {
+    if (mapRef.current && isMapReady && orientationEnabled && isActive && navigationState === "navigating") {
+      const map = mapRef.current.getMap();
+      
+      // Use shouldTransition to check if bearing update is needed
+      const currentBearing = map.getBearing();
+      const targetBearing = compass;
+      
+      // Calculate bearing difference (accounting for 360° wraparound)
+      let bearingDiff = Math.abs(targetBearing - currentBearing);
+      if (bearingDiff > 180) bearingDiff = 360 - bearingDiff;
+      
+      if (shouldTransition(currentBearing, targetBearing, 5)) {
+        console.log(
+          `🧭 Updating bearing: ${currentBearing.toFixed(1)}° → ${targetBearing.toFixed(1)}°`
+        );
+
+        // Use optimal transitions for smooth bearing updates
+        applyOptimalTransition(map, {
+          bearing: targetBearing,
+          speed: speedKmh,
+          source: "device-orientation",
+          context: "navigation",
+        }).catch((error) => {
+          console.error("Error during bearing transition:", error);
+        });
+      }
+    }
+  }, [compass, isActive, orientationEnabled, navigationState, speedKmh, mapRef, isMapReady]);
+
+  // Handle orientation toggle
+  const handleOrientationToggle = useCallback((enabled) => {
+    console.log(`🧭 Orientation ${enabled ? 'enabled' : 'disabled'}`);
+    setOrientationEnabled(enabled);
+    
+    // If disabling orientation, reset map bearing to north
+    if (!enabled && mapRef.current && isMapReady) {
+      const map = mapRef.current.getMap();
+      applyOptimalTransition(map, {
+        bearing: 0,
+        speed: speedKmh,
+        source: "orientation-reset",
+        context: "navigation",
+      }).catch((error) => {
+        console.error("Error resetting bearing:", error);
+      });
+    }
+  }, [speedKmh, mapRef, isMapReady]);
+
+  // GeolocateControl event configuration
   useEffect(() => {
     if (geolocateControlRef.current) {
       const geolocateControl = geolocateControlRef.current;
 
-      // Ajouter les gestionnaires d'événements
+      // Add event handlers
       geolocateControl.on("geolocate", handleGeolocate);
       geolocateControl.on("error", handleGeolocateError);
 
       return () => {
-        // Nettoyer les gestionnaires d'événements
+        // Clean up event handlers
         geolocateControl.off("geolocate", handleGeolocate);
         geolocateControl.off("error", handleGeolocateError);
       };
     }
   }, [handleGeolocate, handleGeolocateError]);
 
-  // Gestion initiale des blocs - une seule fois au chargement
+  // Initial block management - once at load
   useEffect(() => {
     if (!isMapReady || !mapRef.current) return;
 
     const map = mapRef.current.getMap();
 
-    // Initialise MapLibre Directions si pas déjà fait
+    // Initialize MapLibre Directions if not already done
     if (map) {
       initMapLibreDirections(map);
     }
 
     return () => {
-      // Nettoyage global
+      // Global cleanup
       const currentMap = map;
       if (currentMap) {
         try {
@@ -570,13 +630,13 @@ function App() {
             currentMap.removeLayer("blocks-border");
           if (currentMap.getSource("blocks")) currentMap.removeSource("blocks");
         } catch (cleanupError) {
-          console.error("Erreur de nettoyage:", cleanupError);
+          console.error("Cleanup error:", cleanupError);
         }
       }
     };
   }, [isMapReady]);
 
-  // Créer automatiquement la route quand userLocation devient disponible
+  // Automatically create route when userLocation becomes available
   useEffect(() => {
     if (
       userLocation &&
@@ -585,7 +645,7 @@ function App() {
       !route
     ) {
       console.log(
-        "🚀 Position utilisateur disponible - création automatique de la route"
+        "🚀 User position available - automatic route creation"
       );
       console.log("📍 De:", userLocation.latitude, userLocation.longitude);
       console.log(
@@ -606,21 +666,21 @@ function App() {
 
           if (routeResult) {
             console.log(
-              "✅ Route créée automatiquement avec succès:",
+              "✅ Route created automatically successfully:",
               routeResult
             );
             console.log(
-              "📊 Coordonnées route:",
+              "📊 Route coordinates:",
               routeResult.features?.[0]?.geometry?.coordinates?.length,
               "points"
             );
             setRoute(routeResult);
             setOriginalRoute(routeResult);
           } else {
-            console.error("❌ Échec de la création automatique de route");
+            console.error("❌ Automatic route creation failed");
           }
         } catch (error) {
-          console.error("❌ Erreur création automatique route:", error);
+          console.error("❌ Automatic route creation error:", error);
         }
       };
 
@@ -628,7 +688,7 @@ function App() {
     }
   }, [userLocation, destination, navigationState, route]);
 
-  // Surveillance du zoom de la carte
+  // Monitor map zoom
   useEffect(() => {
     if (mapRef.current && isMapReady) {
       const map = mapRef.current.getMap();
@@ -641,7 +701,7 @@ function App() {
       // Log initial du zoom
       handleZoomChange();
 
-      // Écouter les changements de zoom
+      // Listen to zoom changes
       map.on("zoom", handleZoomChange);
       map.on("zoomend", () => {
         const finalZoom = map.getZoom();
@@ -656,7 +716,7 @@ function App() {
     }
   }, [isMapReady]);
 
-  // Gestion des polygones de blocs - UNIQUEMENT en mode OSM
+  // Block polygon management - OSM mode ONLY
   useEffect(() => {
     if (mapRef.current && isMapReady) {
       const map = mapRef.current.getMap();
@@ -664,16 +724,16 @@ function App() {
       const manageBlockPolygons = () => {
         try {
           if (mapType === "osm") {
-            // Mode OSM : ajouter les polygones
+            // OSM mode: add polygons
             if (!map.getSource("blocks")) {
-              // Ajouter la source blocks
+              // Add blocks source
               map.addSource("blocks", {
                 type: "geojson",
                 data: blocksGeoJSON,
               });
             }
 
-            // Ajouter les couches de polygones si elles n'existent pas
+            // Add polygon layers if they don't exist
             if (!map.getLayer("blocks-fill")) {
               map.addLayer({
                 id: "blocks-fill",
@@ -700,9 +760,9 @@ function App() {
               });
             }
 
-            console.log("🗺️ Polygones des blocs affichés (mode OSM)");
+            console.log("🗺️ Block polygons displayed (OSM mode)");
           } else {
-            // Mode satellite : supprimer les polygones
+            // Satellite mode: remove polygons
             if (map.getLayer("blocks-fill")) {
               map.removeLayer("blocks-fill");
             }
@@ -712,32 +772,32 @@ function App() {
             if (map.getSource("blocks")) {
               map.removeSource("blocks");
             }
-            console.log("🗺️ Polygones des blocs masqués (mode satellite)");
+            console.log("🗺️ Block polygons hidden (satellite mode)");
           }
         } catch (error) {
-          console.error("❌ Erreur lors de la gestion des polygones:", error);
+          console.error("❌ Error managing polygons:", error);
         }
       };
 
-      // Si le style est déjà chargé, gérer immédiatement
+      // If style is already loaded, manage immediately
       if (map.isStyleLoaded()) {
         manageBlockPolygons();
       } else {
-        // Sinon, attendre que le style soit chargé
+        // Otherwise, wait for style to load
         map.once('styledata', manageBlockPolygons);
       }
     }
-  }, [mapType, isMapReady, blocksGeoJSON]); // Déclenché à chaque changement de mapType
+  }, [mapType, isMapReady, blocksGeoJSON]); // Triggered on each mapType change
 
-  // Debug des états de route
-  console.log("🗺️ État routes:", {
+  // Debug route states
+  console.log("🗺️ Route states:", {
     route: route ? `${route.features?.length} features` : "null",
     traveledRoute: traveledRoute
       ? `${traveledRoute.features?.length} features`
       : "null",
     navigationState,
-    userLocation: userLocation ? "présent" : "absent",
-    destination: destination ? "présent" : "absent",
+    userLocation: userLocation ? "present" : "absent",
+    destination: destination ? "present" : "absent",
   });
 
   return (
@@ -767,58 +827,73 @@ function App() {
           scrollZoom={true}
           touchPitch={true}
         >
-          {/* Contrôles de carte - toujours disponibles */}
-          {/* Contrôles de navigation - boussole toujours visible */}
+          {/* Map controls - always available */}
+          {/* Navigation controls - compass always visible */}
           <NavigationControl
             showCompass={true}
             showZoom
             position="bottom-right"
           />
 
-          {/* GeolocateControl optimisé avec gestion adaptative de la batterie */}
+          {/* Optimized GeolocateControl with adaptive battery management and orientation */}
           <GeolocateControl
             ref={geolocateControlRef}
             positionOptions={gpsOptions}
-            fitBoundsOptions={fitBoundsOptions}
+            fitBoundsOptions={{
+              ...fitBoundsOptions,
+              maxZoom: navigationState === "navigating" ? 18 : 16, // Higher zoom during navigation
+              bearing: orientationEnabled && isActive ? compass : 0, // Use device orientation
+              pitch: adaptivePitch, // Use adaptive pitch
+            }}
             trackUserLocation={true}
             showUserLocation={true}
-            showUserHeading={true}
-            showAccuracyCircle={true} // Afficher le cercle de précision
+            showUserHeading={orientationEnabled && isActive} // Show heading arrow when orientation is active
+            showAccuracyCircle={!orientationEnabled} // Hide accuracy circle when using orientation (cleaner UI)
             position="bottom-right"
           />
 
-          {/* Bouton de basculement de carte */}
+          {/* Map type toggle button */}
           <div className="map-type-switcher">
             <button
               onClick={() =>
                 setMapType(mapType === "osm" ? "satellite" : "osm")
               }
               className="map-type-button"
-              title={mapType === "osm" ? "Vue satellite" : "Vue carte"}
+              title={mapType === "osm" ? "Satellite view" : "Map view"}
             >
               <BsLayersHalf size={25} />
             </button>
           </div>
 
-          {/* Bouton nouvelle destination pendant la navigation */}
+          {/* New destination button during navigation */}
           {navigationState === "navigating" && (
             <div className="new-destination-control">
               <button
                 onClick={handleNewDestination}
                 className="new-destination-button"
-                title="Nouvelle destination"
+                title="New destination"
               >
                 <img src={stopLogo} alt="Nouvelle destination" />
               </button>
             </div>
           )}
 
-          {/* Affichage de l'itinéraire restant avec styles avancés */}
+          {/* Device orientation toggle - only visible during navigation */}
+          {navigationState === "navigating" && (
+            <OrientationToggle
+              enabled={orientationEnabled}
+              onToggle={handleOrientationToggle}
+              position="top-left"
+              className="orientation-toggle"
+            />
+          )}
+
+          {/* Display remaining route with advanced styles */}
           {route && (
             <>
-              {console.log("🗺️ Affichage route:", route)}
+              {console.log("🗺️ Route display:", route)}
               <Source id="route" type="geojson" data={route}>
-                {/* Couche d'ombre pour effet de profondeur */}
+                {/* Shadow layer for depth effect */}
                 <Layer
                   id="route-line-shadow"
                   type="line"
@@ -843,7 +918,7 @@ function App() {
                     "line-join": "round",
                   }}
                 />
-                {/* Couche de fond (outline) pour meilleur contraste */}
+                {/* Background layer (outline) for better contrast */}
                 <Layer
                   id="route-line-casing"
                   type="line"
@@ -853,11 +928,11 @@ function App() {
                       ["linear"],
                       ["zoom"],
                       10,
-                      "#1e40af", // Bleu foncé aux petits zooms
+                      "#1e40af", // Dark blue at small zooms
                       15,
-                      "#1d4ed8", // Bleu plus intense
+                      "#1d4ed8", // More intense blue
                       20,
-                      "#1e3a8a", // Bleu très foncé aux gros zooms
+                      "#1e3a8a", // Very dark blue at high zooms
                     ],
                     "line-width": [
                       "interpolate",
@@ -877,7 +952,7 @@ function App() {
                     "line-join": "round",
                   }}
                 />
-                {/* Couche principale de la route avec transitions fluides */}
+                {/* Main route layer with smooth transitions */}
                 <Layer
                   id="route-line"
                   type="line"
@@ -898,7 +973,7 @@ function App() {
                       ["exponential", 1.5],
                       ["zoom"],
                       10,
-                      navigationState === "navigating" ? 4 : 3, // Plus épais en navigation
+                      navigationState === "navigating" ? 4 : 3, // Thicker during navigation
                       15,
                       navigationState === "navigating" ? 6 : 5,
                       20,
@@ -921,15 +996,15 @@ function App() {
                     "line-join": "round",
                   }}
                 />
-                {/* Flèches directionnelles pour la route - TEMPORAIREMENT DÉSACTIVÉES */}
+                {/* Directional arrows for route - TEMPORARILY DISABLED */}
               </Source>
             </>
           )}
 
-          {/* Affichage de la partie parcourue avec styles avancés */}
+          {/* Display traveled portion with advanced styles */}
           {traveledRoute && (
             <Source id="traveled-route" type="geojson" data={traveledRoute}>
-              {/* Couche d'ombre pour la route parcourue */}
+              {/* Shadow layer for traveled route */}
               <Layer
                 id="traveled-route-line-shadow"
                 type="line"
@@ -955,7 +1030,7 @@ function App() {
                   "line-join": "round",
                 }}
               />
-              {/* Couche de fond pour la route parcourue */}
+              {/* Background layer for traveled route */}
               <Layer
                 id="traveled-route-line-casing"
                 type="line"
@@ -965,11 +1040,11 @@ function App() {
                     ["linear"],
                     ["zoom"],
                     10,
-                    "#d97706", // Orange foncé
+                    "#d97706", // Dark orange
                     15,
-                    "#c2410c", // Orange plus intense
+                    "#c2410c", // More intense orange
                     20,
-                    "#9a3412", // Orange très foncé
+                    "#9a3412", // Very dark orange
                   ],
                   "line-width": [
                     "interpolate",
@@ -990,7 +1065,7 @@ function App() {
                   "line-join": "round",
                 }}
               />
-              {/* Couche principale de la route parcourue avec transitions */}
+              {/* Main traveled route layer with transitions */}
               <Layer
                 id="traveled-route-line"
                 type="line"
@@ -1000,11 +1075,11 @@ function App() {
                     ["linear"],
                     ["zoom"],
                     10,
-                    "#f59e0b", // Orange standard
+                    "#f59e0b", // Standard orange
                     15,
-                    "#f97316", // Orange plus vif
+                    "#f97316", // More vivid orange
                     20,
-                    "#ea580c", // Orange profond
+                    "#ea580c", // Deep orange
                   ],
                   "line-width": [
                     "interpolate",
@@ -1023,11 +1098,11 @@ function App() {
                     ["linear"],
                     ["zoom"],
                     10,
-                    ["literal", [2, 2]], // Tirets courts aux petits zooms
+                    ["literal", [2, 2]], // Short dashes at small zooms
                     15,
-                    ["literal", [3, 2]], // Tirets moyens
+                    ["literal", [3, 2]], // Medium dashes
                     20,
-                    ["literal", [4, 3]], // Tirets longs aux gros zooms
+                    ["literal", [4, 3]], // Long dashes at high zooms
                   ],
                 }}
                 layout={{
@@ -1035,11 +1110,11 @@ function App() {
                   "line-join": "round",
                 }}
               />
-              {/* Flèches directionnelles pour la route parcourue - TEMPORAIREMENT DÉSACTIVÉES */}
+              {/* Directional arrows for traveled route - TEMPORARILY DISABLED */}
             </Source>
           )}
 
-          {/* Marker de destination */}
+          {/* Destination marker */}
           {destination && (
             <Marker
               longitude={destination.coordinates[0]}
@@ -1054,9 +1129,9 @@ function App() {
             </Marker>
           )}
 
-          {/* Le marqueur utilisateur est maintenant géré par showUserLocation du GeolocateControl */}
+          {/* User marker is now handled by showUserLocation of GeolocateControl */}
 
-          {/* Affichage des POIs - toujours visibles */}
+          {/* POI display - always visible */}
           {publicPois.map((poi) => (
             <Marker
               key={poi.name}
@@ -1072,7 +1147,7 @@ function App() {
             </Marker>
           ))}
 
-          {/* Affichage des numéros de blocs - toujours visibles */}
+          {/* Block number display - always visible */}
           {blocks.map((block) => {
             if (!block.name || block.color === "#19744B") return null;
 
@@ -1091,7 +1166,7 @@ function App() {
           })}
         </Map>
 
-        {/* Interface de navigation */}
+        {/* Navigation interface */}
         {navigationState === "navigating" && userLocation && destination && (
           <NavigationDisplay
             userLocation={userLocation}
@@ -1106,7 +1181,7 @@ function App() {
         {/* Error messages are logged to console only */}
       </main>
 
-      {/* Modales */}
+      {/* Modals */}
       <LocationPermissionModalNew
         isOpen={navigationState === "permission"}
         onPermissionGranted={handleLocationPermissionGranted}
@@ -1129,7 +1204,7 @@ function App() {
         />
       )}
 
-      {/* Alertes de navigation intelligentes */}
+      {/* Smart navigation alerts */}
       <NavigationAlerts
         userLocation={userLocation}
         route={route}

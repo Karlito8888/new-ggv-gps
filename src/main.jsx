@@ -2,15 +2,15 @@ import { createRoot } from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import { queryClient } from './lib/queryClient';
-import './styles/index.css'; // Styles centralisés
+import './styles/index.css'; // Centralized styles
 
-// Filtrer les logs Workbox en développement
+// Filter Workbox logs in development
 if (import.meta.env.DEV) {
   const originalLog = console.log;
   console.log = (...args) => {
     const message = args.join(' ');
     if (message.includes('workbox') || message.includes('Workbox')) {
-      return; // Ignorer les logs Workbox
+      return; // Ignore Workbox logs
     }
     originalLog.apply(console, args);
   };

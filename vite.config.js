@@ -6,10 +6,10 @@ import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
   publicDir: "public",
-  base: "/", // Important pour Netlify
+  base: "/", // Important for Netlify
   build: {
     outDir: "dist",
-    sourcemap: false, // Désactiver pour production
+    sourcemap: false, // Disable for production
     rollupOptions: {
       output: {
         manualChunks: {
@@ -27,7 +27,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       injectRegister: "auto",
 
-      // Configuration optimisée pour Netlify
+      // Optimized configuration for Netlify
       manifest: {
         name: "MyGGV|GPS",
         short_name: "MyGGV|GPS",
@@ -89,7 +89,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,woff2,jpg,jpeg}"],
         runtimeCaching: [
-          // Fichiers critiques (NetworkFirst)
+          // Critical files (NetworkFirst)
           {
             urlPattern: /\.(js|css|html)$/,
             handler: "NetworkFirst",
@@ -98,7 +98,7 @@ export default defineConfig({
               networkTimeoutSeconds: 5,
             },
           },
-          // Cache des assets statiques
+          // Static assets cache
           {
             urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif|webp)$/,
             handler: "CacheFirst",
@@ -106,11 +106,11 @@ export default defineConfig({
               cacheName: "images",
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 jours
+                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
               },
             },
           },
-          // Cache des tuiles OpenStreetMap
+          // OpenStreetMap tiles cache
           {
             urlPattern: /^https:\/\/[a-z]\.tile\.openstreetmap\.org/,
             handler: "CacheFirst",
@@ -118,11 +118,11 @@ export default defineConfig({
               cacheName: "osm-tiles",
               expiration: {
                 maxEntries: 200,
-                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 jours
+                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
               },
             },
           },
-          // Cache Supabase API avec NetworkFirst
+          // Supabase API cache with NetworkFirst
           {
             urlPattern: /^https:\/\/.*\.supabase\.co/,
             handler: "NetworkFirst",
@@ -143,7 +143,7 @@ export default defineConfig({
 
       includeAssets: ["icons/*.png", "markers/*.png"],
       devOptions: {
-        enabled: false, // Désactivé pour développement local (évite les logs Workbox)
+        enabled: false, // Disabled for local development (avoids Workbox logs)
         type: "module",
       },
     }),

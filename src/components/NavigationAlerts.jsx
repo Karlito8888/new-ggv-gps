@@ -10,9 +10,9 @@ const NavigationAlerts = ({
   const [alerts, setAlerts] = useState([]);
   const [lastAlertTime, setLastAlertTime] = useState(0);
 
-  // Utiliser les fonctions optimisées de geoUtils
+  // Use optimized geoUtils functions
   const detectTurnsOptimized = useCallback((routeCoordinates, userPos) => {
-    const lookAheadDistance = Math.max(50, speedKmh * 2); // Distance d'anticipation basée sur la vitesse
+    const lookAheadDistance = Math.max(50, speedKmh * 2); // Look-ahead distance based on speed
     return detectTurns(routeCoordinates, userPos, lookAheadDistance);
   }, [speedKmh]);
 
@@ -20,7 +20,7 @@ const NavigationAlerts = ({
     return snapToRoad(userPos, routeCoordinates, 20); // 20m max distance
   }, []);
 
-  // Analyser la navigation et générer des alertes
+  // Analyze navigation and generate alerts
   const analyzeNavigation = useMemo(() => {
     if (!isNavigating || !userLocation || !route?.features?.[0]?.geometry?.coordinates) {
       return { alerts: [], snappedPosition: null };
@@ -32,10 +32,10 @@ const NavigationAlerts = ({
     // Snap-to-road
     const snappedPosition = snapToRoadOptimized(userLocation, routeCoordinates);
 
-    // Détecter les virages à venir
+    // Detect upcoming turns
     const upcomingTurns = detectTurnsOptimized(routeCoordinates, userLocation);
     
-    // Générer des alertes pour les virages
+    // Generate turn alerts
     upcomingTurns.forEach(turn => {
       const timeToTurn = speedKmh > 0 ? (turn.distance / (speedKmh / 3.6)) : 0;
       
@@ -43,7 +43,7 @@ const NavigationAlerts = ({
         newAlerts.push({
           id: `turn-${turn.coordinates[0]}-${turn.coordinates[1]}`,
           type: 'turn',
-          message: `${turn.severity === 'sharp' ? 'Virage serré' : 'Tournez'} à ${turn.direction === 'left' ? 'gauche' : 'droite'} dans ${Math.round(turn.distance)}m`,
+          message: `${turn.severity === 'sharp' ? 'Sharp turn' : 'Turn'} ${turn.direction === 'left' ? 'left' : 'right'} in ${Math.round(turn.distance)}m`,
           icon: turn.direction === 'left' ? '↰' : '↱',
           priority: turn.severity === 'sharp' ? 'high' : 'medium',
           distance: turn.distance,
@@ -52,23 +52,23 @@ const NavigationAlerts = ({
       }
     });
 
-    // Alerte de vitesse excessive (si on a des données de vitesse)
-    if (speedKmh > 50) { // Plus de 50 km/h dans le village
+    // Speed warning alert (if we have speed data)
+    if (speedKmh > 50) { // Over 50 km/h in the village
       newAlerts.push({
         id: 'speed-warning',
         type: 'speed',
-        message: `Vitesse élevée: ${Math.round(speedKmh)} km/h`,
+        message: `High speed: ${Math.round(speedKmh)} km/h`,
         icon: '⚠️',
         priority: 'medium'
       });
     }
 
-    // Alerte de déviation de route
+    // Route deviation alert
     if (snappedPosition && snappedPosition.distance > 15) {
       newAlerts.push({
         id: 'off-route',
         type: 'deviation',
-        message: 'Vous vous éloignez de la route',
+        message: 'You are moving away from the route',
         icon: '🔄',
         priority: 'high'
       });
@@ -77,21 +77,21 @@ const NavigationAlerts = ({
     return { alerts: newAlerts, snappedPosition };
   }, [userLocation, route, speedKmh, isNavigating, detectTurnsOptimized, snapToRoadOptimized]);
 
-  // Mettre à jour les alertes avec throttling
+  // Update alerts with throttling
   useEffect(() => {
     const now = Date.now();
-    if (now - lastAlertTime > 2000) { // Throttle à 2 secondes
+    if (now - lastAlertTime > 2000) { // Throttle to 2 seconds
       setAlerts(analyzeNavigation.alerts);
       setLastAlertTime(now);
     }
   }, [analyzeNavigation.alerts, lastAlertTime]);
 
-  // Auto-dismiss des alertes après un délai
+  // Auto-dismiss alerts after delay
   useEffect(() => {
     if (alerts.length > 0) {
       const timer = setTimeout(() => {
         setAlerts(prev => prev.filter(alert => 
-          alert.type === 'turn' ? false : true // Garder les alertes non-turn plus longtemps
+          alert.type === 'turn' ? false : true // Keep non-turn alerts longer
         ));
       }, 5000);
       

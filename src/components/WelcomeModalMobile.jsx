@@ -22,23 +22,23 @@ const WelcomeModalMobile = ({
     lot: "",
   });
 
-  // Récupération dynamique des lots selon le bloc sélectionné
+  // Dynamic retrieval of lots based on selected block
   const {
     data: availableLots = [],
     isLoading: isLotsLoading,
     error: lotsError,
   } = useAvailableLots(pickerValue.block);
 
-  // Récupération de la location spécifique quand bloc et lot sont sélectionnés
+  // Retrieve specific location when block and lot are selected
   const {
     isLoading: isLocationLoading,
     error: locationError,
     refetch: refetchLocation,
   } = useLocation(pickerValue.block, pickerValue.lot);
 
-  // Gestion des valeurs par défaut et des changements
+  // Handle default values and changes
   useEffect(() => {
-    // Initialiser le bloc par défaut
+    // Initialize default block
     if (availableBlocks.length > 0 && !pickerValue.block) {
       const defaultBlock = availableBlocks[0].toString();
       setPickerValue(prev => ({
@@ -48,12 +48,12 @@ const WelcomeModalMobile = ({
       return;
     }
 
-    // Gérer les lots quand ils sont chargés
+    // Handle lots when they are loaded
     if (availableLots.length > 0) {
       const currentLot = pickerValue.lot;
       const lotExists = availableLots.some(lot => lot.toString() === currentLot);
 
-      // Si pas de lot sélectionné ou si le lot n'existe plus, prendre le premier
+      // If no lot selected or lot no longer exists, take the first one
       if (!currentLot || !lotExists) {
         setPickerValue(prev => ({
           ...prev,
@@ -78,7 +78,7 @@ const WelcomeModalMobile = ({
     }
 
     try {
-      // Refetch pour s'assurer d'avoir les données les plus récentes
+      // Refetch to ensure we have the most recent data
       const result = await refetchLocation();
       
       if (result.data) {
@@ -89,13 +89,13 @@ const WelcomeModalMobile = ({
     }
   };
 
-  // Préparer les sélections pour le picker
+  // Prepare selections for the picker
   const selections = {
     block: availableBlocks.map(block => block.toString()),
     lot: isLotsLoading ? ["Loading..."] : availableLots.map(lot => lot.toString()),
   };
 
-  // Déterminer l'état de chargement et les erreurs
+  // Determine loading state and errors
   const isLoading = isLocationLoading;
   const error = locationError?.message || lotsError?.message || "";
   const canSubmit = pickerValue.block && pickerValue.lot && !isLotsLoading && pickerValue.lot !== "Loading...";

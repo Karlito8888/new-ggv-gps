@@ -537,7 +537,7 @@ async function tryORS(startLat, startLon, endLat, endLon) {
 
 // Main route creation function with fallback logic
 export async function createRoute(startLat, startLon, endLat, endLon, map = null) {
-  console.log("🚀 Création de route avec fallback en cascade");
+  console.log("🚀 Creating route with cascading fallback");
 
   const services = [
     {
@@ -563,14 +563,14 @@ export async function createRoute(startLat, startLon, endLat, endLon, map = null
     try {
       console.log(`📍 Tentative ${index + 1}/${services.length}: ${service.name}`);
       const result = await service.fn();
-      console.log(`✅ Succès avec ${service.name}:`, result.properties?.source);
+      console.log(`✅ Success with ${service.name}:`, result.properties?.source);
       return result;
     } catch (error) {
-      console.warn(`❌ ${service.name} échoué:`, error.message);
+      console.warn(`❌ ${service.name} failed:`, error.message);
 
       // Si c'est le dernier service, on force le succès
       if (index === services.length - 1) {
-        console.log("🔄 Forçage de la route directe en dernier recours");
+        console.log("🔄 Forcing direct route as last resort");
         return createDirectRoute(startLat, startLon, endLat, endLon);
       }
     }
@@ -632,7 +632,7 @@ export function getNavigationInstructions(
 // Cleanup directions instance
 export function cleanupDirections() {
   if (directions) {
-    directions.remove();
+    // directions.remove();
     directions = null;
   }
 }

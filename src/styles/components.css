@@ -1,4 +1,18 @@
-/* Styles des composants spécifiques à l'application */
+/* Component-specific application styles */
+
+/* Device Orientation Toggle */
+.orientation-toggle {
+  z-index: 1000;
+}
+
+.orientation-toggle button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.orientation-toggle button:active {
+  transform: scale(0.95);
+}
 
 /* Marqueurs de carte */
 .destination-marker {
