@@ -95,6 +95,39 @@ const useDeviceOrientation = (options = {}) => {
     return smoothedAlpha.current;
   }, [smoothingFactor]);
 
+  // Get current orientation immediately (single reading)
+  const getCurrentOrientation = useCallback(() => {
+    return new Promise((resolve, reject) => {
+      if (!isSupported) {
+        reject(new Error('Device orientation not supported'));
+        return;
+      }
+
+      // Set a timeout to avoid hanging
+      const timeout = setTimeout(() => {
+        window.removeEventListener('deviceorientation', handleSingleOrientation);
+        reject(new Error('Orientation timeout'));
+      }, 3000);
+
+      const handleSingleOrientation = (event) => {
+        clearTimeout(timeout);
+        window.removeEventListener('deviceorientation', handleSingleOrientation);
+        
+        const { alpha } = event;
+        if (alpha === null || alpha === undefined) {
+          reject(new Error('Invalid orientation data'));
+          return;
+        }
+        
+        console.log(`🧭 Current device orientation captured: ${alpha.toFixed(1)}°`);
+        resolve(alpha);
+      };
+
+      // Listen for a single orientation event
+      window.addEventListener('deviceorientation', handleSingleOrientation, { passive: true });
+    });
+  }, [isSupported]);
+
   // Handle orientation event
   const handleOrientation = useCallback((event) => {
     const now = Date.now();
@@ -208,6 +241,7 @@ const useDeviceOrientation = (options = {}) => {
     start: startOrientation,
     stop: stopOrientation,
     requestPermission,
+    getCurrentOrientation, // New function for immediate orientation
     
     // Computed values
     compass: orientation?.alpha || 0, // Compass heading in degrees

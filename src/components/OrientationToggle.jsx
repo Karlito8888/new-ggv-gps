@@ -135,6 +135,7 @@ const OrientationToggle = ({
   const positionClasses = {
     'top-right': 'top-4 right-4',
     'top-left': 'top-4 left-4',
+    'center-left': 'top-1/2 left-3 -translate-y-1/2',
     'bottom-right': 'bottom-4 right-4',
     'bottom-left': 'bottom-4 left-4'
   };

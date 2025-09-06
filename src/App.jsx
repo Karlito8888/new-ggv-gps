@@ -104,7 +104,7 @@ function App() {
   const [orientationEnabled, setOrientationEnabled] = useState(false);
 
   // Device orientation hook - only enabled during navigation
-  const { compass, isActive } = useDeviceOrientation({
+  const { compass, isActive, getCurrentOrientation } = useDeviceOrientation({
     enabled: orientationEnabled && navigationState === "navigating",
     smoothingFactor: 0.8,
     throttleMs: 100
@@ -572,23 +572,55 @@ function App() {
   }, [compass, isActive, orientationEnabled, navigationState, speedKmh, mapRef, isMapReady]);
 
   // Handle orientation toggle
-  const handleOrientationToggle = useCallback((enabled) => {
+  const handleOrientationToggle = useCallback(async (enabled) => {
     console.log(`🧭 Orientation ${enabled ? 'enabled' : 'disabled'}`);
-    setOrientationEnabled(enabled);
     
-    // If disabling orientation, reset map bearing to north
-    if (!enabled && mapRef.current && isMapReady) {
-      const map = mapRef.current.getMap();
-      applyOptimalTransition(map, {
-        bearing: 0,
-        speed: speedKmh,
-        source: "orientation-reset",
-        context: "navigation",
-      }).catch((error) => {
-        console.error("Error resetting bearing:", error);
-      });
+    if (enabled) {
+      // Enabling orientation
+      setOrientationEnabled(true);
+      
+      // Immediately sync with current device orientation
+      if (mapRef.current && isMapReady) {
+        try {
+          console.log('🧭 Capturing current device orientation for immediate sync...');
+          const currentOrientation = await getCurrentOrientation();
+          
+          if (currentOrientation !== null) {
+            const map = mapRef.current.getMap();
+            console.log(`🧭 Syncing map to current device orientation: ${currentOrientation.toFixed(1)}°`);
+            
+            // Apply current orientation immediately to the map
+            await applyOptimalTransition(map, {
+              bearing: currentOrientation,
+              speed: speedKmh,
+              source: "orientation-sync",
+              context: "navigation",
+            });
+            
+            console.log('✅ Map synchronized with device orientation');
+          }
+        } catch (error) {
+          console.error('❌ Failed to sync initial orientation:', error);
+          // Continue anyway - the continuous tracking will still work
+        }
+      }
+    } else {
+      // Disabling orientation - reset map bearing to north
+      setOrientationEnabled(false);
+      
+      if (mapRef.current && isMapReady) {
+        const map = mapRef.current.getMap();
+        applyOptimalTransition(map, {
+          bearing: 0,
+          speed: speedKmh,
+          source: "orientation-reset",
+          context: "navigation",
+        }).catch((error) => {
+          console.error("Error resetting bearing:", error);
+        });
+      }
     }
-  }, [speedKmh, mapRef, isMapReady]);
+  }, [speedKmh, mapRef, isMapReady, getCurrentOrientation]);
 
   // GeolocateControl event configuration
   useEffect(() => {
@@ -883,7 +915,7 @@ function App() {
             <OrientationToggle
               enabled={orientationEnabled}
               onToggle={handleOrientationToggle}
-              position="top-left"
+              position="center-left"
               className="orientation-toggle"
             />
           )}
@@ -1192,6 +1224,7 @@ function App() {
         isOpen={navigationState === "welcome"}
         onDestinationSelected={handleDestinationSelected}
         onCancel={() => setNavigationState("permission")}
+        onOrientationToggle={handleOrientationToggle}
         availableBlocks={availableBlocks}
       />
 

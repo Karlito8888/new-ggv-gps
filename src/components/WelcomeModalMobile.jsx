@@ -15,6 +15,7 @@ const WelcomeModalMobile = ({
   isOpen,
   onDestinationSelected,
   onCancel,
+  onOrientationToggle,
   availableBlocks = [],
 }) => {
   const [pickerValue, setPickerValue] = useState({
@@ -83,6 +84,12 @@ const WelcomeModalMobile = ({
       
       if (result.data) {
         onDestinationSelected(result.data);
+        
+        // Auto-trigger device orientation after successful destination selection
+        if (onOrientationToggle && typeof onOrientationToggle === 'function') {
+          console.log('🧭 Auto-triggering device orientation after destination selection');
+          onOrientationToggle(true);
+        }
       }
     } catch (error) {
       console.error("Error while searching for destination:", error);
