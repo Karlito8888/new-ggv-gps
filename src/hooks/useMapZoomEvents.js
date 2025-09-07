@@ -12,8 +12,7 @@ export function useMapZoomEvents({
       const map = mapRef.current.getMap();
 
       const handleZoomChange = () => {
-        const currentZoom = map.getZoom();
-        console.log("🔍 Zoom actuel:", currentZoom.toFixed(2));
+        // Zoom change handler - no logging needed
       };
 
       // Log initial du zoom
@@ -22,8 +21,7 @@ export function useMapZoomEvents({
       // Listen to zoom changes
       map.on("zoom", handleZoomChange);
       map.on("zoomend", () => {
-        const finalZoom = map.getZoom();
-        console.log("🔍 Zoom final:", finalZoom.toFixed(2));
+        // Zoom end handler - no logging needed
       });
 
       // Cleanup

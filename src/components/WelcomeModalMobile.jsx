@@ -87,7 +87,7 @@ const WelcomeModalMobile = ({
         
         // Auto-trigger device orientation after successful destination selection
         if (onOrientationToggle && typeof onOrientationToggle === 'function') {
-          console.log('🧭 Auto-triggering device orientation after destination selection');
+          if (import.meta.env.DEV) console.log('🧭 Auto-triggering device orientation after destination selection');
           onOrientationToggle(true);
         }
       }

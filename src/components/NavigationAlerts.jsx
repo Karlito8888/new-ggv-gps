@@ -4,17 +4,16 @@ import { detectTurns, snapToRoad } from '../utils/geoUtils';
 const NavigationAlerts = ({
   userLocation,
   route,
-  speedKmh = 0,
   isNavigating = false
 }) => {
   const [alerts, setAlerts] = useState([]);
   const [lastAlertTime, setLastAlertTime] = useState(0);
 
-  // Use optimized geoUtils functions
+  // Use optimized geoUtils functions with fixed distance
   const detectTurnsOptimized = useCallback((routeCoordinates, userPos) => {
-    const lookAheadDistance = Math.max(50, speedKmh * 2); // Look-ahead distance based on speed
+    const lookAheadDistance = 100; // Fixed 100m look-ahead distance
     return detectTurns(routeCoordinates, userPos, lookAheadDistance);
-  }, [speedKmh]);
+  }, []);
 
   const snapToRoadOptimized = useCallback((userPos, routeCoordinates) => {
     return snapToRoad(userPos, routeCoordinates, 20); // 20m max distance
@@ -37,7 +36,7 @@ const NavigationAlerts = ({
     
     // Generate turn alerts
     upcomingTurns.forEach(turn => {
-      const timeToTurn = speedKmh > 0 ? (turn.distance / (speedKmh / 3.6)) : 0;
+      const timeToTurn = 0; // Time calculation removed
       
       if (turn.distance < 100 && timeToTurn < 10) { // Moins de 100m ou 10 secondes
         newAlerts.push({
@@ -52,16 +51,7 @@ const NavigationAlerts = ({
       }
     });
 
-    // Speed warning alert (if we have speed data)
-    if (speedKmh > 50) { // Over 50 km/h in the village
-      newAlerts.push({
-        id: 'speed-warning',
-        type: 'speed',
-        message: `High speed: ${Math.round(speedKmh)} km/h`,
-        icon: '⚠️',
-        priority: 'medium'
-      });
-    }
+    // Speed alerts removed (not needed)
 
     // Route deviation alert
     if (snappedPosition && snappedPosition.distance > 15) {
@@ -75,7 +65,7 @@ const NavigationAlerts = ({
     }
 
     return { alerts: newAlerts, snappedPosition };
-  }, [userLocation, route, speedKmh, isNavigating, detectTurnsOptimized, snapToRoadOptimized]);
+  }, [userLocation, route, isNavigating, detectTurnsOptimized, snapToRoadOptimized]);
 
   // Update alerts with throttling
   useEffect(() => {

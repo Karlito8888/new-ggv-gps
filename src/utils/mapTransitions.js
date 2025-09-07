@@ -217,12 +217,7 @@ export function applyOptimalTransition(map, params) {
     currentPitch
   });
   
-  console.log('🎬 Applying optimal transition:', {
-    from: { bearing: currentBearing.toFixed(1), pitch: currentPitch.toFixed(1) },
-    to: { bearing: params.bearing?.toFixed(1), pitch: params.pitch?.toFixed(1) },
-    duration: transitionOptions.duration,
-    source: params.source
-  });
+  // Removed noisy transition log
   
   // Appliquer la transition
   return new Promise((resolve) => {

@@ -9,7 +9,7 @@ export function RouteLayers({ route, traveledRoute, navigationState }) {
       {/* Display remaining route with advanced styles */}
       {route && (
         <>
-          {console.log("🗺️ Route display:", route)}
+          {import.meta.env.DEV && console.log("🗺️ Route display:", route)}
           <Source id="route" type="geojson" data={route}>
             {/* Shadow layer for depth effect */}
             <Layer

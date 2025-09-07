@@ -1,10 +1,7 @@
-import { useEffect, useRef } from "react";
-import useSmoothedLocation from "./hooks/useSmoothedLocation";
-import useAdaptiveGPS from "./hooks/useAdaptiveGPS";
+import { useEffect, useRef, useCallback, useState } from "react";
 import useAdaptivePitch from "./hooks/useAdaptivePitch";
-import { Map } from "react-map-gl/maplibre";
+import { Map, GeolocateControl } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import LocationPermissionModalNew from "./components/LocationPermissionModalNew";
 import WelcomeModalMobile from "./components/WelcomeModalMobile";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModalNew from "./components/ArrivalModalNew";
@@ -14,7 +11,6 @@ import { useNavigationState } from "./hooks/useNavigationState";
 import { useMapConfig } from "./hooks/useMapConfig";
 import { useRouteManager } from "./hooks/useRouteManager";
 import { useMapTransitions } from "./hooks/useMapTransitions";
-import { useGeolocationManager } from "./hooks/useGeolocationManager";
 import { useBlockPolygons } from "./hooks/useBlockPolygons";
 import { useMapZoomEvents } from "./hooks/useMapZoomEvents";
 
@@ -30,103 +26,112 @@ import { MapControls } from "./components/MapControls";
 import { useAvailableBlocks } from "./hooks/useLocations";
 import { cleanupDirectionIcons } from "./utils/mapIcons";
 
-// Constantes de configuration
-const GEOLOCATION_CONFIG = {
-  TIMEOUT: 10000,
-  MAX_AGE: 300000,
-  RETRY_DELAY: 1000,
-  MIN_ACCURACY_DESKTOP: 5000,
-};
 
 function App() {
   // ========================================
   // REFS AND DATA HOOKS
   // ========================================
   const mapRef = useRef(null);
-  const geolocateControlRef = useRef(null);
   const { data: availableBlocks = [] } = useAvailableBlocks();
 
-// ========================================
+  // ========================================
+  // SIMPLE GEOLOCATION STATE - Using MapLibre GeolocateControl
+  // ========================================
+  const [userLocation, setUserLocation] = useState(null);
+  const geolocateControlRef = useRef(null);
+
+  // ========================================
   // NAVIGATION STATE HOOKS
   // ========================================
   const {
     navigationState,
-    rawUserLocation,
-    previousUserLocation,
     destination,
     isMapReady,
     mapType,
     orientationEnabled,
     DEFAULT_COORDS,
-setNavigationState,
+    setNavigationState,
+    setDestination,
     setIsMapReady,
     setOrientationEnabled,
-    handleLocationPermissionGranted,
-    handleLocationPermissionDenied,
     handleArrival,
     handleMapTypeToggle,
     handleOrientationToggle,
-  } = useNavigationState(geolocateControlRef);
+  } = useNavigationState();
 
   // ========================================
   // GPS PROCESSING HOOKS
   // ========================================
-  const {
-    location: userLocation,
-    speed,
-    speedKmh,
-  } = useSmoothedLocation(rawUserLocation, {
-    maxJumpDistance: 50,
-    minAccuracy: GEOLOCATION_CONFIG.MIN_ACCURACY_DESKTOP,
-    smoothingFactor: 0.3,
-    maxSpeed: 50,
-  });
 
-  // Adaptive GPS optimization for battery saving
-  const { gpsOptions, fitBoundsOptions } = useAdaptiveGPS(
-    speed,
-    navigationState === "navigating"
-  );
+  // Note: useAdaptiveGPS supprimé - GeolocateControl gère ses propres options GPS
 
-  // Adaptive pitch based on speed and context
+  // Adaptive pitch based on context
   const { pitch: adaptivePitch, pitchMode } = useAdaptivePitch(
-    speedKmh,
     navigationState,
     navigationState === "navigating"
   );
+
+  // Device orientation hook - MUST be declared before useRouteManager
+  const { compass, isActive, getCurrentOrientation, start: startOrientation } = useDeviceOrientation({
+    enabled: orientationEnabled && navigationState === "navigating",
+    smoothingFactor: 0.8,
+    throttleMs: 100
+  });
 
   // Route management
   const {
     route,
     traveledRoute,
-    originalRoute,
-    lastRouteUpdatePosition,
     handleDestinationSelected,
     handleExitVillage,
     handleNewDestination,
-    updateRouteWithLocation,
-  } = useRouteManager(mapRef, userLocation, destination, navigationState);
+    autoCreateRoute,
+  } = useRouteManager(mapRef, userLocation, destination, navigationState, setNavigationState, setDestination, geolocateControlRef, startOrientation);
 
   // ========================================
-  // HANDLERS AND UTILITY FUNCTIONS
+  // SIMPLE GEOLOCATION MANAGEMENT
   // ========================================
-  useGeolocationManager(
-    geolocateControlRef,
-    updateRouteWithLocation,
-    navigationState,
-    destination,
-    originalRoute,
-    route,
-    previousUserLocation,
-    lastRouteUpdatePosition
-  );
+  
 
-  // Device orientation hook - only enabled during navigation
-  const { compass, isActive, getCurrentOrientation } = useDeviceOrientation({
-    enabled: orientationEnabled && navigationState === "navigating",
-    smoothingFactor: 0.8,
-    throttleMs: 100
-  });
+  // Debug userLocation changes
+  useEffect(() => {
+    console.log('🔍 userLocation changed:', userLocation ? 'GPS AVAILABLE' : 'GPS NULL');
+  }, [userLocation]);
+
+  // Tentative de création automatique de route quand la position devient disponible
+  useEffect(() => {
+    console.log('🔍 Route creation check:', {
+      userLocation: !!userLocation,
+      destination: !!destination, 
+      navigationState,
+      route: !!route
+    });
+    
+    if (userLocation && destination && navigationState === "navigating" && !route) {
+      console.log("🔄 ✅ ALL CONDITIONS MET - Creating route automatically");
+      autoCreateRoute();
+    }
+  }, [userLocation, destination, navigationState, route, autoCreateRoute]);
+
+  // Geolocate event handlers  
+  const handleGeolocate = useCallback((e) => {
+    const location = {
+      latitude: e.coords.latitude,
+      longitude: e.coords.longitude,
+      accuracy: e.coords.accuracy,
+      heading: e.coords.heading,
+      speed: e.coords.speed,
+      timestamp: e.timestamp
+    };
+    console.log('📍 MapLibre Geolocate received:', location);
+    setUserLocation(location);
+    console.log('✅ userLocation state updated');
+  }, []);
+
+  const handleGeolocateError = useCallback((e) => {
+    console.error('❌ GeolocateControl error:', e);
+  }, []);
+
 
   // Map transitions (pitch, bearing, orientation)
   useMapTransitions({
@@ -138,7 +143,6 @@ setNavigationState,
     isActive,
     orientationEnabled,
     navigationState,
-    speedKmh,
     getCurrentOrientation,
     setOrientationEnabled
   });
@@ -216,16 +220,19 @@ setNavigationState,
     };
   }, [isMapReady]);
 
-  // Debug route states
-  console.log("🗺️ Route states:", {
-    route: route ? `${route.features?.length} features` : "null",
-    traveledRoute: traveledRoute
-      ? `${traveledRoute.features?.length} features`
-      : "null",
-    navigationState,
-    userLocation: userLocation ? "present" : "absent",
-    destination: destination ? "present" : "absent",
-  });
+  // Debug states - commented out to prevent console spam
+  // console.log("🗺️ App states:", {
+  //   navigationState,
+  //   hasLocation,
+  //   permissionGranted,
+  //   isLocationLoading,
+  //   locationError,
+  //   route: route ? `${route.features?.length} features` : "null",
+  //   traveledRoute: traveledRoute ? `${traveledRoute.features?.length} features` : "null",
+  //   userLocation: userLocation ? "present" : "absent",
+  //   destination: destination ? "present" : "absent",
+  //   rawLocation: rawUserLocation ? `${rawUserLocation.latitude.toFixed(6)}, ${rawUserLocation.longitude.toFixed(6)}` : "null"
+  // });
 
   return (
     <>
@@ -256,17 +263,27 @@ setNavigationState,
         >
           {/* Map controls */}
           <MapControls
-            geolocateControlRef={geolocateControlRef}
-            gpsOptions={gpsOptions}
-            fitBoundsOptions={fitBoundsOptions}
             navigationState={navigationState}
             orientationEnabled={orientationEnabled}
-            isActive={isActive}
-            compass={compass}
-            adaptivePitch={adaptivePitch}
             handleMapTypeToggle={handleMapTypeToggle}
             handleNewDestination={handleNewDestination}
             handleOrientationToggle={handleOrientationToggle}
+          />
+
+          {/* Geolocate control */}
+          <GeolocateControl
+            ref={geolocateControlRef}
+            position="top-left"
+            positionOptions={{
+              enableHighAccuracy: true,
+              timeout: 30000,
+              maximumAge: 60000
+            }}
+            trackUserLocation={true}
+            showAccuracyCircle={true}
+            showUserHeading={true}
+            onGeolocate={handleGeolocate}
+            onError={handleGeolocateError}
           />
 
           {/* Route layers */}
@@ -300,11 +317,6 @@ setNavigationState,
       </main>
 
       {/* Modals */}
-      <LocationPermissionModalNew
-        isOpen={navigationState === "permission"}
-        onPermissionGranted={handleLocationPermissionGranted}
-        onPermissionDenied={handleLocationPermissionDenied}
-      />
 
       <WelcomeModalMobile
         isOpen={navigationState === "welcome"}
@@ -327,7 +339,6 @@ setNavigationState,
       <NavigationAlerts
         userLocation={userLocation}
         route={route}
-        speedKmh={speedKmh}
         isNavigating={navigationState === "navigating"}
       />
 

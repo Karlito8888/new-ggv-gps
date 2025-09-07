@@ -140,7 +140,7 @@ export function addIconToMap(map, iconName, iconCanvas) {
     
     // Ajouter l'icône à la carte
     map.addImage(iconName, iconCanvas);
-    console.log(`✅ Icon '${iconName}' added to map`);
+    // Removed noisy icon log
   } catch (error) {
     console.error(`❌ Error adding icon '${iconName}':`, error);
   }
@@ -173,8 +173,7 @@ export function initializeDirectionIcons(map) {
   });
 
   // Debug des tailles d'icônes
-  console.log('🎨 Icon route-arrow:', routeArrow.width + 'x' + routeArrow.height);
-  console.log('🎨 Icon traveled-arrow:', traveledArrow.width + 'x' + traveledArrow.height);
+  // Removed noisy icon dimension logs
 
   // Ajouter les icônes à la carte
   addIconToMap(map, 'route-arrow', routeArrow);
@@ -194,7 +193,7 @@ export function cleanupDirectionIcons(map) {
     try {
       if (map.hasImage(iconName)) {
         map.removeImage(iconName);
-        console.log(`🧹 Icon '${iconName}' removed`);
+        // Removed noisy icon removal log
       }
     } catch (error) {
       console.error(`❌ Error removing icon '${iconName}':`, error);

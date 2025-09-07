@@ -133,11 +133,12 @@ const OrientationToggle = ({
 
   // Position classes
   const positionClasses = {
-    'top-right': 'top-4 right-4',
-    'top-left': 'top-4 left-4',
-    'center-left': 'top-1/2 left-3 -translate-y-1/2',
-    'bottom-right': 'bottom-4 right-4',
-    'bottom-left': 'bottom-4 left-4'
+    "top-right": "top-4 right-4",
+    "top-left": "top-4 left-4",
+    "center-left": "top-1/2 left-3 -translate-y-1/2",
+    "center-right": "top-1/2 right-3 -translate-y-1/2",
+    "bottom-right": "bottom-4 right-4",
+    "bottom-left": "bottom-4 left-4",
   };
 
   return (
@@ -223,16 +224,6 @@ const OrientationToggle = ({
         </div>
       )}
 
-      {/* Debug info in development */}
-      {import.meta.env?.DEV && enabled && (
-        <div className="fixed bottom-20 left-4 bg-black bg-opacity-75 text-white p-2 rounded text-xs z-40">
-          <div>Supported: {isSupported ? '✅' : '❌'}</div>
-          <div>Permission: {permission}</div>
-          <div>Active: {isActive ? '✅' : '❌'}</div>
-          <div>Compass: {Math.round(compass)}°</div>
-          {error && <div className="text-red-300">Error: {error}</div>}
-        </div>
-      )}
     </>
   );
 };

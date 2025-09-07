@@ -6,9 +6,9 @@ const DEFAULT_COORDS = {
   longitude: 120.95134859887523,
 };
 
-export function useNavigationState(geolocateControlRef = null, getCurrentPosition = null) {
+export function useNavigationState() {
   // Navigation states
-  const [navigationState, setNavigationState] = useState("permission"); // permission, welcome, navigating, arrived
+  const [navigationState, setNavigationState] = useState("welcome"); // welcome, navigating, arrived (permission géré par GeolocateControl)
   const [rawUserLocation, setRawUserLocation] = useState(null);
   const [previousUserLocation, setPreviousUserLocation] = useState(null);
   const [destination, setDestination] = useState(null);
@@ -18,22 +18,9 @@ export function useNavigationState(geolocateControlRef = null, getCurrentPositio
 
   // Navigation handlers
   const handleLocationPermissionGranted = useCallback(() => {
-    console.log("🔓 Geolocation permission granted");
+    if (import.meta.env.DEV) console.log("🔓 Geolocation permission granted");
     setNavigationState("welcome");
-
-    // Trigger GeolocateControl to get position
-    if (geolocateControlRef?.current) {
-      console.log("🎯 Triggering GeolocateControl...");
-      geolocateControlRef.current.trigger();
-
-      // Get current position after delay
-      if (getCurrentPosition) {
-        setTimeout(getCurrentPosition, 1000);
-      }
-    } else {
-      console.warn("⚠️ GeolocateControl ref non disponible");
-    }
-  }, [geolocateControlRef, getCurrentPosition]);
+  }, []);
 
   const handleLocationPermissionDenied = useCallback((errorMessage) => {
     console.error("Location permission denied:", errorMessage);
@@ -41,7 +28,7 @@ export function useNavigationState(geolocateControlRef = null, getCurrentPositio
   }, []);
 
   const handleDestinationSelectedSimple = useCallback((dest) => {
-    console.log("🎯 Destination selected:", dest);
+    if (import.meta.env.DEV) console.log("🎯 Destination selected:", dest);
     setDestination(dest);
     setNavigationState("navigating");
   }, []);
@@ -60,7 +47,7 @@ export function useNavigationState(geolocateControlRef = null, getCurrentPositio
   }, []);
 
   const handleOrientationToggle = useCallback((enabled) => {
-    console.log(`🧭 Orientation ${enabled ? 'enabled' : 'disabled'}`);
+    if (import.meta.env.DEV) console.log(`🧭 Orientation ${enabled ? 'enabled' : 'disabled'}`);
     setOrientationEnabled(enabled);
   }, []);
 

@@ -1,7 +1,7 @@
 /* Imports - Variables en premier pour Tailwind */
+@import "./fonts.css";
 @import "./variables.css";
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Madimi+One&display=swap");
 
 /* Reset global */
 *,

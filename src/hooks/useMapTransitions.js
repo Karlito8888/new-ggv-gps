@@ -14,7 +14,6 @@ export function useMapTransitions({
   isActive,
   orientationEnabled,
   navigationState,
-  speedKmh,
   getCurrentOrientation,
   setOrientationEnabled
 }) {
@@ -32,7 +31,6 @@ export function useMapTransitions({
         // Use optimal transitions
         applyOptimalTransition(map, {
           pitch: adaptivePitch,
-          speed: speedKmh,
           source: "adaptive-pitch",
           context: pitchMode === "cinematic" ? "cinematic" : "navigation",
         }).catch((error) => {
@@ -40,7 +38,7 @@ export function useMapTransitions({
         });
       }
     }
-  }, [adaptivePitch, pitchMode, speedKmh, mapRef, isMapReady]);
+  }, [adaptivePitch, pitchMode, mapRef, isMapReady]);
 
   // Device orientation effect - update map bearing with device compass
   useEffect(() => {
@@ -63,7 +61,6 @@ export function useMapTransitions({
         // Use optimal transitions for smooth bearing updates
         applyOptimalTransition(map, {
           bearing: targetBearing,
-          speed: speedKmh,
           source: "device-orientation",
           context: "navigation",
         }).catch((error) => {
@@ -71,7 +68,7 @@ export function useMapTransitions({
         });
       }
     }
-  }, [compass, isActive, orientationEnabled, navigationState, speedKmh, mapRef, isMapReady]);
+  }, [compass, isActive, orientationEnabled, navigationState, mapRef, isMapReady]);
 
   // Handle orientation toggle
   const handleOrientationToggle = useCallback(async (enabled) => {
@@ -116,8 +113,7 @@ export function useMapTransitions({
           // Apply current orientation immediately to the map
           await applyOptimalTransition(map, {
             bearing: currentOrientation,
-            speed: speedKmh,
-            source: "orientation-sync",
+              source: "orientation-sync",
             context: "navigation",
           });
           
@@ -138,7 +134,6 @@ export function useMapTransitions({
         const map = mapRef.current.getMap();
         applyOptimalTransition(map, {
           bearing: 0,
-          speed: speedKmh,
           source: "orientation-reset",
           context: "navigation",
         }).catch((error) => {
@@ -146,7 +141,7 @@ export function useMapTransitions({
         });
       }
     }
-  }, [mapRef, isMapReady, getCurrentOrientation, speedKmh, setOrientationEnabled]);
+  }, [mapRef, isMapReady, getCurrentOrientation, setOrientationEnabled]);
 
   return {
     handleOrientationToggle,

@@ -52,7 +52,7 @@ export function useBlockPolygons({
               });
             }
 
-            console.log("🗺️ Block polygons displayed (OSM mode)");
+            // Removed noisy polygon log
           } else {
             // Satellite mode: remove polygons
             if (map.getLayer("blocks-fill")) {
@@ -64,7 +64,7 @@ export function useBlockPolygons({
             if (map.getSource("blocks")) {
               map.removeSource("blocks");
             }
-            console.log("🗺️ Block polygons hidden (satellite mode)");
+            // Removed noisy polygon log
           }
         } catch (error) {
           console.error("❌ Error managing polygons:", error);
