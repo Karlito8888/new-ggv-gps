@@ -30,11 +30,19 @@ const useDeviceOrientation = (options = {}) => {
     const hasDeviceOrientation = 'DeviceOrientationEvent' in window;
     const hasPermissionAPI = typeof DeviceOrientationEvent !== 'undefined' && 
                             typeof DeviceOrientationEvent.requestPermission === 'function';
+    const hasAbsoluteOrientation = 'DeviceOrientationEvent' in window && 
+                                  'DeviceOrientationAbsoluteEvent' in window;
+    
+    // Detect platform more accurately
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isAndroid = /Android/.test(navigator.userAgent);
     
     console.log('🧭 Device orientation support:', {
       hasDeviceOrientation,
       hasPermissionAPI,
-      userAgent: navigator.userAgent.includes('iPhone') ? 'iOS' : 'Android/Other'
+      hasAbsoluteOrientation,
+      platform: isIOS ? 'iOS' : isAndroid ? 'Android' : 'Other',
+      userAgent: navigator.userAgent
     });
     
     setIsSupported(hasDeviceOrientation);
@@ -48,18 +56,51 @@ const useDeviceOrientation = (options = {}) => {
       if (typeof DeviceOrientationEvent !== 'undefined' && 
           typeof DeviceOrientationEvent.requestPermission === 'function') {
         
-        console.log('🍎 iOS detected - requesting DeviceOrientation permission');
-        const permissionResult = await DeviceOrientationEvent.requestPermission();
+        console.log('🍎 [requestPermission] iOS detected - requesting DeviceOrientation permission');
         
-        console.log('🍎 iOS permission result:', permissionResult);
-        setPermission(permissionResult);
+        // Add retry logic for iOS permission request
+        let attempts = 0;
+        const maxAttempts = 3;
+        let permissionResult = null;
         
-        if (permissionResult !== 'granted') {
-          setError('Orientation permission denied. Enable in Settings > Privacy > Motion & Fitness');
-          return false;
+        while (attempts < maxAttempts && permissionResult !== 'granted') {
+          attempts++;
+          console.log(`🍎 [requestPermission] Permission attempt ${attempts}/${maxAttempts}`);
+          
+          try {
+            // Add a small delay between attempts to handle iOS timing issues
+            if (attempts > 1) {
+              console.log('🍎 [requestPermission] Adding delay before retry...');
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            permissionResult = await DeviceOrientationEvent.requestPermission();
+            console.log(`🍎 [requestPermission] Attempt ${attempts} result:`, permissionResult);
+            
+            if (permissionResult === 'granted') {
+              console.log('✅ [requestPermission] Permission granted successfully');
+              setPermission(permissionResult);
+              
+              // Add additional delay after permission granted to ensure iOS is ready
+              console.log('🍎 [requestPermission] Adding post-permission delay for iOS...');
+              await new Promise(resolve => setTimeout(resolve, 300));
+              
+              return true;
+            }
+            
+          } catch (attemptError) {
+            console.warn(`⚠️ [requestPermission] Attempt ${attempts} failed:`, attemptError);
+            if (attempts === maxAttempts) {
+              throw attemptError;
+            }
+          }
         }
         
-        return true;
+        // All attempts failed or permission was denied
+        console.error('❌ [requestPermission] Permission denied after all attempts:', permissionResult);
+        setPermission(permissionResult || 'denied');
+        setError('Orientation permission denied. Enable in Settings > Privacy > Motion & Fitness');
+        return false;
       } else {
         // Android or older iOS - assume granted
         console.log('🤖 Android/Legacy iOS - assuming orientation permission granted');
@@ -98,33 +139,98 @@ const useDeviceOrientation = (options = {}) => {
   // Get current orientation immediately (single reading)
   const getCurrentOrientation = useCallback(() => {
     return new Promise((resolve, reject) => {
+      console.log('🧭 [getCurrentOrientation] Starting orientation capture...');
+      
       if (!isSupported) {
+        console.error('❌ [getCurrentOrientation] Device orientation not supported');
         reject(new Error('Device orientation not supported'));
         return;
       }
 
-      // Set a timeout to avoid hanging
-      const timeout = setTimeout(() => {
-        window.removeEventListener('deviceorientation', handleSingleOrientation);
-        reject(new Error('Orientation timeout'));
-      }, 3000);
+      console.log('🧭 [getCurrentOrientation] Device supported, setting up listener...');
+      
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      const attemptCapture = () => {
+        attempts++;
+        console.log(`🧭 [getCurrentOrientation] Attempt ${attempts}/${maxAttempts}`);
+        
+        // Set a timeout to avoid hanging
+        const timeout = setTimeout(() => {
+          window.removeEventListener('deviceorientation', handleSingleOrientation);
+          console.warn(`⚠️ [getCurrentOrientation] Timeout on attempt ${attempts}`);
+          
+          if (attempts < maxAttempts) {
+            console.log('🔄 [getCurrentOrientation] Retrying...');
+            setTimeout(attemptCapture, 500);
+          } else {
+            console.error('❌ [getCurrentOrientation] All attempts failed - orientation timeout');
+            reject(new Error('Orientation timeout after multiple attempts'));
+          }
+        }, 2000);
 
-      const handleSingleOrientation = (event) => {
-        clearTimeout(timeout);
-        window.removeEventListener('deviceorientation', handleSingleOrientation);
-        
-        const { alpha } = event;
-        if (alpha === null || alpha === undefined) {
-          reject(new Error('Invalid orientation data'));
-          return;
-        }
-        
-        console.log(`🧭 Current device orientation captured: ${alpha.toFixed(1)}°`);
-        resolve(alpha);
+        const handleSingleOrientation = (event) => {
+          clearTimeout(timeout);
+          window.removeEventListener('deviceorientation', handleSingleOrientation);
+          
+          const { alpha, beta, gamma, webkitCompassHeading } = event;
+          console.log('🧭 [getCurrentOrientation] Raw orientation event:', { 
+            alpha, 
+            beta, 
+            gamma, 
+            webkitCompassHeading 
+          });
+          
+          // Cross-platform compass heading calculation
+          let compassHeading;
+          
+          if (webkitCompassHeading !== undefined && webkitCompassHeading !== null) {
+            // iOS: use webkitCompassHeading
+            compassHeading = webkitCompassHeading;
+            console.log('🍎 [getCurrentOrientation] Using iOS webkitCompassHeading:', compassHeading.toFixed(1) + '°');
+          } else if (alpha !== null && alpha !== undefined) {
+            // Android: use alpha, convert to 0-360° heading
+            compassHeading = (360 - alpha) % 360;
+            if (compassHeading < 0) compassHeading += 360;
+            console.log('🤖 [getCurrentOrientation] Using Android alpha (converted):', compassHeading.toFixed(1) + '°');
+          } else {
+            console.warn(`⚠️ [getCurrentOrientation] Invalid compass data on attempt ${attempts}`);
+            
+            if (attempts < maxAttempts) {
+              console.log('🔄 [getCurrentOrientation] Retrying due to invalid compass data...');
+              setTimeout(attemptCapture, 500);
+            } else {
+              console.error('❌ [getCurrentOrientation] All attempts failed - invalid compass data');
+              reject(new Error('Invalid compass data after multiple attempts'));
+            }
+            return;
+          }
+          
+          // Validate compass heading
+          if (compassHeading < 0 || compassHeading > 360 || isNaN(compassHeading)) {
+            console.warn(`⚠️ [getCurrentOrientation] Invalid compass heading:`, compassHeading);
+            
+            if (attempts < maxAttempts) {
+              console.log('🔄 [getCurrentOrientation] Retrying due to invalid heading...');
+              setTimeout(attemptCapture, 500);
+            } else {
+              console.error('❌ [getCurrentOrientation] All attempts failed - invalid compass heading');
+              reject(new Error('Invalid compass heading after multiple attempts'));
+            }
+            return;
+          }
+          
+          console.log(`✅ [getCurrentOrientation] Success on attempt ${attempts}: ${compassHeading.toFixed(1)}°`);
+          resolve(compassHeading);
+        };
+
+        // Listen for a single orientation event
+        console.log('👂 [getCurrentOrientation] Adding event listener...');
+        window.addEventListener('deviceorientation', handleSingleOrientation, { passive: true });
       };
-
-      // Listen for a single orientation event
-      window.addEventListener('deviceorientation', handleSingleOrientation, { passive: true });
+      
+      attemptCapture();
     });
   }, [isSupported]);
 
@@ -138,24 +244,47 @@ const useDeviceOrientation = (options = {}) => {
     }
     lastUpdateTime.current = now;
     
-    const { alpha, beta, gamma } = event;
+    const { alpha, beta, gamma, webkitCompassHeading } = event;
     
-    // Validate orientation data
-    if (alpha === null || alpha === undefined) {
-      console.warn('⚠️ Invalid orientation data - alpha is null');
+    // Cross-platform compass heading calculation
+    let compassHeading;
+    
+    if (webkitCompassHeading !== undefined && webkitCompassHeading !== null) {
+      // iOS: use webkitCompassHeading (direct magnetic north heading)
+      compassHeading = webkitCompassHeading;
+      console.log('🍎 Using iOS webkitCompassHeading:', compassHeading.toFixed(1) + '°');
+    } else if (alpha !== null && alpha !== undefined) {
+      // Android: use alpha, convert to 0-360° heading
+      compassHeading = (360 - alpha) % 360;
+      if (compassHeading < 0) compassHeading += 360;
+      console.log('🤖 Using Android alpha (converted):', compassHeading.toFixed(1) + '°');
+    } else {
+      console.warn('⚠️ Invalid orientation data - no compass heading available');
       return;
     }
     
-    // Smooth the alpha value (compass heading)
-    const smoothedAlphaValue = smoothOrientation(alpha);
+    // Validate compass heading
+    if (compassHeading < 0 || compassHeading > 360 || isNaN(compassHeading)) {
+      console.warn('⚠️ Invalid compass heading:', compassHeading);
+      return;
+    }
+    
+    // Smooth the compass heading
+    const smoothedHeading = smoothOrientation(compassHeading);
     
     // Update orientation state
     setOrientation({
-      alpha: smoothedAlphaValue, // Compass heading (0-360°)
-      beta: beta || 0,           // Front-to-back tilt (-180 to 180°)
-      gamma: gamma || 0,         // Left-to-right tilt (-90 to 90°)
-      raw: { alpha, beta, gamma }, // Raw values for debugging
-      timestamp: now
+      alpha: smoothedHeading,      // Compass heading (0-360°)
+      beta: beta || 0,             // Front-to-back tilt (-180 to 180°)
+      gamma: gamma || 0,           // Left-to-right tilt (-90 to 90°)
+      raw: { 
+        alpha: compassHeading,     // Raw compass heading
+        beta, 
+        gamma,
+        webkitCompassHeading      // iOS-specific value for debugging
+      }, 
+      timestamp: now,
+      platform: webkitCompassHeading !== undefined ? 'iOS' : 'Android'
     });
     
   }, [throttleMs, smoothOrientation]);
@@ -183,9 +312,15 @@ const useDeviceOrientation = (options = {}) => {
     eventListenerRef.current = handleOrientation;
     
     try {
-      // Add orientation event listener
-      window.addEventListener('deviceorientation', eventListenerRef.current, { passive: true });
-      console.log('✅ Device orientation tracking started');
+      // Try to use deviceorientationabsolute first (more accurate for Android)
+      if ('DeviceOrientationAbsoluteEvent' in window) {
+        window.addEventListener('deviceorientationabsolute', eventListenerRef.current, { passive: true });
+        console.log('✅ Device orientation tracking started (absolute event)');
+      } else {
+        // Fall back to standard deviceorientation
+        window.addEventListener('deviceorientation', eventListenerRef.current, { passive: true });
+        console.log('✅ Device orientation tracking started (standard event)');
+      }
       return true;
     } catch (err) {
       console.error('❌ Failed to start orientation tracking:', err);
@@ -197,7 +332,9 @@ const useDeviceOrientation = (options = {}) => {
   // Stop orientation tracking
   const stopOrientation = useCallback(() => {
     if (eventListenerRef.current) {
+      // Remove both types of event listeners
       window.removeEventListener('deviceorientation', eventListenerRef.current);
+      window.removeEventListener('deviceorientationabsolute', eventListenerRef.current);
       eventListenerRef.current = null;
       console.log('🛑 Device orientation tracking stopped');
     }
