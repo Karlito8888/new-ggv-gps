@@ -46,8 +46,8 @@ function App() {
   const geolocateControlRef = useRef(null);
   const { data: availableBlocks = [] } = useAvailableBlocks();
 
-  // ========================================
-  // NAVIGATION STATES
+// ========================================
+  // NAVIGATION STATE HOOKS
   // ========================================
   const {
     navigationState,
@@ -66,7 +66,7 @@ setNavigationState,
     handleArrival,
     handleMapTypeToggle,
     handleOrientationToggle,
-  } = useNavigationState(geolocateControlRef, getCurrentPosition);
+  } = useNavigationState(geolocateControlRef);
 
   // ========================================
   // GPS PROCESSING HOOKS
@@ -107,6 +107,20 @@ setNavigationState,
     updateRouteWithLocation,
   } = useRouteManager(mapRef, userLocation, destination, navigationState);
 
+  // ========================================
+  // HANDLERS AND UTILITY FUNCTIONS
+  // ========================================
+  useGeolocationManager(
+    geolocateControlRef,
+    updateRouteWithLocation,
+    navigationState,
+    destination,
+    originalRoute,
+    route,
+    previousUserLocation,
+    lastRouteUpdatePosition
+  );
+
   // Device orientation hook - only enabled during navigation
   const { compass, isActive, getCurrentOrientation } = useDeviceOrientation({
     enabled: orientationEnabled && navigationState === "navigating",
@@ -129,21 +143,7 @@ setNavigationState,
     setOrientationEnabled
   });
 
-  // ========================================
-  // HANDLERS AND UTILITY FUNCTIONS
-  // ========================================
-  const {
-    getCurrentPosition,
-  } = useGeolocationManager(
-    geolocateControlRef,
-    updateRouteWithLocation,
-    navigationState,
-    destination,
-    originalRoute,
-    route,
-    previousUserLocation,
-    lastRouteUpdatePosition
-  );
+
 
   // Cleanup directions and icons
   useEffect(() => {
