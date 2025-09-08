@@ -8,7 +8,7 @@ const DEFAULT_COORDS = {
 
 export function useNavigationState() {
   // Navigation states
-  const [navigationState, setNavigationState] = useState("welcome"); // welcome, navigating, arrived (permission géré par GeolocateControl)
+  const [navigationState, setNavigationState] = useState("permission"); // permission, welcome, navigating, arrived (permission géré par GeolocateControl)
   const [rawUserLocation, setRawUserLocation] = useState(null);
   const [previousUserLocation, setPreviousUserLocation] = useState(null);
   const [destination, setDestination] = useState(null);

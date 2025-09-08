@@ -5,7 +5,7 @@
       "Bash(npm run build:*)",
       "WebSearch"
     ],
-    "deny": [],
+    "deny": ["Bash(npm run dev)"],
     "ask": []
   }
 }

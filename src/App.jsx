@@ -140,11 +140,23 @@ function App() {
     console.log("📍 MapLibre Geolocate received:", location);
     setUserLocation(location);
     console.log("✅ userLocation state updated");
-  }, []);
+    
+    // Transition from permission to welcome state when GPS is successful
+    if (navigationState === "permission") {
+      console.log("🎉 GPS permission granted, transitioning to welcome screen");
+      setNavigationState("welcome");
+    }
+  }, [navigationState, setNavigationState]);
 
   const handleGeolocateError = useCallback((e) => {
     console.error("❌ GeolocateControl error:", e);
-  }, []);
+    
+    // If GPS fails during permission state, still show welcome screen
+    if (navigationState === "permission") {
+      console.log("⚠️ GPS permission denied or failed, proceeding to welcome screen");
+      setNavigationState("welcome");
+    }
+  }, [navigationState, setNavigationState]);
 
   // Map transitions (pitch, bearing, orientation)
   useMapTransitions({
@@ -197,6 +209,26 @@ function App() {
     mapRef,
     isMapReady,
   });
+
+  // Auto-trigger GPS when map is ready and in permission state
+  useEffect(() => {
+    if (!isMapReady || !mapRef.current || navigationState !== "permission") return;
+
+    // Auto-trigger GPS request
+    if (geolocateControlRef?.current) {
+      console.log("🚀 Auto-triggering GPS on app startup");
+      try {
+        geolocateControlRef.current.trigger();
+      } catch (error) {
+        console.warn("⚠️ Failed to auto-trigger GPS on startup:", error);
+        // Fallback to welcome screen if GPS fails
+        setNavigationState("welcome");
+      }
+    } else {
+      console.warn("⚠️ GeolocateControl ref not available, skipping to welcome");
+      setNavigationState("welcome");
+    }
+  }, [isMapReady, navigationState, geolocateControlRef, setNavigationState]);
 
   // Initial block management - once at load
   useEffect(() => {
