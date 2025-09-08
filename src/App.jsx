@@ -1,11 +1,20 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import useAdaptivePitch from "./hooks/useAdaptivePitch";
 import { Map, GeolocateControl } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
+
+// Components
 import WelcomeModalMobile from "./components/WelcomeModalMobile";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModalNew from "./components/ArrivalModalNew";
 import ExitSuccessModal from "./components/ExitSuccessModal";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import { MapMarkers } from "./components/MapMarkers";
+import { RouteLayers } from "./components/RouteLayers";
+import { MapControls } from "./components/MapControls";
+
+// Hooks
+import useAdaptivePitch from "./hooks/useAdaptivePitch";
 import useDeviceOrientation from "./hooks/useDeviceOrientation";
 import { useNavigationState } from "./hooks/useNavigationState";
 import { useMapConfig } from "./hooks/useMapConfig";
@@ -13,14 +22,12 @@ import { useRouteManager } from "./hooks/useRouteManager";
 import { useMapTransitions } from "./hooks/useMapTransitions";
 import { useBlockPolygons } from "./hooks/useBlockPolygons";
 import { useMapZoomEvents } from "./hooks/useMapZoomEvents";
-
-import { initMapLibreDirections, cleanupDirections } from "./lib/navigation";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import { MapMarkers } from "./components/MapMarkers";
-import { RouteLayers } from "./components/RouteLayers";
-import { MapControls } from "./components/MapControls";
 import { useAvailableBlocks } from "./hooks/useLocations";
+import useGpsPermission from "./hooks/useGpsPermission";
+import useOrientationPermission from "./hooks/useOrientationPermission";
+
+// Utils
+import { initMapLibreDirections, cleanupDirections } from "./lib/navigation";
 import { cleanupDirectionIcons } from "./utils/mapIcons";
 
 function App() {
@@ -132,36 +139,17 @@ function App() {
     }
   }, [userLocation, destination, navigationState, route, autoCreateRoute]);
 
-  // Geolocate event handlers
+  // Combined GPS event handler that sets location AND handles permission flow
   const handleGeolocate = useCallback((e) => {
-    const location = {
-      latitude: e.coords.latitude,
-      longitude: e.coords.longitude,
-      accuracy: e.coords.accuracy,
-      heading: e.coords.heading,
-      speed: e.coords.speed,
-      timestamp: e.timestamp,
-    };
-    console.log("📍 MapLibre Geolocate received:", location);
+    // Set user location first
+    const location = handleGpsSuccess(e);
     setUserLocation(location);
-    console.log("✅ userLocation state updated");
-    
-    // Transition from gps-permission to welcome state when GPS is successful
-    if (navigationState === "gps-permission") {
-      console.log("🎉 GPS permission granted, transitioning to welcome screen");
-      handleGpsPermissionGranted();
-    }
-  }, [navigationState, handleGpsPermissionGranted]);
-
+  }, [handleGpsSuccess]);
+  
+  // GPS error handler from hook
   const handleGeolocateError = useCallback((e) => {
-    console.error("❌ GeolocateControl error:", e);
-    
-    // If GPS fails during gps-permission state, still show welcome screen
-    if (navigationState === "gps-permission") {
-      console.log("⚠️ GPS permission denied or failed, proceeding to welcome screen");
-      handleGpsPermissionDenied(e.message || "GPS permission denied");
-    }
-  }, [navigationState, handleGpsPermissionDenied]);
+    handleGpsError(e);
+  }, [handleGpsError]);
 
   // Map transitions (pitch, bearing, orientation)
   useMapTransitions({
@@ -215,62 +203,27 @@ function App() {
     isMapReady,
   });
 
-  // Auto-trigger GPS when map is ready and in gps-permission state
-  useEffect(() => {
-    if (!isMapReady || !mapRef.current || navigationState !== "gps-permission") return;
-
-    // Auto-trigger GPS request
-    if (geolocateControlRef?.current) {
-      console.log("🚀 Auto-triggering GPS on app startup");
-      try {
-        geolocateControlRef.current.trigger();
-      } catch (error) {
-        console.warn("⚠️ Failed to auto-trigger GPS on startup:", error);
-        // Use permission denied handler
-        handleGpsPermissionDenied("Auto-trigger failed");
-      }
-    } else {
-      console.warn("⚠️ GeolocateControl ref not available, skipping to welcome");
-      handleGpsPermissionDenied("GeolocateControl not available");
-    }
-  }, [isMapReady, navigationState, geolocateControlRef, handleGpsPermissionDenied]);
-
-  // Auto-trigger orientation when entering orientation-permission state
-  useEffect(() => {
-    if (navigationState !== "orientation-permission") return;
-
-    const requestOrientation = async () => {
-      if (requestOrientationPermission && typeof requestOrientationPermission === 'function') {
-        try {
-          console.log("🧭 Auto-requesting orientation permission");
-          const granted = await requestOrientationPermission();
-          console.log("🧭 Orientation permission result:", granted);
-          
-          // Enable orientation if granted
-          if (granted && handleOrientationToggle) {
-            handleOrientationToggle(true);
-          }
-          
-          // Complete orientation step regardless of result
-          handleOrientationPermissionComplete(granted);
-        } catch (error) {
-          console.warn("⚠️ Orientation permission failed:", error);
-          handleOrientationPermissionComplete(false);
-        }
-      } else {
-        // Android/Desktop - no permission needed
-        console.log("🧭 Auto-enabling orientation (no permission required)");
-        if (handleOrientationToggle) {
-          handleOrientationToggle(true);
-        }
-        handleOrientationPermissionComplete(true);
-      }
-    };
-
-    // Small delay to ensure user interaction context is preserved
-    const timer = setTimeout(requestOrientation, 100);
-    return () => clearTimeout(timer);
-  }, [navigationState, requestOrientationPermission, handleOrientationToggle, handleOrientationPermissionComplete]);
+  // ========================================
+  // SPECIALIZED PERMISSION HOOKS
+  // ========================================
+  
+  // GPS Permission management with robust auto-trigger
+  const { handleGpsSuccess, handleGpsError } = useGpsPermission({
+    navigationState,
+    isMapReady,
+    mapRef,
+    geolocateControlRef,
+    handleGpsPermissionGranted,
+    handleGpsPermissionDenied
+  });
+  
+  // Orientation Permission management  
+  useOrientationPermission({
+    navigationState,
+    requestOrientationPermission,
+    handleOrientationToggle,
+    handleOrientationPermissionComplete
+  });
 
   // Initial block management - once at load
   useEffect(() => {
