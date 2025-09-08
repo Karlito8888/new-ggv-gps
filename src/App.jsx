@@ -23,8 +23,6 @@ import { useMapTransitions } from "./hooks/useMapTransitions";
 import { useBlockPolygons } from "./hooks/useBlockPolygons";
 import { useMapZoomEvents } from "./hooks/useMapZoomEvents";
 import { useAvailableBlocks } from "./hooks/useLocations";
-import useGpsPermission from "./hooks/useGpsPermission";
-import useOrientationPermission from "./hooks/useOrientationPermission";
 
 // Utils
 import { initMapLibreDirections, cleanupDirections } from "./lib/navigation";
@@ -56,10 +54,7 @@ function App() {
     setDestination,
     setIsMapReady,
     setOrientationEnabled,
-    handleGpsPermissionGranted,
-    handleGpsPermissionDenied,
     handleDestinationSelected,
-    handleOrientationPermissionComplete,
     handleArrival,
     handleExitComplete,
     handleStartNewNavigation,
@@ -79,12 +74,11 @@ function App() {
     navigationState === "navigating"
   );
 
-  // Device orientation hook - MUST be declared before useRouteManager
+  // Device orientation hook
   const {
     compass,
     isActive,
     getCurrentOrientation,
-    requestPermission: requestOrientationPermission,
   } = useDeviceOrientation({
     enabled: orientationEnabled && navigationState === "navigating",
     smoothingFactor: 0.8,
@@ -120,38 +114,38 @@ function App() {
   }, [userLocation]);
 
   // ========================================
-  // SPECIALIZED PERMISSION HOOKS
+  // SIMPLE GPS AUTO-TRIGGER
   // ========================================
   
-  // GPS Permission management with robust auto-trigger
-  const { handleGpsSuccess, handleGpsError } = useGpsPermission({
-    navigationState,
-    isMapReady,
-    mapRef,
-    geolocateControlRef,
-    handleGpsPermissionGranted,
-    handleGpsPermissionDenied
-  });
-  
-  // Orientation Permission management  
-  useOrientationPermission({
-    navigationState,
-    requestOrientationPermission,
-    handleOrientationToggle,
-    handleOrientationPermissionComplete
-  });
+  // Simple GPS auto-trigger on app startup
+  useEffect(() => {
+    if (!isMapReady || !geolocateControlRef?.current) return;
+    
+    console.log("🚀 Auto-triggering GPS on app startup");
+    try {
+      geolocateControlRef.current.trigger();
+    } catch (error) {
+      console.warn("⚠️ Failed to auto-trigger GPS:", error);
+    }
+  }, [isMapReady]);
 
-  // Combined GPS event handler that sets location AND handles permission flow
+  // Simple GPS event handlers
   const handleGeolocate = useCallback((e) => {
-    // Set user location first
-    const location = handleGpsSuccess(e);
+    const location = {
+      latitude: e.coords.latitude,
+      longitude: e.coords.longitude,
+      accuracy: e.coords.accuracy,
+      heading: e.coords.heading,
+      speed: e.coords.speed,
+      timestamp: e.timestamp,
+    };
+    console.log("📍 GPS location received:", location);
     setUserLocation(location);
-  }, [handleGpsSuccess]);
+  }, []);
   
-  // GPS error handler from hook
   const handleGeolocateError = useCallback((e) => {
-    handleGpsError(e);
-  }, [handleGpsError]);
+    console.error("❌ GPS error:", e);
+  }, []);
 
   // Tentative de création automatique de route quand la position devient disponible
   useEffect(() => {
@@ -357,7 +351,8 @@ function App() {
       <WelcomeModalMobile
         isOpen={navigationState === "welcome"}
         onDestinationSelected={handleDestinationSelected}
-        onCancel={() => setNavigationState("gps-permission")}
+        onCancel={() => setNavigationState("welcome")}
+        onOrientationToggle={handleOrientationToggle}
         availableBlocks={availableBlocks}
       />
 

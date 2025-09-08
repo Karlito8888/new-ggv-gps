@@ -7,8 +7,8 @@ const DEFAULT_COORDS = {
 };
 
 export function useNavigationState() {
-  // Navigation states: Sequential workflow for permissions
-  const [navigationState, setNavigationState] = useState("gps-permission"); // gps-permission, welcome, orientation-permission, navigating, arrived, exit-complete
+  // Navigation states: Simple workflow  
+  const [navigationState, setNavigationState] = useState("welcome"); // welcome, navigating, arrived, exit-complete
   const [rawUserLocation, setRawUserLocation] = useState(null);
   const [previousUserLocation, setPreviousUserLocation] = useState(null);
   const [destination, setDestination] = useState(null);
@@ -16,26 +16,10 @@ export function useNavigationState() {
   const [mapType, setMapType] = useState("osm"); // 'osm' ou 'satellite'
   const [orientationEnabled, setOrientationEnabled] = useState(false);
 
-  // Sequential navigation handlers
-  const handleGpsPermissionGranted = useCallback(() => {
-    if (import.meta.env.DEV) console.log("🔓 GPS permission granted → Welcome screen");
-    setNavigationState("welcome");
-  }, []);
-
-  const handleGpsPermissionDenied = useCallback((errorMessage) => {
-    console.error("GPS permission denied:", errorMessage);
-    // Still proceed to welcome - user can navigate without GPS
-    setNavigationState("welcome");
-  }, []);
-
-  const handleDestinationSelectedSequential = useCallback((dest) => {
-    if (import.meta.env.DEV) console.log("🎯 Destination selected → Orientation permission");
+  // Simple navigation handlers
+  const handleDestinationSelected = useCallback((dest) => {
+    if (import.meta.env.DEV) console.log("🎯 Destination selected → Navigation");
     setDestination(dest);
-    setNavigationState("orientation-permission");
-  }, []);
-
-  const handleOrientationPermissionComplete = useCallback((granted) => {
-    if (import.meta.env.DEV) console.log(`🧭 Orientation permission ${granted ? 'granted' : 'denied/skipped'} → Navigation`);
     setNavigationState("navigating");
   }, []);
 
@@ -89,10 +73,7 @@ export function useNavigationState() {
     setOrientationEnabled,
     
     // Handlers
-    handleGpsPermissionGranted,
-    handleGpsPermissionDenied,
-    handleDestinationSelected: handleDestinationSelectedSequential,
-    handleOrientationPermissionComplete,
+    handleDestinationSelected,
     handleArrival,
     handleExitComplete,
     handleStartNewNavigation,
