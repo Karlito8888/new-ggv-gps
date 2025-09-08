@@ -27,17 +27,19 @@ const ExitSuccessModal = ({ isOpen, onStartNewNavigation }) => {
             </svg>
           </div>
           <DialogTitle className="modal-title success-title">
-            Safe travels! 🚗
+            You've successfully exited
+            <br />
+            Garden Grove Village !
           </DialogTitle>
-          
+
           <div className="exit-message">
-            <p className="main-message">
+            {/* <p className="main-message">
               You've successfully exited Garden Grove Village!
-            </p>
+            </p> */}
             <p className="filipino-message">
-              Salamat po sa paggamit ng MyGGV|GPS!
+              Salamat po
               <br />
-              🙏 Ingat sa paguwi! 🙏
+              🙏 Ingat sa paguwi 🙏
             </p>
           </div>
 
@@ -62,7 +64,7 @@ const ExitSuccessModal = ({ isOpen, onStartNewNavigation }) => {
               Start new navigation
             </Button>
           </div>
-          
+
           <p className="modal-footer">Thank you for using MyGGV|GPS! 💚</p>
         </DialogHeader>
       </DialogContent>

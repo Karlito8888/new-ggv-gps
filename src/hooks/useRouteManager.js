@@ -65,45 +65,30 @@ export function useRouteManager(mapRef, userLocation, destination, navigationSta
     }
   }, [mapRef]);
 
-  // Handle destination selection
-  const handleDestinationSelected = useCallback(async (dest) => {
+  // Route creation function - called when navigation starts
+  const createRouteWhenReady = useCallback(async (dest, currentUserLocation) => {
     if (import.meta.env.DEV) {
-      console.log("🎯 Destination selected:", dest);
-      console.log(
-        "📍 User location available:",
-        userLocation ? "YES" : "NO"
-      );
+      console.log("📍 Creating route for navigation:", dest);
+      console.log("📍 User location available:", currentUserLocation ? "YES" : "NO");
     }
-
-    // ✅ MOST IMPORTANT: Set destination in global state
-    setDestination(dest);
-    setNavigationState("navigating");
-
-    // GPS and Orientation are now handled sequentially in App.jsx - no auto-trigger needed here
 
     // Reset recalculation state for new navigation
     resetRecalculationState();
 
-    // If we have user position, create route immediately and start navigating
-    if (userLocation) {
-      await createRouteToDestination(dest, userLocation);
-      
-      if (import.meta.env.DEV) console.log("🚀 Route created successfully, starting navigation...");
-      setNavigationState("navigating");
+    if (currentUserLocation) {
+      await createRouteToDestination(dest, currentUserLocation);
+      if (import.meta.env.DEV) console.log("🚀 Route created successfully");
     } else {
-      // If no user position yet, just set to navigating state and let autoCreateRoute handle it
       if (import.meta.env.DEV) console.log("⏳ Waiting for user location...");
-      setNavigationState("navigating"); // This will trigger GPS and autoCreateRoute
       
-      // Fallback: Après 30 secondes, proposer de naviguer depuis le centre du village
+      // Fallback: After 30 seconds, log warning
       setTimeout(() => {
-        if (!userLocation) {
+        if (!currentUserLocation) {
           console.warn("⚠️ GPS unavailable after 30s, navigation may proceed with fallback location");
-          // L'utilisateur peut toujours voir la destination sur la carte
         }
       }, 30000);
     }
-  }, [userLocation, createRouteToDestination, setNavigationState, setDestination]);
+  }, [createRouteToDestination]);
 
   // Handle exit village
   const handleExitVillage = useCallback(async () => {
@@ -314,8 +299,8 @@ export function useRouteManager(mapRef, userLocation, destination, navigationSta
     setTraveledRoute,
     setLastRouteUpdatePosition,
     
-    // Handlers
-    handleDestinationSelected,
+    // Handlers  
+    createRouteWhenReady,
     handleExitVillage,
     handleNewDestination,
     updateRouteWithLocation,
