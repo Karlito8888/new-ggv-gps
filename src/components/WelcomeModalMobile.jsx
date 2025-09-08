@@ -15,8 +15,6 @@ const WelcomeModalMobile = ({
   isOpen,
   onDestinationSelected,
   onCancel,
-  onOrientationToggle,
-  requestOrientationPermission,
   availableBlocks = [],
 }) => {
   const [pickerValue, setPickerValue] = useState({
@@ -79,8 +77,8 @@ const WelcomeModalMobile = ({
     pickerValue.lot,
   ]);
 
-  // Gestion de la soumission avec orientation iOS native
-  const handleSubmitWithOrientation = async (e) => {
+  // Simple destination selection - no GPS or orientation handling
+  const handleSubmitDestination = async (e) => {
     e.preventDefault();
 
     if (!pickerValue.block || !pickerValue.lot) {
@@ -88,46 +86,12 @@ const WelcomeModalMobile = ({
     }
 
     try {
-      // 1. ÉTAPE 1: Refetch destination data
+      // Refetch destination data and trigger selection
       const result = await refetchLocation();
-
+      
       if (result.data) {
-        // 2. ÉTAPE 2: Trigger destination selection (déclenche GPS automatiquement)
+        console.log("🎯 Destination selected, triggering sequential workflow");
         onDestinationSelected(result.data);
-
-        // 3. ÉTAPE 3: Attendre un petit délai pour que le GPS se déclenche d'abord
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // 4. ÉTAPE 4: PUIS demander orientation en utilisant le hook
-        if (
-          requestOrientationPermission &&
-          typeof requestOrientationPermission === "function"
-        ) {
-          try {
-            console.log(
-              "🧭 Requesting orientation permission via hook in user click context"
-            );
-            const granted = await requestOrientationPermission();
-            console.log("🧭 Orientation permission result:", granted);
-
-            // Si accordée, activer l'orientation
-            if (granted && onOrientationToggle) {
-              onOrientationToggle(true);
-            }
-          } catch (orientationError) {
-            console.warn("⚠️ Orientation permission failed:", orientationError);
-            // Pas grave - l'utilisateur peut utiliser OrientationToggle plus tard
-          }
-        } else {
-          // Fallback: Android ou desktop - pas de dialogue nécessaire
-          if (
-            onOrientationToggle &&
-            typeof onOrientationToggle === "function"
-          ) {
-            console.log("🧭 Auto-triggering orientation (fallback)");
-            onOrientationToggle(true);
-          }
-        }
       }
     } catch (error) {
       console.error("Error while searching for destination:", error);
@@ -242,7 +206,7 @@ const WelcomeModalMobile = ({
             </Button>
             <Button
               type="button"
-              onClick={handleSubmitWithOrientation}
+              onClick={handleSubmitDestination}
               disabled={isLoading || !canSubmit}
               className="modal-button primary"
             >

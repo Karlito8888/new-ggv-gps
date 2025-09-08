@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { getNavigationInstructions, hasArrived } from "../lib/navigation";
+import { getNavigationInstructions, hasArrived, VILLAGE_EXIT_COORDS } from "../lib/navigation";
 
 const NavigationDisplay = ({
   userLocation,
   destination,
   deviceBearing,
   onArrival,
+  onExitComplete,
   isOrientationActive = false,
 }) => {
   const [instructions, setInstructions] = useState(null);
@@ -34,13 +35,27 @@ const NavigationDisplay = ({
 
     if (arrived && !hasTriggeredArrival) {
       setHasTriggeredArrival(true);
-      onArrival();
+      
+      // Check if destination is the village exit
+      const isExitDestination = 
+        destination.coordinates &&
+        destination.coordinates[0] === VILLAGE_EXIT_COORDS[0] &&
+        destination.coordinates[1] === VILLAGE_EXIT_COORDS[1];
+      
+      if (isExitDestination && onExitComplete) {
+        console.log("🚪 Arrived at village exit - triggering exit complete");
+        onExitComplete();
+      } else {
+        console.log("🎯 Arrived at normal destination - triggering arrival");
+        onArrival();
+      }
     }
   }, [
     userLocation,
     destination,
     deviceBearing,
     onArrival,
+    onExitComplete,
     hasTriggeredArrival,
     isOrientationActive,
   ]);

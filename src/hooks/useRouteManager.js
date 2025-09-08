@@ -10,7 +10,7 @@ import {
   VILLAGE_EXIT_COORDS,
 } from "../lib/navigation";
 
-export function useRouteManager(mapRef, userLocation, destination, navigationState, setNavigationState, setDestination, geolocateControlRef) {
+export function useRouteManager(mapRef, userLocation, destination, navigationState, setNavigationState, setDestination) {
   // Route states
   const [route, setRoute] = useState(null);
   const [originalRoute, setOriginalRoute] = useState(null); // Store the complete original route
@@ -79,19 +79,7 @@ export function useRouteManager(mapRef, userLocation, destination, navigationSta
     setDestination(dest);
     setNavigationState("navigating");
 
-    // 🚀 AUTO-TRIGGER GPS: Activate GeolocateControl programmatically
-    try {
-      if (geolocateControlRef?.current) {
-        console.log("🚀 Auto-triggering GPS after destination selection");
-        geolocateControlRef.current.trigger();
-      } else {
-        console.warn("⚠️ GeolocateControl ref not available for auto-trigger");
-      }
-    } catch (error) {
-      console.warn("⚠️ Failed to auto-trigger GPS:", error);
-    }
-
-    // 🧭 ORIENTATION: Now handled directly in WelcomeModalMobile button click for iOS compatibility
+    // GPS and Orientation are now handled sequentially in App.jsx - no auto-trigger needed here
 
     // Reset recalculation state for new navigation
     resetRecalculationState();
@@ -115,7 +103,7 @@ export function useRouteManager(mapRef, userLocation, destination, navigationSta
         }
       }, 30000);
     }
-  }, [userLocation, createRouteToDestination, setNavigationState, setDestination, geolocateControlRef]);
+  }, [userLocation, createRouteToDestination, setNavigationState, setDestination]);
 
   // Handle exit village
   const handleExitVillage = useCallback(async () => {
@@ -125,6 +113,14 @@ export function useRouteManager(mapRef, userLocation, destination, navigationSta
       coordinates: VILLAGE_EXIT_COORDS,
       address: "Salamat po !\n🙏 Ingat 🙏",
     };
+
+    console.log("🚪 Exit village requested - starting navigation to exit");
+
+    // Set exit destination immediately
+    setDestination(exitDestination);
+    
+    // Transition to navigating state to close modal and start navigation
+    setNavigationState("navigating");
 
     // Reset recalculation state for exit navigation
     resetRecalculationState();
@@ -157,6 +153,8 @@ export function useRouteManager(mapRef, userLocation, destination, navigationSta
 
         // Update recalculation state after successful route creation
         updateRecalculationState(userLocation.latitude, userLocation.longitude);
+        
+        console.log("✅ Exit route created successfully");
         return exitDestination;
       } catch (error) {
         console.error("Exit route creation error:", error);
@@ -164,7 +162,7 @@ export function useRouteManager(mapRef, userLocation, destination, navigationSta
       }
     }
     return exitDestination;
-  }, [userLocation, mapRef]);
+  }, [userLocation, mapRef, setDestination, setNavigationState]);
 
   // Handle new destination (reset all route states)
   const handleNewDestination = useCallback(() => {

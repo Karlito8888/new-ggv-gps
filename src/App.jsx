@@ -5,6 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import WelcomeModalMobile from "./components/WelcomeModalMobile";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModalNew from "./components/ArrivalModalNew";
+import ExitSuccessModal from "./components/ExitSuccessModal";
 import useDeviceOrientation from "./hooks/useDeviceOrientation";
 import { useNavigationState } from "./hooks/useNavigationState";
 import { useMapConfig } from "./hooks/useMapConfig";
@@ -48,7 +49,13 @@ function App() {
     setDestination,
     setIsMapReady,
     setOrientationEnabled,
+    handleGpsPermissionGranted,
+    handleGpsPermissionDenied,
+    handleDestinationSelected,
+    handleOrientationPermissionComplete,
     handleArrival,
+    handleExitComplete,
+    handleStartNewNavigation,
     handleMapTypeToggle,
     handleOrientationToggle,
   } = useNavigationState();
@@ -81,7 +88,6 @@ function App() {
   const {
     route,
     traveledRoute,
-    handleDestinationSelected,
     handleExitVillage,
     handleNewDestination,
     autoCreateRoute,
@@ -91,8 +97,7 @@ function App() {
     destination,
     navigationState,
     setNavigationState,
-    setDestination,
-    geolocateControlRef
+    setDestination
   );
 
   // ========================================
@@ -141,22 +146,22 @@ function App() {
     setUserLocation(location);
     console.log("✅ userLocation state updated");
     
-    // Transition from permission to welcome state when GPS is successful
-    if (navigationState === "permission") {
+    // Transition from gps-permission to welcome state when GPS is successful
+    if (navigationState === "gps-permission") {
       console.log("🎉 GPS permission granted, transitioning to welcome screen");
-      setNavigationState("welcome");
+      handleGpsPermissionGranted();
     }
-  }, [navigationState, setNavigationState]);
+  }, [navigationState, handleGpsPermissionGranted]);
 
   const handleGeolocateError = useCallback((e) => {
     console.error("❌ GeolocateControl error:", e);
     
-    // If GPS fails during permission state, still show welcome screen
-    if (navigationState === "permission") {
+    // If GPS fails during gps-permission state, still show welcome screen
+    if (navigationState === "gps-permission") {
       console.log("⚠️ GPS permission denied or failed, proceeding to welcome screen");
-      setNavigationState("welcome");
+      handleGpsPermissionDenied(e.message || "GPS permission denied");
     }
-  }, [navigationState, setNavigationState]);
+  }, [navigationState, handleGpsPermissionDenied]);
 
   // Map transitions (pitch, bearing, orientation)
   useMapTransitions({
@@ -210,9 +215,9 @@ function App() {
     isMapReady,
   });
 
-  // Auto-trigger GPS when map is ready and in permission state
+  // Auto-trigger GPS when map is ready and in gps-permission state
   useEffect(() => {
-    if (!isMapReady || !mapRef.current || navigationState !== "permission") return;
+    if (!isMapReady || !mapRef.current || navigationState !== "gps-permission") return;
 
     // Auto-trigger GPS request
     if (geolocateControlRef?.current) {
@@ -221,14 +226,51 @@ function App() {
         geolocateControlRef.current.trigger();
       } catch (error) {
         console.warn("⚠️ Failed to auto-trigger GPS on startup:", error);
-        // Fallback to welcome screen if GPS fails
-        setNavigationState("welcome");
+        // Use permission denied handler
+        handleGpsPermissionDenied("Auto-trigger failed");
       }
     } else {
       console.warn("⚠️ GeolocateControl ref not available, skipping to welcome");
-      setNavigationState("welcome");
+      handleGpsPermissionDenied("GeolocateControl not available");
     }
-  }, [isMapReady, navigationState, geolocateControlRef, setNavigationState]);
+  }, [isMapReady, navigationState, geolocateControlRef, handleGpsPermissionDenied]);
+
+  // Auto-trigger orientation when entering orientation-permission state
+  useEffect(() => {
+    if (navigationState !== "orientation-permission") return;
+
+    const requestOrientation = async () => {
+      if (requestOrientationPermission && typeof requestOrientationPermission === 'function') {
+        try {
+          console.log("🧭 Auto-requesting orientation permission");
+          const granted = await requestOrientationPermission();
+          console.log("🧭 Orientation permission result:", granted);
+          
+          // Enable orientation if granted
+          if (granted && handleOrientationToggle) {
+            handleOrientationToggle(true);
+          }
+          
+          // Complete orientation step regardless of result
+          handleOrientationPermissionComplete(granted);
+        } catch (error) {
+          console.warn("⚠️ Orientation permission failed:", error);
+          handleOrientationPermissionComplete(false);
+        }
+      } else {
+        // Android/Desktop - no permission needed
+        console.log("🧭 Auto-enabling orientation (no permission required)");
+        if (handleOrientationToggle) {
+          handleOrientationToggle(true);
+        }
+        handleOrientationPermissionComplete(true);
+      }
+    };
+
+    // Small delay to ensure user interaction context is preserved
+    const timer = setTimeout(requestOrientation, 100);
+    return () => clearTimeout(timer);
+  }, [navigationState, requestOrientationPermission, handleOrientationToggle, handleOrientationPermissionComplete]);
 
   // Initial block management - once at load
   useEffect(() => {
@@ -348,6 +390,7 @@ function App() {
             destination={destination}
             deviceBearing={0}
             onArrival={handleArrival}
+            onExitComplete={handleExitComplete}
             isOrientationActive={false}
           />
         )}
@@ -361,9 +404,7 @@ function App() {
       <WelcomeModalMobile
         isOpen={navigationState === "welcome"}
         onDestinationSelected={handleDestinationSelected}
-        onCancel={() => setNavigationState("permission")}
-        onOrientationToggle={handleOrientationToggle}
-        requestOrientationPermission={requestOrientationPermission}
+        onCancel={() => setNavigationState("gps-permission")}
         availableBlocks={availableBlocks}
       />
 
@@ -376,6 +417,10 @@ function App() {
         />
       )}
 
+      <ExitSuccessModal
+        isOpen={navigationState === "exit-complete"}
+        onStartNewNavigation={handleStartNewNavigation}
+      />
 
       <Footer />
     </>
