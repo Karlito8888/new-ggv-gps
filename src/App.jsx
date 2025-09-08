@@ -59,7 +59,6 @@ function App() {
     handleExitComplete,
     handleStartNewNavigation,
     handleMapTypeToggle,
-    handleOrientationToggle,
   } = useNavigationState();
 
   // ========================================
@@ -168,7 +167,7 @@ function App() {
   }, [userLocation, destination, navigationState, route, autoCreateRoute]);
 
   // Map transitions (pitch, bearing, orientation)
-  useMapTransitions({
+  const { handleOrientationToggle } = useMapTransitions({
     mapRef,
     isMapReady,
     adaptivePitch,

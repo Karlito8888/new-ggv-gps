@@ -45,10 +45,6 @@ export function useNavigationState() {
     setMapType(prev => prev === "osm" ? "satellite" : "osm");
   }, []);
 
-  const handleOrientationToggle = useCallback((enabled) => {
-    if (import.meta.env.DEV) console.log(`🧭 Orientation ${enabled ? 'enabled' : 'disabled'}`);
-    setOrientationEnabled(enabled);
-  }, []);
 
   
 
@@ -79,6 +75,5 @@ export function useNavigationState() {
     handleStartNewNavigation,
     handleNewDestination: handleNewDestinationSimple,
     handleMapTypeToggle,
-    handleOrientationToggle,
   };
 }
