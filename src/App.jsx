@@ -14,10 +14,7 @@ import { useMapTransitions } from "./hooks/useMapTransitions";
 import { useBlockPolygons } from "./hooks/useBlockPolygons";
 import { useMapZoomEvents } from "./hooks/useMapZoomEvents";
 
-import {
-  initMapLibreDirections,
-  cleanupDirections,
-} from "./lib/navigation";
+import { initMapLibreDirections, cleanupDirections } from "./lib/navigation";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { MapMarkers } from "./components/MapMarkers";
@@ -25,7 +22,6 @@ import { RouteLayers } from "./components/RouteLayers";
 import { MapControls } from "./components/MapControls";
 import { useAvailableBlocks } from "./hooks/useLocations";
 import { cleanupDirectionIcons } from "./utils/mapIcons";
-
 
 function App() {
   // ========================================
@@ -72,10 +68,14 @@ function App() {
   );
 
   // Device orientation hook - MUST be declared before useRouteManager
-  const { compass, isActive, getCurrentOrientation, start: startOrientation } = useDeviceOrientation({
+  const {
+    compass,
+    isActive,
+    getCurrentOrientation,
+  } = useDeviceOrientation({
     enabled: orientationEnabled && navigationState === "navigating",
     smoothingFactor: 0.8,
-    throttleMs: 100
+    throttleMs: 100,
   });
 
   // Route management
@@ -86,34 +86,49 @@ function App() {
     handleExitVillage,
     handleNewDestination,
     autoCreateRoute,
-  } = useRouteManager(mapRef, userLocation, destination, navigationState, setNavigationState, setDestination, geolocateControlRef, startOrientation);
+  } = useRouteManager(
+    mapRef,
+    userLocation,
+    destination,
+    navigationState,
+    setNavigationState,
+    setDestination,
+    geolocateControlRef
+  );
 
   // ========================================
   // SIMPLE GEOLOCATION MANAGEMENT
   // ========================================
-  
 
   // Debug userLocation changes
   useEffect(() => {
-    console.log('🔍 userLocation changed:', userLocation ? 'GPS AVAILABLE' : 'GPS NULL');
+    console.log(
+      "🔍 userLocation changed:",
+      userLocation ? "GPS AVAILABLE" : "GPS NULL"
+    );
   }, [userLocation]);
 
   // Tentative de création automatique de route quand la position devient disponible
   useEffect(() => {
-    console.log('🔍 Route creation check:', {
+    console.log("🔍 Route creation check:", {
       userLocation: !!userLocation,
-      destination: !!destination, 
+      destination: !!destination,
       navigationState,
-      route: !!route
+      route: !!route,
     });
-    
-    if (userLocation && destination && navigationState === "navigating" && !route) {
+
+    if (
+      userLocation &&
+      destination &&
+      navigationState === "navigating" &&
+      !route
+    ) {
       console.log("🔄 ✅ ALL CONDITIONS MET - Creating route automatically");
       autoCreateRoute();
     }
   }, [userLocation, destination, navigationState, route, autoCreateRoute]);
 
-  // Geolocate event handlers  
+  // Geolocate event handlers
   const handleGeolocate = useCallback((e) => {
     const location = {
       latitude: e.coords.latitude,
@@ -121,17 +136,16 @@ function App() {
       accuracy: e.coords.accuracy,
       heading: e.coords.heading,
       speed: e.coords.speed,
-      timestamp: e.timestamp
+      timestamp: e.timestamp,
     };
-    console.log('📍 MapLibre Geolocate received:', location);
+    console.log("📍 MapLibre Geolocate received:", location);
     setUserLocation(location);
-    console.log('✅ userLocation state updated');
+    console.log("✅ userLocation state updated");
   }, []);
 
   const handleGeolocateError = useCallback((e) => {
-    console.error('❌ GeolocateControl error:', e);
+    console.error("❌ GeolocateControl error:", e);
   }, []);
-
 
   // Map transitions (pitch, bearing, orientation)
   useMapTransitions({
@@ -144,10 +158,8 @@ function App() {
     orientationEnabled,
     navigationState,
     getCurrentOrientation,
-    setOrientationEnabled
+    setOrientationEnabled,
   });
-
-
 
   // Cleanup directions and icons
   useEffect(() => {
@@ -168,12 +180,8 @@ function App() {
   }, []);
 
   // Map configuration
-  const {
-    initialViewState,
-    blocksGeoJSON,
-    mapStyle,
-    getPolygonCenter,
-  } = useMapConfig(userLocation, navigationState, adaptivePitch, mapType);
+  const { initialViewState, blocksGeoJSON, mapStyle, getPolygonCenter } =
+    useMapConfig(userLocation, navigationState, adaptivePitch, mapType);
 
   // Map transitions are handled by useMapTransitions hook above
 
@@ -181,14 +189,14 @@ function App() {
     mapRef,
     isMapReady,
     mapType,
-    blocksGeoJSON
+    blocksGeoJSON,
   });
 
   // Auto route creation is handled by useRouteManager hook above
 
   useMapZoomEvents({
     mapRef,
-    isMapReady
+    isMapReady,
   });
 
   // Initial block management - once at load
@@ -277,7 +285,7 @@ function App() {
             positionOptions={{
               enableHighAccuracy: true,
               timeout: 30000,
-              maximumAge: 60000
+              maximumAge: 60000,
             }}
             trackUserLocation={true}
             showAccuracyCircle={true}
@@ -293,7 +301,7 @@ function App() {
             navigationState={navigationState}
           />
 
-          <MapMarkers 
+          <MapMarkers
             destination={destination}
             getPolygonCenter={getPolygonCenter}
             navigationState={navigationState}

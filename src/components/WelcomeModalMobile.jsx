@@ -70,8 +70,8 @@ const WelcomeModalMobile = ({
     }
   }, [availableBlocks, availableLots, isLotsLoading, pickerValue.block, pickerValue.lot]);
 
-  // Gestion de la soumission
-  const handleSubmit = async (e) => {
+  // Gestion de la soumission avec orientation iOS native
+  const handleSubmitWithOrientation = async (e) => {
     e.preventDefault();
 
     if (!pickerValue.block || !pickerValue.lot) {
@@ -79,16 +79,38 @@ const WelcomeModalMobile = ({
     }
 
     try {
-      // Refetch to ensure we have the most recent data
+      // 1. ÉTAPE 1: Refetch destination data
       const result = await refetchLocation();
       
       if (result.data) {
+        // 2. ÉTAPE 2: Trigger destination selection (déclenche GPS automatiquement)
         onDestinationSelected(result.data);
         
-        // Auto-trigger device orientation after successful destination selection
-        if (onOrientationToggle && typeof onOrientationToggle === 'function') {
-          if (import.meta.env.DEV) console.log('🧭 Auto-triggering device orientation after destination selection');
-          onOrientationToggle(true);
+        // 3. ÉTAPE 3: Attendre un petit délai pour que le GPS se déclenche d'abord
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // 4. ÉTAPE 4: PUIS demander orientation iOS (dialogue natif)
+        if (typeof DeviceOrientationEvent !== 'undefined' && 
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
+          try {
+            console.log('🧭 Requesting iOS orientation permission in user click context');
+            const permission = await DeviceOrientationEvent.requestPermission();
+            console.log('🧭 iOS orientation permission result:', permission);
+            
+            // Si accordée, activer l'orientation
+            if (permission === 'granted' && onOrientationToggle) {
+              onOrientationToggle(true);
+            }
+          } catch (orientationError) {
+            console.warn('⚠️ iOS orientation permission failed:', orientationError);
+            // Pas grave - l'utilisateur peut utiliser OrientationToggle plus tard
+          }
+        } else {
+          // Android ou desktop - pas de dialogue nécessaire
+          if (onOrientationToggle && typeof onOrientationToggle === 'function') {
+            console.log('🧭 Auto-triggering orientation (non-iOS device)');
+            onOrientationToggle(true);
+          }
         }
       }
     } catch (error) {
@@ -124,7 +146,7 @@ const WelcomeModalMobile = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="modal-form">
+        <form onSubmit={(e) => e.preventDefault()} className="modal-form">
           <div className="picker-container">
             <div className="picker-labels">
               <div className="picker-label">🏢 Block</div>
@@ -189,7 +211,8 @@ const WelcomeModalMobile = ({
               Cancel
             </Button>
             <Button
-              type="submit"
+              type="button"
+              onClick={handleSubmitWithOrientation}
               disabled={isLoading || !canSubmit}
               className="modal-button primary"
             >

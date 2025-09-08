@@ -10,7 +10,7 @@ import {
   VILLAGE_EXIT_COORDS,
 } from "../lib/navigation";
 
-export function useRouteManager(mapRef, userLocation, destination, navigationState, setNavigationState, setDestination, geolocateControlRef, startOrientation) {
+export function useRouteManager(mapRef, userLocation, destination, navigationState, setNavigationState, setDestination, geolocateControlRef) {
   // Route states
   const [route, setRoute] = useState(null);
   const [originalRoute, setOriginalRoute] = useState(null); // Store the complete original route
@@ -91,17 +91,7 @@ export function useRouteManager(mapRef, userLocation, destination, navigationSta
       console.warn("⚠️ Failed to auto-trigger GPS:", error);
     }
 
-    // 🧭 AUTO-TRIGGER ORIENTATION: Request device orientation permission
-    try {
-      if (startOrientation && typeof startOrientation === 'function') {
-        console.log("🧭 Auto-triggering device orientation after destination selection");
-        await startOrientation();
-      } else {
-        console.warn("⚠️ Device orientation start function not available for auto-trigger");
-      }
-    } catch (error) {
-      console.warn("⚠️ Failed to auto-trigger device orientation:", error);
-    }
+    // 🧭 ORIENTATION: Now handled directly in WelcomeModalMobile button click for iOS compatibility
 
     // Reset recalculation state for new navigation
     resetRecalculationState();
@@ -125,7 +115,7 @@ export function useRouteManager(mapRef, userLocation, destination, navigationSta
         }
       }, 30000);
     }
-  }, [userLocation, createRouteToDestination, setNavigationState, setDestination, geolocateControlRef, startOrientation]);
+  }, [userLocation, createRouteToDestination, setNavigationState, setDestination, geolocateControlRef]);
 
   // Handle exit village
   const handleExitVillage = useCallback(async () => {
