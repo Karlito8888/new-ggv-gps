@@ -2,7 +2,7 @@ function Footer() {
   return (
     <footer className="footer">
       <p className="footer-text">
-        © {new Date().getFullYear()} Garden Grove Village 8
+        © {new Date().getFullYear()} Garden Grove Village 9
       </p>
     </footer>
   );

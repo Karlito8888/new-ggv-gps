@@ -119,6 +119,40 @@ function App() {
     );
   }, [userLocation]);
 
+  // ========================================
+  // SPECIALIZED PERMISSION HOOKS
+  // ========================================
+  
+  // GPS Permission management with robust auto-trigger
+  const { handleGpsSuccess, handleGpsError } = useGpsPermission({
+    navigationState,
+    isMapReady,
+    mapRef,
+    geolocateControlRef,
+    handleGpsPermissionGranted,
+    handleGpsPermissionDenied
+  });
+  
+  // Orientation Permission management  
+  useOrientationPermission({
+    navigationState,
+    requestOrientationPermission,
+    handleOrientationToggle,
+    handleOrientationPermissionComplete
+  });
+
+  // Combined GPS event handler that sets location AND handles permission flow
+  const handleGeolocate = useCallback((e) => {
+    // Set user location first
+    const location = handleGpsSuccess(e);
+    setUserLocation(location);
+  }, [handleGpsSuccess]);
+  
+  // GPS error handler from hook
+  const handleGeolocateError = useCallback((e) => {
+    handleGpsError(e);
+  }, [handleGpsError]);
+
   // Tentative de création automatique de route quand la position devient disponible
   useEffect(() => {
     console.log("🔍 Route creation check:", {
@@ -138,18 +172,6 @@ function App() {
       autoCreateRoute();
     }
   }, [userLocation, destination, navigationState, route, autoCreateRoute]);
-
-  // Combined GPS event handler that sets location AND handles permission flow
-  const handleGeolocate = useCallback((e) => {
-    // Set user location first
-    const location = handleGpsSuccess(e);
-    setUserLocation(location);
-  }, [handleGpsSuccess]);
-  
-  // GPS error handler from hook
-  const handleGeolocateError = useCallback((e) => {
-    handleGpsError(e);
-  }, [handleGpsError]);
 
   // Map transitions (pitch, bearing, orientation)
   useMapTransitions({
@@ -201,28 +223,6 @@ function App() {
   useMapZoomEvents({
     mapRef,
     isMapReady,
-  });
-
-  // ========================================
-  // SPECIALIZED PERMISSION HOOKS
-  // ========================================
-  
-  // GPS Permission management with robust auto-trigger
-  const { handleGpsSuccess, handleGpsError } = useGpsPermission({
-    navigationState,
-    isMapReady,
-    mapRef,
-    geolocateControlRef,
-    handleGpsPermissionGranted,
-    handleGpsPermissionDenied
-  });
-  
-  // Orientation Permission management  
-  useOrientationPermission({
-    navigationState,
-    requestOrientationPermission,
-    handleOrientationToggle,
-    handleOrientationPermissionComplete
   });
 
   // Initial block management - once at load

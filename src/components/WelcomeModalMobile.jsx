@@ -196,14 +196,14 @@ const WelcomeModalMobile = ({
           )}
 
           <div className="modal-actions">
-            <Button
+            {/* <Button
               type="button"
               onClick={onCancel}
               variant="outline"
               className="modal-button secondary"
             >
               Cancel
-            </Button>
+            </Button> */}
             <Button
               type="button"
               onClick={handleSubmitDestination}
