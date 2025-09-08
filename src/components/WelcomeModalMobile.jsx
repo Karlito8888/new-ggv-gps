@@ -15,7 +15,6 @@ const WelcomeModalMobile = ({
   isOpen,
   onDestinationSelected,
   onCancel,
-  onOrientationToggle,
   availableBlocks = [],
 }) => {
   const [pickerValue, setPickerValue] = useState({
@@ -93,30 +92,7 @@ const WelcomeModalMobile = ({
       if (result.data) {
         console.log("🎯 Destination selected");
         
-        // 2. Immediately request orientation permission (iOS user context)
-        if (typeof DeviceOrientationEvent !== 'undefined' && 
-            typeof DeviceOrientationEvent.requestPermission === 'function') {
-          try {
-            console.log('🧭 Requesting iOS orientation permission');
-            const permission = await DeviceOrientationEvent.requestPermission();
-            console.log('🧭 iOS orientation permission result:', permission);
-            
-            // Enable orientation if granted
-            if (permission === 'granted' && onOrientationToggle) {
-              onOrientationToggle(true);
-            }
-          } catch (orientationError) {
-            console.warn('⚠️ iOS orientation permission failed:', orientationError);
-          }
-        } else {
-          // Android/Desktop - auto enable
-          console.log('🧭 Auto-enabling orientation (Android/Desktop)');
-          if (onOrientationToggle) {
-            onOrientationToggle(true);
-          }
-        }
-        
-        // 3. Start navigation
+        // 2. Proceed with destination selection
         onDestinationSelected(result.data);
       }
     } catch (error) {

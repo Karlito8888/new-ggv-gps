@@ -7,8 +7,8 @@ const DEFAULT_COORDS = {
 };
 
 export function useNavigationState() {
-  // Navigation states: Simple workflow  
-  const [navigationState, setNavigationState] = useState("welcome"); // welcome, navigating, arrived, exit-complete
+  // Navigation states: Sequential permission workflow  
+  const [navigationState, setNavigationState] = useState("gps-permission"); // gps-permission, welcome, orientation-permission, navigating, arrived, exit-complete
   const [rawUserLocation, setRawUserLocation] = useState(null);
   const [previousUserLocation, setPreviousUserLocation] = useState(null);
   const [destination, setDestination] = useState(null);
@@ -18,9 +18,8 @@ export function useNavigationState() {
 
   // Simple navigation handlers
   const handleDestinationSelected = useCallback((dest) => {
-    if (import.meta.env.DEV) console.log("🎯 Destination selected → Navigation");
+    if (import.meta.env.DEV) console.log("🎯 Destination selected → Stored for navigation");
     setDestination(dest);
-    setNavigationState("navigating");
   }, []);
 
   const handleArrival = useCallback(() => {
@@ -33,7 +32,7 @@ export function useNavigationState() {
 
   const handleStartNewNavigation = useCallback(() => {
     setDestination(null);
-    setNavigationState("welcome");
+    setNavigationState("gps-permission");
   }, []);
 
   const handleNewDestinationSimple = useCallback(() => {
@@ -43,6 +42,28 @@ export function useNavigationState() {
 
   const handleMapTypeToggle = useCallback(() => {
     setMapType(prev => prev === "osm" ? "satellite" : "osm");
+  }, []);
+
+  // New permission handlers
+  const handleGpsPermissionGranted = useCallback(() => {
+    if (import.meta.env.DEV) console.log("📍 GPS permission granted → Welcome");
+    setNavigationState("welcome");
+  }, []);
+
+  const handleOrientationPermissionRequest = useCallback(() => {
+    if (import.meta.env.DEV) console.log("🧭 Starting orientation permission flow");
+    setNavigationState("orientation-permission");
+  }, []);
+
+  const handleOrientationPermissionGranted = useCallback(() => {
+    if (import.meta.env.DEV) console.log("🧭 Orientation permission granted → Navigation");
+    setNavigationState("navigating");
+  }, []);
+
+  const handleDestinationSelectedAndProceed = useCallback((dest) => {
+    if (import.meta.env.DEV) console.log("🎯 Destination selected → Orientation Permission");
+    setDestination(dest);
+    setNavigationState("orientation-permission");
   }, []);
 
 
@@ -70,10 +91,14 @@ export function useNavigationState() {
     
     // Handlers
     handleDestinationSelected,
+    handleDestinationSelectedAndProceed,
     handleArrival,
     handleExitComplete,
     handleStartNewNavigation,
     handleNewDestination: handleNewDestinationSimple,
     handleMapTypeToggle,
+    handleGpsPermissionGranted,
+    handleOrientationPermissionRequest,
+    handleOrientationPermissionGranted,
   };
 }

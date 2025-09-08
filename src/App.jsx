@@ -7,6 +7,8 @@ import WelcomeModalMobile from "./components/WelcomeModalMobile";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModalNew from "./components/ArrivalModalNew";
 import ExitSuccessModal from "./components/ExitSuccessModal";
+import GpsPermissionModal from "./components/GpsPermissionModal";
+import OrientationPermissionModal from "./components/OrientationPermissionModal";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { MapMarkers } from "./components/MapMarkers";
@@ -54,11 +56,13 @@ function App() {
     setDestination,
     setIsMapReady,
     setOrientationEnabled,
-    handleDestinationSelected,
+    handleDestinationSelectedAndProceed,
     handleArrival,
     handleExitComplete,
     handleStartNewNavigation,
     handleMapTypeToggle,
+    handleGpsPermissionGranted,
+    handleOrientationPermissionGranted,
   } = useNavigationState();
 
   // ========================================
@@ -346,13 +350,25 @@ function App() {
       </main>
 
       {/* Modals */}
+      
+      <GpsPermissionModal
+        isOpen={navigationState === "gps-permission"}
+        onPermissionGranted={handleGpsPermissionGranted}
+        geolocateControlRef={geolocateControlRef}
+      />
 
       <WelcomeModalMobile
         isOpen={navigationState === "welcome"}
-        onDestinationSelected={handleDestinationSelected}
+        onDestinationSelected={handleDestinationSelectedAndProceed}
         onCancel={() => setNavigationState("welcome")}
-        onOrientationToggle={handleOrientationToggle}
         availableBlocks={availableBlocks}
+      />
+      
+      <OrientationPermissionModal
+        isOpen={navigationState === "orientation-permission"}
+        onPermissionGranted={handleOrientationPermissionGranted}
+        onPermissionSkipped={handleOrientationPermissionGranted}
+        handleOrientationToggle={handleOrientationToggle}
       />
 
       {destination && (
