@@ -5,7 +5,6 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import WelcomeModalMobile from "./components/WelcomeModalMobile";
 import NavigationDisplay from "./components/NavigationDisplay";
 import ArrivalModalNew from "./components/ArrivalModalNew";
-import NavigationAlerts from "./components/NavigationAlerts";
 import useDeviceOrientation from "./hooks/useDeviceOrientation";
 import { useNavigationState } from "./hooks/useNavigationState";
 import { useMapConfig } from "./hooks/useMapConfig";
@@ -45,7 +44,6 @@ function App() {
     isMapReady,
     mapType,
     orientationEnabled,
-    DEFAULT_COORDS,
     setNavigationState,
     setDestination,
     setIsMapReady,
@@ -72,6 +70,7 @@ function App() {
     compass,
     isActive,
     getCurrentOrientation,
+    requestPermission: requestOrientationPermission,
   } = useDeviceOrientation({
     enabled: orientationEnabled && navigationState === "navigating",
     smoothingFactor: 0.8,
@@ -278,7 +277,7 @@ function App() {
             handleOrientationToggle={handleOrientationToggle}
           />
 
-          {/* Geolocate control */}
+          {/* Geolocate control - hidden but functional */}
           <GeolocateControl
             ref={geolocateControlRef}
             position="top-left"
@@ -292,6 +291,7 @@ function App() {
             showUserHeading={true}
             onGeolocate={handleGeolocate}
             onError={handleGeolocateError}
+            style={{ display: 'none' }}
           />
 
           {/* Route layers */}
@@ -331,6 +331,7 @@ function App() {
         onDestinationSelected={handleDestinationSelected}
         onCancel={() => setNavigationState("permission")}
         onOrientationToggle={handleOrientationToggle}
+        requestOrientationPermission={requestOrientationPermission}
         availableBlocks={availableBlocks}
       />
 
@@ -343,12 +344,6 @@ function App() {
         />
       )}
 
-      {/* Smart navigation alerts */}
-      <NavigationAlerts
-        userLocation={userLocation}
-        route={route}
-        isNavigating={navigationState === "navigating"}
-      />
 
       <Footer />
     </>

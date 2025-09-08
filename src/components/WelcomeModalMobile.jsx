@@ -16,6 +16,7 @@ const WelcomeModalMobile = ({
   onDestinationSelected,
   onCancel,
   onOrientationToggle,
+  requestOrientationPermission,
   availableBlocks = [],
 }) => {
   const [pickerValue, setPickerValue] = useState({
@@ -42,7 +43,7 @@ const WelcomeModalMobile = ({
     // Initialize default block
     if (availableBlocks.length > 0 && !pickerValue.block) {
       const defaultBlock = availableBlocks[0].toString();
-      setPickerValue(prev => ({
+      setPickerValue((prev) => ({
         ...prev,
         block: defaultBlock,
       }));
@@ -52,23 +53,31 @@ const WelcomeModalMobile = ({
     // Handle lots when they are loaded
     if (availableLots.length > 0) {
       const currentLot = pickerValue.lot;
-      const lotExists = availableLots.some(lot => lot.toString() === currentLot);
+      const lotExists = availableLots.some(
+        (lot) => lot.toString() === currentLot
+      );
 
       // If no lot selected or lot no longer exists, take the first one
       if (!currentLot || !lotExists) {
-        setPickerValue(prev => ({
+        setPickerValue((prev) => ({
           ...prev,
-          lot: availableLots[0].toString()
+          lot: availableLots[0].toString(),
         }));
       }
     } else if (pickerValue.block && !isLotsLoading) {
       // Si pas de lots disponibles, reset le lot
-      setPickerValue(prev => ({
+      setPickerValue((prev) => ({
         ...prev,
-        lot: ""
+        lot: "",
       }));
     }
-  }, [availableBlocks, availableLots, isLotsLoading, pickerValue.block, pickerValue.lot]);
+  }, [
+    availableBlocks,
+    availableLots,
+    isLotsLoading,
+    pickerValue.block,
+    pickerValue.lot,
+  ]);
 
   // Gestion de la soumission avec orientation iOS native
   const handleSubmitWithOrientation = async (e) => {
@@ -81,34 +90,41 @@ const WelcomeModalMobile = ({
     try {
       // 1. ÉTAPE 1: Refetch destination data
       const result = await refetchLocation();
-      
+
       if (result.data) {
         // 2. ÉTAPE 2: Trigger destination selection (déclenche GPS automatiquement)
         onDestinationSelected(result.data);
-        
+
         // 3. ÉTAPE 3: Attendre un petit délai pour que le GPS se déclenche d'abord
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // 4. ÉTAPE 4: PUIS demander orientation iOS (dialogue natif)
-        if (typeof DeviceOrientationEvent !== 'undefined' && 
-            typeof DeviceOrientationEvent.requestPermission === 'function') {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // 4. ÉTAPE 4: PUIS demander orientation en utilisant le hook
+        if (
+          requestOrientationPermission &&
+          typeof requestOrientationPermission === "function"
+        ) {
           try {
-            console.log('🧭 Requesting iOS orientation permission in user click context');
-            const permission = await DeviceOrientationEvent.requestPermission();
-            console.log('🧭 iOS orientation permission result:', permission);
-            
+            console.log(
+              "🧭 Requesting orientation permission via hook in user click context"
+            );
+            const granted = await requestOrientationPermission();
+            console.log("🧭 Orientation permission result:", granted);
+
             // Si accordée, activer l'orientation
-            if (permission === 'granted' && onOrientationToggle) {
+            if (granted && onOrientationToggle) {
               onOrientationToggle(true);
             }
           } catch (orientationError) {
-            console.warn('⚠️ iOS orientation permission failed:', orientationError);
+            console.warn("⚠️ Orientation permission failed:", orientationError);
             // Pas grave - l'utilisateur peut utiliser OrientationToggle plus tard
           }
         } else {
-          // Android ou desktop - pas de dialogue nécessaire
-          if (onOrientationToggle && typeof onOrientationToggle === 'function') {
-            console.log('🧭 Auto-triggering orientation (non-iOS device)');
+          // Fallback: Android ou desktop - pas de dialogue nécessaire
+          if (
+            onOrientationToggle &&
+            typeof onOrientationToggle === "function"
+          ) {
+            console.log("🧭 Auto-triggering orientation (fallback)");
             onOrientationToggle(true);
           }
         }
@@ -120,19 +136,25 @@ const WelcomeModalMobile = ({
 
   // Prepare selections for the picker
   const selections = {
-    block: availableBlocks.map(block => block.toString()),
-    lot: isLotsLoading ? ["Loading..."] : availableLots.map(lot => lot.toString()),
+    block: availableBlocks.map((block) => block.toString()),
+    lot: isLotsLoading
+      ? ["Loading..."]
+      : availableLots.map((lot) => lot.toString()),
   };
 
   // Determine loading state and errors
   const isLoading = isLocationLoading;
   const error = locationError?.message || lotsError?.message || "";
-  const canSubmit = pickerValue.block && pickerValue.lot && !isLotsLoading && pickerValue.lot !== "Loading...";
+  const canSubmit =
+    pickerValue.block &&
+    pickerValue.lot &&
+    !isLotsLoading &&
+    pickerValue.lot !== "Loading...";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="welcome-modal mobile-picker-modal">
-        <DialogHeader className="modal-content">
+        <DialogHeader className="modal-content text-center">
           <DialogTitle className="modal-title">Welcome to</DialogTitle>
           <img
             src={ggvLogo}
@@ -152,32 +174,40 @@ const WelcomeModalMobile = ({
               <div className="picker-label">🏢 Block</div>
               <div className="picker-label">🏠 Lot</div>
             </div>
-            
+
             <div className="mobile-picker-wrapper">
               <Picker
                 value={pickerValue}
                 onChange={setPickerValue}
                 height={180}
                 itemHeight={45}
-                wheelMode="natural"
+                wheelMode="normal"
               >
                 <Picker.Column name="block">
-                  {selections.block.map(option => (
+                  {selections.block.map((option) => (
                     <Picker.Item key={option} value={option}>
                       {({ selected }) => (
-                        <div className={`picker-item ${selected ? 'selected' : ''}`}>
+                        <div
+                          className={`picker-item ${
+                            selected ? "selected" : ""
+                          }`}
+                        >
                           Block {option}
                         </div>
                       )}
                     </Picker.Item>
                   ))}
                 </Picker.Column>
-                
+
                 <Picker.Column name="lot">
-                  {selections.lot.map(option => (
+                  {selections.lot.map((option) => (
                     <Picker.Item key={option} value={option}>
                       {({ selected }) => (
-                        <div className={`picker-item ${selected ? 'selected' : ''}`}>
+                        <div
+                          className={`picker-item ${
+                            selected ? "selected" : ""
+                          }`}
+                        >
                           {option === "Loading..." ? (
                             <span className="loading-text">
                               <div className="mini-spinner"></div>
