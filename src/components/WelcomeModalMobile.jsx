@@ -164,16 +164,16 @@ const WelcomeModalMobile = ({
           <DialogDescription className="modal-description">
             Where would you like to go
             <br />
-            in Garden Grove Village?
+            in Garden Grove Village ?
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={(e) => e.preventDefault()} className="modal-form">
           <div className="picker-container">
-            <div className="picker-labels">
-              <div className="picker-label">🏢 Block</div>
-              <div className="picker-label">🏠 Lot</div>
-            </div>
+            {/* <div className="picker-labels">
+              <div className="picker-label">Block</div>
+              <div className="picker-label">Lot</div>
+            </div> */}
 
             <div className="mobile-picker-wrapper">
               <Picker
