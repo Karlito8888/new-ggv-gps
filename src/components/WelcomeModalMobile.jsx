@@ -210,7 +210,7 @@ const WelcomeModalMobile = ({
               type="button"
               onClick={handleSubmitDestination}
               disabled={isLoading || !canSubmit}
-              className="modal-button primary"
+              className="modal-button primary full-width"
             >
               {isLoading ? (
                 <>

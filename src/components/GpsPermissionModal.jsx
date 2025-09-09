@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import ggvLogo from "../assets/img/ggv.png";
 import {
   Dialog,
@@ -9,11 +9,7 @@ import {
 } from "./ui/dialog";
 import Button from "./ui/button";
 
-const GpsPermissionModal = ({ 
-  isOpen, 
-  onPermissionGranted, 
-  geolocateControlRef 
-}) => {
+const GpsPermissionModal = ({ isOpen, geolocateControlRef }) => {
   const [isRequesting, setIsRequesting] = useState(false);
   const [hasError, setHasError] = useState(false);
 
@@ -29,18 +25,15 @@ const GpsPermissionModal = ({
 
     try {
       console.log("📍 Requesting GPS permission...");
-      
+
       // Trigger GPS permission request
       geolocateControlRef.current.trigger();
-      
-      // Wait a bit for permission dialog to appear and be handled
-      setTimeout(() => {
-        console.log("📍 GPS permission flow initiated");
-        setIsRequesting(false);
-        // The actual permission result will be handled by onGeolocate/onError in App.jsx
-        onPermissionGranted();
-      }, 1000);
-      
+
+      // DON'T automatically call onPermissionGranted()
+      // Wait for actual GPS success/error events in App.jsx
+      console.log(
+        "📍 GPS permission request sent, waiting for actual response..."
+      );
     } catch (error) {
       console.error("❌ GPS permission request failed:", error);
       setHasError(true);
@@ -75,7 +68,7 @@ const GpsPermissionModal = ({
             </div>
           )}
 
-          <div className="gps-info">
+          <div className="permission-info">
             <div className="permission-icon">📍</div>
             <p className="permission-description">
               Your location will only be used for navigation purposes and will
@@ -97,8 +90,7 @@ const GpsPermissionModal = ({
                 </>
               ) : (
                 <>
-                  <span className="permission-emoji">📍</span>
-                  👍
+                  <span className="permission-emoji">👍</span>
                 </>
               )}
             </Button>

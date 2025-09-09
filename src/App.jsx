@@ -120,17 +120,16 @@ function App() {
   // SIMPLE GPS AUTO-TRIGGER
   // ========================================
   
-  // Simple GPS auto-trigger on app startup
+  // GPS auto-trigger removed - now handled by GpsPermissionModal
+  // GPS will be triggered only when user clicks "Allow GPS Location" button
+  
+  // GPS permission success handler - transitions from gps-permission to welcome
   useEffect(() => {
-    if (!isMapReady || !geolocateControlRef?.current) return;
-    
-    console.log("🚀 Auto-triggering GPS on app startup");
-    try {
-      geolocateControlRef.current.trigger();
-    } catch (error) {
-      console.warn("⚠️ Failed to auto-trigger GPS:", error);
+    if (navigationState === "gps-permission" && userLocation) {
+      console.log("📍 GPS permission granted - transitioning to welcome");
+      handleGpsPermissionGranted();
     }
-  }, [isMapReady]);
+  }, [navigationState, userLocation, handleGpsPermissionGranted]);
 
   // Simple GPS event handlers
   const handleGeolocate = useCallback((e) => {
@@ -183,6 +182,26 @@ function App() {
     getCurrentOrientation,
     setOrientationEnabled,
   });
+
+  // Recenter map on user location
+  const handleRecenterMap = useCallback(() => {
+    if (!mapRef.current || !userLocation) {
+      console.warn('⚠️ Cannot recenter: map or userLocation not available');
+      return;
+    }
+
+    try {
+      console.log('🎯 Recentering map on user location');
+      mapRef.current.flyTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        zoom: 18,
+        duration: 1000, // 1 second animation
+        essential: true // This animation is considered essential for accessibility
+      });
+    } catch (error) {
+      console.error('❌ Failed to recenter map:', error);
+    }
+  }, [userLocation]);
 
   // Cleanup directions and icons
   useEffect(() => {
@@ -296,9 +315,11 @@ function App() {
           <MapControls
             navigationState={navigationState}
             orientationEnabled={orientationEnabled}
+            userLocation={userLocation}
             handleMapTypeToggle={handleMapTypeToggle}
             handleNewDestination={handleNewDestination}
             handleOrientationToggle={handleOrientationToggle}
+            handleRecenterMap={handleRecenterMap}
           />
 
           {/* Geolocate control - hidden but functional */}
@@ -353,7 +374,6 @@ function App() {
       
       <GpsPermissionModal
         isOpen={navigationState === "gps-permission"}
-        onPermissionGranted={handleGpsPermissionGranted}
         geolocateControlRef={geolocateControlRef}
       />
 
@@ -367,7 +387,6 @@ function App() {
       <OrientationPermissionModal
         isOpen={navigationState === "orientation-permission"}
         onPermissionGranted={handleOrientationPermissionGranted}
-        onPermissionSkipped={handleOrientationPermissionGranted}
         handleOrientationToggle={handleOrientationToggle}
       />
 
