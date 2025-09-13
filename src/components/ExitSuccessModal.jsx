@@ -4,10 +4,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import Button from "./ui/button";
 import modalBaseStyles from './ui/modal-base.module.css';
 
-const ExitSuccessModal = ({ isOpen, onStartNewNavigation }) => {
+const ExitSuccessModal = ({ isOpen }) => {
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent>
@@ -43,28 +42,6 @@ const ExitSuccessModal = ({ isOpen, onStartNewNavigation }) => {
             </p>
           </div>
 
-          <div className={modalBaseStyles.modalActions}>
-            <Button
-              onClick={onStartNewNavigation}
-              preset="success"
-            >
-              <svg
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                />
-              </svg>
-              Start new navigation
-            </Button>
-          </div>
 
           <p className={modalBaseStyles.modalFooter}>Thank you for using MyGGV|GPS! 💚</p>
         </DialogHeader>

@@ -59,7 +59,6 @@ function App() {
     handleDestinationSelectedAndProceed,
     handleArrival,
     handleExitComplete,
-    handleStartNewNavigation,
     handleMapTypeToggle,
     handleGpsPermissionGranted,
     handleOrientationPermissionGranted,
@@ -393,7 +392,6 @@ function App() {
 
       <ExitSuccessModal
         isOpen={navigationState === "exit-complete"}
-        onStartNewNavigation={handleStartNewNavigation}
       />
 
       <Footer />

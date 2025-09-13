@@ -4,7 +4,7 @@ function Footer() {
   return (
     <footer className={styles.footer}>
       <p className={styles.footerText}>
-        © {new Date().getFullYear()} Garden Grove Village X
+        © {new Date().getFullYear()} Garden Grove Village Y
       </p>
     </footer>
   );
