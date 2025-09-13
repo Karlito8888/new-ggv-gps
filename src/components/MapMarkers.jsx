@@ -2,13 +2,11 @@ import React from "react";
 import { Marker } from "react-map-gl/maplibre";
 import { publicPois } from "../data/public-pois";
 import { blocks } from "../data/blocks";
-import stopLogo from "../assets/img/stop.png";
+import styles from './mapMarkers.module.css';
 
-export function MapMarkers({ 
-  destination, 
-  getPolygonCenter, 
-  navigationState,
-  handleNewDestination 
+export function MapMarkers({
+  destination,
+  getPolygonCenter
 }) {
   return (
     <>
@@ -19,9 +17,9 @@ export function MapMarkers({
           latitude={destination.coordinates[1]}
           anchor="bottom"
         >
-          <div className="destination-marker">
-            <div className="destination-marker-pin">
-              <div className="destination-marker-center"></div>
+          <div className={styles.destinationMarker}>
+            <div className={styles.destinationMarkerPin}>
+              <div className={styles.destinationMarkerCenter}></div>
             </div>
           </div>
         </Marker>
@@ -58,23 +56,10 @@ export function MapMarkers({
             latitude={center[1]}
             anchor="center"
           >
-            <div className="block-label">{block.name}</div>
+            <div className={styles.blockLabel}>{block.name}</div>
           </Marker>
         );
       })}
-
-      {/* New destination button during navigation */}
-      {navigationState === "navigating" && (
-        <div className="new-destination-control">
-          <button
-            onClick={handleNewDestination}
-            className="new-destination-button"
-            title="New destination"
-          >
-            <img src={stopLogo} alt="Nouvelle destination" />
-          </button>
-        </div>
-      )}
     </>
   );
 }

@@ -10,6 +10,7 @@ import {
 } from "./ui/dialog";
 import Button from "./ui/button";
 import { useAvailableLots, useLocation } from "../hooks/useLocations";
+import modalBaseStyles from './ui/modal-base.module.css';
 
 const WelcomeModalMobile = ({
   isOpen,
@@ -119,29 +120,26 @@ const WelcomeModalMobile = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="welcome-modal mobile-picker-modal">
-        <DialogHeader className="modal-content text-center">
-          <DialogTitle className="modal-title">Welcome to</DialogTitle>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle></DialogTitle>
           <img
             src={ggvLogo}
             alt="Garden Grove Village Logo"
-            className="modal-logo"
+            className={modalBaseStyles.modalLogo}
           />
-          <DialogDescription className="modal-description">
+          <DialogDescription>
             Where would you like to go
             <br />
             in Garden Grove Village ?
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={(e) => e.preventDefault()} className="modal-form">
-          <div className="picker-container">
-            {/* <div className="picker-labels">
-              <div className="picker-label">Block</div>
-              <div className="picker-label">Lot</div>
-            </div> */}
+        <form onSubmit={(e) => e.preventDefault()} className={modalBaseStyles.modalForm}>
+          <div className={modalBaseStyles.welcomePickerContainer}>
 
-            <div className="mobile-picker-wrapper">
+
+            <div className={modalBaseStyles.welcomeMobilePickerWrapper}>
               <Picker
                 value={pickerValue}
                 onChange={setPickerValue}
@@ -151,40 +149,40 @@ const WelcomeModalMobile = ({
               >
                 <Picker.Column name="block">
                   {selections.block.map((option) => (
-                    <Picker.Item key={option} value={option}>
-                      {({ selected }) => (
-                        <div
-                          className={`picker-item ${
-                            selected ? "selected" : ""
-                          }`}
-                        >
-                          Block {option}
-                        </div>
-                      )}
-                    </Picker.Item>
+                     <Picker.Item key={option} value={option}>
+                       {({ selected }) => (
+                         <div
+                           className={`${modalBaseStyles.welcomePickerItem} ${
+                             selected ? modalBaseStyles.welcomePickerItem.selected : ""
+                           }`}
+                         >
+                           Block {option}
+                         </div>
+                       )}
+                     </Picker.Item>
                   ))}
                 </Picker.Column>
 
                 <Picker.Column name="lot">
                   {selections.lot.map((option) => (
-                    <Picker.Item key={option} value={option}>
-                      {({ selected }) => (
-                        <div
-                          className={`picker-item ${
-                            selected ? "selected" : ""
-                          }`}
-                        >
-                          {option === "Loading..." ? (
-                            <span className="loading-text">
-                              <div className="mini-spinner"></div>
-                              Loading...
-                            </span>
-                          ) : (
-                            `Lot ${option}`
-                          )}
-                        </div>
-                      )}
-                    </Picker.Item>
+                     <Picker.Item key={option} value={option}>
+                       {({ selected }) => (
+                         <div
+                           className={`${modalBaseStyles.welcomePickerItem} ${
+                             selected ? modalBaseStyles.welcomePickerItem.selected : ""
+                           }`}
+                         >
+                           {option === "Loading..." ? (
+                             <span className={modalBaseStyles.welcomeLoadingText}>
+                               <div className={modalBaseStyles.welcomeMiniSpinner}></div>
+                               Loading...
+                             </span>
+                           ) : (
+                             `Lot ${option}`
+                           )}
+                         </div>
+                       )}
+                     </Picker.Item>
                   ))}
                 </Picker.Column>
               </Picker>
@@ -192,34 +190,23 @@ const WelcomeModalMobile = ({
           </div>
 
           {error && (
-            <div className="error-message">
+            <div className={modalBaseStyles.errorMessage}>
               <p>{error}</p>
             </div>
           )}
 
-          <div className="modal-actions">
-            {/* <Button
-              type="button"
-              onClick={onCancel}
-              variant="outline"
-              className="modal-button secondary"
-            >
-              Cancel
-            </Button> */}
+          <div className={modalBaseStyles.modalActions}>
+  
             <Button
-              type="button"
               onClick={handleSubmitDestination}
-              disabled={isLoading || !canSubmit}
-              className="modal-button primary full-width"
+              disabled={!canSubmit || isLoading}
+              preset="surface"
+              className={modalBaseStyles.gpsCustomButton}
+              style={{ width: "auto" }}
             >
-              {isLoading ? (
-                <>
-                  <div className="spinner"></div>
-                  Loading...
-                </>
-              ) : (
-                <span className="span-mirror">🛵💨</span>
-              )}
+              <span className={modalBaseStyles.permissionEmojiMirrored}>
+                🛵💨
+              </span>
             </Button>
           </div>
         </form>

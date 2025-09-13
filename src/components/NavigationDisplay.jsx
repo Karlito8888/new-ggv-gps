@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getNavigationInstructions, hasArrived, VILLAGE_EXIT_COORDS } from "../lib/navigation";
+import styles from './navigationDisplay.module.css';
 
 const NavigationDisplay = ({
   userLocation,
@@ -63,43 +64,43 @@ const NavigationDisplay = ({
   if (!instructions || !destination) return null;
 
   return (
-    <div className="navigation-display">
+    <div className={styles.navigationDisplay}>
       {/* Panneau de navigation principal */}
-      <div className="navigation-panel">
-        <div className="navigation-content">
-          <div className="navigation-info">
-            <div className="instruction-row">
-              <div className="direction-icon">
-                <span className="direction-symbol">
+      <div className={styles.navigationPanel}>
+        <div className={styles.navigationContent}>
+          <div className={styles.navigationInfo}>
+            <div className={styles.instructionRow}>
+              <div className={styles.directionIcon}>
+                <span className={styles.directionSymbol}>
                   {instructions.direction.icon}
                 </span>
               </div>
               <div>
-                <p className="instruction-text">{instructions.instruction}</p>
-                <p className="distance-text">{instructions.distance}</p>
+                <p className={styles.instructionText}>{instructions.instruction}</p>
+                <p className={styles.distanceText}>{instructions.distance}</p>
               </div>
             </div>
           </div>
 
           {destination.blockNumber && destination.lotNumber && (
-            <div className="destination-info">
-              <p className="destination-label">Destination</p>
-              <p className="destination-block">
+            <div className={styles.destinationInfo}>
+              <p className={styles.destinationLabel}>Destination</p>
+              <p className={styles.destinationBlock}>
                 Block {destination.blockNumber}
               </p>
-              <p className="destination-lot">Lot {destination.lotNumber}</p>
+              <p className={styles.destinationLot}>Lot {destination.lotNumber}</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Direction indicator with compass */}
-      <div className="compass-container">
-        <div className="compass">
-          <div className="compass-face">
+      <div className={styles.compassContainer}>
+        <div className={styles.compass}>
+          <div className={styles.compassFace}>
             {/* Compass background */}
             <div
-              className="compass-ring"
+              className={styles.compassRing}
               style={{
                 transform: isOrientationActive
                   ? `rotate(${-deviceBearing}deg)`
@@ -108,33 +109,33 @@ const NavigationDisplay = ({
               }}
             >
               {/* Cardinal points */}
-              <div className="cardinal-point cardinal-north">N</div>
-              <div className="cardinal-point cardinal-east">E</div>
-              <div className="cardinal-point cardinal-south">S</div>
-              <div className="cardinal-point cardinal-west">W</div>
+              <div className={`${styles.cardinalPoint} ${styles.cardinalNorth}`}>N</div>
+              <div className={`${styles.cardinalPoint} ${styles.cardinalEast}`}>E</div>
+              <div className={`${styles.cardinalPoint} ${styles.cardinalSouth}`}>S</div>
+              <div className={`${styles.cardinalPoint} ${styles.cardinalWest}`}>W</div>
             </div>
 
             {/* Direction arrow to destination */}
             <div
-              className="direction-arrow"
+              className={styles.directionArrow}
               style={{
                 transform: `rotate(${instructions.relativeBearing}deg)`,
                 transition: "transform 0.3s ease",
               }}
             >
-              <div className="arrow-line"></div>
-              <div className="arrow-head"></div>
+              <div className={styles.arrowLine}></div>
+              <div className={styles.arrowHead}></div>
             </div>
 
             {/* Compass center */}
-            <div className="compass-center">
-              <div className="center-dot"></div>
+            <div className={styles.compassCenter}>
+              <div className={styles.centerDot}></div>
             </div>
 
             {/* Indication si l'orientation n'est pas active */}
             {!isOrientationActive && (
-              <div className="compass-inactive-overlay">
-                <div className="compass-inactive-text">Activez la boussole</div>
+              <div className={styles.compassInactiveOverlay}>
+                <div className={styles.compassInactiveText}>Activez la boussole</div>
               </div>
             )}
           </div>
@@ -143,8 +144,8 @@ const NavigationDisplay = ({
 
       {/* GPS accuracy information */}
       {/* {userLocation.accuracy && (
-        <div className="accuracy-info">
-          <p className="accuracy-text">
+        <div className={styles.accuracyInfo}>
+          <p className={styles.accuracyText}>
             GPS accuracy: ±{Math.round(userLocation.accuracy)}m
           </p>
         </div>

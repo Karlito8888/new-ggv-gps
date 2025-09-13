@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import Button from "./ui/button";
+import modalBaseStyles from './ui/modal-base.module.css';
 
 const ArrivalModalNew = ({ isOpen, destination, onNewDestination, onExitVillage }) => {
   const [isExiting, setIsExiting] = useState(false);
@@ -17,11 +18,10 @@ const ArrivalModalNew = ({ isOpen, destination, onNewDestination, onExitVillage 
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="arrival-modal">
-        <DialogHeader className="modal-content">
-          <div className="modal-icon">
+      <DialogContent>
+        <DialogHeader>
+          <div className={modalBaseStyles.modalIcon}>
             <svg
-              className="icon"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -34,23 +34,24 @@ const ArrivalModalNew = ({ isOpen, destination, onNewDestination, onExitVillage 
               />
             </svg>
           </div>
-          <DialogTitle className="modal-title">Destination reached !</DialogTitle>
-          
+          <DialogTitle>Destination reached !</DialogTitle>
+
           {destination.blockNumber && destination.lotNumber ? (
             <>
-              <div className="destination-info">
-                <p className="destination-title">
+              <div className={modalBaseStyles.arrivalDestinationInfo}>
+                <p className={modalBaseStyles.arrivalDestinationTitle}>
                   Block {destination.blockNumber}, Lot {destination.lotNumber}
                 </p>
               </div>
 
-              <div className="button-group">
+              <div className={modalBaseStyles.modalActions}>
                 <Button
                   onClick={onNewDestination}
-                  className="button button-primary"
+                  preset="primary"
                 >
                   <svg
-                    className="button-icon"
+                    width="20"
+                    height="20"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -67,42 +68,35 @@ const ArrivalModalNew = ({ isOpen, destination, onNewDestination, onExitVillage 
 
                 <Button
                   onClick={handleExitVillage}
-                  disabled={isExiting}
-                  variant="outline"
-                  className="button button-secondary"
+                  preset="secondary"
+                  loading={isExiting}
                 >
-                  {isExiting ? (
-                    <>
-                      <div className="spinner"></div>
-                      Navigating to exit...
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        className="button-icon"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                        />
-                      </svg>
-                      Exit the village
-                    </>
+                  {!isExiting && (
+                    <svg
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
                   )}
+                  Exit the village
                 </Button>
               </div>
             </>
           ) : destination.address ? (
-            <div className="exit-info">
-              <p className="exit-title">{destination.address}</p>
+            <div className={modalBaseStyles.arrivalExitInfo}>
+              <p className={modalBaseStyles.arrivalExitTitle}>{destination.address}</p>
             </div>
           ) : null}
-          <p className="modal-footer">Thank you for using MyGGV|GPS !</p>
+          <p className={modalBaseStyles.modalFooter}>Thank you for using MyGGV|GPS !</p>
         </DialogHeader>
       </DialogContent>
     </Dialog>

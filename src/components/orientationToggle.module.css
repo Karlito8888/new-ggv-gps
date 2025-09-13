@@ -1,0 +1,104 @@
+/* OrientationToggle Component Styles */
+
+/* Container */
+.container {
+  position: absolute;
+  left: 10px;
+  bottom: 140px;
+  z-index: 50;
+}
+
+
+/* Button base styles */
+.button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  background-color: white !important;
+  border: 1px solid #ddd !important;
+  color: black !important;
+  cursor: pointer;
+}
+
+.button:active {
+  transform: scale(0.95);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Button color states - harmonisé avec les autres boutons de contrôle */
+.bgGray400 {
+  background-color: white !important;
+  border: 1px solid #ddd !important;
+  color: #9ca3af !important;
+}
+
+.bgYellow500 {
+  background-color: white !important;
+  border: 1px solid #eab308 !important;
+  color: #eab308 !important;
+}
+
+.bgRed500 {
+  background-color: white !important;
+  border: 1px solid #ef4444 !important;
+  color: #ef4444 !important;
+}
+
+.bgBlue500 {
+  background-color: white !important;
+  border: 1px solid #3b82f6 !important;
+  color: #3b82f6 !important;
+}
+
+.bgBlue400 {
+  background-color: white !important;
+  border: 1px solid #60a5fa !important;
+  color: #60a5fa !important;
+}
+
+.bgGray600 {
+  background-color: white !important;
+  border: 1px solid #4b5563 !important;
+  color: #4b5563 !important;
+}
+
+/* Icon animations */
+.iconSpin {
+  animation: spin 1s linear infinite;
+}
+
+.iconPulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.iconRotation {
+  transition: transform 0.5s ease;
+}
+
+/* Animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

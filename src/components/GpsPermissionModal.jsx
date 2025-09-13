@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from "./ui/dialog";
 import Button from "./ui/button";
+import modalBaseStyles from './ui/modal-base.module.css';
 
 const GpsPermissionModal = ({ isOpen, geolocateControlRef }) => {
   const [isRequesting, setIsRequesting] = useState(false);
@@ -43,24 +44,26 @@ const GpsPermissionModal = ({ isOpen, geolocateControlRef }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="welcome-modal gps-permission-modal">
-        <DialogHeader className="modal-content text-center">
-          <DialogTitle className="modal-title">Welcome to</DialogTitle>
+      <DialogContent>
+        <>
+          <DialogTitle></DialogTitle>
           <img
             src={ggvLogo}
             alt="Garden Grove Village Logo"
-            className="modal-logo"
+            className={modalBaseStyles.modalLogo}
           />
-          <DialogDescription className="modal-description">
+          <DialogDescription>
             We need access to your location
             <br />
-            to help you navigate in Garden Grove Village
+            to help you navigate
+            <br />
+            in Garden Grove Village...
           </DialogDescription>
-        </DialogHeader>
+        </>
 
-        <div className="modal-form">
+          <div className={modalBaseStyles.modalForm}>
           {hasError && (
-            <div className="error-message">
+            <div className={modalBaseStyles.errorMessage}>
               <p>
                 Unable to access GPS. Please check your browser settings and try
                 again.
@@ -68,30 +71,19 @@ const GpsPermissionModal = ({ isOpen, geolocateControlRef }) => {
             </div>
           )}
 
-          <div className="permission-info">
-            <div className="permission-icon">📍</div>
-            <p className="permission-description">
-              Your location will only be used for navigation purposes and will
-              not be stored or shared.
-            </p>
-          </div>
-
-          <div className="modal-actions">
+          <div className={modalBaseStyles.modalActions}>
             <Button
-              type="button"
               onClick={handleRequestGps}
               disabled={isRequesting}
-              className="modal-button primary full-width"
+              preset="surface"
+              loading={isRequesting}
+              className={modalBaseStyles.gpsCustomButton}
+              style={{ width: "auto" }}
             >
-              {isRequesting ? (
-                <>
-                  <div className="spinner"></div>
-                  Requesting permission...
-                </>
-              ) : (
-                <>
-                  <span className="permission-emoji">👍</span>
-                </>
+              {!isRequesting && (
+                <span className={modalBaseStyles.permissionEmoji}>
+                  📍Allow GPS Location📍
+                </span>
               )}
             </Button>
           </div>

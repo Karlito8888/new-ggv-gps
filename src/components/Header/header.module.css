@@ -1,0 +1,17 @@
+/* Header Component Styles */
+
+.header {
+  height: 60px;
+  background: linear-gradient(135deg, var(--color-green), var(--color-yellow));
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalLogo {
+  height: 40px;
+  width: auto;
+  display: block;
+  margin: 0 auto;
+}

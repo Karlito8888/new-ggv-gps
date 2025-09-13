@@ -5,15 +5,15 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import Button from "./ui/button";
+import modalBaseStyles from './ui/modal-base.module.css';
 
 const ExitSuccessModal = ({ isOpen, onStartNewNavigation }) => {
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="exit-success-modal">
-        <DialogHeader className="modal-content text-center">
-          <div className="modal-icon success-icon">
+      <DialogContent>
+        <DialogHeader>
+          <div className={modalBaseStyles.modalIcon}>
             <svg
-              className="icon"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -26,30 +26,31 @@ const ExitSuccessModal = ({ isOpen, onStartNewNavigation }) => {
               />
             </svg>
           </div>
-          <DialogTitle className="modal-title success-title">
+          <DialogTitle>
             You've successfully exited
             <br />
             Garden Grove Village !
           </DialogTitle>
 
-          <div className="exit-message">
-            {/* <p className="main-message">
+          <div className={modalBaseStyles.exitMessage}>
+            {/* <p className={modalBaseStyles.exitMainMessage}>
               You've successfully exited Garden Grove Village!
             </p> */}
-            <p className="filipino-message">
+            <p className={modalBaseStyles.exitFilipinoMessage}>
               Salamat po
               <br />
               🙏 Ingat sa paguwi 🙏
             </p>
           </div>
 
-          <div className="button-group single-button">
+          <div className={modalBaseStyles.modalActions}>
             <Button
               onClick={onStartNewNavigation}
-              className="button button-success"
+              preset="success"
             >
               <svg
-                className="button-icon"
+                width="20"
+                height="20"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -65,7 +66,7 @@ const ExitSuccessModal = ({ isOpen, onStartNewNavigation }) => {
             </Button>
           </div>
 
-          <p className="modal-footer">Thank you for using MyGGV|GPS! 💚</p>
+          <p className={modalBaseStyles.modalFooter}>Thank you for using MyGGV|GPS! 💚</p>
         </DialogHeader>
       </DialogContent>
     </Dialog>

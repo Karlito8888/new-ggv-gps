@@ -1,3 +1,108 @@
-/* Point d'entrée principal pour tous les styles */
-@import "./globals.css";      /* globals.css contient déjà variables.css */
-@import "./components.css";   /* contient maintenant map-controls.css */
+@import url("https://fonts.googleapis.com/css2?family=Madimi+One&display=swap");
+
+:root {
+  /* Couleurs principales */
+  --color-white: #f4f4f4;
+  --color-green: #50aa61;
+  --color-yellow: #f3c549;
+  --color-black: #121212;
+  --background: 0 0% 100%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 98%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 98%;
+  --accent-foreground: 222.2 84% 4.9%;
+  --border: 214.3 31.8% 91.4%;
+  --ring: 142 76% 36%;
+  --radius: 0.5rem;
+
+  /* Optimisations de rendu */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Optimisations de performance supplémentaires */
+  contain: layout style paint;
+  will-change: auto;
+
+  /* Variables de Map Controls */
+  --map-controls-z-index: 1;
+  --map-controls-z-index-high: 1000;
+  --map-button-border-radius: 6px;
+  --map-button-size: 42px;
+  --map-button-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --map-button-shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --ring: 142 76% 36%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height */
+  height: 100svh; /* Small viewport height */
+}
+
+body {
+  font-family: "Madimi One", cursive, sans-serif;
+}
+
+.radix-themes {
+  display: grid;
+  grid-template-rows: 60px 1fr 60px;
+  grid-template-areas:
+    "head"
+    "main"
+    "foot";
+  height: 100%;
+}
+
+.radix-themes > header {
+  grid-area: head;
+  padding: 10px;
+}
+
+.radix-themes > main {
+  grid-area: main;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.radix-themes > footer {
+  grid-area: foot;
+  padding: 1rem;
+}
+
+h1 {
+  font-size: 1.2em;
+  line-height: 1.1;
+}
+
+p {
+  text-decoration: none;
+  border: none;
+  border-bottom: none;
+}

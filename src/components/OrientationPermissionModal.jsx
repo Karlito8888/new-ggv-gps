@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from "./ui/dialog";
 import Button from "./ui/button";
+import modalBaseStyles from './ui/modal-base.module.css';
 
 const OrientationPermissionModal = ({
   isOpen,
@@ -66,55 +67,43 @@ const OrientationPermissionModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="welcome-modal orientation-permission-modal">
-        <DialogHeader className="modal-content text-center">
-          
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle></DialogTitle>
           <img
             src={ggvLogo}
             alt="Garden Grove Village Logo"
-            className="modal-logo"
+            className={modalBaseStyles.modalLogo}
           />
-          <DialogDescription className="modal-description">
+          <DialogDescription>
             Enable compass orientation
             <br />
-            for better navigation experience
+            for better navigation experience...
           </DialogDescription>
         </DialogHeader>
 
-        <div className="modal-form">
+        <div className={modalBaseStyles.modalForm}>
           {hasError && (
-            <div className="error-message">
+            <div className={modalBaseStyles.errorMessage}>
               <p>{errorMessage}</p>
             </div>
           )}
 
-          {/* <div className="permission-info">
-            <div className="permission-icon">🧭</div>
-            <p className="permission-description">
-              Your device orientation will help align the map with your
-              direction for easier navigation.
-            </p>
-            <p className="permission-note">
-              This feature works best on mobile devices.
-            </p>
-          </div> */}
 
-          <div className="modal-actions">
+
+          <div className={modalBaseStyles.modalActions}>
             <Button
-              type="button"
               onClick={handleRequestOrientation}
               disabled={isRequesting}
-              className="modal-button primary full-width"
+              preset="surface"
+              loading={isRequesting}
+              className={modalBaseStyles.gpsCustomButton}
+              style={{ width: "auto" }}
             >
-              {isRequesting ? (
-                <>
-                  <div className="spinner"></div>
-                  Requesting permission...
-                </>
-              ) : (
-                <>
-                  <span className="permission-emoji">👍</span>
-                </>
+              {!isRequesting && (
+                <span className={modalBaseStyles.permissionEmoji}>
+                  🧭 Enable Compass 🧭
+                </span>
               )}
             </Button>
           </div>

@@ -9,11 +9,11 @@ import ArrivalModalNew from "./components/ArrivalModalNew";
 import ExitSuccessModal from "./components/ExitSuccessModal";
 import GpsPermissionModal from "./components/GpsPermissionModal";
 import OrientationPermissionModal from "./components/OrientationPermissionModal";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+import Header from "./components/Header/Header";
+import Footer from "./components/Footer/Footer";
 import { MapMarkers } from "./components/MapMarkers";
 import { RouteLayers } from "./components/RouteLayers";
-import { MapControls } from "./components/MapControls";
+import { MapControls } from "./components/MapControls/MapControls";
 
 // Hooks
 import useAdaptivePitch from "./hooks/useAdaptivePitch";
@@ -203,6 +203,14 @@ function App() {
     }
   }, [userLocation]);
 
+  // Auto-center map when navigation starts
+  useEffect(() => {
+    if (navigationState === "navigating" && userLocation && isMapReady) {
+      console.log('🎯 Navigation started - auto-centering on user location');
+      handleRecenterMap(); // Réutilise la fonction existante
+    }
+  }, [navigationState, userLocation, isMapReady, handleRecenterMap]);
+
   // Cleanup directions and icons
   useEffect(() => {
     const currentMapRef = mapRef.current;
@@ -270,24 +278,10 @@ function App() {
     };
   }, [isMapReady]);
 
-  // Debug states - commented out to prevent console spam
-  // console.log("🗺️ App states:", {
-  //   navigationState,
-  //   hasLocation,
-  //   permissionGranted,
-  //   isLocationLoading,
-  //   locationError,
-  //   route: route ? `${route.features?.length} features` : "null",
-  //   traveledRoute: traveledRoute ? `${traveledRoute.features?.length} features` : "null",
-  //   userLocation: userLocation ? "present" : "absent",
-  //   destination: destination ? "present" : "absent",
-  //   rawLocation: rawUserLocation ? `${rawUserLocation.latitude.toFixed(6)}, ${rawUserLocation.longitude.toFixed(6)}` : "null"
-  // });
-
   return (
     <>
       <Header />
-      <main style={{ width: "100%", height: "100%", position: "relative" }}>
+      <main>
         <Map
           ref={mapRef}
           initialViewState={initialViewState}
@@ -298,9 +292,7 @@ function App() {
               "Erreur de carte:",
               e.error.message || "Erreur inconnue"
             );
-            // Error logged to console only - not shown to user
           }}
-          // Assurer que les interactions tactiles restent fonctionnelles
           interactiveLayerIds={
             navigationState === "navigating" ? [] : undefined
           }

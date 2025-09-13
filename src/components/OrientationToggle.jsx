@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { FaCompass } from 'react-icons/fa';
 import { MdGpsOff, MdError } from 'react-icons/md';
 import useDeviceOrientation from '../hooks/useDeviceOrientation';
+import styles from './orientationToggle.module.css';
 
 /**
  * OrientationToggle - Button to control device orientation for GPS navigation
  * Handles Android and iOS permissions and provides user feedback
  */
-const OrientationToggle = ({ 
-  enabled = false, 
-  onToggle, 
-  className = "",
-  position = "top-right" 
+const OrientationToggle = ({
+  enabled = false,
+  onToggle,
+  className = ""
 }) => {
   const [isRequesting, setIsRequesting] = useState(false);
   
@@ -64,8 +64,7 @@ const OrientationToggle = ({
     if (!isSupported) {
       return {
         icon: MdError,
-        bgColor: 'bg-gray-400',
-        textColor: 'text-white',
+        bgColorClass: styles.bgGray400,
         tooltip: 'Device orientation not supported',
         disabled: true
       };
@@ -74,19 +73,17 @@ const OrientationToggle = ({
     if (isRequesting) {
       return {
         icon: FaCompass,
-        bgColor: 'bg-yellow-500 animate-pulse',
-        textColor: 'text-white',
+        bgColorClass: `${styles.bgYellow500} ${styles.iconPulse}`,
         tooltip: 'Requesting permission...',
         disabled: true,
-        rotation: 'animate-spin'
+        iconClass: styles.iconSpin
       };
     }
     
     if (error || permission === 'denied') {
       return {
         icon: MdError,
-        bgColor: 'bg-red-500',
-        textColor: 'text-white',
+        bgColorClass: styles.bgRed500,
         tooltip: error || 'Permission denied',
         disabled: false
       };
@@ -95,19 +92,18 @@ const OrientationToggle = ({
     if (enabled && isActive) {
       return {
         icon: FaCompass,
-        bgColor: 'bg-blue-500',
-        textColor: 'text-white',
+        bgColorClass: styles.bgBlue500,
         tooltip: `Orientation active (${Math.round(compass)}°)`,
         disabled: false,
-        rotation: `rotate-[${Math.round(compass)}deg]`
+        iconClass: styles.iconRotation,
+        iconStyle: { transform: `rotate(${Math.round(compass)}deg)` }
       };
     }
     
     if (enabled && !isActive) {
       return {
         icon: FaCompass,
-        bgColor: 'bg-blue-400 animate-pulse',
-        textColor: 'text-white',
+        bgColorClass: `${styles.bgBlue400} ${styles.iconPulse}`,
         tooltip: 'Orientation starting...',
         disabled: false
       };
@@ -115,8 +111,7 @@ const OrientationToggle = ({
     
     return {
       icon: MdGpsOff,
-      bgColor: 'bg-gray-600',
-      textColor: 'text-white',
+      bgColorClass: styles.bgGray600,
       tooltip: 'Enable device orientation',
       disabled: false
     };
@@ -125,39 +120,20 @@ const OrientationToggle = ({
   const buttonState = getButtonState();
   const Icon = buttonState.icon;
 
-  // Position classes
-  const positionClasses = {
-    "top-right": "top-4 right-4",
-    "top-left": "top-4 left-4",
-    "center-left": "top-1/2 left-3 -translate-y-1/2",
-    "center-right": "top-1/2 right-3 -translate-y-1/2",
-    "bottom-right": "bottom-4 right-4",
-    "bottom-left": "bottom-4 left-4",
-  };
-
   return (
     <>
       {/* Main orientation toggle button */}
-      <div className={`fixed ${positionClasses[position]} z-50 ${className}`}>
+      <div className={`${styles.container} ${className}`}>
         <button
           onClick={handleToggle}
           disabled={buttonState.disabled || isRequesting}
-          className={`
-            ${buttonState.bgColor} ${buttonState.textColor}
-            w-12 h-12 rounded-full shadow-lg
-            flex items-center justify-center
-            transition-all duration-300
-            hover:scale-110 active:scale-95
-            disabled:cursor-not-allowed disabled:opacity-50
-          `}
+          className={`${styles.button} ${buttonState.bgColorClass}`}
           title={buttonState.tooltip}
         >
           <Icon 
             size={20} 
-            className={`
-              ${buttonState.rotation || ''} 
-              transition-transform duration-500
-            `}
+            className={buttonState.iconClass || ''}
+            style={buttonState.iconStyle || {}}
           />
         </button>
       </div>
