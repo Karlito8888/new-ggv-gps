@@ -9,6 +9,7 @@ import {
 } from "./ui/dialog";
 import Button from "./ui/button";
 import modalBaseStyles from './ui/modal-base.module.css';
+import useDeviceOrientation from "../hooks/useDeviceOrientation";
 
 const OrientationPermissionModal = ({
   isOpen,
@@ -18,6 +19,8 @@ const OrientationPermissionModal = ({
   const [isRequesting, setIsRequesting] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  
+  const { requestPermission } = useDeviceOrientation();
 
   const handleRequestOrientation = async () => {
     setIsRequesting(true);
@@ -25,34 +28,21 @@ const OrientationPermissionModal = ({
     setErrorMessage("");
 
     try {
-      // Check if this is iOS with orientation permission
-      if (
-        typeof DeviceOrientationEvent !== "undefined" &&
-        typeof DeviceOrientationEvent.requestPermission === "function"
-      ) {
-        console.log("🧭 Requesting iOS orientation permission");
-        const permission = await DeviceOrientationEvent.requestPermission();
-        console.log("🧭 iOS orientation permission result:", permission);
+      console.log("🧭 Requesting orientation permission via unified hook");
+      const result = await requestPermission();
+      console.log("🧭 Orientation permission result:", result);
 
-        if (permission === "granted") {
-          // Enable orientation with complete logic
-          if (handleOrientationToggle) {
-            await handleOrientationToggle(true);
-          }
-          onPermissionGranted();
-        } else {
-          setHasError(true);
-          setErrorMessage(
-            "Orientation permission was denied. You can still navigate without compass."
-          );
-        }
-      } else {
-        // Android/Desktop - auto enable
-        console.log("🧭 Auto-enabling orientation (Android/Desktop)");
+      if (result.granted) {
+        // Enable orientation with complete logic
         if (handleOrientationToggle) {
           await handleOrientationToggle(true);
         }
         onPermissionGranted();
+      } else {
+        setHasError(true);
+        setErrorMessage(
+          "Orientation permission was denied. You can still navigate without compass."
+        );
       }
     } catch (orientationError) {
       console.warn("⚠️ Orientation permission failed:", orientationError);

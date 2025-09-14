@@ -30,11 +30,11 @@ const WelcomeModalMobile = ({
     error: lotsError,
   } = useAvailableLots(pickerValue.block);
 
-  // Retrieve specific location when block and lot are selected
+  // Récupération des coordonnées précises pour la destination sélectionnée
   const {
+    data: locationData,
     isLoading: isLocationLoading,
     error: locationError,
-    refetch: refetchLocation,
   } = useLocation(pickerValue.block, pickerValue.lot);
 
   // Handle default values and changes
@@ -78,26 +78,41 @@ const WelcomeModalMobile = ({
     pickerValue.lot,
   ]);
 
-  // Handle destination selection with orientation permission
-  const handleSubmitDestination = async (e) => {
+  // Handle destination selection - avec coordonnées précises depuis Supabase
+  const handleSubmitDestination = (e) => {
     e.preventDefault();
 
     if (!pickerValue.block || !pickerValue.lot) {
       return;
     }
 
-    try {
-      // 1. Refetch destination data
-      const result = await refetchLocation();
-      
-      if (result.data) {
-        console.log("🎯 Destination selected");
-        
-        // 2. Proceed with destination selection
-        onDestinationSelected(result.data);
-      }
-    } catch (error) {
-      console.error("Error while searching for destination:", error);
+    // Validation stricte des coordonnées avant de procéder
+    if (locationData && locationData.coordinates && Array.isArray(locationData.coordinates) && locationData.coordinates.length === 2) {
+      const location = {
+        blockNumber: parseInt(pickerValue.block),
+        lotNumber: parseInt(pickerValue.lot),
+        address: `Block ${pickerValue.block}, Lot ${pickerValue.lot}`,
+        coordinates: locationData.coordinates, // [longitude, latitude]
+        markerUrl: locationData.marker_url || '/default-marker.png',
+      };
+      console.log("🎯 Destination selected with coordinates:", location);
+      onDestinationSelected(location);
+    } else if (locationData && locationData.coordinates?.coordinates && Array.isArray(locationData.coordinates.coordinates) && locationData.coordinates.coordinates.length === 2) {
+      // Handle nested coordinates structure
+      const location = {
+        blockNumber: parseInt(pickerValue.block),
+        lotNumber: parseInt(pickerValue.lot),
+        address: `Block ${pickerValue.block}, Lot ${pickerValue.lot}`,
+        coordinates: locationData.coordinates.coordinates, // [longitude, latitude]
+        markerUrl: locationData.marker_url || '/default-marker.png',
+      };
+      console.log("🎯 Destination selected with nested coordinates:", location);
+      onDestinationSelected(location);
+    } else {
+      // Bloquer la sélection si pas de coordonnées valides
+      console.error("❌ Invalid or missing coordinates for selected location:", locationData);
+      alert("Invalid destination: coordinates not found. Please try again.");
+      return;
     }
   };
 
@@ -105,18 +120,26 @@ const WelcomeModalMobile = ({
   const selections = {
     block: availableBlocks.map((block) => block.toString()),
     lot: isLotsLoading
-      ? ["Loading..."]
+      ? [""]
       : availableLots.map((lot) => lot.toString()),
   };
 
   // Determine loading state and errors
-  const isLoading = isLocationLoading;
-  const error = locationError?.message || lotsError?.message || "";
+  const isLoading = isLotsLoading || isLocationLoading;
+  const error = lotsError?.message || locationError?.message || "";
+  
+  // Validation stricte pour le bouton submit
+  const hasValidCoordinates = locationData && (
+    (Array.isArray(locationData.coordinates) && locationData.coordinates.length === 2) ||
+    (locationData.coordinates?.coordinates && Array.isArray(locationData.coordinates.coordinates) && locationData.coordinates.coordinates.length === 2)
+  );
+  
   const canSubmit =
     pickerValue.block &&
     pickerValue.lot &&
     !isLotsLoading &&
-    pickerValue.lot !== "Loading...";
+    !isLocationLoading &&
+    hasValidCoordinates;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
@@ -172,14 +195,13 @@ const WelcomeModalMobile = ({
                              selected ? modalBaseStyles.welcomePickerItem.selected : ""
                            }`}
                          >
-                           {option === "Loading..." ? (
-                             <span className={modalBaseStyles.welcomeLoadingText}>
-                               <div className={modalBaseStyles.welcomeMiniSpinner}></div>
-                               Loading...
-                             </span>
-                           ) : (
-                             `Lot ${option}`
-                           )}
+                            {isLotsLoading && !option ? (
+                              <span className={modalBaseStyles.welcomeLoadingText}>
+                                <div style={{width: '16px', height: '16px', border: '2px solid #e5e7eb', borderTop: '2px solid #10b981', borderRadius: '50%', animation: 'spin 1s linear infinite', display: 'inline-block', marginRight: '8px'}}></div>
+                              </span>
+                            ) : (
+                              `Lot ${option}`
+                            )}
                          </div>
                        )}
                      </Picker.Item>

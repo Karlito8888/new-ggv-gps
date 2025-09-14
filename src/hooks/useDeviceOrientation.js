@@ -19,25 +19,7 @@ const useDeviceOrientation = (options = {}) => {
     setIsSupported(supported);
   }, []);
 
-  // Demande permission (iOS uniquement)
-  const requestPermission = useCallback(async () => {
-    try {
-      if (typeof DeviceOrientationEvent !== 'undefined' && 
-          typeof DeviceOrientationEvent.requestPermission === 'function') {
-        // iOS
-        const result = await DeviceOrientationEvent.requestPermission();
-        setPermission(result);
-        return result === 'granted';
-      } else {
-        // Android - pas de permission nécessaire
-        setPermission('granted');
-        return true;
-      }
-    } catch {
-      setPermission('denied');
-      return false;
-    }
-  }, []);
+  // [Old requestPermission function removed - now using requestPermissionDetailed]
 
   // Gestionnaire d'événement simple
   const handleOrientation = useCallback((event) => {
@@ -57,12 +39,45 @@ const useDeviceOrientation = (options = {}) => {
     setCompass(heading);
   }, []);
 
+  // Unified permission request with detailed result
+  const requestPermissionDetailed = useCallback(async () => {
+    try {
+      if (typeof DeviceOrientationEvent !== 'undefined' && 
+          typeof DeviceOrientationEvent.requestPermission === 'function') {
+        // iOS - requires explicit permission
+        const result = await DeviceOrientationEvent.requestPermission();
+        setPermission(result);
+        return { 
+          granted: result === 'granted', 
+          platform: 'ios',
+          permission: result 
+        };
+      } else {
+        // Android/Desktop - no permission required
+        setPermission('granted');
+        return { 
+          granted: true, 
+          platform: 'android',
+          permission: 'granted' 
+        };
+      }
+    } catch (error) {
+      setPermission('denied');
+      return { 
+        granted: false, 
+        platform: 'ios',
+        permission: 'denied',
+        error 
+      };
+    }
+  }, []);
+
   // Démarrer l'orientation
   const start = useCallback(async () => {
     if (!enabled || !isSupported) return false;
 
-    const hasPermission = await requestPermission();
-    if (!hasPermission) return false;
+    const result = await requestPermissionDetailed();
+    if (!result.granted) return false;
 
     // Android : priorité à deviceorientationabsolute (valeurs absolues)
     // iOS : deviceorientation standard avec webkitCompassHeading
@@ -74,7 +89,7 @@ const useDeviceOrientation = (options = {}) => {
     
     setIsActive(true);
     return true;
-  }, [enabled, isSupported, requestPermission, handleOrientation]);
+  }, [enabled, isSupported, requestPermissionDetailed, handleOrientation]);
 
   // Arrêter l'orientation
   const stop = useCallback(() => {
@@ -94,6 +109,11 @@ const useDeviceOrientation = (options = {}) => {
     return () => stop();
   }, [enabled, isSupported, start, stop]);
 
+  // Get current orientation value (for map transitions)
+  const getCurrentOrientation = useCallback(() => {
+    return compass;
+  }, [compass]);
+
   return {
     // Valeurs
     compass,
@@ -104,7 +124,8 @@ const useDeviceOrientation = (options = {}) => {
     // Contrôles
     start,
     stop,
-    requestPermission,
+    requestPermission: requestPermissionDetailed, // Use the detailed version
+    getCurrentOrientation,
   };
 };
 

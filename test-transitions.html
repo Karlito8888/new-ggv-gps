@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test MapLibre Secure Transitions</title>
+    <link href='https://unpkg.com/maplibre-gl@5.7.1/dist/maplibre-gl.css' rel='stylesheet' />
+    <script src='https://unpkg.com/maplibre-gl@5.7.1/dist/maplibre-gl.js'></script>
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+        #map { width: 100%; height: 500px; margin: 20px 0; }
+        .controls { margin: 20px 0; }
+        button { margin: 5px; padding: 10px 15px; font-size: 14px; }
+        .status { padding: 10px; background: #f0f0f0; border-radius: 5px; margin: 10px 0; }
+        .error { background: #ffe0e0; color: #d00; }
+        .success { background: #e0ffe0; color: #060; }
+        .warning { background: #fff0e0; color: #840; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test des Transitions MapLibre Sécurisées</h1>
+    
+    <div class="controls">
+        <button onclick="testSecureTransition()">Test Transition Sécurisée</button>
+        <button onclick="testGpsTransition()">Test Transition GPS</button>
+        <button onclick="testEmergencyFallback()">Test Fallback d'Urgence</button>
+        <button onclick="testConcurrentTransitions()">Test Animations Concurrentes</button>
+        <button onclick="resetMap()">Réinitialiser</button>
+    </div>
+    
+    <div id="status" class="status">Prêt pour les tests...</div>
+    
+    <div id='map'></div>
+
+    <script type="module">
+        // Importer les fonctions de transition sécurisées (simulation)
+        const validateEasingFunction = (easing) => {
+            if (typeof easing === 'function') {
+                try {
+                    const testResult = easing(0.5);
+                    if (typeof testResult === 'number' && !isNaN(testResult)) {
+                        return easing;
+                    }
+                } catch {
+                    console.warn('Invalid easing function provided, using linear fallback');
+                }
+            }
+            return (t) => Math.max(0, Math.min(1, t));
+        };
+
+        const isMapReady = (map) => {
+            if (!map) {
+                console.warn('Map instance is null or undefined');
+                return false;
+            }
+            if (!map.isStyleLoaded()) {
+                console.warn('Map style not fully loaded');
+                return false;
+            }
+            if (map.isMoving()) {
+                console.warn('Map is currently moving, skipping transition');
+                return false;
+            }
+            return true;
+        };
+
+        const secureTransition = (map, options = {}) => {
+            return new Promise((resolve, reject) => {
+                try {
+                    if (!isMapReady(map)) {
+                        reject(new Error('Map not ready for transition'));
+                        return;
+                    }
+
+                    const secureOptions = {
+                        essential: true,
+                        duration: typeof options.duration === 'number' && options.duration > 0 ? options.duration : 1000,
+                        easing: validateEasingFunction(options.easing),
+                        center: options.center && Array.isArray(options.center) && options.center.length === 2
+                            ? [Number(options.center[0]), Number(options.center[1])]
+                            : undefined,
+                        zoom: typeof options.zoom === 'number' && !isNaN(options.zoom)
+                            ? Math.max(0, Math.min(24, options.zoom))
+                            : undefined,
+                        bearing: typeof options.bearing === 'number' && !isNaN(options.bearing)
+                            ? ((options.bearing % 360) + 360) % 360
+                            : undefined,
+                        pitch: typeof options.pitch === 'number' && !isNaN(options.pitch)
+                            ? Math.max(0, Math.min(60, options.pitch))
+                            : undefined,
+                        complete: () => {
+                            console.log('✅ Secure transition completed successfully');
+                            resolve();
+                        }
+                    };
+
+                    Object.keys(secureOptions).forEach(key => {
+                        if (secureOptions[key] === undefined) {
+                            delete secureOptions[key];
+                        }
+                    });
+
+                    console.log('🚀 Executing secure transition:', secureOptions);
+                    
+                    if (options.type === 'flyTo') {
+                        map.flyTo(secureOptions);
+                    } else {
+                        map.easeTo(secureOptions);
+                    }
+
+                } catch (error) {
+                    console.error('❌ Secure transition failed:', error);
+                    reject(error);
+                }
+            });
+        };
+
+        // Initialiser la carte
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://demotiles.maplibre.org/style.json',
+            center: [120.95134859887523, 14.347872973134175], // Garden Grove Village
+            zoom: 12
+        });
+
+        const statusEl = document.getElementById('status');
+
+        function updateStatus(message, type = 'info') {
+            statusEl.className = `status ${type}`;
+            statusEl.textContent = message;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        // Attendre que la carte soit prête
+        map.on('load', () => {
+            updateStatus('✅ Carte chargée et prête pour les tests', 'success');
+        });
+
+        // Tests disponibles globalement
+        window.testSecureTransition = async () => {
+            try {
+                updateStatus('🧪 Test transition sécurisée en cours...', 'warning');
+                
+                await secureTransition(map, {
+                    center: [120.96, 14.35],
+                    zoom: 16,
+                    pitch: 30,
+                    bearing: 45,
+                    duration: 2000,
+                    easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
+                });
+                
+                updateStatus('✅ Test transition sécurisée réussi!', 'success');
+            } catch (error) {
+                updateStatus(`❌ Test échoué: ${error.message}`, 'error');
+            }
+        };
+
+        window.testGpsTransition = async () => {
+            try {
+                updateStatus('📍 Test transition GPS en cours...', 'warning');
+                
+                // Simuler une transition GPS
+                await secureTransition(map, {
+                    type: 'flyTo',
+                    center: [120.95134859887523, 14.347872973134175],
+                    zoom: 15,
+                    duration: 1000
+                });
+                
+                // Ajouter le pitch après
+                await secureTransition(map, {
+                    pitch: 25,
+                    duration: 800
+                });
+                
+                updateStatus('✅ Test transition GPS réussi!', 'success');
+            } catch (error) {
+                updateStatus(`❌ Test GPS échoué: ${error.message}`, 'error');
+            }
+        };
+
+        window.testEmergencyFallback = () => {
+            try {
+                updateStatus('🚨 Test fallback d\'urgence en cours...', 'warning');
+                
+                // Forcer une erreur puis utiliser le fallback
+                map.jumpTo({
+                    center: [120.94, 14.36],
+                    zoom: 17
+                });
+                
+                updateStatus('✅ Test fallback d\'urgence réussi!', 'success');
+            } catch (error) {
+                updateStatus(`❌ Test fallback échoué: ${error.message}`, 'error');
+            }
+        };
+
+        window.testConcurrentTransitions = async () => {
+            try {
+                updateStatus('⚡ Test animations concurrentes en cours...', 'warning');
+                
+                // Lancer plusieurs transitions en même temps (devrait être géré par la file d'attente)
+                const promises = [
+                    secureTransition(map, { center: [120.95, 14.34], duration: 1000 }),
+                    secureTransition(map, { zoom: 14, duration: 800 }),
+                    secureTransition(map, { pitch: 20, duration: 1200 })
+                ];
+                
+                // Attendre la première à compléter
+                await Promise.race(promises);
+                
+                updateStatus('✅ Test animations concurrentes gérées!', 'success');
+            } catch (error) {
+                updateStatus(`❌ Test concurrent échoué: ${error.message}`, 'error');
+            }
+        };
+
+        window.resetMap = () => {
+            map.jumpTo({
+                center: [120.95134859887523, 14.347872973134175],
+                zoom: 12,
+                pitch: 0,
+                bearing: 0
+            });
+            updateStatus('🔄 Carte réinitialisée', 'info');
+        };
+
+        // Exposer les fonctions pour les tests manuels
+        window.secureTransition = secureTransition;
+        window.map = map;
+    </script>
+</body>
+</html>

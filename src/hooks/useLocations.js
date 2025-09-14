@@ -96,8 +96,8 @@ export const useLocation = (blockNumber, lotNumber) => {
         throw new Error(`Error fetching location: ${error.message}`);
       }
 
-      // Validation des coordonnées
-      if (!data.coordinates || !data.coordinates.coordinates || data.coordinates.coordinates.length !== 2) {
+      // Validation simplifiée des coordonnées
+      if (!data.coordinates?.coordinates || data.coordinates.coordinates.length !== 2) {
         throw new Error('Invalid coordinates for this destination');
       }
 
@@ -114,31 +114,4 @@ export const useLocation = (blockNumber, lotNumber) => {
   });
 };
 
-/**
- * Hook pour récupérer des statistiques sur les locations
- */
-export const useLocationStats = () => {
-  return useQuery({
-    queryKey: [...locationKeys.all, 'stats'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('locations')
-        .select('block, lot, is_locked, deleted_at')
-        .is('deleted_at', null);
 
-      if (error) {
-        throw new Error(`Error fetching location stats: ${error.message}`);
-      }
-
-      const stats = {
-        totalLocations: data.length,
-        totalBlocks: new Set(data.map(item => item.block)).size,
-        availableLocations: data.filter(item => !item.is_locked).length,
-        lockedLocations: data.filter(item => item.is_locked).length,
-      };
-
-      return stats;
-    },
-    staleTime: 15 * 60 * 1000, // 15 minutes - les stats changent peu souvent
-  });
-};

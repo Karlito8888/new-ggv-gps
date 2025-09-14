@@ -10,8 +10,8 @@ export function MapMarkers({
 }) {
   return (
     <>
-      {/* Destination marker */}
-      {destination && (
+      {/* Destination marker - avec validation selon la documentation MapLibre */}
+      {destination && destination.coordinates && Array.isArray(destination.coordinates) && destination.coordinates.length === 2 && (
         <Marker
           longitude={destination.coordinates[0]}
           latitude={destination.coordinates[1]}

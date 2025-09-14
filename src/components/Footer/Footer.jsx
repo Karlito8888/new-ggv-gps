@@ -1,10 +1,10 @@
-import styles from './footer.module.css';
+import styles from "./footer.module.css";
 
 function Footer() {
   return (
     <footer className={styles.footer}>
       <p className={styles.footerText}>
-        © {new Date().getFullYear()} Garden Grove Village B
+        © {new Date().getFullYear()} Garden Grove Village C
       </p>
     </footer>
   );

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Spinner Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; background: #f5f5f5; }
+        .test-container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            margin-bottom: 20px; 
+            max-width: 600px;
+        }
+        .loading-demo {
+            background: linear-gradient(135deg, #10b981, #f59e0b);
+            padding: 2rem;
+            border-radius: 1rem;
+            color: white;
+            text-align: center;
+        }
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .picker-simulation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 180px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .picker-column {
+            width: 200px;
+            height: 180px;
+            overflow: hidden;
+            position: relative;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .picker-item {
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #374151;
+        }
+        .picker-item.selected {
+            background: #f3f4f6;
+            font-weight: 600;
+        }
+        .loading-text {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test du Spinner Fix</h1>
+    
+    <div class="test-container">
+        <h2>✅ Spinner CSS Simple (Solution Finale)</h2>
+        <p>Cette solution utilise un spinner CSS simple qui évite les problèmes d'import React.</p>
+        
+        <div class="loading-demo">
+            <div class="loading-text">
+                <div class="spinner"></div>
+                Chargement des lots...
+            </div>
+        </div>
+        
+        <h3>Avantages :</h3>
+        <ul>
+            <li>✅ Pas de dépendance d'import</li>
+            <li>✅ Compatible avec tous les contextes</li>
+            <li>✅ Léger et performant</li>
+            <li>✅ Pas de problème de scope</li>
+        </ul>
+    </div>
+
+    <div class="test-container">
+        <h2>📱 Simulation du Picker Mobile</h2>
+        <p>Voici comment le spinner apparaît dans le contexte du picker mobile.</p>
+        
+        <div class="picker-simulation">
+            <div class="picker-column">
+                <div class="picker-item">Block 1</div>
+                <div class="picker-item">Block 2</div>
+                <div class="picker-item selected">Block 3</div>
+                <div class="picker-item">Block 4</div>
+            </div>
+            
+            <div class="picker-column">
+                <div class="picker-item">
+                    <div class="loading-text">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+                <div class="picker-item">Lot 1</div>
+                <div class="picker-item">Lot 2</div>
+                <div class="picker-item">Lot 3</div>
+            </div>
+        </div>
+        
+        <p><em>Le spinner apparaît pendant le chargement des lots, remplaçant le texte "Loading..." pour une interface plus épurée.</em></p>
+    </div>
+
+    <div class="test-container">
+        <h2>🔧 Code de la Solution</h2>
+        <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 14px;">
+            <pre>
+// Dans WelcomeModalMobile.jsx
+{isLotsLoading && !option ? (
+  &lt;span className={modalBaseStyles.welcomeLoadingText}&gt;
+    &lt;div style={{
+      width: '16px', 
+      height: '16px', 
+      border: '2px solid #e5e7eb', 
+      borderTop: '2px solid #10b981', 
+      borderRadius: '50%', 
+      animation: 'spin 1s linear infinite', 
+      display: 'inline-block', 
+      marginRight: '8px'
+    }}&gt;&lt;/div&gt;
+  &lt;/span&gt;
+) : (
+  `Lot ${option}`
+)}
+
+// Dans modal-base.module.css
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+            </pre>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>📊 Comparaison des Solutions</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background: #f3f4f6;">
+                <th style="padding: 10px; text-align: left;">Aspect</th>
+                <th style="padding: 10px; text-align: left;">Radix UI Spinner</th>
+                <th style="padding: 10px; text-align: left;">CSS Simple</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Import</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">❌ Problème de scope</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">✅ Aucun import</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Taille</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">❌ Bundle + lourd</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">✅ Ultra-léger</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Compatibilité</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">❌ Contexte React requis</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">✅ Universel</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">Performance</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">⚠️ Dépendances</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">✅ Native CSS</td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

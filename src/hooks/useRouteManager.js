@@ -24,6 +24,11 @@ export function useRouteManager(mapRef, userLocation, destination, navigationSta
       return;
     }
 
+    if (!dest.coordinates || !Array.isArray(dest.coordinates) || dest.coordinates.length < 2) {
+      console.error("❌ Invalid destination coordinates:", dest.coordinates);
+      throw new Error("Invalid destination coordinates");
+    }
+
     if (import.meta.env.DEV) {
       console.log("🚀 Attempting route creation...");
       console.log("📍 From:", currentUserLocation.latitude, currentUserLocation.longitude);
@@ -100,6 +105,12 @@ export function useRouteManager(mapRef, userLocation, destination, navigationSta
     };
 
     console.log("🚪 Exit village requested - starting navigation to exit");
+
+    // Validate exit coordinates
+    if (!VILLAGE_EXIT_COORDS || !Array.isArray(VILLAGE_EXIT_COORDS) || VILLAGE_EXIT_COORDS.length < 2) {
+      console.error("❌ Invalid village exit coordinates");
+      return;
+    }
 
     // Set exit destination immediately
     setDestination(exitDestination);
@@ -252,6 +263,9 @@ export function useRouteManager(mapRef, userLocation, destination, navigationSta
     if (
       userLocation &&
       destination &&
+      destination.coordinates &&
+      Array.isArray(destination.coordinates) &&
+      destination.coordinates.length >= 2 &&
       navigationState === "navigating" &&
       !route
     ) {

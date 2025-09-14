@@ -27,8 +27,8 @@ import { useMapZoomEvents } from "./hooks/useMapZoomEvents";
 import { useAvailableBlocks } from "./hooks/useLocations";
 
 // Utils
-import { initMapLibreDirections, cleanupDirections } from "./lib/navigation";
-import { cleanupDirectionIcons } from "./utils/mapIcons";
+import { initMapLibreDirections } from "./lib/navigation";
+import { gpsTransition, recenterMap, cleanupMapResources } from "./utils/mapTransitions";
 
 function App() {
   // ========================================
@@ -83,8 +83,6 @@ function App() {
     getCurrentOrientation,
   } = useDeviceOrientation({
     enabled: orientationEnabled && navigationState === "navigating",
-    smoothingFactor: 0.8,
-    throttleMs: 100,
   });
 
   // Route management
@@ -107,31 +105,14 @@ function App() {
   // SIMPLE GEOLOCATION MANAGEMENT
   // ========================================
 
-  // Debug userLocation changes
-  useEffect(() => {
-    console.log(
-      "🔍 userLocation changed:",
-      userLocation ? "GPS AVAILABLE" : "GPS NULL"
-    );
-  }, [userLocation]);
-
-  // ========================================
-  // SIMPLE GPS AUTO-TRIGGER
-  // ========================================
-  
-  // GPS auto-trigger removed - now handled by GpsPermissionModal
-  // GPS will be triggered only when user clicks "Allow GPS Location" button
-  
-  // GPS permission success handler - transitions from gps-permission to welcome
   useEffect(() => {
     if (navigationState === "gps-permission" && userLocation) {
-      console.log("📍 GPS permission granted - transitioning to welcome");
       handleGpsPermissionGranted();
     }
   }, [navigationState, userLocation, handleGpsPermissionGranted]);
 
-  // Simple GPS event handlers
-  const handleGeolocate = useCallback((e) => {
+  // Simple GPS event handlers - avec transition sécurisée
+  const handleGeolocate = useCallback(async (e) => {
     const location = {
       latitude: e.coords.latitude,
       longitude: e.coords.longitude,
@@ -140,30 +121,23 @@ function App() {
       speed: e.coords.speed,
       timestamp: e.timestamp,
     };
-    console.log("📍 GPS location received:", location);
+    
     setUserLocation(location);
-  }, []);
+    
+    // Transition simplifiée lors du premier positionnement GPS
+    if (navigationState === "gps-permission" && mapRef.current && isMapReady) {
+      console.log("📍 GPS acquired - simple transition starting");
+      await gpsTransition(mapRef.current, location, true);
+    }
+  }, [navigationState, mapRef, isMapReady]);
   
   const handleGeolocateError = useCallback((e) => {
-    console.error("❌ GPS error:", e);
+    console.error("GPS error:", e);
   }, []);
 
-  // Tentative de création automatique de route quand la position devient disponible
+  // Auto route creation - simplified (removed verbose logs)
   useEffect(() => {
-    console.log("🔍 Route creation check:", {
-      userLocation: !!userLocation,
-      destination: !!destination,
-      navigationState,
-      route: !!route,
-    });
-
-    if (
-      userLocation &&
-      destination &&
-      navigationState === "navigating" &&
-      !route
-    ) {
-      console.log("🔄 ✅ ALL CONDITIONS MET - Creating route automatically");
+    if (userLocation && destination && navigationState === "navigating" && !route) {
       autoCreateRoute();
     }
   }, [userLocation, destination, navigationState, route, autoCreateRoute]);
@@ -182,49 +156,23 @@ function App() {
     setOrientationEnabled,
   });
 
-  // Recenter map on user location
-  const handleRecenterMap = useCallback(() => {
-    if (!mapRef.current || !userLocation) {
-      console.warn('⚠️ Cannot recenter: map or userLocation not available');
-      return;
-    }
-
-    try {
-      console.log('🎯 Recentering map on user location');
-      mapRef.current.flyTo({
-        center: [userLocation.longitude, userLocation.latitude],
-        zoom: 18,
-        duration: 1000, // 1 second animation
-        essential: true // This animation is considered essential for accessibility
-      });
-    } catch (error) {
-      console.error('❌ Failed to recenter map:', error);
-    }
+  // Recenter map - version ultra simplifiée
+  const handleRecenterMap = useCallback(async () => {
+    if (!mapRef.current || !userLocation) return;
+    await recenterMap(mapRef.current, userLocation);
   }, [userLocation]);
 
-  // Auto-center map when navigation starts
+  // Auto-center when navigation starts - simplified (removed verbose logs)
   useEffect(() => {
     if (navigationState === "navigating" && userLocation && isMapReady) {
-      console.log('🎯 Navigation started - auto-centering on user location');
-      handleRecenterMap(); // Réutilise la fonction existante
+      handleRecenterMap();
     }
   }, [navigationState, userLocation, isMapReady, handleRecenterMap]);
 
-  // Cleanup directions and icons
+  // Cleanup map resources - ultra simplified
   useEffect(() => {
-    const currentMapRef = mapRef.current;
-
     return () => {
-      // Clean up MapLibre Directions instance
-      cleanupDirections();
-
-      // Clean up direction icons
-      if (currentMapRef) {
-        const map = currentMapRef.getMap();
-        if (map) {
-          cleanupDirectionIcons(map);
-        }
-      }
+      cleanupMapResources(mapRef);
     };
   }, []);
 
@@ -286,12 +234,7 @@ function App() {
           initialViewState={initialViewState}
           mapStyle={mapStyle}
           onLoad={() => setIsMapReady(true)}
-          onError={(e) => {
-            console.error(
-              "Erreur de carte:",
-              e.error.message || "Erreur inconnue"
-            );
-          }}
+          onError={(e) => console.error("Map error:", e.error?.message || "Unknown error")}
           interactiveLayerIds={
             navigationState === "navigating" ? [] : undefined
           }

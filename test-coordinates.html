@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Coordinate Validation</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-case { 
+            background: #f5f5f5; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+        }
+        .success { background: #e0ffe0; }
+        .error { background: #ffe0e0; }
+        .code { 
+            background: #333; 
+            color: #fff; 
+            padding: 10px; 
+            border-radius: 3px; 
+            font-family: monospace; 
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de Validation des Coordonnées</h1>
+    
+    <h2>Scénarios de Test</h2>
+    
+    <div class="test-case">
+        <h3>Cas 1: Coordonnées valides</h3>
+        <div class="code">
+destination = {
+  coordinates: [120.95134859887523, 14.347872973134175],
+  blockNumber: 7,
+  lotNumber: 4
+}
+        </div>
+        <div id="result1"></div>
+    </div>
+
+    <div class="test-case">
+        <h3>Cas 2: Coordonnées null (ancien bug)</h3>
+        <div class="code">
+destination = {
+  coordinates: null,
+  blockNumber: 7,
+  lotNumber: 4
+}
+        </div>
+        <div id="result2"></div>
+    </div>
+
+    <div class="test-case">
+        <h3>Cas 3: Coordonnées undefined</h3>
+        <div class="code">
+destination = {
+  coordinates: undefined,
+  blockNumber: 7,
+  lotNumber: 4
+}
+        </div>
+        <div id="result3"></div>
+    </div>
+
+    <div class="test-case">
+        <h3>Cas 4: Array invalide</h3>
+        <div class="code">
+destination = {
+  coordinates: [120.9513], // Un seul élément
+  blockNumber: 7,
+  lotNumber: 4
+}
+        </div>
+        <div id="result4"></div>
+    </div>
+
+    <div class="test-case">
+        <h3>Cas 5: Pas de propriété coordinates</h3>
+        <div class="code">
+destination = {
+  blockNumber: 7,
+  lotNumber: 4
+  // coordinates manquante
+}
+        </div>
+        <div id="result5"></div>
+    </div>
+
+    <script>
+        // Fonction de validation selon la documentation MapLibre
+        function validateCoordinates(destination) {
+            if (!destination) return false;
+            
+            // Validation selon la documentation officielle MapLibre
+            return destination.coordinates && 
+                   Array.isArray(destination.coordinates) && 
+                   destination.coordinates.length === 2 &&
+                   typeof destination.coordinates[0] === 'number' &&
+                   typeof destination.coordinates[1] === 'number' &&
+                   !isNaN(destination.coordinates[0]) &&
+                   !isNaN(destination.coordinates[1]);
+        }
+
+        // Tests
+        const testCases = [
+            {
+                name: "Coordonnées valides",
+                destination: {
+                    coordinates: [120.95134859887523, 14.347872973134175],
+                    blockNumber: 7,
+                    lotNumber: 4
+                },
+                expected: true
+            },
+            {
+                name: "Coordonnées null (ancien bug)",
+                destination: {
+                    coordinates: null,
+                    blockNumber: 7,
+                    lotNumber: 4
+                },
+                expected: false
+            },
+            {
+                name: "Coordonnées undefined",
+                destination: {
+                    coordinates: undefined,
+                    blockNumber: 7,
+                    lotNumber: 4
+                },
+                expected: false
+            },
+            {
+                name: "Array invalide",
+                destination: {
+                    coordinates: [120.9513], // Un seul élément
+                    blockNumber: 7,
+                    lotNumber: 4
+                },
+                expected: false
+            },
+            {
+                name: "Pas de propriété coordinates",
+                destination: {
+                    blockNumber: 7,
+                    lotNumber: 4
+                },
+                expected: false
+            }
+        ];
+
+        // Exécuter les tests
+        testCases.forEach((testCase, index) => {
+            const result = validateCoordinates(testCase.destination);
+            const isSuccess = result === testCase.expected;
+            const resultDiv = document.getElementById(`result${index + 1}`);
+            
+            resultDiv.innerHTML = `
+                <div class="${isSuccess ? 'success' : 'error'}">
+                    <strong>Résultat:</strong> ${result ? 'VALIDE' : 'INVALIDE'}<br>
+                    <strong>Attendu:</strong> ${testCase.expected ? 'VALIDE' : 'INVALIDE'}<br>
+                    <strong>Statut:</strong> ${isSuccess ? '✅ SUCCÈS' : '❌ ÉCHEC'}
+                </div>
+            `;
+        });
+
+        // Résumé
+        const totalTests = testCases.length;
+        const passedTests = testCases.filter((test, index) => {
+            const result = validateCoordinates(test.destination);
+            return result === test.expected;
+        }).length;
+
+        document.body.innerHTML += `
+            <div class="test-case ${passedTests === totalTests ? 'success' : 'error'}">
+                <h2>📊 Résumé des Tests</h2>
+                <p><strong>Total:</strong> ${totalTests} tests</p>
+                <p><strong>Réussis:</strong> ${passedTests} tests</p>
+                <p><strong>Échecs:</strong> ${totalTests - passedTests} tests</p>
+                <p><strong>Taux de réussite:</strong> ${Math.round((passedTests / totalTests) * 100)}%</p>
+            </div>
+        `;
+    </script>
+</body>
+</html>

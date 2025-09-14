@@ -1,9 +1,8 @@
-import { useEffect, useCallback } from "react";
-import { applyOptimalTransition, shouldTransition } from "../utils/mapTransitions";
+import { useEffect, useCallback, useRef } from "react";
 
 /**
- * Hook for managing map transitions (pitch, bearing, orientation)
- * Merges functionality from useMapEffects.js and useDeviceOrientationManager.js
+ * Hook for managing map transitions - VERSION ULTRA SIMPLIFIÉE
+ * Utilise directement les API natives de MapLibre GL JS
  */
 export function useMapTransitions({
   mapRef,
@@ -17,129 +16,64 @@ export function useMapTransitions({
   getCurrentOrientation,
   setOrientationEnabled
 }) {
-  // Dynamic pitch update with optimal transitions
+  // Protection simple contre les animations multiples
+  const isTransitioning = useRef(false);
+
+  // Dynamic pitch update - ultra simple
   useEffect(() => {
-    if (mapRef.current && isMapReady) {
-      const map = mapRef.current.getMap();
-
-      // Use shouldTransition to check if update is needed
-      if (shouldTransition(map.getPitch(), adaptivePitch, 2)) {
-        console.log(
-          `🎥 Updating pitch: ${map.getPitch().toFixed(1)}° → ${adaptivePitch}°`
-        );
-
-        // Use optimal transitions
-        applyOptimalTransition(map, {
-          pitch: adaptivePitch,
-          source: "adaptive-pitch",
-          context: pitchMode === "cinematic" ? "cinematic" : "navigation",
-        }).catch((error) => {
-          console.error("Error during pitch transition:", error);
-        });
-      }
-    }
+    if (!mapRef.current?.getMap() || !isMapReady || isTransitioning.current) return;
+    
+    isTransitioning.current = true;
+    const map = mapRef.current.getMap();
+    
+    map.easeTo({
+      pitch: adaptivePitch,
+      duration: pitchMode === 'cinematic' ? 1200 : 600,
+      essential: true
+    });
+    
+    setTimeout(() => {
+      isTransitioning.current = false;
+    }, pitchMode === 'cinematic' ? 1200 : 600);
+    
   }, [adaptivePitch, pitchMode, mapRef, isMapReady]);
 
-  // Device orientation effect - update map bearing with device compass
+  // Device orientation effect - ultra simple
   useEffect(() => {
-    if (mapRef.current && isMapReady && orientationEnabled && isActive && navigationState === "navigating") {
-      const map = mapRef.current.getMap();
-      
-      // Use shouldTransition to check if bearing update is needed
-      const currentBearing = map.getBearing();
-      const targetBearing = compass;
-      
-      // Calculate bearing difference (accounting for 360° wraparound)
-      let bearingDiff = Math.abs(targetBearing - currentBearing);
-      if (bearingDiff > 180) bearingDiff = 360 - bearingDiff;
-      
-      if (shouldTransition(currentBearing, targetBearing, 5)) {
-        console.log(
-          `🧭 Updating bearing: ${currentBearing.toFixed(1)}° → ${targetBearing.toFixed(1)}°`
-        );
-
-        // Use optimal transitions for smooth bearing updates
-        applyOptimalTransition(map, {
-          bearing: targetBearing,
-          source: "device-orientation",
-          context: "navigation",
-        }).catch((error) => {
-          console.error("Error during bearing transition:", error);
-        });
-      }
-    }
+    if (!mapRef.current?.getMap() || !isMapReady || !orientationEnabled || !isActive || navigationState !== "navigating" || isTransitioning.current) return;
+    
+    isTransitioning.current = true;
+    const map = mapRef.current.getMap();
+    
+    map.easeTo({
+      bearing: compass,
+      duration: 300,
+      essential: true
+    });
+    
+    setTimeout(() => {
+      isTransitioning.current = false;
+    }, 300);
+    
   }, [compass, isActive, orientationEnabled, navigationState, mapRef, isMapReady]);
 
-  // Handle orientation toggle
+  // Handle orientation toggle - ultra simple
   const handleOrientationToggle = useCallback(async (enabled) => {
-    console.log(`🧭 [handleOrientationToggle] Orientation ${enabled ? 'enabled' : 'disabled'}`);
+    setOrientationEnabled(enabled);
     
-    if (enabled) {
-      console.log('🧭 [handleOrientationToggle] Enabling orientation...');
+    if (!mapRef.current?.getMap() || !isMapReady) return;
+    
+    try {
+      const targetBearing = enabled ? await getCurrentOrientation() : 0;
+      const map = mapRef.current.getMap();
       
-      // First, capture current orientation before setting state
-      let currentOrientation = null;
-      if (mapRef.current && isMapReady) {
-        try {
-          console.log('🧭 [handleOrientationToggle] Capturing current device orientation for immediate sync...');
-          console.log('🧭 [handleOrientationToggle] Map state:', { 
-            mapExists: !!mapRef.current, 
-            isReady: isMapReady,
-            getCurrentOrientation: typeof getCurrentOrientation 
-          });
-          
-          // Add a small delay to ensure permission is fully granted (iOS timing issue)
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          currentOrientation = await getCurrentOrientation();
-          console.log(`🧭 [handleOrientationToggle] Captured orientation: ${currentOrientation}°`);
-          
-        } catch (error) {
-          console.error('❌ [handleOrientationToggle] Failed to capture initial orientation:', error);
-          // Continue anyway - we'll sync when tracking starts
-        }
-      }
-      
-      // Now enable orientation state
-      console.log('🧭 [handleOrientationToggle] Setting orientation enabled state...');
-      setOrientationEnabled(true);
-      
-      // Apply the captured orientation if we have it
-      if (currentOrientation !== null && mapRef.current && isMapReady) {
-        try {
-          console.log(`🧭 [handleOrientationToggle] Applying captured orientation to map: ${currentOrientation.toFixed(1)}°`);
-          const map = mapRef.current.getMap();
-          
-          // Apply current orientation immediately to the map
-          await applyOptimalTransition(map, {
-            bearing: currentOrientation,
-              source: "orientation-sync",
-            context: "navigation",
-          });
-          
-          console.log('✅ [handleOrientationToggle] Map synchronized with captured device orientation');
-        } catch (error) {
-          console.error('❌ [handleOrientationToggle] Failed to apply orientation to map:', error);
-        }
-      } else {
-        console.warn('⚠️ [handleOrientationToggle] No valid orientation captured, continuous tracking will handle sync');
-      }
-      
-    } else {
-      console.log('🧭 [handleOrientationToggle] Disabling orientation...');
-      // Disabling orientation - reset map bearing to north
-      setOrientationEnabled(false);
-      
-      if (mapRef.current && isMapReady) {
-        const map = mapRef.current.getMap();
-        applyOptimalTransition(map, {
-          bearing: 0,
-          source: "orientation-reset",
-          context: "navigation",
-        }).catch((error) => {
-          console.error("❌ [handleOrientationToggle] Error resetting bearing:", error);
-        });
-      }
+      map.easeTo({
+        bearing: targetBearing,
+        duration: 600,
+        essential: true
+      });
+    } catch (error) {
+      console.error('Orientation toggle error:', error);
     }
   }, [mapRef, isMapReady, getCurrentOrientation, setOrientationEnabled]);
 

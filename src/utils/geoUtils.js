@@ -1,7 +1,9 @@
 /**
  * Utilitaires géographiques réutilisables
- * Centralise les calculs géométriques pour éviter la duplication
+ * Version simplifiée - utilise les capacités natives de JavaScript
  */
+
+import { findClosestPointOnRoute } from "../lib/navigation";
 
 /**
  * Calcule la distance entre deux points GPS (formule Haversine)
@@ -62,6 +64,9 @@ export function formatDistance(distance) {
  * @returns {Object} Objet avec direction et icône
  */
 export function bearingToDirection(bearing) {
+  // Normaliser le bearing entre 0-360 de manière simple
+  const normalizedBearing = ((bearing % 360) + 360) % 360;
+  
   const directions = [
     { name: "North", icon: "↑", min: 337.5, max: 22.5 },
     { name: "Northeast", icon: "↗", min: 22.5, max: 67.5 },
@@ -72,72 +77,12 @@ export function bearingToDirection(bearing) {
     { name: "West", icon: "←", min: 247.5, max: 292.5 },
     { name: "Northwest", icon: "↖", min: 292.5, max: 337.5 },
   ];
-
-  for (const dir of directions) {
-    if (dir.name === "North") {
-      // Cas spécial pour le Nord (traverse 0°)
-      if (bearing >= dir.min || bearing <= dir.max) {
-        return { name: dir.name, icon: dir.icon };
-      }
-    } else {
-      if (bearing >= dir.min && bearing < dir.max) {
-        return { name: dir.name, icon: dir.icon };
-      }
-    }
-  }
-
-  return { name: "North", icon: "↑" }; // Fallback
-}
-
-/**
- * Trouve le point le plus proche sur une route
- * @param {number} userLat - Latitude utilisateur
- * @param {number} userLon - Longitude utilisateur
- * @param {Array} routeCoordinates - Coordonnées de la route [[lon, lat], ...]
- * @returns {Object|null} Point le plus proche avec distance et index
- */
-export function findClosestPointOnRoute(userLat, userLon, routeCoordinates) {
-  if (!routeCoordinates || routeCoordinates.length < 2) {
-    return null;
-  }
-
-  let closestPoint = null;
-  let minDistance = Infinity;
-  let segmentIndex = 0;
-
-  for (let i = 0; i < routeCoordinates.length; i++) {
-    const [lon, lat] = routeCoordinates[i];
-    const distance = calculateDistance(userLat, userLon, lat, lon);
-    
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestPoint = {
-        latitude: lat,
-        longitude: lon,
-        distance: minDistance
-      };
-      segmentIndex = i;
-    }
-  }
-
-  return {
-    ...closestPoint,
-    segmentIndex,
-    coordinates: routeCoordinates[segmentIndex]
-  };
-}
-
-/**
- * Vérifie si un utilisateur est hors route
- * @param {number} userLat - Latitude utilisateur
- * @param {number} userLon - Longitude utilisateur
- * @param {Array} routeCoordinates - Coordonnées de la route
- * @param {number} threshold - Seuil de déviation en mètres
- * @returns {boolean} True si hors route
- */
-export function isUserOffRoute(userLat, userLon, routeCoordinates, threshold = 25) {
-  const closestPoint = findClosestPointOnRoute(userLat, userLon, routeCoordinates);
-  return closestPoint ? closestPoint.distance > threshold : true;
+  
+  // Trouver la direction avec une simple recherche
+  return directions.find(dir => 
+    (dir.min <= normalizedBearing && normalizedBearing < dir.max) ||
+    (dir.min > dir.max && (normalizedBearing >= dir.min || normalizedBearing < dir.max))
+  ) || { name: "North", icon: "↑" };
 }
 
 /**
@@ -149,16 +94,12 @@ export function calculateRouteDistance(routeData) {
   if (!routeData?.features?.[0]?.geometry?.coordinates) return 0;
   
   const coordinates = routeData.features[0].geometry.coordinates;
-  let distance = 0;
   
-  for (let i = 1; i < coordinates.length; i++) {
-    distance += calculateDistance(
-      coordinates[i-1][1], coordinates[i-1][0],
-      coordinates[i][1], coordinates[i][0]
-    );
-  }
-  
-  return distance;
+  return coordinates.reduce((total, coord, index) => {
+    if (index === 0) return 0;
+    const prevCoord = coordinates[index - 1];
+    return total + calculateDistance(prevCoord[1], prevCoord[0], coord[1], coord[0]);
+  }, 0);
 }
 
 /**
@@ -177,8 +118,12 @@ export function snapToRoad(userPos, routeCoordinates, maxDistance = 20) {
     routeCoordinates
   );
   
-  // Snap seulement si on est proche de la route
-  return closestPoint && closestPoint.distance < maxDistance ? closestPoint : null;
+  return closestPoint && closestPoint.distance < maxDistance ? {
+    latitude: closestPoint.point[1],
+    longitude: closestPoint.point[0],
+    distance: closestPoint.distance,
+    segmentIndex: closestPoint.segmentIndex
+  } : null;
 }
 
 /**
@@ -193,7 +138,6 @@ export function detectTurns(routeCoordinates, userPos, lookAheadDistance = 100) 
   
   const turns = [];
   
-  // Trouver le point le plus proche sur la route
   const closestPoint = findClosestPointOnRoute(
     userPos.latitude, 
     userPos.longitude, 
@@ -204,43 +148,32 @@ export function detectTurns(routeCoordinates, userPos, lookAheadDistance = 100) 
   
   const startIndex = closestPoint.segmentIndex;
   
-  // Analyser les points à venir
   for (let i = startIndex; i < routeCoordinates.length - 2; i++) {
-    const currentPoint = routeCoordinates[i];
-    const nextPoint = routeCoordinates[i + 1];
-    const futurePoint = routeCoordinates[i + 2];
+    const [currentLon, currentLat] = routeCoordinates[i];
+    const [nextLon, nextLat] = routeCoordinates[i + 1];
+    const [futureLon, futureLat] = routeCoordinates[i + 2];
     
-    // Distance jusqu'au virage
     const distanceToTurn = calculateDistance(
       userPos.latitude, userPos.longitude,
-      nextPoint[1], nextPoint[0]
+      nextLat, nextLon
     );
     
-    // Ne considérer que les virages dans la zone d'anticipation
     if (distanceToTurn > lookAheadDistance) continue;
     
-    // Calculer l'angle du virage
-    const bearing1 = calculateBearing(
-      currentPoint[1], currentPoint[0],
-      nextPoint[1], nextPoint[0]
-    );
-    const bearing2 = calculateBearing(
-      nextPoint[1], nextPoint[0],
-      futurePoint[1], futurePoint[0]
-    );
+    const bearing1 = calculateBearing(currentLat, currentLon, nextLat, nextLon);
+    const bearing2 = calculateBearing(nextLat, nextLon, futureLat, futureLon);
     
     let turnAngle = bearing2 - bearing1;
     if (turnAngle > 180) turnAngle -= 360;
     if (turnAngle < -180) turnAngle += 360;
     
-    // Détecter les virages significatifs (> 30 degrés)
     if (Math.abs(turnAngle) > 30) {
       turns.push({
         type: 'turn',
         direction: turnAngle > 0 ? 'right' : 'left',
         angle: Math.abs(turnAngle),
         distance: distanceToTurn,
-        coordinates: nextPoint,
+        coordinates: [nextLon, nextLat],
         severity: Math.abs(turnAngle) > 90 ? 'sharp' : 'normal'
       });
     }

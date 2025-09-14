@@ -23,9 +23,7 @@ const OrientationToggle = ({
     requestPermission,
     compass
   } = useDeviceOrientation({ 
-    enabled,
-    smoothingFactor: 0.8,
-    throttleMs: 100 
+    enabled
   });
 
   // Handle toggle click

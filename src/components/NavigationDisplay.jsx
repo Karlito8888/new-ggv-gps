@@ -14,7 +14,10 @@ const NavigationDisplay = ({
   const [hasTriggeredArrival, setHasTriggeredArrival] = useState(false);
 
   useEffect(() => {
-    if (!userLocation || !destination) return;
+    if (!userLocation || !destination || !destination.coordinates || !Array.isArray(destination.coordinates) || destination.coordinates.length < 2) {
+      console.warn("⚠️ NavigationDisplay: Missing or invalid destination coordinates");
+      return;
+    }
 
     const navInstructions = getNavigationInstructions(
       userLocation.latitude,
@@ -40,6 +43,8 @@ const NavigationDisplay = ({
       // Check if destination is the village exit
       const isExitDestination = 
         destination.coordinates &&
+        Array.isArray(destination.coordinates) &&
+        destination.coordinates.length >= 2 &&
         destination.coordinates[0] === VILLAGE_EXIT_COORDS[0] &&
         destination.coordinates[1] === VILLAGE_EXIT_COORDS[1];
       
