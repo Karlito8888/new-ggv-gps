@@ -74,16 +74,20 @@ body,
 
 body {
   font-family: "Madimi One", cursive, sans-serif;
+  /* Couleur de fond qui correspond au footer pour masquer l'espace */
+  background: linear-gradient(135deg, var(--color-yellow), var(--color-green));
 }
 
 .radix-themes {
   display: grid;
-  grid-template-rows: calc(60px + var(--safe-area-top)) 1fr calc(60px + var(--safe-area-bottom));
+  grid-template-rows: calc(60px + var(--safe-area-top)) 1fr 60px;
   grid-template-areas:
     "head"
     "main"
     "foot";
   height: 100%;
+  /* S'assure que le footer peut s'étendre en bas */
+  overflow: hidden;
 }
 
 .radix-themes > header {
@@ -102,7 +106,7 @@ body {
 .radix-themes > footer {
   grid-area: foot;
   padding: 1rem;
-  padding-bottom: calc(1rem + var(--safe-area-bottom));
+  /* Le footer gère lui-même le padding bottom via son module CSS */
 }
 
 h1 {
@@ -119,7 +123,7 @@ p {
 /* Support spécifique pour les encoches et barres système */
 @supports (padding-top: env(safe-area-inset-top)) {
   .radix-themes {
-    height: calc(100% + var(--safe-area-top) + var(--safe-area-bottom));
+    height: calc(100% + var(--safe-area-top));
   }
 }
 
@@ -128,5 +132,7 @@ p {
   .radix-themes {
     height: 100vh;
     height: 100dvh;
+    /* Supprime l'overflow pour Android */
+    overflow: visible;
   }
 }
