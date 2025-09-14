@@ -9,6 +9,14 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: false, // Disable for production
+    target: 'modules', // Optimize for modern smartphones
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks: {
@@ -25,64 +33,98 @@ export default defineConfig({
       registerType: "autoUpdate",
       injectRegister: "auto",
 
-      // Optimized configuration for Netlify
-      manifest: {
-        name: "MyGGV|GPS",
-        short_name: "MyGGV|GPS",
-        description: "GPS for Garden Grove Village",
-        theme_color: "#50AA61",
-        background_color: "#FFFFFF",
-        display: "standalone",
-        orientation: "portrait",
-        start_url: "/",
-        scope: "/",
-        icons: [
-          {
-            src: "/icons/icon-16x16.png",
-            sizes: "16x16",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-32x32.png",
-            sizes: "32x32",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-48x48.png",
-            sizes: "48x48",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-72x72.png",
-            sizes: "72x72",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-96x96.png",
-            sizes: "96x96",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-144x144.png",
-            sizes: "144x144",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "any maskable",
-          },
-          {
-            src: "/icons/icon-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any maskable",
-          },
-        ],
-        categories: ["navigation", "travel", "utilities"],
-        lang: "fr-FR",
-      },
+       // Optimized configuration for Netlify
+       manifest: {
+         name: "MyGGV|GPS",
+         short_name: "MyGGV|GPS",
+         description: "GPS for Garden Grove Village",
+         theme_color: "#50AA61",
+         background_color: "#FFFFFF",
+         display: "standalone",
+         orientation: "portrait",
+         start_url: "/",
+         scope: "/",
+         icons: [
+           // iOS icons
+           {
+             src: "/AppImages/ios/16.png",
+             sizes: "16x16",
+             type: "image/png",
+           },
+           {
+             src: "/AppImages/ios/32.png",
+             sizes: "32x32",
+             type: "image/png",
+           },
+           {
+             src: "/AppImages/ios/48.png",
+             sizes: "48x48",
+             type: "image/png",
+           },
+           {
+             src: "/AppImages/ios/72.png",
+             sizes: "72x72",
+             type: "image/png",
+           },
+           {
+             src: "/AppImages/ios/96.png",
+             sizes: "96x96",
+             type: "image/png",
+           },
+           {
+             src: "/AppImages/ios/144.png",
+             sizes: "144x144",
+             type: "image/png",
+           },
+           {
+             src: "/AppImages/ios/192.png",
+             sizes: "192x192",
+             type: "image/png",
+             purpose: "any maskable",
+           },
+           {
+             src: "/AppImages/ios/512.png",
+             sizes: "512x512",
+             type: "image/png",
+             purpose: "any maskable",
+           },
+           // Android icons
+           {
+             src: "/AppImages/android/android-launchericon-48-48.png",
+             sizes: "48x48",
+             type: "image/png",
+           },
+           {
+             src: "/AppImages/android/android-launchericon-72-72.png",
+             sizes: "72x72",
+             type: "image/png",
+           },
+           {
+             src: "/AppImages/android/android-launchericon-96-96.png",
+             sizes: "96x96",
+             type: "image/png",
+           },
+           {
+             src: "/AppImages/android/android-launchericon-144-144.png",
+             sizes: "144x144",
+             type: "image/png",
+           },
+           {
+             src: "/AppImages/android/android-launchericon-192-192.png",
+             sizes: "192x192",
+             type: "image/png",
+             purpose: "any maskable",
+           },
+           {
+             src: "/AppImages/android/android-launchericon-512-512.png",
+             sizes: "512x512",
+             type: "image/png",
+             purpose: "any maskable",
+           },
+         ],
+         categories: ["navigation", "travel", "utilities"],
+         lang: "en-PH",
+       },
 
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,woff2,jpg,jpeg}"],
@@ -116,7 +158,7 @@ export default defineConfig({
               cacheName: "osm-tiles",
               expiration: {
                 maxEntries: 200,
-                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+                maxAgeSeconds: 3 * 24 * 60 * 60, // 3 days for frequent local usage
               },
             },
           },
@@ -139,7 +181,7 @@ export default defineConfig({
         clientsClaim: true,
       },
 
-      includeAssets: ["icons/*.png", "markers/*.png"],
+       includeAssets: ["AppImages/**/*.png", "markers/*.png"],
       devOptions: {
         enabled: false, // Disabled for local development (avoids Workbox logs)
         type: "module",
@@ -161,4 +203,4 @@ export default defineConfig({
     strictPort: true,
     host: true,
   },
-});;
+});

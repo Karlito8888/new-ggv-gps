@@ -1,7 +1,6 @@
 import MapLibreGlDirections from "@maplibre/maplibre-gl-directions";
+import * as turf from "@turf/turf";
 import {
-  calculateDistance,
-  calculateBearing,
   formatDistance,
   bearingToDirection
 } from "../utils/geoUtils";
@@ -9,16 +8,13 @@ import {
 // Village exit coordinates
 export const VILLAGE_EXIT_COORDS = [120.951863, 14.35098];
 
-// Minimum distance to consider arrival (in meters)
-export const ARRIVAL_THRESHOLD = 10;
-
-// Route deviation and recalculation thresholds
-export const ROUTE_DEVIATION_THRESHOLD = 25; // meters - automatic recalculation threshold (réduit pour plus de réactivité)
-export const SIGNIFICANT_DEVIATION_THRESHOLD = 40; // meters - for detecting intentional route changes (réduit)
-export const MIN_RECALCULATION_INTERVAL = 8000; // 8 seconds - prevent too frequent recalculations (réduit)
-export const MIN_MOVEMENT_THRESHOLD = 8; // meters - minimum movement for route updates (réduit)
-export const DIRECTION_CHANGE_THRESHOLD = 35; // degrees - significant direction change (réduit pour plus de sensibilité)
-export const PERSISTENT_DEVIATION_TIME = 6000; // 6 seconds - time to confirm intentional deviation (réduit)
+// Route deviation and recalculation thresholds (internal use only)
+const ROUTE_DEVIATION_THRESHOLD = 25; // meters - automatic recalculation threshold (réduit pour plus de réactivité)
+const SIGNIFICANT_DEVIATION_THRESHOLD = 40; // meters - for detecting intentional route changes (réduit)
+const MIN_RECALCULATION_INTERVAL = 8000; // 8 seconds - prevent too frequent recalculations (réduit)
+const MIN_MOVEMENT_THRESHOLD = 8; // meters - minimum movement for route updates (réduit)
+const DIRECTION_CHANGE_THRESHOLD = 35; // degrees - significant direction change (réduit pour plus de sensibilité)
+const PERSISTENT_DEVIATION_TIME = 6000; // 6 seconds - time to confirm intentional deviation (réduit)
 
 // Configuration constants
 const ROUTING_CONFIG = {
@@ -63,125 +59,337 @@ export function initMapLibreDirections(map) {
       },
     },
   });
+  
+  // Initialize native MapLibre sources for better performance
+  initMapLibreRouteSources(map);
+  
   return directions;
+}
+
+// Initialize MapLibre sources and layers for route management with feature states
+export function initMapLibreRouteSources(map) {
+  if (!map) return;
+
+  // Main route source with unique feature IDs for state management
+  if (!map.getSource('route-main')) {
+    map.addSource('route-main', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: []
+      },
+      // Optimisation : réduire le buffer et la tolérance pour de meilleures performances
+      buffer: 0,
+      tolerance: 0.375,
+      maxzoom: 22
+    });
+  }
+
+  // Traveled route source
+  if (!map.getSource('route-traveled')) {
+    map.addSource('route-traveled', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: []
+      },
+      buffer: 0,
+      tolerance: 0.375,
+      maxzoom: 22
+    });
+  }
+
+  // Remaining route source
+  if (!map.getSource('route-remaining')) {
+    map.addSource('route-remaining', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: []
+      },
+      buffer: 0,
+      tolerance: 0.375,
+      maxzoom: 22
+    });
+  }
+
+  // Add layers with feature state expressions for dynamic styling
+  if (!map.getLayer('route-traveled-layer')) {
+    map.addLayer({
+      id: 'route-traveled-layer',
+      type: 'line',
+      source: 'route-traveled',
+      paint: {
+        // Utiliser les feature states pour des styles dynamiques
+        'line-color': [
+          'case',
+          ['boolean', ['feature-state', 'highlighted'], false], '#fbbf24',
+          ['boolean', ['feature-state', 'active'], false], '#f59e0b',
+          '#94a3b8'
+        ],
+        'line-width': [
+          'case',
+          ['boolean', ['feature-state', 'highlighted'], false], 6,
+          ['boolean', ['feature-state', 'active'], false], 5,
+          4
+        ],
+        'line-opacity': [
+          'case',
+          ['boolean', ['feature-state', 'highlighted'], false], 0.9,
+          ['boolean', ['feature-state', 'active'], false], 0.8,
+          0.6
+        ],
+        // 'line-dasharray': ['literal', [3, 3]] // Commenté pour éviter les erreurs de data expression
+      },
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round'
+      }
+    });
+  }
+
+  if (!map.getLayer('route-remaining-layer')) {
+    map.addLayer({
+      id: 'route-remaining-layer',
+      type: 'line',
+      source: 'route-remaining',
+      paint: {
+        // Styles dynamiques basés sur les états
+        'line-color': [
+          'case',
+          ['boolean', ['feature-state', 'highlighted'], false], '#60a5fa',
+          ['boolean', ['feature-state', 'active'], false], '#3b82f6',
+          '#2563eb'
+        ],
+        'line-width': [
+          'case',
+          ['boolean', ['feature-state', 'highlighted'], false], 6,
+          ['boolean', ['feature-state', 'active'], false], 5,
+          4
+        ],
+        'line-opacity': [
+          'case',
+          ['boolean', ['feature-state', 'highlighted'], false], 1.0,
+          ['boolean', ['feature-state', 'active'], false], 0.9,
+          0.8
+        ]
+      },
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round'
+      }
+    });
+  }
+
+  // Ajouter une couche unique pour les segments avec feature states (approche moderne)
+  if (!map.getLayer('route-segments-layer')) {
+    map.addLayer({
+      id: 'route-segments-layer',
+      type: 'line',
+      source: 'route-main',
+      paint: {
+        // Style conditionnel basé sur les feature states
+        'line-color': [
+          'case',
+          ['boolean', ['feature-state', 'traveled'], false], '#f59e0b',
+          ['boolean', ['feature-state', 'remaining'], false], '#3b82f6',
+          ['boolean', ['feature-state', 'active'], false], '#10b981',
+          '#6b7280'
+        ],
+        'line-width': [
+          'case',
+          ['boolean', ['feature-state', 'active'], false], 6,
+          ['boolean', ['feature-state', 'traveled'], false], 4,
+          ['boolean', ['feature-state', 'remaining'], false], 4,
+          3
+        ],
+        'line-opacity': [
+          'case',
+          ['boolean', ['feature-state', 'active'], false], 1.0,
+          ['boolean', ['feature-state', 'traveled'], false], 0.8,
+          ['boolean', ['feature-state', 'remaining'], false], 0.8,
+          0.6
+        ],
+        'line-dasharray': ['literal', [1, 0]] // Simplifié - pas de data expression
+      },
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round'
+      }
+    });
+  }
 }
 
 // calculateDistance is now imported from geoUtils
 
-// Calculate the shortest distance from a point to a line segment
-export function pointToLineDistance(
-  pointLat,
-  pointLon,
-  line1Lat,
-  line1Lon,
-  line2Lat,
-  line2Lon
-) {
-  const A = pointLat - line1Lat;
-  const B = pointLon - line1Lon;
-  const C = line2Lat - line1Lat;
-  const D = line2Lon - line1Lon;
-
-  const dot = A * C + B * D;
-  const lenSq = C * C + D * D;
-
-  if (lenSq === 0) {
-    // Line segment is actually a point
-    return calculateDistance(pointLat, pointLon, line1Lat, line1Lon);
-  }
-
-  let param = dot / lenSq;
-
-  let xx, yy;
-  if (param < 0) {
-    xx = line1Lat;
-    yy = line1Lon;
-  } else if (param > 1) {
-    xx = line2Lat;
-    yy = line2Lon;
-  } else {
-    xx = line1Lat + param * C;
-    yy = line1Lon + param * D;
-  }
-
-  return calculateDistance(pointLat, pointLon, xx, yy);
+// Calculate the shortest distance from a point to a line segment using Turf.js
+function _pointToLineDistance(pointLat, pointLon, line1Lat, line1Lon, line2Lat, line2Lon) {
+  const point = turf.point([pointLon, pointLat]);
+  const line = turf.lineString([[line1Lon, line1Lat], [line2Lon, line2Lat]]);
+  return turf.pointToLineDistance(point, line, { units: 'meters' });
 }
 
-// Check if user has deviated from the route
-export function isUserOffRoute(
-  userLat,
-  userLon,
-  routeGeometry,
-  threshold = ROUTE_DEVIATION_THRESHOLD
-) {
-  if (
-    !routeGeometry ||
-    !routeGeometry.coordinates ||
-    routeGeometry.coordinates.length < 2
-  ) {
+// Check if user has deviated from the route using optimized MapLibre queryRenderedFeatures
+export function isUserOffRoute(userLat, userLon, routeGeometry, threshold = ROUTE_DEVIATION_THRESHOLD, map = null) {
+  if (!routeGeometry || !routeGeometry.coordinates || routeGeometry.coordinates.length < 2) {
     return false; // Can't determine if off-route without valid route
   }
 
-  const coordinates = routeGeometry.coordinates;
-  let minDistance = Infinity;
-
-  // Check distance to each segment of the route
-  for (let i = 0; i < coordinates.length - 1; i++) {
-    const [lon1, lat1] = coordinates[i];
-    const [lon2, lat2] = coordinates[i + 1];
-
-    const distance = pointToLineDistance(
-      userLat,
-      userLon,
-      lat1,
-      lon1,
-      lat2,
-      lon2
-    );
-    minDistance = Math.min(minDistance, distance);
-
-    // Early exit if we're close enough to the route
-    if (minDistance <= threshold) {
-      return false;
+  // Optimisation : utiliser queryRenderedFeatures avec une approche multi-niveaux
+  if (map && typeof map.queryRenderedFeatures === 'function') {
+    try {
+      const userPoint = map.project([userLon, userLat]);
+      
+      // Calculer la taille du buffer en pixels basée sur le seuil et le zoom
+      const zoom = map.getZoom();
+      const metersPerPixel = 1.5 * Math.pow(2, 15 - zoom);
+      const pixelThreshold = Math.min(Math.max(threshold / metersPerPixel, 10), 100); // Limiter entre 10 et 100 pixels
+      
+      // Requête multi-échelle : commencer avec un petit buffer, augmenter si nécessaire
+      const bufferSizes = [pixelThreshold * 0.5, pixelThreshold, pixelThreshold * 2];
+      
+      for (const bufferSize of bufferSizes) {
+        const nearbyFeatures = map.queryRenderedFeatures(
+          [
+            [userPoint.x - bufferSize, userPoint.y - bufferSize],
+            [userPoint.x + bufferSize, userPoint.y + bufferSize]
+          ],
+          { 
+            layers: ['route-remaining-layer', 'route-main', 'route-segments-layer'],
+            // Filtrer pour n'inclure que les features de route
+            filter: ['==', '$type', 'LineString']
+          }
+        );
+        
+        // Si on trouve des features de route à n'importe quel niveau, l'utilisateur est sur la route
+        if (nearbyFeatures.length > 0) {
+          // Vérification supplémentaire : s'assurer que la feature est suffisamment proche
+          const closestFeatureDistance = Math.min(
+            ...nearbyFeatures.map(feature => {
+              // Calculer la distance approximative au centre du bbox de la feature
+              if (feature.geometry && feature.geometry.coordinates) {
+                const coords = feature.geometry.coordinates;
+                const centerCoord = Array.isArray(coords[0]) ? 
+                  coords[Math.floor(coords.length / 2)] : coords;
+                
+                if (centerCoord && centerCoord.length >= 2) {
+                  const featurePoint = map.project([centerCoord[0], centerCoord[1]]);
+                  return Math.sqrt(
+                    Math.pow(userPoint.x - featurePoint.x, 2) + 
+                    Math.pow(userPoint.y - featurePoint.y, 2)
+                  ) * metersPerPixel; // Convertir en mètres
+                }
+              }
+              return Infinity;
+            })
+          );
+          
+          if (closestFeatureDistance <= threshold) {
+            return false; // Sur la route
+          }
+        }
+      }
+      
+      // Aucune feature de route trouvée dans les buffers, probablement hors route
+      console.log(`🛣️ No route features found within ${threshold}m (pixel threshold: ${pixelThreshold}px)`);
+      return true;
+      
+    } catch (error) {
+      console.warn('queryRenderedFeatures failed, falling back to Turf.js:', error);
     }
   }
 
+  // Fallback optimisé à Turf.js avec nos fonctions améliorées
+  const userPoint = turf.point([userLon, userLat]);
+  const routeLine = turf.lineString(routeGeometry.coordinates);
+  
+  // Use Turf's nearest point on line function
+  const nearest = turf.nearestPointOnLine(routeLine, userPoint, { units: 'meters' });
+  const minDistance = nearest.properties.dist;
+
   const isOffRoute = minDistance > threshold;
   if (isOffRoute) {
-    console.log(
-      `🛣️ User is off-route: ${minDistance.toFixed(
-        1
-      )}m from route (threshold: ${threshold}m)`
-    );
+    console.log(`🛣️ User is off-route: ${minDistance.toFixed(1)}m from route (threshold: ${threshold}m)`);
   }
   return isOffRoute;
 }
 
-// Detect if user is approaching an intersection or decision point
-export function isApproachingDecisionPoint(userLat, userLon, routeGeometry, lookAheadDistance = 50) {
+// Detect if user is approaching an intersection or decision point using Turf.js and MapLibre projections
+export function isApproachingDecisionPoint(userLat, userLon, routeGeometry, lookAheadDistance = 50, map = null) {
   if (!routeGeometry || !routeGeometry.coordinates || routeGeometry.coordinates.length < 3) {
     return false;
   }
 
-  const coordinates = routeGeometry.coordinates;
-  const userPosition = findClosestPointOnRoute(userLat, userLon, routeGeometry);
+  const userPoint = turf.point([userLon, userLat]);
+  const routeLine = turf.lineString(routeGeometry.coordinates);
   
-  if (!userPosition) return false;
-
-  const { segmentIndex } = userPosition;
+  // Find the closest point on the route
+  const nearest = turf.nearestPointOnLine(routeLine, userPoint);
+  const segmentIndex = nearest.properties.index;
   
-  // Look ahead in the route for significant direction changes (potential intersections)
+  // Use MapLibre projection for more accurate distance calculations if map is available
+  if (map) {
+    try {
+      const userPixel = map.project([userLon, userLat]);
+      let totalPixelDistance = 0;
+      
+      for (let i = segmentIndex; i < routeGeometry.coordinates.length - 2 && totalPixelDistance < lookAheadDistance * 2; i++) {
+        const [lon1, lat1] = routeGeometry.coordinates[i];
+        const [lon2, lat2] = routeGeometry.coordinates[i + 1];
+        const [lon3, lat3] = routeGeometry.coordinates[i + 2];
+        
+        const pixel1 = map.project([lon1, lat1]);
+        const pixel2 = map.project([lon2, lat2]);
+        const _pixel3 = map.project([lon3, lat3]);
+        
+        // Calculate pixel distance from user to segment for more accurate proximity detection
+        const segmentPixelDistance = Math.sqrt(
+          Math.pow(pixel2.x - pixel1.x, 2) + Math.pow(pixel2.y - pixel1.y, 2)
+        );
+        
+        // Calculate distance from user pixel to segment midpoint
+        const segmentMidpoint = {
+          x: (pixel1.x + pixel2.x) / 2,
+          y: (pixel1.y + pixel2.y) / 2
+        };
+        const userToSegmentDistance = Math.sqrt(
+          Math.pow(userPixel.x - segmentMidpoint.x, 2) + Math.pow(userPixel.y - segmentMidpoint.y, 2)
+        );
+        
+        totalPixelDistance += segmentPixelDistance;
+        
+        // Convert back to geographic distance for bearing calculation
+        const geoDistance = turf.distance([lon1, lat1], [lon2, lat2], { units: 'meters' });
+        
+        // Calculate the angle between consecutive segments using Turf
+        const bearing1 = turf.bearing(turf.point([lon1, lat1]), turf.point([lon2, lat2]));
+        const bearing2 = turf.bearing(turf.point([lon2, lat2]), turf.point([lon3, lat3]));
+        const angleDiff = Math.abs(bearing2 - bearing1);
+        const normalizedAngle = Math.min(angleDiff, 360 - angleDiff);
+        
+        // If there's a significant turn ahead (>30°) and user is close to segment, consider it a decision point
+        if (normalizedAngle > 30 && geoDistance < lookAheadDistance && userToSegmentDistance < 100) {
+          console.log(`🛣️ Decision point detected ahead: ${normalizedAngle.toFixed(1)}° turn in ${geoDistance.toFixed(1)}m (pixel distance: ${userToSegmentDistance.toFixed(0)}px)`);
+          return true;
+        }
+      }
+    } catch (error) {
+      console.warn('Map projection failed, falling back to geographic calculation:', error);
+    }
+  }
+  
+  // Fallback to geographic calculation
   let totalDistance = 0;
-  for (let i = segmentIndex; i < coordinates.length - 2 && totalDistance < lookAheadDistance; i++) {
-    const [lon1, lat1] = coordinates[i];
-    const [lon2, lat2] = coordinates[i + 1];
-    const [lon3, lat3] = coordinates[i + 2];
+  for (let i = segmentIndex; i < routeGeometry.coordinates.length - 2 && totalDistance < lookAheadDistance; i++) {
+    const [lon1, lat1] = routeGeometry.coordinates[i];
+    const [lon2, lat2] = routeGeometry.coordinates[i + 1];
+    const [lon3, lat3] = routeGeometry.coordinates[i + 2];
     
-    totalDistance += calculateDistance(lat1, lon1, lat2, lon2);
+    totalDistance += turf.distance([lon1, lat1], [lon2, lat2], { units: 'meters' });
     
-    // Calculate the angle between consecutive segments
-    const bearing1 = calculateBearing(lat1, lon1, lat2, lon2);
-    const bearing2 = calculateBearing(lat2, lon2, lat3, lon3);
+    // Calculate the angle between consecutive segments using Turf
+    const bearing1 = turf.bearing(turf.point([lon1, lat1]), turf.point([lon2, lat2]));
+    const bearing2 = turf.bearing(turf.point([lon2, lat2]), turf.point([lon3, lat3]));
     const angleDiff = Math.abs(bearing2 - bearing1);
     const normalizedAngle = Math.min(angleDiff, 360 - angleDiff);
     
@@ -215,7 +423,7 @@ export function detectIntentionalRouteChange(
   // Calculate user's current direction if we have previous position
   let currentUserDirection = null;
   if (previousLat && previousLon) {
-    currentUserDirection = calculateBearing(previousLat, previousLon, userLat, userLon);
+    currentUserDirection = turf.bearing(turf.point([previousLon, previousLat]), turf.point([userLon, userLat]));
   }
 
   // Check for significant deviation
@@ -288,7 +496,8 @@ export function shouldRecalculateRoute(
   currentRoute,
   forceRecalculation = false,
   previousLat = null,
-  previousLon = null
+  previousLon = null,
+  map = null
 ) {
   const now = Date.now();
 
@@ -311,11 +520,10 @@ export function shouldRecalculateRoute(
 
   // Check if user has moved significantly since last recalculation
   if (lastRecalculationPosition) {
-    const movementDistance = calculateDistance(
-      userLat,
-      userLon,
-      lastRecalculationPosition.lat,
-      lastRecalculationPosition.lon
+    const movementDistance = turf.distance(
+      [userLon, userLat],
+      [lastRecalculationPosition.lon, lastRecalculationPosition.lat],
+      { units: 'meters' }
     );
 
     if (movementDistance < MIN_MOVEMENT_THRESHOLD) {
@@ -329,13 +537,7 @@ export function shouldRecalculateRoute(
   }
 
   // Check for intentional route changes first
-  const intentionalChange = detectIntentionalRouteChange(
-    userLat,
-    userLon,
-    currentRoute,
-    previousLat,
-    previousLon
-  );
+  const intentionalChange = detectIntentionalRouteChange(userLat, userLon, currentRoute, previousLat, previousLon);
 
   if (intentionalChange) {
     console.log("🛣️ Intentional route change detected, triggering recalculation");
@@ -345,7 +547,7 @@ export function shouldRecalculateRoute(
   // Check if user is off the current route (standard deviation)
   if (currentRoute && currentRoute.features && currentRoute.features[0]) {
     const routeGeometry = currentRoute.features[0].geometry;
-    const isOffRoute = isUserOffRoute(userLat, userLon, routeGeometry);
+    const isOffRoute = isUserOffRoute(userLat, userLon, routeGeometry, ROUTE_DEVIATION_THRESHOLD, map);
 
     if (isOffRoute) {
       console.log("🚨 User is off-route, automatic recalculation triggered");
@@ -377,16 +579,17 @@ export function resetRecalculationState() {
 
 // bearingToDirection and formatDistance are now imported from geoUtils
 
-// Check if user has arrived at destination
+// Check if user has arrived at destination using Turf.js
 export function hasArrived(userLat, userLon, destLat, destLon) {
-  return (
-    calculateDistance(userLat, userLon, destLat, destLon) <= ARRIVAL_THRESHOLD
-  );
+  return turf.distance([userLon, userLat], [destLat, destLon], { units: 'meters' }) <= 10;
 }
 
-// Fallback: Creates a simple straight-line route
-export function createDirectRoute(startLat, startLon, endLat, endLon) {
-  const distance = calculateDistance(startLat, startLon, endLat, endLon);
+// Fallback: Creates a simple straight-line route using Turf.js
+function createDirectRoute(startLat, startLon, endLat, endLon) {
+  const start = turf.point([startLon, startLat]);
+  const end = turf.point([endLon, endLat]);
+  const distance = turf.distance(start, end, { units: 'meters' });
+  
   return {
     type: "Feature",
     geometry: {
@@ -475,8 +678,8 @@ async function tryMapLibreDirections(startLat, startLon, endLat, endLon, map) {
       type: "Feature",
       geometry: route.geometry,
       properties: {
-        distance: route.distance || calculateDistance(startLat, startLon, endLat, endLon),
-        duration: route.duration || Math.round((route.distance || calculateDistance(startLat, startLon, endLat, endLon)) / ROUTING_CONFIG.WALKING_SPEED),
+        distance: route.distance || turf.distance([startLon, startLat], [endLon, endLat], { units: 'meters' }),
+        duration: route.duration || Math.round((route.distance || turf.distance([startLon, startLat], [endLon, endLat], { units: 'meters' })) / ROUTING_CONFIG.WALKING_SPEED),
         steps: route.legs?.[0]?.steps || [],
         source: "maplibre-directions",
       },
@@ -535,7 +738,7 @@ async function tryORS(startLat, startLon, endLat, endLon) {
   };
 }
 
-// Main route creation function with fallback logic
+// Main route creation function with fallback logic and MapLibre source management
 export async function createRoute(startLat, startLon, endLat, endLon, map = null) {
   console.log("🚀 Creating route with cascading fallback");
 
@@ -554,8 +757,7 @@ export async function createRoute(startLat, startLon, endLat, endLon, map = null
     },
     {
       name: "Direct Route",
-      fn: () =>
-        Promise.resolve(createDirectRoute(startLat, startLon, endLat, endLon)),
+      fn: () => Promise.resolve(createDirectRoute(startLat, startLon, endLat, endLon)),
     },
   ];
 
@@ -564,6 +766,12 @@ export async function createRoute(startLat, startLon, endLat, endLon, map = null
       console.log(`📍 Tentative ${index + 1}/${services.length}: ${service.name}`);
       const result = await service.fn();
       console.log(`✅ Success with ${service.name}:`, result.properties?.source);
+      
+      // Update MapLibre sources if map is provided
+      if (map) {
+        await updateMapLibreRouteSources(map, result);
+      }
+      
       return result;
     } catch (error) {
       console.warn(`❌ ${service.name} failed:`, error.message);
@@ -571,30 +779,267 @@ export async function createRoute(startLat, startLon, endLat, endLon, map = null
       // Si c'est le dernier service, on force le succès
       if (index === services.length - 1) {
         console.log("🔄 Forcing direct route as last resort");
-        return createDirectRoute(startLat, startLon, endLat, endLon);
+        const directRoute = createDirectRoute(startLat, startLon, endLat, endLon);
+        
+        // Update MapLibre sources if map is provided
+        if (map) {
+          await updateMapLibreRouteSources(map, directRoute);
+        }
+        
+        return directRoute;
       }
     }
   }
 
   // Ne devrait jamais arriver, mais sécurité
-  return createDirectRoute(startLat, startLon, endLat, endLon);
+  const directRoute = createDirectRoute(startLat, startLon, endLat, endLon);
+  
+  // Update MapLibre sources if map is provided
+  if (map) {
+    await updateMapLibreRouteSources(map, directRoute);
+  }
+  
+  return directRoute;
 }
 
-// Calculate navigation instructions
-export function getNavigationInstructions(
-  userLat,
-  userLon,
-  destLat,
-  destLon,
-  deviceBearing = 0
-) {
-  const distance = calculateDistance(userLat, userLon, destLat, destLon);
-  const bearing = calculateBearing(userLat, userLon, destLat, destLon);
+// Update MapLibre sources with new route data and feature states
+async function updateMapLibreRouteSources(map, routeData) {
+  if (!map || !routeData) return;
+
+  try {
+    // Ensure sources exist
+    initMapLibreRouteSources(map);
+
+    // Update main route source
+    if (map.getSource('route-main')) {
+      map.getSource('route-main').setData({
+        type: 'FeatureCollection',
+        features: [routeData]
+      });
+    }
+
+    // Initialize traveled and remaining routes with empty data
+    if (map.getSource('route-traveled')) {
+      map.getSource('route-traveled').setData({
+        type: 'FeatureCollection',
+        features: []
+      });
+    }
+
+    if (map.getSource('route-remaining')) {
+      map.getSource('route-remaining').setData({
+        type: 'FeatureCollection',
+        features: [routeData]
+      });
+    }
+
+    // Set initial feature states for route segments
+    if (routeData.geometry && routeData.geometry.coordinates) {
+      setRouteSegmentStates(map, routeData, 'initial');
+    }
+
+    console.log('✅ MapLibre route sources updated');
+  } catch (error) {
+    console.warn('❌ Error updating MapLibre sources:', error);
+  }
+}
+
+// Set feature states for route segments with unique IDs
+function setRouteSegmentStates(map, routeData, state) {
+  if (!map || !routeData || !routeData.geometry) return;
+
+  try {
+    const coordinates = routeData.geometry.coordinates;
+    
+    // Créer des features avec des IDs uniques pour chaque segment
+    const segmentFeatures = [];
+    
+    for (let i = 0; i < coordinates.length - 1; i++) {
+      const feature = {
+        type: 'Feature',
+        id: `route-segment-${i}`, // ID unique pour le feature state
+        geometry: {
+          type: 'LineString',
+          coordinates: [coordinates[i], coordinates[i + 1]]
+        },
+        properties: {
+          segmentIndex: i,
+          originalIndex: i
+        }
+      };
+      segmentFeatures.push(feature);
+    }
+    
+    // Mettre à jour la source avec les segments
+    if (map.getSource('route-main')) {
+      map.getSource('route-main').setData({
+        type: 'FeatureCollection',
+        features: segmentFeatures
+      });
+    }
+    
+    // Appliquer les états aux segments
+    segmentFeatures.forEach((feature) => {
+      let segmentState = {};
+      
+      switch (state) {
+        case 'traveled':
+          segmentState = { traveled: true, remaining: false, active: false };
+          break;
+        case 'remaining':
+          segmentState = { traveled: false, remaining: true, active: false };
+          break;
+        case 'active':
+          segmentState = { traveled: false, remaining: false, active: true };
+          break;
+        default:
+          segmentState = { traveled: false, remaining: false, active: false };
+      }
+      
+      map.setFeatureState(
+        {
+          source: 'route-main',
+          id: feature.id
+        },
+        segmentState
+      );
+    });
+    
+    console.log(`✅ Route segment states set to: ${state} (${segmentFeatures.length} segments)`);
+  } catch (error) {
+    console.warn('❌ Error setting feature states:', error);
+  }
+}
+
+// Update feature state for user's current position on route with MapLibre projections
+export function updateUserPositionOnRoute(map, userLat, userLon, routeData) {
+  if (!map || !routeData || !routeData.geometry) return;
+
+  try {
+    // Use MapLibre projection for more accurate positioning
+    const userPoint = turf.point([userLon, userLat]);
+    const userPixel = map.project([userLon, userLat]);
+    
+    const routeLine = turf.lineString(routeData.geometry.coordinates);
+    const nearest = turf.nearestPointOnLine(routeLine, userPoint);
+    
+    const segmentIndex = nearest.properties.index;
+    const totalSegments = routeData.geometry.coordinates.length - 1;
+    
+    // Optimisation : ne mettre à jour que les segments qui ont changé d'état
+    const currentStates = new Map();
+    
+    // Obtenir l'état actuel des segments (si disponible)
+    for (let i = 0; i < totalSegments; i++) {
+      try {
+        const state = map.getFeatureState({ source: 'route-main', id: `route-segment-${i}` });
+        currentStates.set(i, state);
+      } catch {
+        currentStates.set(i, {});
+      }
+    }
+    
+    // Mark segments as traveled up to current position
+    for (let i = 0; i <= segmentIndex; i++) {
+      const currentState = currentStates.get(i) || {};
+      const newState = { 
+        traveled: true, 
+        remaining: false, 
+        active: i === segmentIndex,
+        userPixel: userPixel // Store pixel coordinates for visualization
+      };
+      
+      // Ne mettre à jour que si l'état a changé
+      if (shouldUpdateFeatureState(currentState, newState)) {
+        map.setFeatureState(
+          { source: 'route-main', id: `route-segment-${i}` },
+          newState
+        );
+      }
+    }
+    
+    // Mark remaining segments
+    for (let i = segmentIndex + 1; i < totalSegments; i++) {
+      const currentState = currentStates.get(i) || {};
+      const newState = { 
+        traveled: false, 
+        remaining: true, 
+        active: false 
+      };
+      
+      // Ne mettre à jour que si l'état a changé
+      if (shouldUpdateFeatureState(currentState, newState)) {
+        map.setFeatureState(
+          { source: 'route-main', id: `route-segment-${i}` },
+          newState
+        );
+      }
+    }
+    
+    console.log(`📍 User position updated on route segment ${segmentIndex}/${totalSegments - 1} at pixel (${userPixel.x.toFixed(0)}, ${userPixel.y.toFixed(0)})`);
+  } catch (error) {
+    console.warn('❌ Error updating user position state:', error);
+  }
+}
+
+// Helper function to check if feature state needs updating
+function shouldUpdateFeatureState(currentState, newState) {
+  return (
+    currentState.traveled !== newState.traveled ||
+    currentState.remaining !== newState.remaining ||
+    currentState.active !== newState.active
+  );
+}
+
+// Utility functions for coordinate conversion using MapLibre
+export function convertToPixelCoordinates(map, lat, lon) {
+  if (!map) return null;
+  try {
+    return map.project([lon, lat]);
+  } catch (error) {
+    console.warn('❌ Error converting to pixel coordinates:', error);
+    return null;
+  }
+}
+
+export function convertToGeographicCoordinates(map, x, y) {
+  if (!map) return null;
+  try {
+    const lngLat = map.unproject([x, y]);
+    return { lat: lngLat.lat, lon: lngLat.lng };
+  } catch (error) {
+    console.warn('❌ Error converting to geographic coordinates:', error);
+    return null;
+  }
+}
+
+// Calculate screen distance between two geographic points
+export function calculateScreenDistance(map, lat1, lon1, lat2, lon2) {
+  if (!map) return null;
+  try {
+    const pixel1 = map.project([lon1, lat1]);
+    const pixel2 = map.project([lon2, lat2]);
+    
+    return Math.sqrt(
+      Math.pow(pixel2.x - pixel1.x, 2) + Math.pow(pixel2.y - pixel1.y, 2)
+    );
+  } catch (error) {
+    console.warn('❌ Error calculating screen distance:', error);
+    return null;
+  }
+}
+
+// Calculate navigation instructions using Turf.js
+export function getNavigationInstructions(userLat, userLon, destLat, destLon, deviceBearing = 0) {
+  const userPoint = turf.point([userLon, userLat]);
+  const destPoint = turf.point([destLon, destLat]);
+  const distance = turf.distance(userPoint, destPoint, { units: 'meters' });
+  const bearing = turf.bearing(userPoint, destPoint);
   const relativeBearing = (bearing - deviceBearing + 360) % 360;
   const direction = bearingToDirection(bearing);
 
   let instruction = "";
-  if (distance <= ARRIVAL_THRESHOLD) {
+  if (distance <= 10) {
     instruction = "You have arrived!";
   } else {
     // Determine instruction based on relative bearing
@@ -629,83 +1074,16 @@ export function getNavigationInstructions(
   };
 }
 
-// Cleanup directions instance
-export function cleanupDirections() {
-  if (directions) {
-    // directions.remove();
-    directions = null;
-  }
-}
+// Cleanup directions instance (internal use only)
+// function cleanupDirections() {
+//   if (directions) {
+//     // directions.remove();
+//     directions = null;
+//   }
+// }
 
-// Find the closest point on the route to the user's current position
-export function findClosestPointOnRoute(userLat, userLon, routeGeometry) {
-  if (
-    !routeGeometry ||
-    !routeGeometry.coordinates ||
-    routeGeometry.coordinates.length < 2
-  ) {
-    return null;
-  }
-
-  const coordinates = routeGeometry.coordinates;
-  let closestPoint = null;
-  let minDistance = Infinity;
-  let segmentIndex = 0;
-  let positionOnSegment = 0;
-
-  // Check each segment of the route
-  for (let i = 0; i < coordinates.length - 1; i++) {
-    const [lon1, lat1] = coordinates[i];
-    const [lon2, lat2] = coordinates[i + 1];
-
-    // Calculate closest point on this segment
-    const A = userLat - lat1;
-    const B = userLon - lon1;
-    const C = lat2 - lat1;
-    const D = lon2 - lon1;
-
-    const dot = A * C + B * D;
-    const lenSq = C * C + D * D;
-
-    let param = -1;
-    if (lenSq !== 0) {
-      param = dot / lenSq;
-    }
-
-    let xx, yy;
-    if (param < 0) {
-      xx = lat1;
-      yy = lon1;
-      param = 0;
-    } else if (param > 1) {
-      xx = lat2;
-      yy = lon2;
-      param = 1;
-    } else {
-      xx = lat1 + param * C;
-      yy = lon1 + param * D;
-    }
-
-    const distance = calculateDistance(userLat, userLon, xx, yy);
-
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestPoint = [yy, xx]; // [lon, lat]
-      segmentIndex = i;
-      positionOnSegment = param;
-    }
-  }
-
-  return {
-    point: closestPoint,
-    segmentIndex,
-    positionOnSegment,
-    distance: minDistance,
-  };
-}
-
-// Create a route with only the remaining portion (from user position to destination)
-export function createRemainingRoute(userLat, userLon, originalRoute) {
+// Create a route with only the remaining portion using Turf.js and MapLibre sources
+export function createRemainingRoute(userLat, userLon, originalRoute, map = null) {
   if (!originalRoute || !originalRoute.features || !originalRoute.features[0]) {
     return originalRoute;
   }
@@ -713,45 +1091,24 @@ export function createRemainingRoute(userLat, userLon, originalRoute) {
   const routeFeature = originalRoute.features[0];
   const routeGeometry = routeFeature.geometry;
 
-  if (
-    !routeGeometry ||
-    !routeGeometry.coordinates ||
-    routeGeometry.coordinates.length < 2
-  ) {
+  if (!routeGeometry || !routeGeometry.coordinates || routeGeometry.coordinates.length < 2) {
     return originalRoute;
   }
 
-  const closestPointInfo = findClosestPointOnRoute(
-    userLat,
-    userLon,
-    routeGeometry
-  );
-
-  if (!closestPointInfo) {
-    return originalRoute;
-  }
-
-  const {
-    point: closestPoint,
-    segmentIndex,
-    positionOnSegment,
-  } = closestPointInfo;
-  const coordinates = routeGeometry.coordinates;
+  // Use Turf.js to find the closest point on the route
+  const userPoint = turf.point([userLon, userLat]);
+  const routeLine = turf.lineString(routeGeometry.coordinates);
+  const nearest = turf.nearestPointOnLine(routeLine, userPoint);
+  
+  const segmentIndex = nearest.properties.index;
+  const closestPoint = nearest.geometry.coordinates;
 
   // Create new coordinates array starting from the closest point
-  const remainingCoordinates = [];
-
-  // Add the closest point as the starting point
-  remainingCoordinates.push(closestPoint);
-
-  // If we're not at the end of the current segment, add the end of current segment
-  if (positionOnSegment < 1 && segmentIndex < coordinates.length - 1) {
-    remainingCoordinates.push(coordinates[segmentIndex + 1]);
-  }
+  const remainingCoordinates = [closestPoint];
 
   // Add all remaining segments
-  for (let i = segmentIndex + 2; i < coordinates.length; i++) {
-    remainingCoordinates.push(coordinates[i]);
+  for (let i = segmentIndex + 1; i < routeGeometry.coordinates.length; i++) {
+    remainingCoordinates.push(routeGeometry.coordinates[i]);
   }
 
   // If the remaining route is too short, keep the original
@@ -759,13 +1116,9 @@ export function createRemainingRoute(userLat, userLon, originalRoute) {
     return originalRoute;
   }
 
-  // Calculate remaining distance
-  let remainingDistance = 0;
-  for (let i = 0; i < remainingCoordinates.length - 1; i++) {
-    const [lon1, lat1] = remainingCoordinates[i];
-    const [lon2, lat2] = remainingCoordinates[i + 1];
-    remainingDistance += calculateDistance(lat1, lon1, lat2, lon2);
-  }
+  // Calculate remaining distance using Turf.js
+  const remainingLine = turf.lineString(remainingCoordinates);
+  const remainingDistance = turf.length(remainingLine, { units: 'meters' });
 
   // Create new route feature with remaining coordinates
   const remainingRoute = {
@@ -781,58 +1134,50 @@ export function createRemainingRoute(userLat, userLon, originalRoute) {
           ...routeFeature.properties,
           distance: remainingDistance,
           isRemainingRoute: true,
-          originalDistance:
-            routeFeature.properties?.distance || remainingDistance,
+          originalDistance: routeFeature.properties?.distance || remainingDistance,
         },
       },
     ],
   };
 
-  console.log(
-    `🛣️ Route updated: ${formatDistance(
-      remainingDistance
-    )} remaining (was ${formatDistance(
-      routeFeature.properties?.distance || 0
-    )})`
-  );
+  console.log(`🛣️ Route updated: ${formatDistance(remainingDistance)} remaining (was ${formatDistance(routeFeature.properties?.distance || 0)})`);
+
+  // Update MapLibre source and feature states if map is provided
+  if (map) {
+    if (map.getSource('route-remaining')) {
+      map.getSource('route-remaining').setData(remainingRoute);
+    }
+    
+    // Update feature states to reflect the new remaining portion
+    updateUserPositionOnRoute(map, userLat, userLon, originalRoute);
+  }
 
   return remainingRoute;
 }
 
-// Check if the route should be updated (user has progressed significantly)
-export function shouldUpdateRemainingRoute(
-  userLat,
-  userLon,
-  currentRoute,
-  lastUpdatePosition,
-  threshold = 20
-) {
+// Check if the route should be updated using Turf.js
+export function shouldUpdateRemainingRoute(userLat, userLon, currentRoute, lastUpdatePosition, threshold = 20) {
   if (!lastUpdatePosition) {
     return true; // First update
   }
 
-  const movementDistance = calculateDistance(
-    userLat,
-    userLon,
-    lastUpdatePosition.lat,
-    lastUpdatePosition.lon
+  const movementDistance = turf.distance(
+    [userLon, userLat],
+    [lastUpdatePosition.lon, lastUpdatePosition.lat],
+    { units: 'meters' }
   );
 
   // Update if user has moved significantly forward
   if (movementDistance >= threshold) {
-    console.log(
-      `📍 User moved ${formatDistance(
-        movementDistance
-      )}, updating remaining route`
-    );
+    console.log(`📍 User moved ${formatDistance(movementDistance)}, updating remaining route`);
     return true;
   }
 
   return false;
 }
 
-// Create a route showing the traveled portion (from start to user position)
-export function createTraveledRoute(userLat, userLon, originalRoute) {
+// Create a route showing the traveled portion using Turf.js and MapLibre sources
+export function createTraveledRoute(userLat, userLon, originalRoute, map = null) {
   if (!originalRoute || !originalRoute.features || !originalRoute.features[0]) {
     return null;
   }
@@ -840,29 +1185,17 @@ export function createTraveledRoute(userLat, userLon, originalRoute) {
   const routeFeature = originalRoute.features[0];
   const routeGeometry = routeFeature.geometry;
 
-  if (
-    !routeGeometry ||
-    !routeGeometry.coordinates ||
-    routeGeometry.coordinates.length < 2
-  ) {
+  if (!routeGeometry || !routeGeometry.coordinates || routeGeometry.coordinates.length < 2) {
     return null;
   }
 
-  const closestPointInfo = findClosestPointOnRoute(
-    userLat,
-    userLon,
-    routeGeometry
-  );
-
-  if (!closestPointInfo) {
-    return null;
-  }
-
-  const {
-    point: closestPoint,
-    segmentIndex,
-    positionOnSegment,
-  } = closestPointInfo;
+  // Use Turf.js to find the closest point on the route
+  const userPoint = turf.point([userLon, userLat]);
+  const routeLine = turf.lineString(routeGeometry.coordinates);
+  const nearest = turf.nearestPointOnLine(routeLine, userPoint);
+  
+  const segmentIndex = nearest.properties.index;
+  const closestPoint = nearest.geometry.coordinates;
   const coordinates = routeGeometry.coordinates;
 
   // Create coordinates array from start to the closest point
@@ -874,7 +1207,7 @@ export function createTraveledRoute(userLat, userLon, originalRoute) {
   }
 
   // Add the closest point as the end point (if not already at segment start)
-  if (positionOnSegment > 0) {
+  if (nearest.properties.location > 0) {
     traveledCoordinates.push(closestPoint);
   }
 
@@ -883,13 +1216,9 @@ export function createTraveledRoute(userLat, userLon, originalRoute) {
     return null;
   }
 
-  // Calculate traveled distance
-  let traveledDistance = 0;
-  for (let i = 0; i < traveledCoordinates.length - 1; i++) {
-    const [lon1, lat1] = traveledCoordinates[i];
-    const [lon2, lat2] = traveledCoordinates[i + 1];
-    traveledDistance += calculateDistance(lat1, lon1, lat2, lon2);
-  }
+  // Calculate traveled distance using Turf.js
+  const traveledLine = turf.lineString(traveledCoordinates);
+  const traveledDistance = turf.length(traveledLine, { units: 'meters' });
 
   // Create traveled route feature
   const traveledRoute = {
@@ -908,6 +1237,16 @@ export function createTraveledRoute(userLat, userLon, originalRoute) {
       },
     ],
   };
+
+  // Update MapLibre source and feature states if map is provided
+  if (map) {
+    if (map.getSource('route-traveled')) {
+      map.getSource('route-traveled').setData(traveledRoute);
+    }
+    
+    // Update feature states to reflect the new traveled portion
+    updateUserPositionOnRoute(map, userLat, userLon, originalRoute);
+  }
 
   return traveledRoute;
 }

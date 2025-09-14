@@ -19,16 +19,19 @@ export function useMapTransitions({
   // Protection simple contre les animations multiples
   const isTransitioning = useRef(false);
 
-  // Dynamic pitch update - ultra simple
+  // Dynamic pitch update - optimized with flyTo()
   useEffect(() => {
     if (!mapRef.current?.getMap() || !isMapReady || isTransitioning.current) return;
     
     isTransitioning.current = true;
     const map = mapRef.current.getMap();
     
-    map.easeTo({
+    // Utiliser flyTo() pour une transition plus fluide du pitch
+    map.flyTo({
       pitch: adaptivePitch,
       duration: pitchMode === 'cinematic' ? 1200 : 600,
+      speed: 0.8,
+      curve: 1,
       essential: true
     });
     
@@ -38,16 +41,19 @@ export function useMapTransitions({
     
   }, [adaptivePitch, pitchMode, mapRef, isMapReady]);
 
-  // Device orientation effect - ultra simple
+  // Device orientation effect - optimized with flyTo()
   useEffect(() => {
     if (!mapRef.current?.getMap() || !isMapReady || !orientationEnabled || !isActive || navigationState !== "navigating" || isTransitioning.current) return;
     
     isTransitioning.current = true;
     const map = mapRef.current.getMap();
     
-    map.easeTo({
+    // Utiliser flyTo() pour une transition plus fluide du bearing
+    map.flyTo({
       bearing: compass,
       duration: 300,
+      speed: 1.2,
+      curve: 1,
       essential: true
     });
     
@@ -57,7 +63,7 @@ export function useMapTransitions({
     
   }, [compass, isActive, orientationEnabled, navigationState, mapRef, isMapReady]);
 
-  // Handle orientation toggle - ultra simple
+  // Handle orientation toggle - optimized with flyTo()
   const handleOrientationToggle = useCallback(async (enabled) => {
     setOrientationEnabled(enabled);
     
@@ -67,9 +73,12 @@ export function useMapTransitions({
       const targetBearing = enabled ? await getCurrentOrientation() : 0;
       const map = mapRef.current.getMap();
       
-      map.easeTo({
+      // Utiliser flyTo() pour une transition plus fluide
+      map.flyTo({
         bearing: targetBearing,
         duration: 600,
+        speed: 1,
+        curve: 1.2,
         essential: true
       });
     } catch (error) {

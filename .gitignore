@@ -26,3 +26,7 @@ dist-ssr
 .opencode.json
 .aider*
 .env
+
+# Test files (keep only organized tests in tests/ directory)
+test-*.html
+!tests/

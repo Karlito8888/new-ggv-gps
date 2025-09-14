@@ -29,7 +29,7 @@ export function MapControls({
           onClick={handleMapTypeToggle}
           variant="soft"
           title="Satellite view"
-          className={styles.mapTypeButton}
+          className={`${styles.mapTypeButton} ${styles.buttonTransparent}`}
         >
           <BsLayersHalf size={25} />
         </Button>

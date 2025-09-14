@@ -95,8 +95,8 @@
 }
 
 /* ========================================
-    MAP TYPE SWITCHER (Bouton satellite)
-    ======================================== */
+     MAP TYPE SWITCHER (Bouton satellite)
+     ======================================== */
 .mapTypeSwitcher {
   position: absolute;
   bottom: 75px;
@@ -113,6 +113,19 @@
   border: 1px solid #ddd !important;
   color: black !important;
   z-index: var(--map-controls-z-index);
+}
+
+.mapTypeButton {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 /* ========================================

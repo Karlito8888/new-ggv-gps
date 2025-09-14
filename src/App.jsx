@@ -12,6 +12,8 @@ import OrientationPermissionModal from "./components/OrientationPermissionModal"
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
 import { MapMarkers } from "./components/MapMarkers";
+import { MapSymbolLayers } from "./components/MapSymbolLayers";
+import { useSymbolLayerInteractions } from "./hooks/useSymbolLayerInteractions";
 import { RouteLayers } from "./components/RouteLayers";
 import { MapControls } from "./components/MapControls/MapControls";
 
@@ -156,6 +158,18 @@ function App() {
     setOrientationEnabled,
   });
 
+  // Symbol layer interactions
+  useSymbolLayerInteractions(mapRef, 
+    (poi) => {
+      console.log('POI clicked:', poi);
+      // Gérer le clic sur un POI si nécessaire
+    },
+    (destination) => {
+      console.log('Destination clicked:', destination);
+      // Gérer le clic sur la destination si nécessaire
+    }
+  );
+
   // Recenter map - version ultra simplifiée
   const handleRecenterMap = useCallback(async () => {
     if (!mapRef.current || !userLocation) return;
@@ -206,23 +220,6 @@ function App() {
     if (map) {
       initMapLibreDirections(map);
     }
-
-    return () => {
-      // Global cleanup
-      const currentMap = map;
-      if (currentMap) {
-        try {
-          currentMap.off("render");
-          if (currentMap.getLayer("blocks-fill"))
-            currentMap.removeLayer("blocks-fill");
-          if (currentMap.getLayer("blocks-border"))
-            currentMap.removeLayer("blocks-border");
-          if (currentMap.getSource("blocks")) currentMap.removeSource("blocks");
-        } catch (cleanupError) {
-          console.error("Cleanup error:", cleanupError);
-        }
-      }
-    };
   }, [isMapReady]);
 
   return (
@@ -280,6 +277,13 @@ function App() {
             navigationState={navigationState}
           />
 
+          {/* SymbolLayer temporairement désactivé - à réactiver après correction des erreurs */}
+          {/* <MapSymbolLayers
+            destination={destination}
+            getPolygonCenter={getPolygonCenter}
+          /> */}
+
+          {/* Legacy MapMarkers - utilisé jusqu'à ce que SymbolLayer soit corrigé */}
           <MapMarkers
             destination={destination}
             getPolygonCenter={getPolygonCenter}
