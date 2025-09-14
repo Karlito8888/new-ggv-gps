@@ -1,13 +1,15 @@
 /* Footer Component Styles */
 
 .footer {
-  height: 60px;
+  min-height: 60px;
+  height: auto;
   background: linear-gradient(135deg, var(--color-yellow), var(--color-green));
   color: var(--color-white);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  padding-bottom: max(1rem, var(--safe-area-bottom, 1rem));
 }
 
 .footerText {

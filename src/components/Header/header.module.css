@@ -1,12 +1,14 @@
 /* Header Component Styles */
 
 .header {
-  height: 60px;
+  min-height: 60px;
+  height: auto;
   background: linear-gradient(135deg, var(--color-green), var(--color-yellow));
   color: var(--color-white);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-top: max(0px, var(--safe-area-top, 0px));
 }
 
 .modalLogo {
