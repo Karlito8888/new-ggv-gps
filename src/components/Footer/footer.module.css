@@ -9,10 +9,10 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  padding-bottom: max(1rem, var(--safe-area-bottom, 1rem));
-  /* Masquage intelligent: étend le footer dans la safe area */
-  margin-bottom: calc(-1 * var(--safe-area-bottom, 0px));
-  /* S'assure que le footer s'étende jusqu'en bas */
+  padding-bottom: max(1rem, var(--safe-area-bottom, 0px));
+  /* Étend le footer pour couvrir la safe area sans créer d'espace */
+  margin-bottom: 0;
+  /* S'assure que le footer est bien visible en bas */
   position: relative;
   z-index: 1;
 }
@@ -22,4 +22,12 @@
   color: var(--color-white);
   font-weight: bold;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.versionText {
+  text-align: center;
+  color: var(--color-black);
+  font-size: 0.8em;
+  margin-top: 2px;
+  opacity: 0.7;
 }

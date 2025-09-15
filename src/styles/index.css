@@ -65,28 +65,29 @@
 html,
 body,
 #root {
-  height: 100%;
-  height: 100vh;
   height: 100dvh; /* Dynamic viewport height - moderne */
-  height: 100svh; /* Small viewport height - iOS 15+ */
-  height: -webkit-fill-available; /* Android ancien */
+  height: 100svh; /* Small viewport height - iOS 15+ fallback */
+  min-height: -webkit-fill-available; /* Android ancien fallback */
 }
 
 body {
   font-family: "Madimi One", cursive, sans-serif;
-  /* Couleur de fond qui correspond au footer pour masquer l'espace */
-  background: linear-gradient(135deg, var(--color-yellow), var(--color-green));
+  /* Couleur de fond unie pour éviter les problèmes de gradient */
+  background: var(--color-green);
+  margin: 0;
+  padding: 0;
 }
 
 .radix-themes {
   display: grid;
-  grid-template-rows: calc(60px + var(--safe-area-top)) 1fr 60px;
+  grid-template-rows: auto 1fr auto;
   grid-template-areas:
     "head"
     "main"
     "foot";
-  height: 100%;
-  /* S'assure que le footer peut s'étendre en bas */
+  height: 100dvh;
+  min-height: -webkit-fill-available;
+  /* Permet au contenu de s'adapter sans créer d'espace blanc */
   overflow: hidden;
 }
 
@@ -123,16 +124,17 @@ p {
 /* Support spécifique pour les encoches et barres système */
 @supports (padding-top: env(safe-area-inset-top)) {
   .radix-themes {
-    height: calc(100% + var(--safe-area-top));
+    height: 100dvh;
+    min-height: -webkit-fill-available;
   }
 }
 
 /* Support Android avec barre de navigation */
 @media (display-mode: standalone) {
   .radix-themes {
-    height: 100vh;
     height: 100dvh;
-    /* Supprime l'overflow pour Android */
-    overflow: visible;
+    min-height: -webkit-fill-available;
+    /* Maintient overflow hidden pour éviter l'espace blanc */
+    overflow: hidden;
   }
 }
