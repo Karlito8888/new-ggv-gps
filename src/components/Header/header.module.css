@@ -9,7 +9,6 @@
   align-items: center;
   justify-content: center;
   padding: 10px;
-  padding-top: max(10px, var(--safe-area-top, 0px));
 }
 
 .modalLogo {

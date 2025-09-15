@@ -17,11 +17,7 @@
   --ring: 142 76% 36%;
   --radius: 0.5rem;
 
-  /* Safe areas iOS/Android */
-  --safe-area-top: env(safe-area-inset-top, 0px);
-  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-area-left: env(safe-area-inset-left, 0px);
-  --safe-area-right: env(safe-area-inset-right, 0px);
+  /* Safe areas iOS/Android - gérés par react-native-safe-area-context */
 
   /* Optimisations de rendu */
   font-synthesis: none;
@@ -123,20 +119,4 @@ p {
   border-bottom: none;
 }
 
-/* Support spécifique pour les encoches et barres système */
-@supports (padding-top: env(safe-area-inset-top)) {
-  .radix-themes {
-    height: 100dvh;
-    min-height: -webkit-fill-available;
-  }
-}
-
-/* Support Android avec barre de navigation */
-@media (display-mode: standalone) {
-  .radix-themes {
-    height: 100dvh;
-    min-height: -webkit-fill-available;
-    /* Maintient overflow hidden pour éviter l'espace blanc */
-    overflow: hidden;
-  }
-}
+/* Support spécifique pour les encoches et barres système - géré par react-native-safe-area-context */

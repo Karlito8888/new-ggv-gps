@@ -1,13 +1,21 @@
 import styles from "./footer.module.css";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function Footer() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <footer className={styles.footer}>
+    <footer 
+      className={styles.footer}
+      style={{
+        paddingBottom: insets.bottom,
+      }}
+    >
       <p className={styles.footerText}>
         © {new Date().getFullYear()} Garden Grove Village
       </p>
       <p className={styles.versionText}>
-        V.1.0.3
+        v1.0.4
       </p>
     </footer>
   );

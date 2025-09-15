@@ -3,7 +3,6 @@
 .footer {
   min-height: 60px;
   height: auto;
-  /* background: linear-gradient(135deg, var(--color-yellow), var(--color-green)); */
   background: transparent;
   color: var(--color-white);
   display: flex;
@@ -11,7 +10,6 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  padding-bottom: max(1rem, var(--safe-area-bottom, 0px));
   margin-bottom: 0;
 }
 
