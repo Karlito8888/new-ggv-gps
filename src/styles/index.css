@@ -71,9 +71,11 @@ body,
 }
 
 body {
+  height: 100svh;
   font-family: "Madimi One", cursive, sans-serif;
   /* Couleur de fond unie pour éviter les problèmes de gradient */
-  background: var(--color-green);
+  /* background: var(--color-green); */
+  background: linear-gradient(135deg, var(--color-green), var(--color-yellow), var(--color-green));
   margin: 0;
   padding: 0;
 }
@@ -86,15 +88,17 @@ body {
     "main"
     "foot";
   height: 100dvh;
+  height: 100svh;
   min-height: -webkit-fill-available;
   /* Permet au contenu de s'adapter sans créer d'espace blanc */
   overflow: hidden;
+  background: transparent !important;
 }
 
 .radix-themes > header {
   grid-area: head;
   padding: 10px;
-  padding-top: calc(10px + var(--safe-area-top));
+  background: transparent;
 }
 
 .radix-themes > main {
@@ -106,8 +110,6 @@ body {
 
 .radix-themes > footer {
   grid-area: foot;
-  padding: 1rem;
-  /* Le footer gère lui-même le padding bottom via son module CSS */
 }
 
 h1 {

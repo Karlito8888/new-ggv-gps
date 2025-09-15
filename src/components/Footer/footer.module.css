@@ -3,21 +3,20 @@
 .footer {
   min-height: 60px;
   height: auto;
-  background: linear-gradient(135deg, var(--color-yellow), var(--color-green));
+  /* background: linear-gradient(135deg, var(--color-yellow), var(--color-green)); */
+  background: transparent;
   color: var(--color-white);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 1rem;
   padding-bottom: max(1rem, var(--safe-area-bottom, 0px));
-  /* Étend le footer pour couvrir la safe area sans créer d'espace */
   margin-bottom: 0;
-  /* S'assure que le footer est bien visible en bas */
-  position: relative;
-  z-index: 1;
 }
 
 .footerText {
+  font-family: "Madimi One", cursive, sans-serif;
   text-align: center;
   color: var(--color-white);
   font-weight: bold;
@@ -25,9 +24,10 @@
 }
 
 .versionText {
+  font-family: "Madimi One", cursive, sans-serif;
   text-align: center;
   color: var(--color-black);
-  font-size: 0.8em;
+  font-size: 0.5em;
   margin-top: 2px;
   opacity: 0.7;
 }
