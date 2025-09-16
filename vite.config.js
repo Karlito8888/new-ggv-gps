@@ -39,13 +39,13 @@ export default defineConfig({
          short_name: "MyGGV|GPS",
          description: "GPS for Garden Grove Village",
          theme_color: "#50AA61",
-         background_color: "#FFFFFF",
+         background_color: "#50AA61",
          display: "standalone",
          orientation: "portrait",
          start_url: "/",
          scope: "/",
          icons: [
-           // iOS icons
+           // Icônes principales (iOS prioritaire, plus propres)
            {
              src: "/AppImages/ios/16.png",
              sizes: "16x16",
@@ -88,42 +88,14 @@ export default defineConfig({
              type: "image/png",
              purpose: "any maskable",
            },
-           // Android icons
-           {
-             src: "/AppImages/android/android-launchericon-48-48.png",
-             sizes: "48x48",
-             type: "image/png",
-           },
-           {
-             src: "/AppImages/android/android-launchericon-72-72.png",
-             sizes: "72x72",
-             type: "image/png",
-           },
-           {
-             src: "/AppImages/android/android-launchericon-96-96.png",
-             sizes: "96x96",
-             type: "image/png",
-           },
-           {
-             src: "/AppImages/android/android-launchericon-144-144.png",
-             sizes: "144x144",
-             type: "image/png",
-           },
-           {
-             src: "/AppImages/android/android-launchericon-192-192.png",
-             sizes: "192x192",
-             type: "image/png",
-             purpose: "any maskable",
-           },
-           {
-             src: "/AppImages/android/android-launchericon-512-512.png",
-             sizes: "512x512",
-             type: "image/png",
-             purpose: "any maskable",
-           },
          ],
          categories: ["navigation", "travel", "utilities"],
          lang: "en-PH",
+         dir: "ltr",
+         display_override: ["window-controls-overlay", "standalone"],
+         edge_side_panel: {
+           "preferred_width": 400
+         },
        },
 
       workbox: {
@@ -150,15 +122,27 @@ export default defineConfig({
               },
             },
           },
-          // OpenStreetMap tiles cache
+          // OpenStreetMap tiles cache (optimisé pour Garden Grove Village)
           {
             urlPattern: /^https:\/\/[a-z]\.tile\.openstreetmap\.org/,
             handler: "CacheFirst",
             options: {
               cacheName: "osm-tiles",
               expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 3 * 24 * 60 * 60, // 3 days for frequent local usage
+                maxEntries: 500, // Plus de tiles pour zone locale
+                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 jours pour usage local fréquent
+              },
+            },
+          },
+          // Satellite tiles cache (Esri)
+          {
+            urlPattern: /^https:\/\/server\.arcgisonline\.com/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "satellite-tiles",
+              expiration: {
+                maxEntries: 300,
+                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 jours
               },
             },
           },

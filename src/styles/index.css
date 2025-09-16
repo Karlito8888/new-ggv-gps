@@ -42,6 +42,29 @@
   --map-button-shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
+/* Styles spécifiques PWA */
+@media (display-mode: standalone) {
+
+  /* Quand l'app est installée comme PWA */
+  html {
+    /* Assurer que l'app utilise tout l'écran */
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  body {
+    /* Empêcher le bounce sur iOS */
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-container {
+    /* Assurer que l'app remplit tout l'écran */
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
 .dark {
   --background: 222.2 84% 4.9%;
   --popover: 222.2 84% 4.9%;
@@ -62,53 +85,81 @@
   padding: 0;
 }
 
-html,
-body,
-#root {
-  height: 100dvh; /* Dynamic viewport height - moderne */
-  height: 100svh; /* Small viewport height - iOS 15+ fallback */
-  min-height: -webkit-fill-available; /* Android ancien fallback */
+html {
+  height: 100%;
+  /* Empêcher le scroll sur mobile */
+  overflow: hidden;
+  /* Support des safe areas */
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
 }
 
 body {
+  height: 100dvh;
+  /* Dynamic viewport height - moderne */
   height: 100svh;
+  /* Small viewport height - iOS 15+ fallback */
+  min-height: -webkit-fill-available;
+  /* Android ancien fallback */
   font-family: "Madimi One", cursive, sans-serif;
-  /* Couleur de fond unie pour éviter les problèmes de gradient */
-  /* background: var(--color-green); */
   background: linear-gradient(135deg, var(--color-green), var(--color-yellow), var(--color-green));
   margin: 0;
   padding: 0;
+  /* Empêcher le scroll et le bounce sur iOS */
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
 }
 
-.radix-themes {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  grid-template-areas:
-    "head"
-    "main"
-    "foot";
+#root {
   height: 100dvh;
   height: 100svh;
   min-height: -webkit-fill-available;
-  /* Permet au contenu de s'adapter sans créer d'espace blanc */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.radix-themes {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  height: 100svh;
+  min-height: -webkit-fill-available;
   overflow: hidden;
   background: transparent !important;
 }
 
-.radix-themes > header {
-  grid-area: head;
+/* Layout principal de l'app */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  height: 100svh;
+  min-height: -webkit-fill-available;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.radix-themes>header {
   padding: 10px;
   background: transparent;
 }
 
-.radix-themes > main {
+.radix-themes>main {
   grid-area: main;
   width: 100%;
   height: 100%;
   position: relative;
 }
 
-.radix-themes > footer {
+.radix-themes>footer {
   grid-area: foot;
 }
 
@@ -138,5 +189,62 @@ p {
     min-height: -webkit-fill-available;
     /* Maintient overflow hidden pour éviter l'espace blanc */
     overflow: hidden;
+  }
+}
+
+/* Styles pour différents types d'écrans mobiles */
+@supports (height: 100dvh) {
+
+  /* Navigateurs modernes avec support dvh */
+  .app-container {
+    height: 100dvh;
+  }
+}
+
+@supports not (height: 100dvh) {
+
+  /* Fallback pour navigateurs plus anciens */
+  .app-container {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+}
+
+/* Gestion spéciale pour iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  .app-container {
+    height: -webkit-fill-available;
+  }
+}
+
+/* Empêcher le zoom sur les inputs (iOS) */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+/* Styles pour les encoches et safe areas */
+@media (orientation: portrait) {
+  .header {
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  }
+
+  .footer {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (orientation: landscape) {
+  .header {
+    padding-top: calc(5px + env(safe-area-inset-top, 0px));
+    padding-left: calc(10px + env(safe-area-inset-left, 0px));
+    padding-right: calc(10px + env(safe-area-inset-right, 0px));
+  }
+
+  .footer {
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    padding-left: calc(1rem + env(safe-area-inset-left, 0px));
+    padding-right: calc(1rem + env(safe-area-inset-right, 0px));
   }
 }

@@ -62,9 +62,9 @@ iconSizes.forEach(size => {
 // Check environment variables
 console.log('\n🔐 Environment variables:');
 const envVars = [
-  'VITE_SUPABASE_URL',
-  'VITE_SUPABASE_ANON_KEY',
-  'VITE_OPENROUTE_API_KEY'
+  'VITE_SUPABASE_URL',        // REQUIS - Base de données
+  'VITE_SUPABASE_ANON_KEY',   // REQUIS - Authentification
+  'VITE_OPENROUTE_API_KEY'    // OPTIONNEL - Routing fallback
 ];
 
 envVars.forEach(varName => {

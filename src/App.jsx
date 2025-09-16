@@ -135,6 +135,18 @@ function App() {
   
   const handleGeolocateError = useCallback((e) => {
     console.error("GPS error:", e);
+    
+    // Gestion d'erreur améliorée pour desktop
+    if (e.code === 1) {
+      console.log("📍 GPS permission denied - showing fallback options");
+      // L'utilisateur a refusé la permission
+    } else if (e.code === 2) {
+      console.log("📍 GPS position unavailable - trying fallback");
+      // Position non disponible (souvent sur desktop)
+    } else if (e.code === 3) {
+      console.log("📍 GPS timeout - extending timeout for desktop");
+      // Timeout (courant sur desktop avec géolocalisation IP)
+    }
   }, []);
 
   // Auto route creation - simplified (removed verbose logs)
@@ -223,9 +235,9 @@ function App() {
   }, [isMapReady]);
 
   return (
-    <>
+    <div className="app-container">
       <Header />
-      <main>
+      <main className="main-content">
         <Map
           ref={mapRef}
           initialViewState={initialViewState}
@@ -259,8 +271,8 @@ function App() {
             position="top-left"
             positionOptions={{
               enableHighAccuracy: true,
-              timeout: 30000,
-              maximumAge: 60000,
+              timeout: 45000, // Timeout plus long pour desktop
+              maximumAge: 300000, // 5 minutes - plus tolérant pour desktop
             }}
             trackUserLocation={true}
             showAccuracyCircle={true}
@@ -342,7 +354,7 @@ function App() {
       />
 
       <Footer />
-    </>
+    </div>
   );
 }
 

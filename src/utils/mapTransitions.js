@@ -2,94 +2,23 @@
  * MapLibre GL JS Transitions - Version Optimisée avec flyTo() et jumpTo()
  * 
  * Système de transitions natif utilisant les API MapLibre GL JS optimisées
- * Remplace les transitions personnalisées par flyTo() et jumpTo() natifs
+ * Standardisé sur Turf.js pour les calculs de distance
  */
 
-/**
- * Validation de base des paramètres de transition
- */
-const validateTransitionParams = (map) => {
-  if (!map || typeof map !== 'object') {
-    console.warn('Map invalide');
-    return false;
-  }
-  
-  if (!map.isStyleLoaded()) {
-    console.warn('Style non chargé');
-    return false;
-  }
-  
-  return true;
-};
+import * as turf from "@turf/turf";
 
 /**
  * Calcule la distance entre deux points pour déterminer le type de transition
  */
 const calculateDistanceForTransition = (map, from, to) => {
-  if (!from || !to || !map) return 0;
+  if (!from || !to) return 0;
   
   try {
-    const pixel1 = map.project(from);
-    const pixel2 = map.project(to);
-    return Math.sqrt(Math.pow(pixel2.x - pixel1.x, 2) + Math.pow(pixel2.y - pixel1.y, 2));
+    // Utiliser Turf.js pour un calcul précis
+    return turf.distance(from, to, { units: 'meters' });
   } catch {
     return 1000; // Distance par défaut
   }
-};
-
-/**
- * Transition intelligente utilisant flyTo() ou jumpTo() selon la distance
- */
-export const transitionTo = (map, options = {}) => {
-  if (!validateTransitionParams(map)) return Promise.resolve();
-
-  return new Promise((resolve) => {
-    try {
-      const { center, zoom, bearing, pitch, duration = 1000, ...otherOptions } = options;
-      
-      // Déterminer si on utilise flyTo() ou jumpTo() selon la distance
-      const currentCenter = map.getCenter();
-      const targetCenter = center || [currentCenter.lng, currentCenter.lat];
-      const distance = calculateDistanceForTransition(map, [currentCenter.lng, currentCenter.lat], targetCenter);
-      
-      // Si la distance est petite (< 200px) ou pas de changement de zoom significatif, utiliser jumpTo()
-      const currentZoom = map.getZoom();
-      const zoomChange = Math.abs((zoom || currentZoom) - currentZoom);
-      const useJumpTo = distance < 200 && zoomChange < 2;
-      
-      const transitionOptions = {
-        center: targetCenter,
-        zoom: zoom || currentZoom,
-        bearing: bearing !== undefined ? bearing : map.getBearing(),
-        pitch: pitch !== undefined ? pitch : map.getPitch(),
-        ...otherOptions
-      };
-
-      if (useJumpTo) {
-        // Transition instantanée pour les petits changements
-        map.jumpTo(transitionOptions);
-        resolve();
-      } else {
-        // Transition fluide avec flyTo() pour les grands changements
-        const flyOptions = {
-          ...transitionOptions,
-          duration: duration,
-          // Courbe d'animation optimisée pour la navigation
-          curve: distance > 1000 ? 1.42 : 1,
-          speed: distance > 1000 ? 1.2 : 0.8,
-          essential: true
-        };
-        
-        map.flyTo({
-          ...flyOptions,
-          complete: resolve
-        });
-      }
-    } catch (error) {
-      console.error('Transition échouée:', error);
-      resolve(); // Ne pas bloquer l'application
-    }
-  });
 };
 
 /**

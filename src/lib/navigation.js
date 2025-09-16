@@ -222,12 +222,7 @@ export function initMapLibreRouteSources(map) {
 
 // calculateDistance is now imported from geoUtils
 
-// Calculate the shortest distance from a point to a line segment using Turf.js
-function _pointToLineDistance(pointLat, pointLon, line1Lat, line1Lon, line2Lat, line2Lon) {
-  const point = turf.point([pointLon, pointLat]);
-  const line = turf.lineString([[line1Lon, line1Lat], [line2Lon, line2Lat]]);
-  return turf.pointToLineDistance(point, line, { units: 'meters' });
-}
+
 
 // Check if user has deviated from the route using optimized MapLibre queryRenderedFeatures
 export function isUserOffRoute(userLat, userLon, routeGeometry, threshold = ROUTE_DEVIATION_THRESHOLD, map = null) {

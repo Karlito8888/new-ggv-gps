@@ -7,7 +7,7 @@ function Footer() {
         © {new Date().getFullYear()} Garden Grove Village
       </p>
       <p className={styles.versionText}>
-        v1.0.5
+        v1.0.6
       </p>
     </footer>
   );

@@ -1,7 +1,7 @@
 /* Header Component Styles */
 
 .header {
-  min-height: 60px;
+  min-height: calc(60px + var(--safe-area-top, 0px));
   height: auto;
   background: transparent;
   color: var(--color-white);
@@ -9,7 +9,12 @@
   align-items: center;
   justify-content: center;
   padding: 10px;
-  padding-top: max(10px, var(--safe-area-top, 0px));
+  padding-top: calc(10px + var(--safe-area-top, 0px));
+  /* S'étendre jusqu'en haut de l'écran */
+  margin-top: calc(-1 * var(--safe-area-top, 0px));
+  /* Assurer que le contenu reste visible */
+  position: relative;
+  z-index: 10;
 }
 
 .modalLogo {

@@ -58,9 +58,8 @@
     Cache-Control = "public, max-age=31536000, immutable"
 
 # Variables d'environnement (à configurer dans Netlify UI)
+# REQUIS :
 # VITE_SUPABASE_URL
 # VITE_SUPABASE_ANON_KEY
-# VITE_SUPABASE_SERVICE_ROLE_KEY
-# VITE_SUPABASE_STORAGE_URL
-# REACT_APP_GOOGLE_API_KEY
+# OPTIONNEL :
 # VITE_OPENROUTE_API_KEY

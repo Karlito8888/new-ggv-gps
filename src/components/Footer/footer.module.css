@@ -1,7 +1,7 @@
 /* Footer Component Styles */
 
 .footer {
-  min-height: 60px;
+  min-height: calc(60px + var(--safe-area-bottom, 0px));
   height: auto;
   background: transparent;
   color: var(--color-white);
@@ -10,8 +10,12 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  padding-bottom: max(1rem, var(--safe-area-bottom, 0px));
-  margin-bottom: 0;
+  padding-bottom: calc(1rem + var(--safe-area-bottom, 0px));
+  /* S'étendre jusqu'en bas de l'écran */
+  margin-bottom: calc(-1 * var(--safe-area-bottom, 0px));
+  /* Assurer que le contenu reste visible */
+  position: relative;
+  z-index: 10;
 }
 
 .footerText {

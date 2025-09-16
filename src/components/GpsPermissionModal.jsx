@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ggvLogo from "../assets/img/ggv.png";
 import {
   Dialog,
@@ -9,10 +9,28 @@ import {
 } from "./ui/dialog";
 import Button from "./ui/button";
 import modalBaseStyles from './ui/modal-base.module.css';
+import { testGeolocation } from '../utils/geolocationUtils';
 
 const GpsPermissionModal = ({ isOpen, geolocateControlRef }) => {
   const [isRequesting, setIsRequesting] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [capabilities, setCapabilities] = useState(null);
+
+  // Détecter les capacités au montage
+  useEffect(() => {
+    const checkCapabilities = async () => {
+      const result = await testGeolocation();
+      setCapabilities(result);
+      
+      if (!result.success) {
+        console.warn('Geolocation test failed:', result.error);
+      }
+    };
+    
+    if (isOpen) {
+      checkCapabilities();
+    }
+  }, [isOpen]);
 
   const handleRequestGps = async () => {
     if (!geolocateControlRef?.current) {
@@ -26,6 +44,11 @@ const GpsPermissionModal = ({ isOpen, geolocateControlRef }) => {
 
     try {
       console.log("📍 Requesting GPS permission...");
+
+      // Utiliser les capacités détectées
+      if (capabilities?.capabilities?.isDesktop) {
+        console.log("🖥️ Desktop detected - GPS may be less accurate but functional");
+      }
 
       // Trigger GPS permission request
       geolocateControlRef.current.trigger();
@@ -58,6 +81,14 @@ const GpsPermissionModal = ({ isOpen, geolocateControlRef }) => {
             to help you navigate
             <br />
             in Garden Grove Village...
+            {capabilities?.capabilities?.isDesktop && (
+              <>
+                <br />
+                <small style={{ opacity: 0.8 }}>
+                  📍 Desktop location may be less precise but works fine for navigation
+                </small>
+              </>
+            )}
           </DialogDescription>
         </>
 
@@ -65,8 +96,26 @@ const GpsPermissionModal = ({ isOpen, geolocateControlRef }) => {
           {hasError && (
             <div className={modalBaseStyles.errorMessage}>
               <p>
-                Unable to access GPS. Please check your browser settings and try
-                again.
+                Unable to access location. 
+                {capabilities?.capabilities?.isDesktop ? (
+                  <>
+                    <br />
+                    <strong>Desktop users:</strong> Location may be less precise but still works.
+                    <br />
+                    Please allow location access in your browser.
+                  </>
+                ) : (
+                  <>
+                    <br />
+                    Please check your browser settings and try again.
+                  </>
+                )}
+                {!capabilities?.capabilities?.isSecureContext && (
+                  <>
+                    <br />
+                    <strong>Note:</strong> HTTPS is required for location access.
+                  </>
+                )}
               </p>
             </div>
           )}

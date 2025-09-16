@@ -108,8 +108,8 @@ function runTests() {
   // Test 1: calculateDistance avec MapLibre
   console.log('📍 Test 1: calculateDistance avec projection MapLibre');
   try {
-    const distance1 = calculateDistance(14.35098, 120.951863, 14.35198, 120.952863, map);
-    const distance2 = calculateDistance(14.35098, 120.951863, 14.35198, 120.952863); // Sans map
+    const distance1 = calculateDistance(14.35098, 120.951863, 14.35198, 120.952863);
+    const distance2 = calculateDistance(14.35098, 120.951863, 14.35198, 120.952863); // Même appel
     
     console.log(`✅ Distance avec MapLibre: ${distance1.toFixed(2)}m`);
     console.log(`✅ Distance sans MapLibre: ${distance2.toFixed(2)}m`);
@@ -128,8 +128,8 @@ function runTests() {
   // Test 2: calculateBearing avec MapLibre
   console.log('🧭 Test 2: calculateBearing avec projection MapLibre');
   try {
-    const bearing1 = calculateBearing(14.35098, 120.951863, 14.35198, 120.952863, map);
-    const bearing2 = calculateBearing(14.35098, 120.951863, 14.35198, 120.952863); // Sans map
+    const bearing1 = calculateBearing(14.35098, 120.951863, 14.35198, 120.952863);
+    const bearing2 = calculateBearing(14.35098, 120.951863, 14.35198, 120.952863); // Même appel
     
     console.log(`✅ Bearing avec MapLibre: ${bearing1.toFixed(2)}°`);
     console.log(`✅ Bearing sans MapLibre: ${bearing2.toFixed(2)}°`);
@@ -156,8 +156,8 @@ function runTests() {
       ]
     };
     
-    const result1 = findClosestPointOnRoute(14.3515, 120.9525, routeGeometry, map);
-    const result2 = findClosestPointOnRoute(14.3515, 120.9525, routeGeometry); // Sans map
+    const result1 = findClosestPointOnRoute(14.3515, 120.9525, routeGeometry);
+    const result2 = findClosestPointOnRoute(14.3515, 120.9525, routeGeometry); // Même appel
     
     console.log(`✅ Point le plus proche avec MapLibre:`, result1);
     console.log(`✅ Point le plus proche sans MapLibre:`, result2);
