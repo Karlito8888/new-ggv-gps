@@ -1,7 +1,7 @@
 /* Header Component Styles */
 
 .header {
-  min-height: calc(60px + var(--safe-area-top, 0px));
+  min-height: calc(60px + env(safe-area-inset-top, 0px));
   height: auto;
   background: transparent;
   color: var(--color-white);
@@ -9,9 +9,8 @@
   align-items: center;
   justify-content: center;
   padding: 10px;
-  padding-top: calc(10px + var(--safe-area-top, 0px));
-  /* S'étendre jusqu'en haut de l'écran */
-  margin-top: calc(-1 * var(--safe-area-top, 0px));
+  /* Suppression du padding-top en double - géré par index.css */
+  /* Retrait de la margin négative qui cause l'espace blanc */
   /* Assurer que le contenu reste visible */
   position: relative;
   z-index: 10;

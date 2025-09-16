@@ -105,10 +105,16 @@
 }
 
 html {
-  height: 100%;
+  /* Le hack crucial pour iOS PWA */
+  min-height: calc(100% + env(safe-area-inset-top));
+  /* Safe area padding pour toutes les directions */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   /* Empêcher le scroll sur mobile */
   overflow: hidden;
-  /* Pas de padding sur html - géré par les composants individuels */
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 body {
@@ -126,6 +132,7 @@ body {
   overflow: hidden;
   /* Retirer position fixed qui cause l'espace blanc */
   width: 100%;
+  /* Important : ne pas ajouter de padding ici, déjà géré par html */
 }
 
 #root {
@@ -274,6 +281,11 @@ textarea {
   .radix-themes>header {
     padding-top: calc(25px + env(safe-area-inset-top, 0px)) !important;
   }
+  
+  /* Correction supplémentaire pour les éléments fixed en PWA */
+  .footer {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
 }
 
 @media (display-mode: standalone) and (orientation: landscape) {
@@ -287,5 +299,12 @@ textarea {
     padding-top: calc(15px + env(safe-area-inset-top, 0px)) !important;
     padding-left: calc(10px + env(safe-area-inset-left, 0px));
     padding-right: calc(10px + env(safe-area-inset-right, 0px));
+  }
+  
+  /* Correction supplémentaire pour les éléments fixed en PWA landscape */
+  .footer {
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: calc(1rem + env(safe-area-inset-left, 0px)) !important;
+    padding-right: calc(1rem + env(safe-area-inset-right, 0px)) !important;
   }
 }

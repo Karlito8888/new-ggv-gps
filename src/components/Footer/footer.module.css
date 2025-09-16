@@ -1,7 +1,7 @@
 /* Footer Component Styles */
 
 .footer {
-  min-height: calc(60px + var(--safe-area-bottom, 0px));
+  min-height: calc(60px + env(safe-area-inset-bottom, 0px));
   height: auto;
   background: transparent;
   color: var(--color-white);
@@ -10,9 +10,8 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  padding-bottom: calc(1rem + var(--safe-area-bottom, 0px));
-  /* S'étendre jusqu'en bas de l'écran - PWA fix */
-  margin-bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+  /* Suppression du padding-bottom en double - géré par index.css */
+  /* Retrait de la margin négative qui cause l'espace blanc */
   /* Assurer que le contenu reste visible */
   position: relative;
   z-index: 10;
