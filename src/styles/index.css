@@ -56,12 +56,31 @@
     /* Empêcher le bounce sur iOS */
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    /* Éliminer tout espace blanc en PWA */
+    height: 100vh !important;
+    height: 100dvh !important;
   }
 
   .app-container {
     /* Assurer que l'app remplit tout l'écran */
     min-height: 100vh;
     min-height: 100dvh;
+  }
+
+  /* Fix spécifique pour l'espace blanc en bas en PWA */
+  #root {
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+
+  /* Header avec plus de padding en PWA */
+  .radix-themes>header {
+    padding: 20px 10px 10px 10px !important;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px)) !important;
+  }
+
+  .header {
+    padding-top: calc(20px + env(safe-area-inset-top, 0px)) !important;
   }
 }
 
@@ -89,8 +108,7 @@ html {
   height: 100%;
   /* Empêcher le scroll sur mobile */
   overflow: hidden;
-  /* Support des safe areas */
-  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  /* Pas de padding sur html - géré par les composants individuels */
 }
 
 body {
@@ -106,10 +124,8 @@ body {
   padding: 0;
   /* Empêcher le scroll et le bounce sur iOS */
   overflow: hidden;
-  position: fixed;
+  /* Retirer position fixed qui cause l'espace blanc */
   width: 100%;
-  top: 0;
-  left: 0;
 }
 
 #root {
@@ -246,5 +262,30 @@ textarea {
     padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
     padding-left: calc(1rem + env(safe-area-inset-left, 0px));
     padding-right: calc(1rem + env(safe-area-inset-right, 0px));
+  }
+}
+
+/* Styles PWA avec plus de padding pour le header */
+@media (display-mode: standalone) and (orientation: portrait) {
+  .header {
+    padding-top: calc(25px + env(safe-area-inset-top, 0px)) !important;
+  }
+
+  .radix-themes>header {
+    padding-top: calc(25px + env(safe-area-inset-top, 0px)) !important;
+  }
+}
+
+@media (display-mode: standalone) and (orientation: landscape) {
+  .header {
+    padding-top: calc(15px + env(safe-area-inset-top, 0px)) !important;
+    padding-left: calc(10px + env(safe-area-inset-left, 0px));
+    padding-right: calc(10px + env(safe-area-inset-right, 0px));
+  }
+
+  .radix-themes>header {
+    padding-top: calc(15px + env(safe-area-inset-top, 0px)) !important;
+    padding-left: calc(10px + env(safe-area-inset-left, 0px));
+    padding-right: calc(10px + env(safe-area-inset-right, 0px));
   }
 }

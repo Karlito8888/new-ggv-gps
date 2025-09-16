@@ -11,8 +11,8 @@
   justify-content: center;
   padding: 1rem;
   padding-bottom: calc(1rem + var(--safe-area-bottom, 0px));
-  /* S'étendre jusqu'en bas de l'écran */
-  margin-bottom: calc(-1 * var(--safe-area-bottom, 0px));
+  /* S'étendre jusqu'en bas de l'écran - PWA fix */
+  margin-bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
   /* Assurer que le contenu reste visible */
   position: relative;
   z-index: 10;
