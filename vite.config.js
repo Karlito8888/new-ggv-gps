@@ -40,7 +40,7 @@ export default defineConfig({
          description: "GPS for Garden Grove Village",
          theme_color: "#50AA61",
          background_color: "#50AA61",
-         display: "fullscreen",
+         display: "standalone",
          orientation: "portrait",
          start_url: "/",
          scope: "/",
