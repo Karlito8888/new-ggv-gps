@@ -76,11 +76,8 @@
 
 html {
   min-height: 100%;
-  overflow: hidden;
-  background-attachment: fixed;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
+  height: 100dvh;
+  height: 100svh;
 }
 
 body {
@@ -190,6 +187,12 @@ body {
    =================================================================== */
 
 @media (display-mode: standalone) {
+  html {
+    min-height: calc(100% + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+      env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
   /* Header - Extension jusqu'en haut avec safe area */
   .header {
     padding-top: max(10px, env(safe-area-inset-top));

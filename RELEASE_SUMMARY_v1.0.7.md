@@ -3,20 +3,20 @@
 ## 📱 **PWA Layout Optimizations**
 
 ### ✨ **Nouvelles fonctionnalités :**
-- **Header PWA amélioré** : Plus d'espace en haut spécifiquement en mode PWA
+- **Header PWA collé** : Header fixe en haut de l'écran en mode PWA
 - **Footer PWA optimisé** : Élimination de l'espace blanc indésirable en bas
-- **Safe areas perfectionnées** : Gestion optimale des encoches et barres système
+- **Layout simplifié** : Suppression des complexités safe-area
 
 ### 🔧 **Améliorations techniques :**
 
-#### **PWA Header Spacing :**
-- **Portrait PWA** : `25px + safe-area-top` de padding
-- **Landscape PWA** : `15px + safe-area-top` de padding
-- **Navigateur normal** : Padding standard conservé
+#### **PWA Header fixe :**
+- **Position fixed** en haut de l'écran
+- **Arrière-plan semi-transparent** avec effet de flou
+- **Navigateur normal** : Comportement standard conservé
 
 #### **PWA Footer Fix :**
 - **Espace blanc éliminé** en bas de l'écran PWA
-- **Margin négatif** pour compenser les safe areas
+- **Layout simplifié** sans complexités safe-area
 - **Hauteur dynamique** avec support dvh/svh
 
 #### **CSS Optimizations :**
@@ -28,7 +28,7 @@
 - ✅ **iOS Safari** (PWA + navigateur)
 - ✅ **Android Chrome** (PWA + navigateur)
 - ✅ **Desktop** (tous navigateurs)
-- ✅ **Safe areas** (encoches, Dynamic Island, home indicator)
+- ✅ **Layout simplifié** sans dépendances safe-area
 
 ### 📋 **Fichiers modifiés :**
 - `src/styles/index.css` - Règles PWA optimisées
@@ -42,9 +42,9 @@ Aucune action requise - mise à jour automatique du layout PWA.
 
 ## 🧪 **Tests recommandés :**
 1. **Installer la PWA** sur smartphone
-2. **Vérifier l'espacement** header/footer
+2. **Vérifier le header fixe** en haut de l'écran
 3. **Tester les orientations** portrait/landscape
-4. **Contrôler les safe areas** (encoches, etc.)
+4. **Contrôler l'absence d'espace blanc** en bas
 
 ---
 

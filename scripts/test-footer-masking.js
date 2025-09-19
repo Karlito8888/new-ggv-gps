@@ -15,9 +15,8 @@ if (footer) {
   console.log('z-index:', footerStyles.zIndex);
 }
 
-// Vérifier la safe area
+// Vérifier les styles root
 const rootStyles = getComputedStyle(document.documentElement);
-console.log('Safe area bottom:', rootStyles.getPropertyValue('--safe-area-bottom'));
 
 // Vérifier le body
 const bodyStyles = getComputedStyle(document.body);

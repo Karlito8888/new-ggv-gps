@@ -5,13 +5,11 @@
 ### ❌ **Avant :**
 - **Header** : Contenu masqué par l'encoche/status bar
 - **Footer** : Espace blanc indésirable en bas
-- **Safe areas** : Non respectées correctement
 - **Layout** : Problèmes de viewport sur PWA installée
 
 ### ✅ **Après :**
-- **Header** : S'étend jusqu'en haut avec safe area
+- **Header** : Collé en haut de l'écran en PWA
 - **Footer** : S'étend jusqu'en bas sans espace blanc
-- **Safe areas** : Parfaitement gérées (encoche, home indicator)
 - **Layout** : Optimisé pour PWA standalone
 
 ## 🔧 Modifications apportées
@@ -56,27 +54,20 @@
 }
 ```
 
-### **3. Header avec Safe Area (header.module.css) :**
+### **3. Header fixe en PWA (header.module.css) :**
 ```css
-.header {
-  min-height: calc(60px + var(--safe-area-top, 0px));
-  padding-top: calc(10px + var(--safe-area-top, 0px));
-  /* S'étendre jusqu'en haut */
-  margin-top: calc(-1 * var(--safe-area-top, 0px));
-  position: relative;
-  z-index: 10;
-}
-```
-
-### **4. Footer avec Safe Area (footer.module.css) :**
-```css
-.footer {
-  min-height: calc(60px + var(--safe-area-bottom, 0px));
-  padding-bottom: calc(1rem + var(--safe-area-bottom, 0px));
-  /* S'étendre jusqu'en bas */
-  margin-bottom: calc(-1 * var(--safe-area-bottom, 0px));
-  position: relative;
-  z-index: 10;
+@media (display-mode: standalone) {
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: rgba(80, 170, 97, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 15px 10px 10px 10px;
+    z-index: 1000;
+  }
 }
 ```
 
@@ -98,18 +89,13 @@
 }
 ```
 
-### **6. Gestion orientation :**
+### **6. Ajustement du contenu principal :**
 ```css
-@media (orientation: portrait) {
-  .header {
-    padding-top: calc(10px + env(safe-area-inset-top, 0px));
-  }
-}
-
-@media (orientation: landscape) {
-  .header {
-    padding-left: calc(10px + env(safe-area-inset-left, 0px));
-    padding-right: calc(10px + env(safe-area-inset-right, 0px));
+@media (display-mode: standalone) {
+  .main-content {
+    margin-top: 65px;
+    height: calc(100vh - 65px);
+    height: calc(100dvh - 65px);
   }
 }
 ```
@@ -131,14 +117,13 @@
 ## 🎨 Résultat visuel
 
 ### **Header :**
-- S'étend jusqu'en haut de l'écran
-- Contenu visible sous l'encoche/status bar
-- Padding adaptatif selon l'appareil
+- Collé en haut de l'écran en mode PWA
+- Arrière-plan semi-transparent avec effet de flou
+- Position fixe pour rester visible
 
 ### **Footer :**
 - S'étend jusqu'en bas de l'écran  
 - Pas d'espace blanc indésirable
-- Contenu visible au-dessus du home indicator
 
 ### **Main Content :**
 - Utilise tout l'espace disponible
@@ -162,7 +147,7 @@
 
 **PWA parfaitement optimisée pour mobile !** 📱
 
-- Header et Footer utilisent tout l'écran
-- Safe areas respectées sur tous les appareils
+- Header collé en haut en mode PWA
+- Footer utilise tout l'écran
 - Layout stable en portrait/landscape
 - Expérience native sur PWA installée
