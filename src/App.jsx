@@ -235,7 +235,7 @@ function App() {
   }, [isMapReady]);
 
   return (
-    <div className="app-container">
+    <>
       <Header />
       <main className="main-content">
         <Map
@@ -354,7 +354,7 @@ function App() {
       />
 
       <Footer />
-    </div>
+    </>
   );
 }
 

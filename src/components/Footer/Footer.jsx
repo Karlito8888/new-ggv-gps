@@ -1,13 +1,11 @@
-import styles from "./footer.module.css";
-
 function Footer() {
   return (
-    <footer className={styles.footer}>
-      <p className={styles.footerText}>
+    <footer className="footer">
+      <p className="footer-text">
         © {new Date().getFullYear()} Garden Grove Village
       </p>
-      <p className={styles.versionText}>
-        v1.0.8
+      <p className="version-text">
+        v1.0.9
       </p>
     </footer>
   );

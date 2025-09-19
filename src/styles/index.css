@@ -1,4 +1,12 @@
+/* ===================================================================
+   IMPORTS ET POLICES
+   =================================================================== */
+
 @import url("https://fonts.googleapis.com/css2?family=Madimi+One&display=swap");
+
+/* ===================================================================
+   VARIABLES CSS (CUSTOM PROPERTIES)
+   =================================================================== */
 
 :root {
   /* Couleurs principales */
@@ -6,6 +14,8 @@
   --color-green: #50aa61;
   --color-yellow: #f3c549;
   --color-black: #121212;
+
+  /* Design System - Radix UI Variables */
   --background: 0 0% 100%;
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 84% 4.9%;
@@ -17,22 +27,6 @@
   --ring: 142 76% 36%;
   --radius: 0.5rem;
 
-  /* Safe areas iOS/Android */
-  --safe-area-top: env(safe-area-inset-top, 0px);
-  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-area-left: env(safe-area-inset-left, 0px);
-  --safe-area-right: env(safe-area-inset-right, 0px);
-
-  /* Optimisations de rendu */
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  /* Optimisations de performance supplémentaires */
-  contain: layout style paint;
-  will-change: auto;
-
   /* Variables de Map Controls */
   --map-controls-z-index: 1;
   --map-controls-z-index-high: 1000;
@@ -40,49 +34,21 @@
   --map-button-size: 42px;
   --map-button-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   --map-button-shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.15);
+
+  /* Optimisations de rendu */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Optimisations de performance */
+  contain: layout style paint;
+  will-change: auto;
 }
 
-/* Styles spécifiques PWA */
-@media (display-mode: standalone) {
-
-  /* Quand l'app est installée comme PWA */
-  html {
-    /* Assurer que l'app utilise tout l'écran */
-    height: 100vh;
-    height: 100dvh;
-  }
-
-  body {
-    /* Empêcher le bounce sur iOS */
-    overscroll-behavior: none;
-    -webkit-overflow-scrolling: touch;
-    /* Éliminer tout espace blanc en PWA */
-    height: 100vh !important;
-    height: 100dvh !important;
-  }
-
-  .app-container {
-    /* Assurer que l'app remplit tout l'écran */
-    min-height: 100vh;
-    min-height: 100dvh;
-  }
-
-  /* Fix spécifique pour l'espace blanc en bas en PWA */
-  #root {
-    height: 100vh !important;
-    height: 100dvh !important;
-  }
-
-  /* Header avec plus de padding en PWA */
-  .radix-themes>header {
-    padding: 20px 10px 10px 10px !important;
-    padding-top: calc(20px + env(safe-area-inset-top, 0px)) !important;
-  }
-
-  .header {
-    padding-top: calc(20px + env(safe-area-inset-top, 0px)) !important;
-  }
-}
+/* ===================================================================
+   DARK THEME
+   =================================================================== */
 
 .dark {
   --background: 222.2 84% 4.9%;
@@ -96,6 +62,10 @@
   --ring: 142 76% 36%;
 }
 
+/* ===================================================================
+   RESET CSS ET STYLES DE BASE
+   =================================================================== */
+
 *,
 *::before,
 *::after {
@@ -105,11 +75,7 @@
 }
 
 html {
-  /* Le hack crucial pour iOS PWA */
-  min-height: calc(100% + env(safe-area-inset-top));
-  /* Safe area padding pour toutes les directions */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  /* Empêcher le scroll sur mobile */
+  min-height: 100%;
   overflow: hidden;
   background-attachment: fixed;
   background-position: center;
@@ -119,21 +85,24 @@ html {
 
 body {
   height: 100dvh;
-  /* Dynamic viewport height - moderne */
   height: 100svh;
-  /* Small viewport height - iOS 15+ fallback */
   min-height: -webkit-fill-available;
-  /* Android ancien fallback */
   font-family: "Madimi One", cursive, sans-serif;
-  background: linear-gradient(135deg, var(--color-green), var(--color-yellow), var(--color-green));
+  background: linear-gradient(
+    135deg,
+    var(--color-green),
+    var(--color-yellow),
+    var(--color-green)
+  );
   margin: 0;
   padding: 0;
-  /* Empêcher le scroll et le bounce sur iOS */
   overflow: hidden;
-  /* Retirer position fixed qui cause l'espace blanc */
   width: 100%;
-  /* Important : ne pas ajouter de padding ici, déjà géré par html */
 }
+
+/* ===================================================================
+   LAYOUT PRINCIPAL DE L'APPLICATION
+   =================================================================== */
 
 #root {
   height: 100dvh;
@@ -145,8 +114,12 @@ body {
 }
 
 .radix-themes {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "header"
+    "main"
+    "footer";
   height: 100dvh;
   height: 100svh;
   min-height: -webkit-fill-available;
@@ -154,38 +127,104 @@ body {
   background: transparent !important;
 }
 
-/* Layout principal de l'app */
-.app-container {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  height: 100svh;
-  min-height: -webkit-fill-available;
-  overflow: hidden;
-}
-
-.main-content {
-  flex: 1;
-  overflow: hidden;
-  position: relative;
-}
-
-.radix-themes>header {
-  padding: 10px;
+/* Header Component */
+.header {
+  grid-area: header;
+  min-height: 60px;
+  height: auto;
   background: transparent;
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.radix-themes>main {
+.modal-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Main Content */
+.main-content {
   grid-area: main;
   width: 100%;
   height: 100%;
+  overflow: hidden;
   position: relative;
 }
 
-.radix-themes>footer {
-  grid-area: foot;
+/* Footer Component */
+.footer {
+  grid-area: footer;
+  min-height: 60px;
+  height: auto;
+  background: transparent;
+  color: var(--color-white);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
+.footer-text {
+  font-family: "Madimi One", cursive, sans-serif;
+  text-align: center;
+  color: var(--color-white);
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.version-text {
+  font-family: "Madimi One", cursive, sans-serif;
+  text-align: center;
+  color: var(--color-black);
+  font-size: 0.5em;
+  margin-top: 2px;
+  opacity: 0.7;
+}
+
+/* ===================================================================
+   STYLES SPÉCIFIQUES PWA (PROGRESSIVE WEB APP)
+   =================================================================== */
+
+@media (display-mode: standalone) {
+  /* Header - Extension jusqu'en haut avec safe area */
+  .header {
+    padding-top: max(10px, env(safe-area-inset-top));
+    background: rgba(80, 170, 97, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Footer - Extension jusqu'en bas avec safe area */
+  .footer {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    background: rgba(80, 170, 97, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* Main content - Ajustement pour éviter les chevauchements */
+  .main-content {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Corps général - Optimisations PWA */
+  body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ===================================================================
+   UTILITAIRES ET OVERRIDES
+   =================================================================== */
+
+/* Styles typographiques de base */
 h1 {
   font-size: 1.2em;
   line-height: 1.1;
@@ -197,114 +236,9 @@ p {
   border-bottom: none;
 }
 
-/* Support spécifique pour les encoches et barres système */
-@supports (padding-top: env(safe-area-inset-top)) {
-  .radix-themes {
-    height: 100dvh;
-    min-height: -webkit-fill-available;
-  }
-}
-
-/* Support Android avec barre de navigation */
-@media (display-mode: standalone) {
-  .radix-themes {
-    height: 100dvh;
-    min-height: -webkit-fill-available;
-    /* Maintient overflow hidden pour éviter l'espace blanc */
-    overflow: hidden;
-  }
-}
-
-/* Styles pour différents types d'écrans mobiles */
-@supports (height: 100dvh) {
-
-  /* Navigateurs modernes avec support dvh */
-  .app-container {
-    height: 100dvh;
-  }
-}
-
-@supports not (height: 100dvh) {
-
-  /* Fallback pour navigateurs plus anciens */
-  .app-container {
-    height: 100vh;
-    height: -webkit-fill-available;
-  }
-}
-
-/* Gestion spéciale pour iOS Safari */
-@supports (-webkit-touch-callout: none) {
-  .app-container {
-    height: -webkit-fill-available;
-  }
-}
-
 /* Empêcher le zoom sur les inputs (iOS) */
 input,
 select,
 textarea {
   font-size: 16px !important;
-}
-
-/* Styles pour les encoches et safe areas */
-@media (orientation: portrait) {
-  .header {
-    padding-top: calc(10px + env(safe-area-inset-top, 0px));
-  }
-
-  .footer {
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-  }
-}
-
-@media (orientation: landscape) {
-  .header {
-    padding-top: calc(5px + env(safe-area-inset-top, 0px));
-    padding-left: calc(10px + env(safe-area-inset-left, 0px));
-    padding-right: calc(10px + env(safe-area-inset-right, 0px));
-  }
-
-  .footer {
-    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
-    padding-left: calc(1rem + env(safe-area-inset-left, 0px));
-    padding-right: calc(1rem + env(safe-area-inset-right, 0px));
-  }
-}
-
-/* Styles PWA avec plus de padding pour le header */
-@media (display-mode: standalone) and (orientation: portrait) {
-  .header {
-    padding-top: calc(25px + env(safe-area-inset-top, 0px)) !important;
-  }
-
-  .radix-themes>header {
-    padding-top: calc(25px + env(safe-area-inset-top, 0px)) !important;
-  }
-  
-  /* Correction supplémentaire pour les éléments fixed en PWA */
-  .footer {
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)) !important;
-  }
-}
-
-@media (display-mode: standalone) and (orientation: landscape) {
-  .header {
-    padding-top: calc(15px + env(safe-area-inset-top, 0px)) !important;
-    padding-left: calc(10px + env(safe-area-inset-left, 0px));
-    padding-right: calc(10px + env(safe-area-inset-right, 0px));
-  }
-
-  .radix-themes>header {
-    padding-top: calc(15px + env(safe-area-inset-top, 0px)) !important;
-    padding-left: calc(10px + env(safe-area-inset-left, 0px));
-    padding-right: calc(10px + env(safe-area-inset-right, 0px));
-  }
-  
-  /* Correction supplémentaire pour les éléments fixed en PWA landscape */
-  .footer {
-    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px)) !important;
-    padding-left: calc(1rem + env(safe-area-inset-left, 0px)) !important;
-    padding-right: calc(1rem + env(safe-area-inset-right, 0px)) !important;
-  }
 }
