@@ -3,7 +3,7 @@
 ![React](https://img.shields.io/badge/React-19-blue.svg)
 ![MapLibre](https://img.shields.io/badge/MapLibre-5.6-green.svg)
 ![Performance](https://img.shields.io/badge/Optimized-60%25%2B-orange.svg)
-![PWA](https://img.shields.io/badge/PWA-Ready-purple.svg)
+![Web](https://img.shields.io/badge/Web-App-purple.svg)
 
 > **Navigation GPS intelligente pour Garden Grove Village, Philippines**  
 > _Optimisée avec les API natives MapLibre GL pour des performances exceptionnelles_
@@ -24,9 +24,8 @@
 - 🔄 **Transitions fluides** via `flyTo()` et `jumpTo()` natifs
 - 🎯 **Détection off-route optimisée** avec `queryRenderedFeatures()`
 
-### 📱 **Mobile-First & PWA**
+### 📱 **Mobile-First Web App**
 
-- 📲 **Progressive Web App** avec offline support
 - 🎯 **Design responsive** optimisé pour mobile
 - 🔋 **Performance optimisée** pour appareils low-end
 - 📡 **GPS adaptatif** avec gestion intelligente de la batterie
@@ -65,8 +64,7 @@ Frontend:
 ├── React 19 + Vite (Build ultra-rapide)
 ├── MapLibre GL 5.6 (Cartographie native)
 ├── TanStack Query (État serveur optimisé)
-├── Radix UI + Tailwind (UI moderne)
-└── Workbox (PWA offline)
+└── Radix UI + Tailwind (UI moderne)
 
 Optimisations MapLibre:
 ├── map.project() → Calculs 80% plus rapides

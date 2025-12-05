@@ -12,7 +12,7 @@
   to = "/index.html"
   status = 200
 
-# Headers de sécurité pour PWA
+# Headers de sécurité
 [[headers]]
   for = "/*"
   [headers.values]
@@ -21,25 +21,6 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(self), camera=(), microphone=()"
-
-# Headers spécifiques PWA
-[[headers]]
-  for = "/manifest.webmanifest"
-  [headers.values]
-    Content-Type = "application/manifest+json"
-    Cache-Control = "public, max-age=86400"
-
-[[headers]]
-  for = "/sw.js"
-  [headers.values]
-    Content-Type = "application/javascript"
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/workbox-*.js"
-  [headers.values]
-    Content-Type = "application/javascript"
-    Cache-Control = "public, max-age=0, must-revalidate"
 
 # Cache optimisé pour assets
 [[headers]]

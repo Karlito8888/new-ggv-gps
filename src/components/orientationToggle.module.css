@@ -8,17 +8,16 @@
   z-index: 50;
 }
 
-
 /* Button base styles */
 .button {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-button);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all var(--transition-slow);
   background-color: white !important;
   border: 1px solid #ddd !important;
   color: black !important;
@@ -34,7 +33,7 @@
   opacity: 0.5;
 }
 
-/* Button color states - harmonisé avec les autres boutons de contrôle */
+/* Button color states */
 .bgGray400 {
   background-color: white !important;
   border: 1px solid #ddd !important;
@@ -71,34 +70,15 @@
   color: #4b5563 !important;
 }
 
-/* Icon animations */
+/* Icon animations - using centralized @keyframes from animations.css */
 .iconSpin {
   animation: spin 1s linear infinite;
 }
 
 .iconPulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulseOpacity 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .iconRotation {
   transition: transform 0.5s ease;
-}
-
-/* Animations */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
 }

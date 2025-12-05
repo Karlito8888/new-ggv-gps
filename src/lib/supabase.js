@@ -11,11 +11,5 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase URL or Anon Key");
 }
 
-// Création et export du client Supabase standard
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true, // Rafraîchit automatiquement le token d'authentification
-    persistSession: true, // Persiste la session entre les rechargements de page
-    storage: localStorage, // Utilise localStorage pour persister la session
-  },
-});
+// Création et export du client Supabase (lecture seule, pas d'auth)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);

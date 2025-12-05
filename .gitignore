@@ -61,9 +61,7 @@ combined.log
 .parcel-cache/
 .swc/
 
-# PWA Cache
-sw.js.map
-workbox-*.js.map
+
 
 # ========================================
 # EDITORS & IDEs
@@ -148,7 +146,7 @@ test-output/
 storybook-static/
 
 # ========================================
-# PWA & MOBILE SPECIFIC
+# MOBILE SPECIFIC
 # ========================================
 # Capacitor
 android/
@@ -242,3 +240,17 @@ docs-temp/
 # Scripts temporaires
 scripts/temp/
 temp-*
+
+# ========================================
+# AI ASSISTANTS
+# ========================================
+# Claude Code
+.claude/settings.local.json
+.claude/mcp.json
+
+# Serena
+.serena/memories/
+.serena/cache/
+
+# Dev dist
+dev-dist/

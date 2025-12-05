@@ -27,13 +27,31 @@
   --ring: 142 76% 36%;
   --radius: 0.5rem;
 
+  /* Typography */
+  --font-primary: "Madimi One", cursive, sans-serif;
+
+  /* Shadow System - Elevation Scale */
+  --shadow-soft: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --shadow-strong: 0 8px 25px rgba(0, 0, 0, 0.2);
+  --shadow-dialog: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-button: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --text-shadow-default: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  --text-shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --text-shadow-green: 0 2px 4px rgba(80, 170, 97, 0.3);
+
+  /* Transition Durations */
+  --transition-fast: 0.1s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
   /* Variables de Map Controls */
   --map-controls-z-index: 1;
   --map-controls-z-index-high: 1000;
   --map-button-border-radius: 6px;
   --map-button-size: 42px;
-  --map-button-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --map-button-shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --map-button-shadow: var(--shadow-soft);
+  --map-button-shadow-hover: var(--shadow-medium);
 
   /* Optimisations de rendu */
   font-synthesis: none;
@@ -84,13 +102,8 @@ body {
   height: 100dvh;
   height: 100svh;
   min-height: -webkit-fill-available;
-  font-family: "Madimi One", cursive, sans-serif;
-  background: linear-gradient(
-    135deg,
-    var(--color-green),
-    var(--color-yellow),
-    var(--color-green)
-  );
+  font-family: var(--font-primary);
+  background: linear-gradient(135deg, var(--color-green), var(--color-yellow), var(--color-green));
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -166,15 +179,15 @@ body {
 }
 
 .footer-text {
-  font-family: "Madimi One", cursive, sans-serif;
+  font-family: var(--font-primary);
   text-align: center;
   color: var(--color-white);
   font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: var(--text-shadow-default);
 }
 
 .version-text {
-  font-family: "Madimi One", cursive, sans-serif;
+  font-family: var(--font-primary);
   text-align: center;
   color: var(--color-black);
   font-size: 0.5em;
@@ -203,4 +216,21 @@ input,
 select,
 textarea {
   font-size: 16px !important;
+}
+
+/* ===================================================================
+   UTILITAIRES D'ACCESSIBILITÉ
+   =================================================================== */
+
+/* Screen Reader Only - Masque visuellement mais reste accessible aux lecteurs d'écran */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

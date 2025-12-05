@@ -1,11 +1,7 @@
 # SPA Fallback pour React Router
 /*    /index.html   200
 
-# PWA files avec cache optimal
-/sw.js    /sw.js   200
-/manifest.webmanifest    /manifest.webmanifest   200
-
-# Assets statiques avec cache long terme
+# Assets statiques
 /icons/*    /icons/:splat   200
 /markers/*    /markers/:splat   200
 

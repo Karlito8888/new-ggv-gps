@@ -7,7 +7,7 @@ const DEFAULT_COORDS = {
 };
 
 export function useNavigationState() {
-  // Navigation states: Sequential permission workflow  
+  // Navigation states: Sequential permission workflow
   const [navigationState, setNavigationState] = useState("gps-permission"); // gps-permission, welcome, orientation-permission, navigating, arrived, exit-complete
   const [rawUserLocation, setRawUserLocation] = useState(null);
   const [previousUserLocation, setPreviousUserLocation] = useState(null);
@@ -41,7 +41,7 @@ export function useNavigationState() {
   }, []);
 
   const handleMapTypeToggle = useCallback(() => {
-    setMapType(prev => prev === "osm" ? "satellite" : "osm");
+    setMapType((prev) => (prev === "osm" ? "satellite" : "osm"));
   }, []);
 
   // New permission handlers
@@ -61,13 +61,12 @@ export function useNavigationState() {
   }, []);
 
   const handleDestinationSelectedAndProceed = useCallback((dest) => {
-    if (import.meta.env.DEV) console.log("🎯 Destination selected → Orientation Permission");
+    // Flux optimisé : aller directement à la navigation
+    // L'orientation sera demandée au premier toggle du bouton boussole (lazy permission)
+    if (import.meta.env.DEV) console.log("🎯 Destination selected → Navigation (orientation lazy)");
     setDestination(dest);
-    setNavigationState("orientation-permission");
+    setNavigationState("navigating");
   }, []);
-
-
-  
 
   return {
     // States
@@ -79,7 +78,7 @@ export function useNavigationState() {
     mapType,
     orientationEnabled,
     DEFAULT_COORDS,
-    
+
     // Setters
     setNavigationState,
     setRawUserLocation,
@@ -88,7 +87,7 @@ export function useNavigationState() {
     setIsMapReady,
     setMapType,
     setOrientationEnabled,
-    
+
     // Handlers
     handleDestinationSelected,
     handleDestinationSelectedAndProceed,

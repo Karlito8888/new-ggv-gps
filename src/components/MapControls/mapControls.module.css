@@ -1,31 +1,35 @@
-/* MapControls Component Styles - Contrôle total de la disposition des contrôles de carte */
+/* MapControls Component Styles */
 
 /* ========================================
-   GESTION CENTRALISÉE DES Z-INDEX ET ANIMATIONS
+   Z-INDEX HIERARCHY
    ======================================== */
-
-/* Z-index hierarchy - système centralisé pour toute l'application */
 .zIndexBase {
   z-index: var(--map-controls-z-index, 1);
 }
+
 .zIndexHigh {
   z-index: var(--map-controls-z-index-high, 1000);
 }
+
 .zIndexDialog {
   z-index: var(--dialog-z-index, 50);
 }
 
-/* Animations communes - centralisées pour éviter la duplication */
+/* ========================================
+   COMMON ANIMATIONS - Using centralized @keyframes
+   ======================================== */
 .animationBounceIn {
   animation: bounceIn 0.75s both;
 }
 
 .animationScaleActive:active {
   transform: scale(0.95);
-  transition: transform 0.1s ease;
+  transition: transform var(--transition-fast);
 }
 
-/* Boutons communs - patterns unifiés */
+/* ========================================
+   COMMON BUTTON PATTERNS
+   ======================================== */
 .buttonCircular {
   border-radius: 50% !important;
 }
@@ -34,7 +38,9 @@
   background: transparent !important;
 }
 
-/* Positionnement absolu - utilitaires communs */
+/* ========================================
+   POSITIONING UTILITIES
+   ======================================== */
 .positionBottomLeft {
   position: absolute;
   bottom: 10px;
@@ -47,19 +53,24 @@
   right: 10px;
 }
 
-/* Styles visuels communs */
+/* ========================================
+   SHADOW UTILITIES - Using CSS variables
+   ======================================== */
 .shadowSoft {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-soft);
 }
 
 .shadowMedium {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-medium);
 }
 
 .shadowStrong {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-strong);
 }
 
+/* ========================================
+   BORDER RADIUS UTILITIES
+   ======================================== */
 .borderRadiusSmall {
   border-radius: 0.25rem;
 }
@@ -72,13 +83,15 @@
   border-radius: 1rem;
 }
 
-/* Transitions communes */
+/* ========================================
+   TRANSITION UTILITIES - Using CSS variables
+   ======================================== */
 .transitionSmooth {
-  transition: all 0.2s ease;
+  transition: all var(--transition-normal);
 }
 
 .transitionFast {
-  transition: all 0.1s ease;
+  transition: all var(--transition-fast);
 }
 
 /* ========================================
@@ -95,8 +108,8 @@
 }
 
 /* ========================================
-     MAP TYPE SWITCHER (Bouton satellite)
-     ======================================== */
+   MAP TYPE SWITCHER
+   ======================================== */
 .mapTypeSwitcher {
   position: absolute;
   bottom: 75px;
@@ -104,8 +117,7 @@
   width: 40px !important;
   height: 40px !important;
   border-radius: 50%;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-button);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -129,8 +141,8 @@
 }
 
 /* ========================================
-    RECENTER GPS BUTTON (Bouton de recentrage)
-    ======================================== */
+   RECENTER GPS BUTTON
+   ======================================== */
 .recenterGpsControl {
   position: absolute;
   bottom: 190px;
@@ -151,10 +163,9 @@
   cursor: pointer !important;
 }
 
-
 /* ========================================
-    NEW DESTINATION BUTTON (Bouton nouvelle destination)
-    ======================================== */
+   NEW DESTINATION BUTTON
+   ======================================== */
 .newDestinationControl {
   position: absolute;
   width: 40px;
@@ -165,8 +176,7 @@
 }
 
 .newDestinationButton {
-  /* Utilise les classes utilitaires */
-  @apply buttonTransparent;
+  background: transparent !important;
   width: 100%;
   height: 100%;
 }
@@ -176,8 +186,3 @@
   height: 100%;
   object-fit: contain;
 }
-
-/* ========================================
-   RESPONSIVE DESIGN - SUPPRIMÉ
-   ======================================== */
-/* Application conçue pour smartphone - styles optimisés par défaut */

@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from "react";
-import { Polygon } from "ol/geom";
+import * as turf from "@turf/turf";
 import { blocks } from "../data/blocks";
 
 export function useMapConfig(userLocation, navigationState, adaptivePitch, mapType) {
@@ -29,8 +29,9 @@ export function useMapConfig(userLocation, navigationState, adaptivePitch, mapTy
 
   const getPolygonCenter = useCallback((coords) => {
     if (!coords || coords.length === 0) return [0, 0];
-    const polygon = new Polygon([coords]);
-    return polygon.getInteriorPoint().getCoordinates();
+    const polygon = turf.polygon([coords]);
+    const centroid = turf.centroid(polygon);
+    return centroid.geometry.coordinates;
   }, []);
 
   // Memoization of blocks in GeoJSON with calculated centers

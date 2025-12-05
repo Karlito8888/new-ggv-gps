@@ -1,146 +1,92 @@
-<!-- index.html -->
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en-PH">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="format-detection" content="telephone=no" />
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="format-detection" content="telephone=no" />
+    <!-- Basic information -->
+    <title>MyGGV|GPS</title>
+    <meta
+      name="description"
+      content="Open-source GPS application to navigate Garden Grove Village with precision and ease"
+    />
+    <meta
+      name="keywords"
+      content="GPS, Garden Grove Village, navigation, open-source, map, route"
+    />
+    <meta name="author" content="MyGGV Team" />
 
-  <!-- Basic information -->
-  <title>MyGGV|GPS</title>
-  <meta name="description"
-    content="Open-source GPS application to navigate Garden Grove Village with precision and ease" />
-  <meta name="keywords" content="GPS, Garden Grove Village, navigation, open-source, map, route" />
-  <meta name="author" content="MyGGV Team" />
+    <!-- Theme color (browser UI) -->
+    <meta name="theme-color" content="#50AA61" />
 
-  <!-- Favicon and icons -->
-  <link rel="icon" type="image/png" sizes="32x32" href="/AppImages/ios/32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/AppImages/ios/16.png" />
-  <link rel="apple-touch-icon" sizes="57x57" href="/AppImages/ios/57.png" />
-  <link rel="apple-touch-icon" sizes="60x60" href="/AppImages/ios/60.png" />
-  <link rel="apple-touch-icon" sizes="72x72" href="/AppImages/ios/72.png" />
-  <link rel="apple-touch-icon" sizes="76x76" href="/AppImages/ios/76.png" />
-  <link rel="apple-touch-icon" sizes="114x114" href="/AppImages/ios/114.png" />
-  <link rel="apple-touch-icon" sizes="120x120" href="/AppImages/ios/120.png" />
-  <link rel="apple-touch-icon" sizes="144x144" href="/AppImages/ios/144.png" />
-  <link rel="apple-touch-icon" sizes="152x152" href="/AppImages/ios/152.png" />
-  <link rel="apple-touch-icon" sizes="167x167" href="/AppImages/ios/167.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/AppImages/ios/180.png" />
-  <link rel="apple-touch-icon" sizes="1024x1024" href="/AppImages/ios/1024.png" />
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
 
-  <!-- PWA settings -->
-  <meta name="theme-color" content="#50AA61" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="MyGGV|GPS" />
-  <!-- iOS Safe Area Support -->
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://myggv-gps.netlify.app/" />
+    <meta property="og:title" content="MyGGV - GPS for Garden Grove Village" />
+    <meta
+      property="og:description"
+      content="Open-source GPS application to navigate Garden Grove Village with precision and ease"
+    />
+    <meta property="og:image" content="https://myggv-gps.netlify.app/icons/og-image.png" />
 
-  <!-- iOS splash screens -->
-  <!-- Note: You'll need to generate device-specific splash screens for optimal experience -->
-  <!-- For now, using a fallback approach with the largest available icon -->
-  <link rel="apple-touch-startup-image" href="/AppImages/ios/512.png" media="(min-device-width: 320px)" />
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://myggv-gps.netlify.app/" />
+    <meta property="twitter:title" content="MyGGV - GPS for Garden Grove Village" />
+    <meta
+      property="twitter:description"
+      content="Open-source GPS application to navigate Garden Grove Village with precision and ease"
+    />
+    <meta property="twitter:image" content="https://myggv-gps.netlify.app/icons/og-image.png" />
 
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://myggv-gps.netlify.app/" />
-  <meta property="og:title" content="MyGGV - GPS for Garden Grove Village" />
-  <meta property="og:description"
-    content="Open-source GPS application to navigate Garden Grove Village with precision and ease" />
-  <meta property="og:image" content="https://myggv-gps.netlify.app/AppImages/ios/512.png" />
+    <!-- Preloading critical resources -->
+    <link rel="preconnect" href="https://a.tile.openstreetmap.org" />
+    <link rel="preconnect" href="https://b.tile.openstreetmap.org" />
+    <link rel="preconnect" href="https://c.tile.openstreetmap.org" />
+    <link rel="preconnect" href="https://server.arcgisonline.com" />
+    <link rel="preconnect" href="https://wlrrruemchacgyypexsu.supabase.co" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://routing.openstreetmap.de" />
 
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://myggv-gps.netlify.app/" />
-  <meta property="twitter:title" content="MyGGV - GPS for Garden Grove Village" />
-  <meta property="twitter:description"
-    content="Open-source GPS application to navigate Garden Grove Village with precision and ease" />
-  <meta property="twitter:image" content="https://myggv-gps.netlify.app/AppImages/ios/512.png" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/src/index.css" />
 
-  <!-- Preloading critical resources -->
-  <link rel="preconnect" href="https://a.tile.openstreetmap.org" />
-  <link rel="preconnect" href="https://b.tile.openstreetmap.org" />
-  <link rel="preconnect" href="https://c.tile.openstreetmap.org" />
-  <link rel="preconnect" href="https://server.arcgisonline.com" />
-  <link rel="preconnect" href="https://wlrrruemchacgyypexsu.supabase.co" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="dns-prefetch" href="https://routing.openstreetmap.de" />
-  <!-- Removed preloading of non-existent font -->
+    <!-- Geolocation and permissions -->
+    <meta http-equiv="Permissions-Policy" content="geolocation=*, accelerometer=*, gyroscope=*" />
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="/src/index.css" />
+    <!-- Security -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; connect-src 'self' https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org https://demotiles.maplibre.org https://wlrrruemchacgyypexsu.supabase.co https://routing.openstreetmap.de https://api.openrouteservice.org https://server.arcgisonline.com; img-src 'self' data: https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org https://demotiles.maplibre.org https://server.arcgisonline.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://demotiles.maplibre.org;"
+    />
 
-  <!-- Geolocation and permissions -->
-  <meta http-equiv="Permissions-Policy" content="geolocation=*, accelerometer=*, gyroscope=*" />
+    <!-- Additional Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+  </head>
 
-  <!-- Security -->
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; connect-src 'self' https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org https://demotiles.maplibre.org https://wlrrruemchacgyypexsu.supabase.co https://routing.openstreetmap.de https://api.openrouteservice.org https://server.arcgisonline.com; img-src 'self' data: https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org https://demotiles.maplibre.org https://server.arcgisonline.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://demotiles.maplibre.org; manifest-src 'self';" />
+  <body>
+    <div id="root"></div>
 
-  <!-- Additional Security Headers (seuls ceux supportés en meta) -->
-  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
-</head>
+    <!-- Fallback for disabled JavaScript -->
+    <noscript>
+      <div style="padding: 20px; text-align: center">
+        <h1>JavaScript is required</h1>
+        <p>
+          This GPS application requires JavaScript to function. Please enable it in your browser
+          settings.
+        </p>
+      </div>
+    </noscript>
 
-<body>
-  <div id="root"></div>
-
-  <!-- Fallback for disabled JavaScript -->
-  <noscript>
-    <div style="padding: 20px; text-align: center">
-      <h1>JavaScript is required</h1>
-      <p>
-        This GPS application requires JavaScript to function. Please enable it
-        in your browser settings.
-      </p>
-    </div>
-  </noscript>
-
-  <!-- Main script -->
-  <script type="module" src="/src/main.jsx"></script>
-
-  <!-- Offline detection with nonce -->
-  <script>
-    window.addEventListener("load", () => {
-      function updateOnlineStatus() {
-        const statusElement = document.createElement("div");
-        statusElement.id = "connection-status";
-        statusElement.style.position = "fixed";
-        statusElement.style.bottom = "0";
-        statusElement.style.left = "0";
-        statusElement.style.right = "0";
-        statusElement.style.padding = "10px";
-        statusElement.style.textAlign = "center";
-        statusElement.style.zIndex = "9999";
-
-        if (navigator.onLine) {
-          statusElement.textContent = "";
-          statusElement.style.display = "none";
-        } else {
-          statusElement.textContent =
-            "You are offline. Some features may be limited.";
-          statusElement.style.backgroundColor = "#f44336";
-          statusElement.style.color = "white";
-        }
-
-        const existingElement = document.getElementById("connection-status");
-        if (existingElement) {
-          document.body.removeChild(existingElement);
-        }
-        document.body.appendChild(statusElement);
-      }
-
-      window.addEventListener("online", updateOnlineStatus);
-      window.addEventListener("offline", updateOnlineStatus);
-      updateOnlineStatus();
-    });
-  </script>
-</body>
-
+    <!-- Main script -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

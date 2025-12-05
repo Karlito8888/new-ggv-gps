@@ -2,7 +2,7 @@
   --dialog-z-index: 50;
   --dialog-overlay-bg: rgba(0, 0, 0, 0.8);
   --dialog-border-radius: 1rem;
-  --dialog-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --dialog-shadow: var(--shadow-dialog, 0 25px 50px -12px rgba(0, 0, 0, 0.25));
   --dialog-max-width: 32rem;
   --dialog-padding: 2rem;
   --dialog-gap: 1rem;
@@ -49,9 +49,8 @@
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-white);
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: var(--text-shadow-default);
   letter-spacing: 1px;
-  /* margin-bottom: 1.5rem; */
 }
 
 .modalLogo {
@@ -69,7 +68,7 @@
   font-weight: bold;
   line-height: 1.5;
   margin-block: 1rem;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: var(--text-shadow-default);
 }
 
 .modalForm {
@@ -133,16 +132,22 @@
   position: relative;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 0.75rem;
-  overflow: hidden;
+  overflow: visible;
   min-height: 200px;
   display: flex;
   flex-direction: column;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.welcomeMobilePickerWrapper > div {
+  touch-action: pan-y !important;
 }
 
 .welcomePickerItem {
   font-weight: 600;
   color: #333;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: var(--text-shadow-subtle);
   padding: 0.75rem;
   text-align: center;
   font-size: 1rem;
@@ -154,7 +159,7 @@
 .welcomePickerItem.selected {
   color: var(--color-green);
   font-weight: 700;
-  text-shadow: 0 2px 4px rgba(80, 170, 97, 0.3);
+  text-shadow: var(--text-shadow-green);
   background-color: rgba(80, 170, 97, 0.1);
 }
 
@@ -168,17 +173,12 @@
   padding: 1rem;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 .exitFilipinoMessage {
   color: rgba(255, 255, 255, 0.9);
   font-size: 1.125rem;
   font-weight: bold;
   line-height: 1.4;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: var(--text-shadow-default);
   margin: 0;
 }
 
@@ -191,7 +191,7 @@
   font-size: 1.125rem;
   font-weight: 600;
   margin: 0;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: var(--text-shadow-default);
 }
 
 .arrivalExitInfo {
@@ -203,7 +203,7 @@
   font-size: 1.125rem;
   font-weight: 600;
   margin: 0;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: var(--text-shadow-default);
 }
 
 .modalIcon {
@@ -222,13 +222,47 @@
   color: rgba(255, 255, 255, 0.7);
   margin-top: 1rem;
   font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: var(--text-shadow-default);
 }
-
-
 
 .dialogFooter {
   display: flex;
   flex-direction: column-reverse;
   gap: 0.5rem;
+}
+
+/* Page-based navigation styles (replaces modal overlays) */
+.pageOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--dialog-z-index);
+  background: var(--dialog-overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  /* Safe areas for notched devices (iOS) */
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.pageContent {
+  display: grid;
+  width: 90%;
+  max-width: var(--dialog-max-width);
+  gap: var(--dialog-gap);
+  background: linear-gradient(135deg, var(--color-green), var(--color-yellow));
+  padding: var(--dialog-padding);
+  border-radius: var(--dialog-border-radius);
+  box-shadow: var(--dialog-shadow);
+  color: var(--color-white);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.welcomePickerItemSelected {
+  color: var(--color-green);
+  font-weight: 700;
+  text-shadow: var(--text-shadow-green);
+  background-color: rgba(80, 170, 97, 0.1);
 }
