@@ -24,6 +24,12 @@ export function useNavigation(map, userLocation, routeGeoJSON, destination) {
   const [distanceRemaining, setDistanceRemaining] = useState(0);
   const [hasArrived, setHasArrived] = useState(false);
 
+  // Extract stable values to avoid complex expressions in deps
+  const userLat = userLocation?.latitude;
+  const userLng = userLocation?.longitude;
+  const destLng = destination?.coordinates?.[0];
+  const destLat = destination?.coordinates?.[1];
+
   // Update navigation data when user location changes
   useEffect(() => {
     if (!map || !userLocation || !destination) {
@@ -74,15 +80,7 @@ export function useNavigation(map, userLocation, routeGeoJSON, destination) {
       duration: 1000, // 1 second smooth transition
       essential: true, // Ensure animation completes even if interrupted
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    map,
-    userLocation?.latitude,
-    userLocation?.longitude,
-    destination?.coordinates?.[0],
-    destination?.coordinates?.[1],
-    routeGeoJSON,
-  ]);
+  }, [map, userLat, userLng, destLng, destLat, routeGeoJSON, userLocation, destination]);
 
   return {
     bearing,
@@ -110,8 +108,7 @@ function calculateBearing(lat1, lon1, lat2, lon2) {
   const Δλ = ((lon2 - lon1) * Math.PI) / 180;
 
   const y = Math.sin(Δλ) * Math.cos(φ2);
-  const x =
-    Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
 
   let θ = Math.atan2(y, x);
   θ = (θ * 180) / Math.PI; // Convert to degrees

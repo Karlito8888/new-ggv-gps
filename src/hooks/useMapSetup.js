@@ -147,8 +147,7 @@ export function useMapSetup(containerRef, options = {}) {
     return () => {
       mapInstance.remove();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty deps - only run on mount (intentional)
+  }, [containerRef, options]);
 
   // Handle map style changes
   useEffect(() => {

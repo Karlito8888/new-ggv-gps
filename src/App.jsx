@@ -30,16 +30,10 @@ export default function App() {
   const [deviceOrientation, setDeviceOrientation] = useState(null);
 
   // Initialize map and GPS tracking
-  const { map, userLocation, isMapReady, setMapStyle } =
-    useMapSetup(mapContainerRef);
+  const { map, userLocation, isMapReady, setMapStyle } = useMapSetup(mapContainerRef);
 
   // Calculate route when destination is selected
-  // eslint-disable-next-line no-unused-vars
-  const { routeGeoJSON, distance, duration, isCalculating } = useRouting(
-    map,
-    userLocation,
-    destination,
-  );
+  const { routeGeoJSON } = useRouting(map, userLocation, destination);
 
   // Navigation logic (bearing, arrival detection)
   const { bearing, nextTurn, distanceRemaining, hasArrived } = useNavigation(
@@ -75,10 +69,7 @@ export default function App() {
     window.addEventListener("deviceorientation", handleOrientation);
 
     return () => {
-      window.removeEventListener(
-        "deviceorientationabsolute",
-        handleOrientation,
-      );
+      window.removeEventListener("deviceorientationabsolute", handleOrientation);
       window.removeEventListener("deviceorientation", handleOrientation);
     };
   }, [navState]);
@@ -91,10 +82,7 @@ export default function App() {
       {/* Conditional overlays based on navState */}
       <AnimatePresence mode="wait">
         {navState === "gps-permission" && (
-          <GPSPermissionOverlay
-            key="gps-permission"
-            onGrant={() => setNavState("welcome")}
-          />
+          <GPSPermissionOverlay key="gps-permission" onGrant={() => setNavState("welcome")} />
         )}
 
         {navState === "welcome" && (
@@ -164,11 +152,7 @@ export default function App() {
       {/* Map style toggle (always visible when map ready) */}
       {isMapReady && (
         <div className="map-style-toggle">
-          <button
-            onClick={() => setMapStyle("osm")}
-            className="style-btn"
-            aria-label="Street map"
-          >
+          <button onClick={() => setMapStyle("osm")} className="style-btn" aria-label="Street map">
             🗺️
           </button>
           <button
@@ -217,10 +201,7 @@ function GPSPermissionOverlay({ onGrant }) {
     >
       <motion.div className="modal" variants={modalVariants}>
         <h1>📍 GPS Permission Required</h1>
-        <p>
-          MyGGV GPS needs access to your location to provide turn-by-turn
-          navigation.
-        </p>
+        <p>MyGGV GPS needs access to your location to provide turn-by-turn navigation.</p>
         <button className="btn-primary" onClick={onGrant}>
           Enable GPS
         </button>
@@ -247,10 +228,8 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
       const block = blocks.find((b) => b.name === selectedBlock);
       if (block) {
         // Calculate center of block polygon
-        const centerLng =
-          block.coords.reduce((sum, c) => sum + c[0], 0) / block.coords.length;
-        const centerLat =
-          block.coords.reduce((sum, c) => sum + c[1], 0) / block.coords.length;
+        const centerLng = block.coords.reduce((sum, c) => sum + c[0], 0) / block.coords.length;
+        const centerLat = block.coords.reduce((sum, c) => sum + c[1], 0) / block.coords.length;
 
         onSelectDestination({
           type: "block",
@@ -332,9 +311,7 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
         )}
 
         {selectedType === "exit" && (
-          <p className="text-center text-gray-600">
-            Get directions to exit the village
-          </p>
+          <p className="text-center text-gray-600">Get directions to exit the village</p>
         )}
 
         <button className="btn-primary mt-4" onClick={handleNavigate}>
@@ -388,18 +365,11 @@ function OrientationPermissionOverlay({ onGrant }) {
     >
       <motion.div className="modal" variants={modalVariants}>
         <h1>🧭 Compass Permission</h1>
-        <p>
-          Enable device orientation for accurate compass heading during
-          navigation.
-        </p>
+        <p>Enable device orientation for accurate compass heading during navigation.</p>
 
         {error && <div className="error-message">{error}</div>}
 
-        <button
-          className="btn-primary"
-          onClick={handleRequest}
-          disabled={isRequesting}
-        >
+        <button className="btn-primary" onClick={handleRequest} disabled={isRequesting}>
           {isRequesting ? "Requesting..." : "Enable Compass"}
         </button>
 
@@ -428,8 +398,7 @@ function NavigationOverlay({
   };
 
   // Calculate compass heading (use device orientation if available)
-  const compassHeading =
-    deviceOrientation?.webkitHeading || deviceOrientation?.alpha || bearing;
+  const compassHeading = deviceOrientation?.webkitHeading || deviceOrientation?.alpha || bearing;
 
   return (
     <motion.div
@@ -446,26 +415,19 @@ function NavigationOverlay({
       </div>
 
       <div className="nav-distance">
-        <div className="distance-value">
-          {formatDistance(distanceRemaining)}
-        </div>
+        <div className="distance-value">{formatDistance(distanceRemaining)}</div>
         <div className="distance-label">remaining</div>
       </div>
 
       {nextTurn && (
         <div className="nav-turn">
           <div className="turn-instruction">{nextTurn.instruction}</div>
-          <div className="turn-distance">
-            {formatDistance(nextTurn.distance)}
-          </div>
+          <div className="turn-distance">{formatDistance(nextTurn.distance)}</div>
         </div>
       )}
 
       <div className="nav-compass">
-        <div
-          className="compass-arrow"
-          style={{ transform: `rotate(${compassHeading}deg)` }}
-        >
+        <div className="compass-arrow" style={{ transform: `rotate(${compassHeading}deg)` }}>
           ↑
         </div>
       </div>
@@ -485,8 +447,7 @@ function ArrivedOverlay({ destination, onNavigateAgain, onExitVillage }) {
       <motion.div className="modal" variants={modalVariants}>
         <h1>🎉 You've Arrived!</h1>
         <p className="text-center text-lg">
-          You have reached{" "}
-          <strong>{destination?.name || "your destination"}</strong>
+          You have reached <strong>{destination?.name || "your destination"}</strong>
         </p>
 
         <button className="btn-primary mt-4" onClick={onNavigateAgain}>

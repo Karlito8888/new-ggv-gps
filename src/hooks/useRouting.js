@@ -33,6 +33,12 @@ export function useRouting(map, origin, destination) {
   const abortControllerRef = useRef(null);
   const lastRecalculationRef = useRef(0); // Track last recalculation time
 
+  // Extract stable values to avoid complex expressions in deps
+  const originLat = origin?.latitude;
+  const originLng = origin?.longitude;
+  const destLng = destination?.coordinates?.[0];
+  const destLat = destination?.coordinates?.[1];
+
   // Calculate route when origin or destination changes
   useEffect(() => {
     if (!map || !origin || !destination) {
@@ -100,14 +106,7 @@ export function useRouting(map, origin, destination) {
         abortControllerRef.current.abort();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    map,
-    origin?.latitude,
-    origin?.longitude,
-    destination?.coordinates?.[0],
-    destination?.coordinates?.[1],
-  ]);
+  }, [map, originLat, originLng, destLng, destLat, origin, destination]);
 
   // Detect deviation and trigger recalculation
   // Checks every 5 seconds if user is > 25m from route
@@ -128,9 +127,7 @@ export function useRouting(map, origin, destination) {
 
       // Deviation threshold: 25 meters
       if (distanceFromRoute > 25) {
-        console.log(
-          `User deviated ${Math.round(distanceFromRoute)}m from route, recalculating...`,
-        );
+        console.log(`User deviated ${Math.round(distanceFromRoute)}m from route, recalculating...`);
         lastRecalculationRef.current = now;
 
         // Trigger recalculation by clearing route
@@ -174,12 +171,7 @@ function calculateDistanceToRoute(origin, routeGeoJSON) {
 
   // Check distance to each point on the route
   for (const [lng, lat] of coordinates) {
-    const distance = calculateHaversineDistance(
-      origin.latitude,
-      origin.longitude,
-      lat,
-      lng,
-    );
+    const distance = calculateHaversineDistance(origin.latitude, origin.longitude, lat, lng);
 
     if (distance < minDistance) {
       minDistance = distance;
@@ -226,9 +218,7 @@ async function fetchOSRMRoute(origin, destination, signal) {
     // Check for OSRM error codes
     // https://project-osrm.org/docs/v5.24.0/api/#result-objects
     if (data.code !== "Ok") {
-      console.warn(
-        `OSRM code: ${data.code}, message: ${data.message || "N/A"}`,
-      );
+      console.warn(`OSRM code: ${data.code}, message: ${data.message || "N/A"}`);
       return null;
     }
 
