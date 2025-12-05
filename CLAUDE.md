@@ -108,6 +108,17 @@ VITE_OPENROUTE_API_KEY=...  # Optional fallback routing
 - GeoJSON coordinates are `[longitude, latitude]` (GeoJSON standard)
 - User location objects use `{latitude, longitude}` (GPS standard)
 
+## Development Philosophy
+
+**KISS (Keep It Simple, Stupid)**: Avoid over-engineering at all costs.
+
+- Prefer direct solutions over abstractions
+- No unnecessary hooks, contexts, or state machines
+- If a simple `navigate()` call works, don't add callbacks/events
+- Fewer files > more files with "clean architecture"
+- Inline logic is fine if it's only used once
+- Don't create utils/helpers for one-time operations
+
 ## Browser Compatibility
 
 **Target browsers: Google Chrome (Android) and Safari (iOS)**

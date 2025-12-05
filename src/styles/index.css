@@ -110,6 +110,13 @@ body {
   width: 100%;
 }
 
+/* Force Madimi One globally (override Radix UI defaults) */
+body,
+.radix-themes,
+.radix-themes * {
+  font-family: var(--font-primary);
+}
+
 /* ===================================================================
    LAYOUT PRINCIPAL DE L'APPLICATION
    =================================================================== */
@@ -233,4 +240,19 @@ textarea {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ===================================================================
+   MAPLIBRE OVERRIDES
+   =================================================================== */
+
+/* Attribution control - fermé par défaut */
+.maplibregl-ctrl-attrib.maplibregl-compact-show:not(:focus):not(:hover) {
+  padding: 2px 24px 2px 0;
+  visibility: visible;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact-show:not(:focus):not(:hover)
+  .maplibregl-ctrl-attrib-inner {
+  display: none;
 }

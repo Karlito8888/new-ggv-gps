@@ -14,19 +14,12 @@ import { overlayVariants, modalVariants, slideUpVariants } from "../lib/animatio
  */
 export default function WelcomePage() {
   const navigate = useNavigate();
-  const { setDestination, userLocation } = useOutletContext();
+  const { setDestination, setOrientationEnabled } = useOutletContext();
 
   const [pickerValue, setPickerValue] = useState({
     block: "",
     lot: "",
   });
-
-  // Redirect to GPS permission if no location
-  useEffect(() => {
-    if (!userLocation) {
-      navigate("/");
-    }
-  }, [userLocation, navigate]);
 
   // Get available blocks
   const { data: availableBlocks = [] } = useAvailableBlocks();
@@ -78,8 +71,28 @@ export default function WelcomePage() {
     }
   }, [availableBlocks, availableLots, isLotsLoading, pickerValue.block, pickerValue.lot]);
 
+  // Request device orientation permission (iOS only, must be triggered by user gesture)
+  const requestOrientationPermission = async () => {
+    // Check if iOS requestPermission is available
+    if (
+      typeof DeviceOrientationEvent !== "undefined" &&
+      typeof DeviceOrientationEvent.requestPermission === "function"
+    ) {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        console.log("iOS DeviceOrientation permission:", permission);
+        return permission === "granted";
+      } catch (error) {
+        console.warn("DeviceOrientation permission request failed:", error);
+        return false;
+      }
+    }
+    // Android/Desktop - no permission needed, return true
+    return true;
+  };
+
   // Handle destination selection
-  const handleSubmitDestination = (e) => {
+  const handleSubmitDestination = async (e) => {
     e.preventDefault();
 
     if (!pickerValue.block || !pickerValue.lot) {
@@ -107,6 +120,14 @@ export default function WelcomePage() {
       console.error("Invalid or missing coordinates for selected location:", locationData);
       alert("Invalid destination: coordinates not found. Please try again.");
       return;
+    }
+
+    // Request orientation permission and enable orientation automatically
+    // iOS: Shows native permission dialog (must happen on user gesture)
+    // Android: No dialog needed, just enable
+    const permissionGranted = await requestOrientationPermission();
+    if (permissionGranted) {
+      setOrientationEnabled(true);
     }
 
     const location = {

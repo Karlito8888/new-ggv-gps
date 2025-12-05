@@ -5,9 +5,9 @@ import { Theme } from "@radix-ui/themes";
 import { router } from "./router";
 import { NavigationProvider } from "./contexts/NavigationContext";
 import { queryClient } from "./lib/queryClient";
-import "./styles/index.css"; // Centralized styles
+import "@radix-ui/themes/styles.css"; // Radix base styles (imported first to allow overrides)
+import "./styles/index.css"; // Centralized styles (overrides Radix)
 import "./styles/animations.css"; // Centralized @keyframes
-import "@radix-ui/themes/styles.css";
 
 createRoot(document.getElementById("root")).render(
   <QueryClientProvider client={queryClient}>

@@ -9,7 +9,6 @@ import Footer from "../components/Footer/Footer";
 import MapLoadingOverlay from "../components/MapLoadingOverlay";
 import AnimatedOutlet from "../components/AnimatedOutlet";
 import { MapMarkers } from "../components/MapMarkers";
-import { RouteLayers } from "../components/RouteLayers";
 import { MapControls } from "../components/MapControls/MapControls";
 
 // Hooks
@@ -23,13 +22,16 @@ import { useSymbolLayerInteractions } from "../hooks/useSymbolLayerInteractions"
 // Context
 import { useNavigation } from "../hooks/useNavigation";
 
-// Utils
-import { initMapLibreDirections } from "../lib/navigation";
+// Utils - Native MapLibre route layer management
+import { initNativeRouteLayers, cleanupRouteLayers } from "../lib/navigation";
 import { gpsTransition, recenterMap, cleanupMapResources } from "../utils/mapTransitions";
 
 /**
  * MapLayout - Persistent map wrapper for all routes
  * The map remains mounted across route changes to avoid re-initialization
+ *
+ * Route visualization is now handled by native MapLibre layers (not React components)
+ * for better performance during navigation updates.
  */
 export default function MapLayout() {
   const navigate = useNavigate();
@@ -199,19 +201,25 @@ export default function MapLayout() {
     }
   }, [navigationState, userLocation, isMapReady, handleRecenterMap]);
 
-  // Initialize MapLibre Directions when map is ready
+  // Initialize native MapLibre route layers when map is ready
   useEffect(() => {
     if (!isMapReady || !mapRef.current) return;
     const map = mapRef.current.getMap();
     if (map) {
-      initMapLibreDirections(map);
+      initNativeRouteLayers(map);
     }
   }, [isMapReady, mapRef]);
 
   // Cleanup map resources on unmount
   useEffect(() => {
+    const currentMapRef = mapRef.current;
     return () => {
-      cleanupMapResources(mapRef);
+      // Cleanup native route layers
+      const map = currentMapRef?.getMap();
+      if (map) {
+        cleanupRouteLayers(map);
+      }
+      cleanupMapResources({ current: currentMapRef });
     };
   }, [mapRef]);
 
@@ -224,6 +232,7 @@ export default function MapLayout() {
     setDestination,
     navigationState,
     orientationEnabled,
+    setOrientationEnabled,
     handleOrientationToggle,
     handleMapTypeToggle,
     handleRecenterMap,
@@ -283,12 +292,8 @@ export default function MapLayout() {
             style={{ display: "none" }}
           />
 
-          {/* Route layers */}
-          <RouteLayers
-            route={route}
-            traveledRoute={traveledRoute}
-            navigationState={navigationState}
-          />
+          {/* Route layers are now managed natively by MapLibre via initNativeRouteLayers() */}
+          {/* No React component needed - sources/layers are updated directly */}
 
           {/* Map markers */}
           <MapMarkers

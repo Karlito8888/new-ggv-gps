@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { motion } from "framer-motion";
 import ggvLogo from "../assets/img/ggv.png";
 import Button from "../components/ui/button";
@@ -11,6 +11,7 @@ import { overlayVariants, modalVariants, pulseVariants, shakeVariants } from "..
  * Requests GPS permission from the user
  */
 export default function GpsPermissionPage() {
+  const navigate = useNavigate();
   const { geolocateControlRef, gpsError } = useOutletContext();
   const [isRequesting, setIsRequesting] = useState(false);
   const [shouldShake, setShouldShake] = useState(false);
@@ -18,7 +19,10 @@ export default function GpsPermissionPage() {
   const handleRequestGps = () => {
     if (!geolocateControlRef?.current) return;
     setIsRequesting(true);
+
+    // Trigger GPS and navigate immediately
     geolocateControlRef.current.trigger();
+    navigate("/welcome");
   };
 
   // Reset requesting state after timeout (handles dismissed permission dialogs)
@@ -57,9 +61,7 @@ export default function GpsPermissionPage() {
         animate="visible"
         exit="exit"
       >
-        <div className={styles.dialogHeader}>
-          <h1 className="sr-only">Location Permission Required</h1>
-        </div>
+        <h1 className="sr-only">Location Permission Required</h1>
 
         <motion.img
           src={ggvLogo}

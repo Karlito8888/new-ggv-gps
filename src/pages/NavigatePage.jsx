@@ -68,7 +68,7 @@ export default function NavigatePage() {
       setRedirectMessage("Location required. Redirecting...");
       const timeout = setTimeout(() => {
         navigate("/", { replace: true });
-      }, 1500);
+      }, 500);
       return () => clearTimeout(timeout);
     }
 
@@ -78,7 +78,7 @@ export default function NavigatePage() {
       setRedirectMessage("No destination selected. Redirecting...");
       const timeout = setTimeout(() => {
         navigate("/welcome", { replace: true });
-      }, 1500);
+      }, 500);
       return () => clearTimeout(timeout);
     }
 
@@ -196,7 +196,6 @@ export default function NavigatePage() {
       onArrival={handleArrival}
       onExitComplete={handleExitComplete}
       isOrientationActive={orientationEnabled}
-      isExitMode={isExitMode}
     />
   );
 }
