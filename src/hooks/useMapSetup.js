@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
-import { blocks } from '../data/blocks';
+import { useState, useEffect, useRef } from "react";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { blocks } from "../data/blocks";
 
 /**
  * useMapSetup Hook
@@ -27,17 +27,17 @@ export function useMapSetup(containerRef, options = {}) {
   const [map, setMap] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [mapStyle, setMapStyle] = useState('osm');
+  const [mapStyle, setMapStyle] = useState("osm");
   const geolocateRef = useRef(null);
 
   // Map style URLs
   const getMapStyleUrl = (style) => {
     switch (style) {
-      case 'satellite':
-        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-      case 'osm':
+      case "satellite":
+        return "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+      case "osm":
       default:
-        return 'https://tiles.openfreemap.org/styles/liberty';
+        return "https://tiles.openfreemap.org/styles/liberty";
     }
   };
 
@@ -49,7 +49,7 @@ export function useMapSetup(containerRef, options = {}) {
     // https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#constructor
     const mapInstance = new maplibregl.Map({
       container: containerRef.current,
-      style: getMapStyleUrl('osm'),
+      style: getMapStyleUrl("osm"),
       center: options.center || [120.95134859887523, 14.347872973134175], // Village center
       zoom: options.zoom || 15,
       pitch: options.pitch || 0,
@@ -58,18 +58,18 @@ export function useMapSetup(containerRef, options = {}) {
 
     // Wait for map to load before adding sources/layers
     // https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#load
-    mapInstance.on('load', () => {
+    mapInstance.on("load", () => {
       // Convert blocks array to GeoJSON FeatureCollection
       const blocksGeoJSON = {
-        type: 'FeatureCollection',
+        type: "FeatureCollection",
         features: blocks.map((block) => ({
-          type: 'Feature',
+          type: "Feature",
           properties: {
             name: block.name,
-            color: block.color || '#627BC1',
+            color: block.color || "#627BC1",
           },
           geometry: {
-            type: 'Polygon',
+            type: "Polygon",
             coordinates: [block.coords],
           },
         })),
@@ -77,31 +77,31 @@ export function useMapSetup(containerRef, options = {}) {
 
       // Add blocks source
       // https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#addsource
-      mapInstance.addSource('blocks', {
-        type: 'geojson',
+      mapInstance.addSource("blocks", {
+        type: "geojson",
         data: blocksGeoJSON,
       });
 
       // Add blocks fill layer
       // https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#addlayer
       mapInstance.addLayer({
-        id: 'blocks-fill',
-        type: 'fill',
-        source: 'blocks',
+        id: "blocks-fill",
+        type: "fill",
+        source: "blocks",
         paint: {
-          'fill-color': ['get', 'color'],
-          'fill-opacity': 0.2,
+          "fill-color": ["get", "color"],
+          "fill-opacity": 0.2,
         },
       });
 
       // Add blocks outline layer
       mapInstance.addLayer({
-        id: 'blocks-outline',
-        type: 'line',
-        source: 'blocks',
+        id: "blocks-outline",
+        type: "line",
+        source: "blocks",
         paint: {
-          'line-color': '#627BC1',
-          'line-width': 2,
+          "line-color": "#627BC1",
+          "line-width": 2,
         },
       });
 
@@ -121,7 +121,7 @@ export function useMapSetup(containerRef, options = {}) {
 
       // Listen for successful geolocation updates
       // https://maplibre.org/maplibre-gl-js/docs/API/classes/GeolocateControl/#geolocate
-      geolocate.on('geolocate', (position) => {
+      geolocate.on("geolocate", (position) => {
         // Position object follows browser Geolocation API standard
         // https://developer.mozilla.org/en-US/docs/Web/API/Position
         setUserLocation({
@@ -133,8 +133,8 @@ export function useMapSetup(containerRef, options = {}) {
       });
 
       // Listen for geolocation errors
-      geolocate.on('error', (error) => {
-        console.error('Geolocation error:', error);
+      geolocate.on("error", (error) => {
+        console.error("Geolocation error:", error);
       });
 
       setIsMapReady(true);
@@ -147,7 +147,8 @@ export function useMapSetup(containerRef, options = {}) {
     return () => {
       mapInstance.remove();
     };
-  }, []); // Empty deps - only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run on mount (intentional)
 
   // Handle map style changes
   useEffect(() => {
@@ -158,46 +159,46 @@ export function useMapSetup(containerRef, options = {}) {
     map.setStyle(getMapStyleUrl(mapStyle));
 
     // Re-add sources and layers after style changes
-    map.once('styledata', () => {
+    map.once("styledata", () => {
       // Check if blocks source already exists
-      if (!map.getSource('blocks')) {
+      if (!map.getSource("blocks")) {
         const blocksGeoJSON = {
-          type: 'FeatureCollection',
+          type: "FeatureCollection",
           features: blocks.map((block) => ({
-            type: 'Feature',
+            type: "Feature",
             properties: {
               name: block.name,
-              color: block.color || '#627BC1',
+              color: block.color || "#627BC1",
             },
             geometry: {
-              type: 'Polygon',
+              type: "Polygon",
               coordinates: [block.coords],
             },
           })),
         };
 
-        map.addSource('blocks', {
-          type: 'geojson',
+        map.addSource("blocks", {
+          type: "geojson",
           data: blocksGeoJSON,
         });
 
         map.addLayer({
-          id: 'blocks-fill',
-          type: 'fill',
-          source: 'blocks',
+          id: "blocks-fill",
+          type: "fill",
+          source: "blocks",
           paint: {
-            'fill-color': ['get', 'color'],
-            'fill-opacity': 0.2,
+            "fill-color": ["get", "color"],
+            "fill-opacity": 0.2,
           },
         });
 
         map.addLayer({
-          id: 'blocks-outline',
-          type: 'line',
-          source: 'blocks',
+          id: "blocks-outline",
+          type: "line",
+          source: "blocks",
           paint: {
-            'line-color': '#627BC1',
-            'line-width': 2,
+            "line-color": "#627BC1",
+            "line-width": 2,
           },
         });
       }

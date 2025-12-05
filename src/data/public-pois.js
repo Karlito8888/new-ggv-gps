@@ -3,7 +3,7 @@ export const publicPois = [
     name: "Guard Post",
     coords: [120.951835, 14.350945],
     icon: "markers/post.png",
-  }
+  },
   // {
   //   name: "Swimming Pool",
   //   coords: [120.95258, 14.346882],

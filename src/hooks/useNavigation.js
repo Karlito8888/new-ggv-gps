@@ -74,6 +74,7 @@ export function useNavigation(map, userLocation, routeGeoJSON, destination) {
       duration: 1000, // 1 second smooth transition
       essential: true, // Ensure animation completes even if interrupted
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     map,
     userLocation?.latitude,
@@ -109,7 +110,8 @@ function calculateBearing(lat1, lon1, lat2, lon2) {
   const Δλ = ((lon2 - lon1) * Math.PI) / 180;
 
   const y = Math.sin(Δλ) * Math.cos(φ2);
-  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  const x =
+    Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
 
   let θ = Math.atan2(y, x);
   θ = (θ * 180) / Math.PI; // Convert to degrees
