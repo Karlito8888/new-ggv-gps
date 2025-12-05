@@ -26,7 +26,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MyGGV GPS is a React-based web application for GPS navigation within Garden Grove Village, Philippines. It uses MapLibre GL for mapping with optimized native APIs instead of traditional geographic calculations.
+MyGGV GPS is a React-based web application for GPS navigation within Garden Grove Village, Philippines. It uses **100% native MapLibre GL JS** (no wrappers) with a radically simplified architecture.
+
+**Architecture Philosophy**: Extreme simplification following KISS principle
+
+- 8 total files (~1,250 LOC core)
+- 3 essential hooks
+- Direct MapLibre GL JS (no react-map-gl)
+- No routing library (conditional rendering)
+- No external state management (simple useState)
 
 ## Commands
 
@@ -41,98 +49,346 @@ npm run preview      # Preview production build
 
 ## Architecture
 
-### Navigation State Machine
+### File Structure (8 files total)
 
-The app follows a sequential permission workflow managed by `useNavigationState`:
+```
+src/
+├── App.jsx (513 LOC)              # Main component with 6 inline overlays
+├── main.jsx (23 LOC)              # Entry point (Theme + App only)
+├── hooks/
+│   ├── useMapSetup.js (213 LOC)   # Map init + GPS + GeolocateControl
+│   ├── useRouting.js (300 LOC)    # OSRM routing + deviation detection
+│   └── useNavigation.js (237 LOC) # Turn-by-turn + arrival detection
+├── data/
+│   ├── blocks.js                   # Village block polygons
+│   └── public-pois.js              # Points of interest
+└── lib/
+    └── supabase.js                 # Supabase client (optional)
+```
 
-1. **gps-permission** → Request GPS access
-2. **welcome** → Destination selection
-3. **orientation-permission** → Request device orientation
-4. **navigating** → Active turn-by-turn navigation
-5. **arrived** → Arrival confirmation
-6. **exit-complete** → Exit village flow complete
+### Navigation State Machine (6 states)
 
-### Key Architectural Patterns
+Simple `useState` in `App.jsx` - no React Router, no Context:
 
-**MapLibre Native Optimizations**: The codebase prioritizes MapLibre native methods over Turf.js/Haversine calculations for performance:
+```
+gps-permission → welcome → orientation-permission → navigating → arrived → exit-complete
+```
 
-- `map.project()` for coordinate-to-pixel conversions
-- `map.queryRenderedFeatures()` for spatial queries
-- Feature State API for dynamic styling without re-rendering
-- `flyTo()`/`jumpTo()` for camera transitions
+**Implementation**:
 
-**Route Management** (`src/lib/navigation.js`):
+```jsx
+const [navState, setNavState] = useState('gps-permission');
 
-- Cascading fallback: OSRM → MapLibre Directions → OpenRouteService → Direct line
-- Automatic route recalculation on deviation (25m threshold)
-- Traveled/remaining route tracking with MapLibre sources
+// Conditional rendering
+{navState === 'gps-permission' && <GPSPermissionOverlay onGrant={...} />}
+{navState === 'welcome' && <WelcomeOverlay onSelectDestination={...} />}
+{navState === 'orientation-permission' && <OrientationPermissionOverlay onGrant={...} />}
+{navState === 'navigating' && <NavigationOverlay {...navigationData} />}
+{navState === 'arrived' && <ArrivedOverlay onReset={...} />}
+{navState === 'exit-complete' && <ExitCompleteOverlay onReset={...} />}
+```
 
-**Hook-Based Architecture**:
+### Hook Architecture (3 hooks)
 
-- `useNavigationState` - State machine and transitions
-- `useRouteManager` - Route creation, updates, deviation detection
-- `useMapTransitions` - Camera animations and orientation
-- `useMapConfig` - Map style and initial view configuration
+#### 1. useMapSetup(containerRef, options)
+
+**Purpose**: Initialize MapLibre map with GPS tracking
+
+**Returns**:
+
+```js
+{
+  (map, // maplibregl.Map instance
+    userLocation, // {latitude, longitude, accuracy, heading}
+    isMapReady, // boolean
+    setMapStyle); // (style: 'osm' | 'satellite') => void
+}
+```
+
+**Key Features**:
+
+- Direct `new maplibregl.Map()` initialization
+- Native `GeolocateControl` for GPS tracking
+- Block polygons loaded as GeoJSON source + layers
+- Map style switching (OSM/satellite)
+
+#### 2. useRouting(map, origin, destination)
+
+**Purpose**: Calculate routes with cascading fallback + deviation detection
+
+**Returns**:
+
+```js
+{
+  (routeGeoJSON, // GeoJSON LineString or null
+    distance, // meters
+    duration, // seconds
+    isCalculating, // boolean
+    error); // Error or null
+}
+```
+
+**Key Features**:
+
+- Cascading fallback: OSRM → Direct line
+- **Automatic recalculation on deviation** (>25m threshold, checks every 5s)
+- Route visualization: Single blue line (`route-remaining` source)
+- Native `map.addSource()` and `map.getSource().setData()` usage
+
+#### 3. useNavigation(map, userLocation, routeGeoJSON, destination)
+
+**Purpose**: Turn-by-turn navigation logic and arrival detection
+
+**Returns**:
+
+```js
+{
+  (bearing, // degrees (0-360) to destination
+    nextTurn, // {instruction, distance} or null
+    distanceRemaining, // meters
+    hasArrived); // boolean (< 20m threshold)
+}
+```
+
+**Key Features**:
+
+- Bearing calculation using Haversine formula
+- Distance remaining calculation
+- Arrival detection (< 20m threshold)
+- Camera control with `map.flyTo()` (bearing, pitch, zoom)
+
+### Inline Overlay Components (in App.jsx)
+
+All UI overlays are defined inline (no separate files):
+
+1. **GPSPermissionOverlay** - Request GPS access
+2. **WelcomeOverlay** - Destination selection (blocks/POIs)
+3. **OrientationPermissionOverlay** - Request device orientation (iOS/Android)
+4. **NavigationOverlay** - Turn-by-turn display with compass
+5. **ArrivedOverlay** - Arrival confirmation
+6. **ExitCompleteOverlay** - Exit village flow
+
+**Benefits**: Fewer files, simpler navigation, no prop drilling
+
+### MapLibre Native API Usage
+
+**100% Native MapLibre** - No react-map-gl wrapper, no Turf.js library:
+
+```js
+// Map initialization
+const map = new maplibregl.Map({
+  container: containerRef.current,
+  style: "https://tiles.openfreemap.org/styles/liberty",
+  center: [120.9513, 14.3479],
+  zoom: 15,
+});
+
+// GPS tracking with GeolocateControl
+const geolocate = new maplibregl.GeolocateControl({
+  positionOptions: { enableHighAccuracy: true },
+  trackUserLocation: true,
+  showUserHeading: true,
+});
+map.addControl(geolocate);
+
+// Route visualization
+map.addSource("route-remaining", {
+  type: "geojson",
+  data: routeGeoJSON,
+});
+
+map.addLayer({
+  id: "route-remaining-line",
+  type: "line",
+  source: "route-remaining",
+  paint: {
+    "line-color": "#4285F4",
+    "line-width": 5,
+  },
+});
+
+// Update route dynamically
+map.getSource("route-remaining").setData(newRouteGeoJSON);
+```
+
+### Routing Logic
+
+**Cascading Fallback** (in `useRouting.js`):
+
+1. **OSRM** (router.project-osrm.org) - Free, fast routing
+2. **Direct line** - Last resort fallback
+
+**Deviation Detection**:
+
+- Checks every 5 seconds if user is > 25m from route
+- Prevents recalculation spam (minimum 10 seconds between recalcs)
+- Automatically triggers route recalculation by clearing `routeGeoJSON`
 
 ### Data Flow
 
 ```
+main.jsx
+  └── <Theme><App /></Theme>
+
 App.jsx
-├── GeolocateControl (MapLibre native) → userLocation state
-├── useNavigationState → navigation flow control
-├── useRouteManager → route GeoJSON management
-└── Components receive state via props
+  ├── useMapSetup(containerRef) → map, userLocation, setMapStyle
+  ├── useRouting(map, userLocation, destination) → routeGeoJSON, distance, duration
+  ├── useNavigation(map, userLocation, routeGeoJSON, destination) → bearing, distanceRemaining, hasArrived
+  └── Conditional overlays based on navState
 ```
 
-### Map Sources and Layers
-
-The navigation system uses three MapLibre sources with Feature State API:
-
-- `route-main` - Full route with segment IDs
-- `route-traveled` - Grayed traveled portion
-- `route-remaining` - Active remaining route
+**No React Router** - Simple conditional rendering based on `navState`
+**No Context** - Props passed directly to inline components
+**No Redux/Zustand** - Simple `useState` for all state
 
 ## Environment Variables
 
 ```bash
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
-VITE_OPENROUTE_API_KEY=...  # Optional fallback routing
+VITE_OPENROUTE_API_KEY=...  # Optional (not used in current fallback chain)
 ```
 
 ## Code Conventions
 
-- Modern React (hooks only, no classes)
-- ESLint with React Hooks plugin enforced
-- Prefer MapLibre native methods over Turf.js where applicable
-- GeoJSON coordinates are `[longitude, latitude]` (GeoJSON standard)
-- User location objects use `{latitude, longitude}` (GPS standard)
+- **Modern React** (hooks only, no classes)
+- **ESLint** with React Hooks plugin enforced
+- **100% MapLibre native** - No wrappers (no react-map-gl)
+- **No Turf.js** - Use MapLibre spatial APIs where possible
+- **GeoJSON coordinates**: `[longitude, latitude]` (GeoJSON standard)
+- **User location objects**: `{latitude, longitude}` (GPS standard)
 
 ## Development Philosophy
 
-**KISS (Keep It Simple, Stupid)**: Avoid over-engineering at all costs.
+**KISS (Keep It Simple, Stupid)**: Radical simplification applied ruthlessly.
 
-- Prefer direct solutions over abstractions
-- No unnecessary hooks, contexts, or state machines
-- If a simple `navigate()` call works, don't add callbacks/events
+- ✅ **Inline logic** if only used once
+- ✅ **Direct MapLibre calls** instead of wrapper abstractions
+- ✅ **Conditional rendering** instead of React Router
+- ✅ **Simple useState** instead of Context/Redux
+- ✅ **Inline components** instead of separate files (if small)
+- ❌ **No utils/helpers** for one-time operations
+- ❌ **No unnecessary abstractions** or premature optimization
+
+**Prefer**:
+
 - Fewer files > more files with "clean architecture"
-- Inline logic is fine if it's only used once
-- Don't create utils/helpers for one-time operations
+- Direct solutions > reusable abstractions
+- Native APIs > wrapper libraries
 
 ## Browser Compatibility
 
 **Target browsers: Google Chrome (Android) and Safari (iOS)**
 
-Critical compatibility patterns already implemented:
+Critical compatibility patterns implemented:
 
-- Device Orientation: `deviceorientationabsolute` (Chrome) + `webkitCompassHeading` (Safari)
-- iOS permission: `DeviceOrientationEvent.requestPermission()` required
-- CSS viewport: `100dvh` with `100svh` and `-webkit-fill-available` fallbacks
-- Input zoom prevention: `font-size: 16px` on inputs (iOS Safari)
+### Device Orientation
+
+```js
+// iOS 13+ requires permission
+if (typeof DeviceOrientationEvent.requestPermission === "function") {
+  const permission = await DeviceOrientationEvent.requestPermission();
+}
+
+// Android Chrome
+window.addEventListener("deviceorientationabsolute", (e) => {
+  setHeading(e.alpha);
+});
+
+// iOS Safari
+window.addEventListener("deviceorientation", (e) => {
+  if (e.webkitCompassHeading) {
+    setHeading(e.webkitCompassHeading);
+  }
+});
+```
+
+### CSS Viewport
+
+- Primary: `100dvh` (dynamic viewport height)
+- Fallbacks: `100svh`, `-webkit-fill-available`
+
+### Input Zoom Prevention (iOS Safari)
+
+- `font-size: 16px` on all inputs
 
 ## Village Data
 
-- Default center: `[120.95134859887523, 14.347872973134175]`
-- Village exit: `[120.951863, 14.35098]`
-- Block polygons in `src/data/blocks.js`
-- POIs in `src/data/public-pois.js`
+- **Default center**: `[120.95134859887523, 14.347872973134175]`
+- **Village exit**: `[120.951863, 14.35098]`
+- **Block polygons**: `src/data/blocks.js`
+- **POIs**: `src/data/public-pois.js`
+
+## Key Dependencies
+
+**Removed** (replaced by native APIs):
+
+- ❌ `react-map-gl` → Direct MapLibre GL JS
+- ❌ `@turf/turf` → MapLibre native spatial APIs
+- ❌ `react-router-dom` → Conditional rendering
+- ❌ `@tanstack/react-query` → Direct Supabase calls
+
+**Kept** (essential):
+
+- ✅ `maplibre-gl` (5.6.0) - Core mapping library
+- ✅ `react` (19.1.0) + `react-dom` (19.1.0)
+- ✅ `@supabase/supabase-js` (2.50.0) - Backend client (optional)
+- ✅ `@radix-ui/*` - UI components (Dialog, Select)
+- ✅ `framer-motion` - Smooth animations
+- ✅ `tailwindcss` via `daisyui` - Styling
+
+## Performance Metrics
+
+- **Total files**: 8 (7 core + 1 optional Supabase client)
+- **Lines of code**: ~1,250 (core architecture)
+- **Custom hooks**: 3
+- **Bundle size**: ~121 KB gzipped (index), ~264 KB gzipped (maps)
+- **Dependencies removed**: ~150 KB gzipped savings
+
+## Common Tasks
+
+### Add a new destination type
+
+1. Update `src/data/blocks.js` or `src/data/public-pois.js`
+2. Map markers will auto-render in `useMapSetup.js`
+
+### Modify navigation flow
+
+1. Edit state machine in `App.jsx` (`navState` transitions)
+2. Update conditional rendering for new states
+
+### Change map style
+
+1. Use `setMapStyle('osm')` or `setMapStyle('satellite')` from `useMapSetup`
+2. Styles defined in `getMapStyle()` function
+
+### Adjust deviation threshold
+
+1. Edit `src/hooks/useRouting.js`
+2. Change `if (distanceFromRoute > 25)` to desired threshold
+
+### Modify arrival detection
+
+1. Edit `src/hooks/useNavigation.js`
+2. Change `if (distance < 20)` to desired threshold
+
+## Debugging Tips
+
+- **GPS not working**: Check browser permissions in DevTools
+- **Route not appearing**: Check Network tab for OSRM API calls
+- **Map not loading**: Check MapLibre style URL in console
+- **Deviation detection not triggering**: Check console logs for distance values
+- **iOS orientation issues**: Verify `DeviceOrientationEvent.requestPermission()` was called
+
+## Testing Checklist
+
+- [ ] GPS permission flow (iOS + Android)
+- [ ] Destination selection (blocks/POIs)
+- [ ] Device orientation permission + compass
+- [ ] Route calculation with OSRM
+- [ ] Route fallback to direct line (simulate OSRM failure)
+- [ ] Deviation detection triggers recalculation (move >25m from route)
+- [ ] Arrival detection (<20m threshold)
+- [ ] Map style toggle (OSM ↔ Satellite)
+- [ ] Village exit flow
+- [ ] PWA install prompt
