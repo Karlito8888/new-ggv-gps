@@ -1,20 +1,23 @@
 import { createRoot } from "react-dom/client";
-import { RouterProvider } from "react-router-dom";
-import { QueryClientProvider } from "@tanstack/react-query";
 import { Theme } from "@radix-ui/themes";
-import { router } from "./router";
-import { NavigationProvider } from "./contexts/NavigationContext";
-import { queryClient } from "./lib/queryClient";
-import "@radix-ui/themes/styles.css"; // Radix base styles (imported first to allow overrides)
-import "./styles/index.css"; // Centralized styles (overrides Radix)
+import App from "./App";
+import "@radix-ui/themes/styles.css"; // Radix base styles
+import "./styles/index.css"; // Centralized Tailwind styles
 import "./styles/animations.css"; // Centralized @keyframes
+import "./styles/app.css"; // New app-specific styles
+
+/**
+ * Main Entry Point
+ *
+ * Simplified from old architecture:
+ * - ❌ No RouterProvider (react-router-dom removed)
+ * - ❌ No QueryClientProvider (@tanstack/react-query removed)
+ * - ❌ No NavigationProvider (context removed)
+ * - ✅ Just Theme + App
+ */
 
 createRoot(document.getElementById("root")).render(
-  <QueryClientProvider client={queryClient}>
-    <Theme>
-      <NavigationProvider>
-        <RouterProvider router={router} />
-      </NavigationProvider>
-    </Theme>
-  </QueryClientProvider>,
+  <Theme>
+    <App />
+  </Theme>,
 );
