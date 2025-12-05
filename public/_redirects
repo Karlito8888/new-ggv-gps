@@ -1,14 +1,15 @@
-# SPA Fallback pour React Router
-/*    /index.html   200
+# Sécurité - Bloquer l'accès aux fichiers sensibles
+/.env    /404.html   404
+/package.json    /404.html   404
+/vite.config.js    /404.html   404
 
-# Assets statiques
+# Assets statiques (servis directement, pas de redirect)
+/assets/*    /assets/:splat   200
 /icons/*    /icons/:splat   200
 /markers/*    /markers/:splat   200
 
 # API Proxy pour éviter les problèmes CORS (si nécessaire)
 /api/*    https://wlrrruemchacgyypexsu.supabase.co/rest/v1/:splat   200
 
-# Sécurité - Bloquer l'accès aux fichiers sensibles
-/.env    /404.html   404
-/package.json    /404.html   404
-/vite.config.js    /404.html   404
+# SPA Fallback pour React Router (DOIT être en dernier)
+/*    /index.html   200
