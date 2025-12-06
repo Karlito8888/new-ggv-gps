@@ -352,12 +352,6 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
         coordinates: guardPost.coords,
         name: guardPost.name,
       });
-    } else if (selectedType === "exit") {
-      onSelectDestination({
-        type: "exit",
-        coordinates: VILLAGE_EXIT,
-        name: "Village Exit",
-      });
     }
   };
 
@@ -412,17 +406,6 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
             </svg>
             Guard Post
           </button>
-          <button
-            className={`welcome-type-btn ${selectedType === "exit" ? "active" : ""}`}
-            onClick={() => setSelectedType("exit")}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            Exit
-          </button>
         </div>
 
         {selectedType === "block" && (
@@ -449,13 +432,6 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
           <p className="welcome-info">
             Navigate to the Guard Post at the village entrance.
             <span className="tagalog-inline">Pumunta sa Guard Post sa pasukan ng village.</span>
-          </p>
-        )}
-
-        {selectedType === "exit" && (
-          <p className="welcome-info">
-            Get directions to exit the village.
-            <span className="tagalog-inline">Kumuha ng direksyon para lumabas ng village.</span>
           </p>
         )}
 
