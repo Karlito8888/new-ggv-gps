@@ -406,20 +406,22 @@ function WelcomeOverlay({ blocks, onSelectDestination }) {
             value={selectedLot}
             onChange={(e) => setSelectedLot(e.target.value)}
             className="welcome-select"
-            disabled={!selectedBlock || isLoadingLots}
+            disabled={!selectedBlock || isLoadingLots || lots.length === 0}
           >
             <option value="" disabled>
-              Select Lot (Pumili ng Lot)
+              {isLoadingLots
+                ? "Loading... (Nag-lo-load...)"
+                : !selectedBlock
+                  ? "Select a block first (Pumili muna ng Block)"
+                  : lots.length === 0
+                    ? "No lots available (Walang available na Lot)"
+                    : "Select Lot (Pumili ng Lot)"}
             </option>
-            {isLoadingLots ? (
-              <option value="">Loading...</option>
-            ) : (
-              lots.map((l) => (
-                <option key={l.lot} value={l.lot}>
-                  Lot {l.lot}
-                </option>
-              ))
-            )}
+            {lots.map((l) => (
+              <option key={l.lot} value={l.lot}>
+                Lot {l.lot}
+              </option>
+            ))}
           </select>
         </div>
 

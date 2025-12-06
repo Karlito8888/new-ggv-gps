@@ -32,13 +32,17 @@ export function useNavigation(map, userLocation, destination) {
   const destLng = destination?.coordinates?.[0];
 
   useEffect(() => {
-    if (!userLat || !userLng || !destLat || !destLng) return;
+    if (!userLat || !userLng || !destLat || !destLng) {
+      setHasArrived(false);
+      return;
+    }
 
     const dist = getDistance(userLat, userLng, destLat, destLng);
     setDistanceRemaining(dist);
     setBearing(getBearing(userLat, userLng, destLat, destLng));
 
-    if (dist < 20) setHasArrived(true);
+    // Set arrival state based on current distance
+    setHasArrived(dist < 20);
   }, [userLat, userLng, destLat, destLng]);
 
   return { distanceRemaining, bearing, hasArrived };
