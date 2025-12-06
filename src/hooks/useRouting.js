@@ -51,6 +51,7 @@ export function useRouting(map, origin, destination) {
   const [routeGeoJSON, setRouteGeoJSON] = useState(null);
   const [distance, setDistance] = useState(0);
   const abortRef = useRef(null);
+  const lastOriginRef = useRef(null);
 
   const originLat = origin?.latitude;
   const originLng = origin?.longitude;
@@ -63,7 +64,22 @@ export function useRouting(map, origin, destination) {
       return;
     }
 
+    // Only recalculate route if user moved > 30 meters from last calculation
+    if (lastOriginRef.current) {
+      const movedDistance = getDistance(
+        lastOriginRef.current.lat,
+        lastOriginRef.current.lng,
+        originLat,
+        originLng,
+      );
+      if (movedDistance < 30) {
+        return; // Skip recalculation, user hasn't moved enough
+      }
+    }
+
     const fetchRoute = async () => {
+      // Save current origin for next comparison
+      lastOriginRef.current = { lat: originLat, lng: originLng };
       abortRef.current?.abort();
       abortRef.current = new AbortController();
       const signal = abortRef.current.signal;
