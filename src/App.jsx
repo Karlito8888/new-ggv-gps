@@ -58,6 +58,10 @@ export default function App() {
     }
   }, [navState, map, isMapReady]);
 
+  // Track user interaction for auto-recenter
+  const userInteractionTimeRef = useRef(null);
+  const recenterTimeoutRef = useRef(null);
+
   // Effect 2: Setup orientation listeners (only recreated when map changes, not navState)
   useEffect(() => {
     if (!map || !isMapReady) return;
@@ -73,12 +77,24 @@ export default function App() {
 
     const onInteractionStart = () => {
       isUserInteracting = true;
+      userInteractionTimeRef.current = Date.now();
+      // Clear any pending recenter timeout
+      if (recenterTimeoutRef.current) {
+        clearTimeout(recenterTimeoutRef.current);
+      }
     };
     const onInteractionEnd = () => {
       // Small delay before re-enabling rotation to avoid jank
       setTimeout(() => {
         isUserInteracting = false;
       }, 300);
+
+      // Auto-recenter after 5 seconds if navigating
+      if (isNavigatingRef.current) {
+        recenterTimeoutRef.current = setTimeout(() => {
+          userInteractionTimeRef.current = null;
+        }, 5000);
+      }
     };
 
     map.on("dragstart", onInteractionStart);
@@ -141,14 +157,31 @@ export default function App() {
       map.off("dragend", onInteractionEnd);
       map.off("zoomstart", onInteractionStart);
       map.off("zoomend", onInteractionEnd);
+      if (recenterTimeoutRef.current) {
+        clearTimeout(recenterTimeoutRef.current);
+      }
     };
   }, [map, isMapReady]); // Note: no navState dependency - uses ref instead
+
+  // Effect: Keep user ALWAYS centered during navigation
+  useEffect(() => {
+    if (!map || !isMapReady || navState !== "navigating" || !userLocation) return;
+
+    // Skip centering if user recently interacted (within 5 seconds)
+    if (userInteractionTimeRef.current) {
+      const timeSinceInteraction = Date.now() - userInteractionTimeRef.current;
+      if (timeSinceInteraction < 5000) return;
+    }
+
+    // Center map on user position
+    map.setCenter([userLocation.longitude, userLocation.latitude]);
+  }, [map, isMapReady, navState, userLocation]);
 
   // Effect 3: Set initial navigation view when entering navigation mode
   useEffect(() => {
     if (!map || !isMapReady || navState !== "navigating") return;
     // Set initial navigation view: zoom in, pitch 45°
-    map.easeTo({ pitch: 45, zoom: 18, duration: 500 });
+    map.easeTo({ pitch: 45, zoom: 20, duration: 500 });
   }, [navState, map, isMapReady]);
 
   return (

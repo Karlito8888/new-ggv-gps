@@ -12,13 +12,15 @@
       "Bash(npm install)",
       "Bash(git tag:*)",
       "WebFetch(domain:css-tricks.com)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(bun run lint:*)",
+      "Bash(bun run build:*)"
     ],
     "deny": [],
     "ask": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "archon"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
