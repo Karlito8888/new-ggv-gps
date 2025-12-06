@@ -6,7 +6,6 @@ import { useNavigation } from "./hooks/useNavigation";
 import { blocks } from "./data/blocks";
 import { publicPois } from "./data/public-pois";
 import ggvLogo from "./assets/img/ggv.png";
-import stopIcon from "./assets/img/stop.png";
 import "./styles/index.css";
 
 // Village exit coordinates (from CLAUDE.md)
@@ -360,44 +359,81 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
 
   return (
     <motion.div
-      className="overlay"
+      className="overlay welcome-overlay"
       variants={overlayVariants}
       initial="hidden"
       animate="visible"
       exit="exit"
     >
-      <motion.div className="modal" variants={modalVariants}>
-        <h1>🏘️ Where to?</h1>
+      <motion.div className="modal welcome-modal" variants={modalVariants}>
+        {/* Destination Icon */}
+        <div className="welcome-icon-wrapper">
+          <svg
+            className="welcome-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+        </div>
 
-        <div className="destination-type-selector">
+        <h1 className="welcome-title">Choose Destination</h1>
+        <p className="welcome-tagalog">(Pumili ng Destinasyon)</p>
+
+        <p className="welcome-description">
+          Select where you want to go in the village.
+          <span className="tagalog-inline">Piliin kung saan mo gustong pumunta sa village.</span>
+        </p>
+
+        <div className="welcome-type-selector">
           <button
-            className={`type-btn ${selectedType === "block" ? "active" : ""}`}
+            className={`welcome-type-btn ${selectedType === "block" ? "active" : ""}`}
             onClick={() => setSelectedType("block")}
           >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+            </svg>
             Block
           </button>
           <button
-            className={`type-btn ${selectedType === "poi" ? "active" : ""}`}
+            className={`welcome-type-btn ${selectedType === "poi" ? "active" : ""}`}
             onClick={() => setSelectedType("poi")}
           >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
             Guard Post
           </button>
           <button
-            className={`type-btn ${selectedType === "exit" ? "active" : ""}`}
+            className={`welcome-type-btn ${selectedType === "exit" ? "active" : ""}`}
             onClick={() => setSelectedType("exit")}
           >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
             Exit
           </button>
         </div>
 
         {selectedType === "block" && (
-          <div className="block-selector">
+          <div className="welcome-block-selector">
             <label htmlFor="block-select">Select Block:</label>
             <select
               id="block-select"
               value={selectedBlock}
               onChange={(e) => setSelectedBlock(e.target.value)}
-              className="select-input"
+              className="welcome-select"
             >
               {blocks.map((block) => (
                 <option key={block.name} value={block.name}>
@@ -409,16 +445,31 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
         )}
 
         {selectedType === "poi" && (
-          <p className="text-center text-gray-600">
-            Navigate to the Guard Post at the village entrance
+          <p className="welcome-info">
+            Navigate to the Guard Post at the village entrance.
+            <span className="tagalog-inline">Pumunta sa Guard Post sa pasukan ng village.</span>
           </p>
         )}
 
         {selectedType === "exit" && (
-          <p className="text-center text-gray-600">Get directions to exit the village</p>
+          <p className="welcome-info">
+            Get directions to exit the village.
+            <span className="tagalog-inline">Kumuha ng direksyon para lumabas ng village.</span>
+          </p>
         )}
 
-        <button className="btn-primary mt-4" onClick={handleNavigate}>
+        <button className="welcome-btn" onClick={handleNavigate}>
+          <svg
+            className="welcome-btn-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>
           Navigate
         </button>
       </motion.div>
@@ -461,24 +512,76 @@ function OrientationPermissionOverlay({ onGrant }) {
 
   return (
     <motion.div
-      className="overlay"
+      className="overlay orientation-overlay"
       variants={overlayVariants}
       initial="hidden"
       animate="visible"
       exit="exit"
     >
-      <motion.div className="modal" variants={modalVariants}>
-        <h1>🧭 Compass Permission</h1>
-        <p>Enable device orientation for accurate compass heading during navigation.</p>
+      <motion.div className="modal orientation-modal" variants={modalVariants}>
+        {/* Compass Icon */}
+        <div className="orientation-icon-wrapper">
+          <svg
+            className="orientation-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polygon
+              points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"
+              fill="currentColor"
+            />
+          </svg>
+        </div>
+
+        <h1 className="orientation-title">Enable Compass</h1>
+        <p className="orientation-tagalog">(I-enable ang Compass)</p>
+
+        <p className="orientation-description">
+          Enable device orientation for accurate compass heading during navigation.
+          <span className="tagalog-inline">
+            I-enable ang device orientation para sa tamang direksyon habang nag-navigate.
+          </span>
+        </p>
 
         {error && <div className="error-message">{error}</div>}
 
-        <button className="btn-primary" onClick={handleRequest} disabled={isRequesting}>
+        <button className="orientation-btn" onClick={handleRequest} disabled={isRequesting}>
+          <svg
+            className="orientation-btn-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polygon
+              points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"
+              fill="currentColor"
+            />
+          </svg>
           {isRequesting ? "Requesting..." : "Enable Compass"}
         </button>
 
-        <button className="btn-secondary mt-2" onClick={onGrant}>
-          Skip (navigate without compass)
+        <button className="orientation-btn-skip" onClick={onGrant}>
+          <svg
+            className="orientation-skip-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+          Skip for now
         </button>
       </motion.div>
     </motion.div>
@@ -503,20 +606,49 @@ function NavigationOverlay({
       exit={{ y: -100, opacity: 0 }}
     >
       <div className="nav-header">
-        <h2>{destination?.name || "Navigating..."}</h2>
-        <button className="btn-stop" onClick={onCancel} aria-label="Arrêter la navigation">
-          <img src={stopIcon} alt="Stop" />
+        <div className="nav-destination">
+          <svg
+            className="nav-destination-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>
+          <h2>{destination?.name || "Navigating..."}</h2>
+        </div>
+        <button className="nav-stop-btn" onClick={onCancel} aria-label="Stop navigation">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
         </button>
       </div>
 
-      <div className="nav-distance">
-        <div className="distance-value">{formatDistance(distanceRemaining)}</div>
-        <div className="distance-label">remaining</div>
-      </div>
+      <div className="nav-info">
+        <div className="nav-distance">
+          <div className="distance-value">{formatDistance(distanceRemaining)}</div>
+          <div className="distance-label">remaining • natitira</div>
+        </div>
 
-      <div className="nav-compass">
-        <div className="compass-arrow" style={{ transform: `rotate(${heading}deg)` }}>
-          ↑
+        <div className="nav-compass">
+          <div className="compass-ring">
+            <div className="compass-arrow" style={{ transform: `rotate(${heading}deg)` }}>
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M12 2L19 21L12 17L5 21L12 2Z" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -526,23 +658,68 @@ function NavigationOverlay({
 function ArrivedOverlay({ destination, onNavigateAgain, onExitVillage }) {
   return (
     <motion.div
-      className="overlay"
+      className="overlay arrived-overlay"
       variants={overlayVariants}
       initial="hidden"
       animate="visible"
       exit="exit"
     >
-      <motion.div className="modal" variants={modalVariants}>
-        <h1>🎉 You've Arrived!</h1>
-        <p className="text-center text-lg">
-          You have reached <strong>{destination?.name || "your destination"}</strong>
+      <motion.div className="modal arrived-modal" variants={modalVariants}>
+        {/* Success Icon */}
+        <div className="arrived-icon-wrapper">
+          <svg
+            className="arrived-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+        </div>
+
+        <h1 className="arrived-title">You've Arrived!</h1>
+        <p className="arrived-tagalog">(Nakarating ka na!)</p>
+
+        <p className="arrived-description">
+          You have reached <strong>{destination?.name || "your destination"}</strong>.
+          <span className="tagalog-inline">
+            Nakarating ka na sa {destination?.name || "iyong destinasyon"}.
+          </span>
         </p>
 
-        <button className="btn-primary mt-4" onClick={onNavigateAgain}>
+        <button className="arrived-btn" onClick={onNavigateAgain}>
+          <svg
+            className="arrived-btn-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>
           Navigate Somewhere Else
         </button>
 
-        <button className="btn-secondary mt-2" onClick={onExitVillage}>
+        <button className="arrived-btn-secondary" onClick={onExitVillage}>
+          <svg
+            className="arrived-exit-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
           Exit Village
         </button>
       </motion.div>
@@ -553,19 +730,55 @@ function ArrivedOverlay({ destination, onNavigateAgain, onExitVillage }) {
 function ExitCompleteOverlay({ onReset }) {
   return (
     <motion.div
-      className="overlay"
+      className="overlay exit-overlay"
       variants={overlayVariants}
       initial="hidden"
       animate="visible"
       exit="exit"
     >
-      <motion.div className="modal" variants={modalVariants}>
-        <h1>👋 Safe Travels!</h1>
-        <p className="text-center">
+      <motion.div className="modal exit-modal" variants={modalVariants}>
+        {/* Wave Icon */}
+        <div className="exit-icon-wrapper">
+          <svg
+            className="exit-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+            <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+            <line x1="6" y1="1" x2="6" y2="4" />
+            <line x1="10" y1="1" x2="10" y2="4" />
+            <line x1="14" y1="1" x2="14" y2="4" />
+          </svg>
+        </div>
+
+        <h1 className="exit-title">Safe Travels!</h1>
+        <p className="exit-tagalog">(Ingat sa byahe!)</p>
+
+        <p className="exit-description">
           You have exited Garden Grove Village. Thank you for using MyGGV GPS!
+          <span className="tagalog-inline">
+            Lumabas ka na sa Garden Grove Village. Salamat sa paggamit ng MyGGV GPS!
+          </span>
         </p>
 
-        <button className="btn-primary mt-4" onClick={onReset}>
+        <button className="exit-btn" onClick={onReset}>
+          <svg
+            className="exit-btn-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
           Start New Navigation
         </button>
       </motion.div>

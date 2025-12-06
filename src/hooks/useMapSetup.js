@@ -38,6 +38,7 @@ function addBlocksLayer(map) {
       "text-field": ["get", "name"],
       "text-size": 14,
       "text-anchor": "center",
+      "text-font": ["Noto Sans Regular"],
     },
     paint: {
       "text-color": "#333",
@@ -64,45 +65,67 @@ export function useMapSetup(containerRef) {
   const [isMapReady, setIsMapReady] = useState(false);
   const geolocateRef = useRef(null);
 
-  const styleUrl = "https://tiles.openfreemap.org/styles/liberty";
-
   // Initialize map
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const mapInstance = new maplibregl.Map({
-      container: containerRef.current,
-      style: styleUrl,
-      center: VILLAGE_CENTER,
-      zoom: 15,
-    });
+    let mapInstance = null;
 
-    // Suppress missing image warnings from the base map style
-    mapInstance.on("styleimagemissing", () => {});
+    const initMap = async () => {
+      // Fetch and fix the OpenFreeMap Liberty style
+      const response = await fetch("https://tiles.openfreemap.org/styles/liberty");
+      const style = await response.json();
 
-    mapInstance.on("load", () => {
-      addBlocksLayer(mapInstance);
+      // Fix: Use MapLibre official font server (OpenFreeMap fonts return 404)
+      style.glyphs = "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf";
 
-      const geolocate = new maplibregl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        trackUserLocation: true,
-        showUserHeading: true,
+      mapInstance = new maplibregl.Map({
+        container: containerRef.current,
+        style: style,
+        center: VILLAGE_CENTER,
+        zoom: 15,
       });
-      mapInstance.addControl(geolocate);
-      geolocateRef.current = geolocate;
 
-      geolocate.on("geolocate", (pos) => {
-        setUserLocation({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
+      // Fix: Create transparent placeholder for missing sprite images
+      mapInstance.on("styleimagemissing", (e) => {
+        if (!mapInstance.hasImage(e.id)) {
+          mapInstance.addImage(e.id, {
+            width: 1,
+            height: 1,
+            data: new Uint8Array(4),
+          });
+        }
+      });
+
+      mapInstance.on("load", () => {
+        addBlocksLayer(mapInstance);
+
+        const geolocate = new maplibregl.GeolocateControl({
+          positionOptions: { enableHighAccuracy: true },
+          trackUserLocation: true,
+          showUserHeading: true,
         });
+        mapInstance.addControl(geolocate);
+        geolocateRef.current = geolocate;
+
+        geolocate.on("geolocate", (pos) => {
+          setUserLocation({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+        });
+
+        setIsMapReady(true);
       });
 
-      setIsMapReady(true);
-    });
+      setMap(mapInstance);
+    };
 
-    setMap(mapInstance);
-    return () => mapInstance.remove();
+    initMap();
+
+    return () => {
+      if (mapInstance) mapInstance.remove();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
