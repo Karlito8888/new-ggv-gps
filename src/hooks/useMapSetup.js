@@ -64,12 +64,25 @@ export function useMapSetup(containerRef) {
   const [userLocation, setUserLocation] = useState(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const geolocateRef = useRef(null);
+  // Track if initial position was set by triggerGeolocate to avoid double setState
+  const initialPositionSetRef = useRef(false);
 
   // Initialize map
   useEffect(() => {
     if (!containerRef.current) return;
 
     let mapInstance = null;
+
+    // Named handler for proper cleanup
+    const onStyleImageMissing = (e) => {
+      if (!mapInstance.hasImage(e.id)) {
+        mapInstance.addImage(e.id, {
+          width: 1,
+          height: 1,
+          data: new Uint8Array(4),
+        });
+      }
+    };
 
     const initMap = async () => {
       // Fetch and fix the OpenFreeMap Liberty style
@@ -87,15 +100,7 @@ export function useMapSetup(containerRef) {
       });
 
       // Fix: Create transparent placeholder for missing sprite images
-      mapInstance.on("styleimagemissing", (e) => {
-        if (!mapInstance.hasImage(e.id)) {
-          mapInstance.addImage(e.id, {
-            width: 1,
-            height: 1,
-            data: new Uint8Array(4),
-          });
-        }
-      });
+      mapInstance.on("styleimagemissing", onStyleImageMissing);
 
       mapInstance.on("load", () => {
         addBlocksLayer(mapInstance);
@@ -108,7 +113,13 @@ export function useMapSetup(containerRef) {
         mapInstance.addControl(geolocate, "bottom-right");
         geolocateRef.current = geolocate;
 
+        // Persistent listener for GPS updates (skips first event handled by triggerGeolocate)
         geolocate.on("geolocate", (pos) => {
+          // Skip if this is the initial position (already handled by triggerGeolocate promise)
+          if (!initialPositionSetRef.current) {
+            initialPositionSetRef.current = true;
+            return;
+          }
           setUserLocation({
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
@@ -124,7 +135,10 @@ export function useMapSetup(containerRef) {
     initMap();
 
     return () => {
-      if (mapInstance) mapInstance.remove();
+      if (mapInstance) {
+        mapInstance.off("styleimagemissing", onStyleImageMissing);
+        mapInstance.remove();
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -157,6 +171,11 @@ export function useMapSetup(containerRef) {
       const onSuccess = (pos) => {
         geolocate.off("geolocate", onSuccess);
         geolocate.off("error", onError);
+        // Set initial userLocation here (persistent listener skips first event)
+        setUserLocation({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
         resolve(pos);
       };
 

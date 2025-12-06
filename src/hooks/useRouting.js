@@ -1,18 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { getDistance } from "../lib/geo";
 
 // ORS API Key from environment
 const ORS_API_KEY = import.meta.env.VITE_OPENROUTE_API_KEY;
-
-// Haversine distance in meters
-function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 // Parse OSRM maneuver to simple instruction
 function parseManeuver(maneuver, distance) {
@@ -42,10 +32,33 @@ function parseManeuver(maneuver, distance) {
   return { type: "straight", icon: "↑", distance };
 }
 
+// Request timeout (3 seconds to fail fast)
+const REQUEST_TIMEOUT_MS = 3000;
+
+// Fetch with timeout helper
+async function fetchWithTimeout(url, signal) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  // Combine external signal with timeout signal
+  const combinedSignal = signal
+    ? AbortSignal.any([signal, controller.signal])
+    : controller.signal;
+
+  try {
+    const res = await fetch(url, { signal: combinedSignal });
+    clearTimeout(timeoutId);
+    return res;
+  } catch (e) {
+    clearTimeout(timeoutId);
+    throw e;
+  }
+}
+
 // OSRM routing (primary)
 async function fetchOSRM(originLng, originLat, destLng, destLat, signal) {
   const url = `https://router.project-osrm.org/route/v1/foot/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
-  const res = await fetch(url, { signal });
+  const res = await fetchWithTimeout(url, signal);
   const data = await res.json();
 
   if (data.code === "Ok" && data.routes?.[0]) {
@@ -74,7 +87,7 @@ async function fetchORS(originLng, originLat, destLng, destLat, signal) {
   if (!ORS_API_KEY) return null;
 
   const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${ORS_API_KEY}&start=${originLng},${originLat}&end=${destLng},${destLat}`;
-  const res = await fetch(url, { signal });
+  const res = await fetchWithTimeout(url, signal);
   const data = await res.json();
 
   if (data.features?.[0]) {
@@ -87,17 +100,24 @@ async function fetchORS(originLng, originLat, destLng, destLat, signal) {
   return null;
 }
 
+// Debounce delay for origin changes (prevents API spam when GPS updates rapidly)
+const DEBOUNCE_MS = 500;
+
 export function useRouting(map, origin, destination) {
   const [routeGeoJSON, setRouteGeoJSON] = useState(null);
   const [distance, setDistance] = useState(0);
   const [steps, setSteps] = useState([]);
   const abortRef = useRef(null);
   const lastOriginRef = useRef(null);
+  const debounceTimerRef = useRef(null);
 
   const originLat = origin?.latitude;
   const originLng = origin?.longitude;
   const destLat = destination?.coordinates?.[1];
   const destLng = destination?.coordinates?.[0];
+
+  // Track destination to detect changes (recalculate immediately on new destination)
+  const lastDestRef = useRef(null);
 
   useEffect(() => {
     if (!map || !originLat || !originLng || !destLat || !destLng) {
@@ -105,8 +125,14 @@ export function useRouting(map, origin, destination) {
       return;
     }
 
-    // Only recalculate route if user moved > 30 meters from last calculation
-    if (lastOriginRef.current) {
+    // Check if destination changed (always recalculate on new destination)
+    const destChanged =
+      !lastDestRef.current ||
+      lastDestRef.current.lat !== destLat ||
+      lastDestRef.current.lng !== destLng;
+
+    // Only recalculate route if user moved > 30 meters OR destination changed
+    if (!destChanged && lastOriginRef.current) {
       const movedDistance = getDistance(
         lastOriginRef.current.lat,
         lastOriginRef.current.lng,
@@ -117,6 +143,9 @@ export function useRouting(map, origin, destination) {
         return; // Skip recalculation, user hasn't moved enough
       }
     }
+
+    // Update destination ref
+    lastDestRef.current = { lat: destLat, lng: destLng };
 
     const fetchRoute = async () => {
       // Save current origin for next comparison
@@ -180,8 +209,24 @@ export function useRouting(map, origin, destination) {
       updateMapRoute(map, geometry);
     };
 
-    fetchRoute();
-    return () => abortRef.current?.abort();
+    // Clear previous debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Debounce route calculation (except for destination changes which are immediate)
+    if (destChanged) {
+      fetchRoute();
+    } else {
+      debounceTimerRef.current = setTimeout(fetchRoute, DEBOUNCE_MS);
+    }
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      abortRef.current?.abort();
+    };
   }, [map, originLat, originLng, destLat, destLng]);
 
   return { routeGeoJSON, distance, steps };

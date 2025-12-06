@@ -2,7 +2,7 @@
    IMPORTS ET POLICES
    =================================================================== */
 
-@import url("https://fonts.googleapis.com/css2?family=Madimi+One&display=swap");
+/* Font loaded via preload in index.html to avoid render-blocking */
 
 /* ===================================================================
    VARIABLES CSS (CUSTOM PROPERTIES)
@@ -55,7 +55,7 @@
 
   /* Optimisations de rendu */
   font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  text-rendering: auto; /* Let browser decide (optimizeLegibility is slow on mobile) */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 

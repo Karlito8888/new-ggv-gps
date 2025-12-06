@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMapSetup } from "./hooks/useMapSetup";
 import { useRouting } from "./hooks/useRouting";
 import { useNavigation } from "./hooks/useNavigation";
+import { getDistance } from "./lib/geo";
 import { blocks } from "./data/blocks";
 import { supabase } from "./lib/supabase";
 import ggvLogo from "./assets/img/ggv.png";
@@ -45,39 +46,71 @@ export default function App() {
     }
   }, [hasArrived, navState]);
 
-  // Handle device orientation AND map rotation (heading-up navigation)
+  // Track if we're currently navigating (used by orientation effect)
+  const isNavigatingRef = useRef(false);
+  isNavigatingRef.current = navState === "navigating";
+
+  // Effect 1: Reset map to north-up when leaving navigation mode
   useEffect(() => {
     if (!map || !isMapReady) return;
-
-    // Reset to north-up when not navigating
     if (navState !== "navigating") {
       map.easeTo({ bearing: 0, pitch: 0, duration: 300 });
-      return;
     }
+  }, [navState, map, isMapReady]);
 
-    // Set initial navigation view: zoom in, pitch 45° (GeolocateControl handles centering)
-    map.easeTo({ pitch: 45, zoom: 18, duration: 500 });
+  // Effect 2: Setup orientation listeners (only recreated when map changes, not navState)
+  useEffect(() => {
+    if (!map || !isMapReady) return;
 
     // Throttle state for map rotation
     let lastBearing = 0;
     let lastUpdate = 0;
-    const THROTTLE_MS = 100; // Max 10 updates/sec
-    const MIN_DELTA = 2; // Ignore changes < 2 degrees
+    const THROTTLE_MS = 250; // Max 4 updates/sec
+    const MIN_DELTA = 3; // Ignore changes < 3 degrees
+
+    // Track if user is interacting with the map (pan/zoom)
+    let isUserInteracting = false;
+
+    const onInteractionStart = () => {
+      isUserInteracting = true;
+    };
+    const onInteractionEnd = () => {
+      // Small delay before re-enabling rotation to avoid jank
+      setTimeout(() => {
+        isUserInteracting = false;
+      }, 300);
+    };
+
+    map.on("dragstart", onInteractionStart);
+    map.on("dragend", onInteractionEnd);
+    map.on("zoomstart", onInteractionStart);
+    map.on("zoomend", onInteractionEnd);
+
+    // Detect platform once (iOS uses webkitCompassHeading, Android uses alpha)
+    const isIOS =
+      typeof DeviceOrientationEvent !== "undefined" &&
+      typeof DeviceOrientationEvent.requestPermission === "function";
 
     const handler = (e) => {
-      // Calculate heading (iOS vs Android)
+      // Only rotate map when navigating (check ref to avoid stale closure)
+      if (!isNavigatingRef.current) return;
+
+      // Skip rotation if user is panning/zooming
+      if (isUserInteracting) return;
+
+      // Calculate heading based on platform
       let heading;
-      if (e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
+      if (isIOS && e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
         // iOS Safari: 0-360, 0=North, clockwise
         heading = e.webkitCompassHeading;
-      } else if (e.alpha !== null) {
+      } else if (!isIOS && e.alpha !== null) {
         // Android Chrome: 0-360, counter-clockwise - need to invert
         heading = (360 - e.alpha) % 360;
       } else {
         return;
       }
 
-      // Throttle all updates (map rotation + React state)
+      // Throttle updates
       const now = Date.now();
       const bearingDelta = Math.abs(heading - lastBearing);
       // Handle wraparound (359° → 1° is only 2°, not 358°)
@@ -90,25 +123,32 @@ export default function App() {
       lastBearing = heading;
       lastUpdate = now;
 
-      // Rotate map to follow device heading (GeolocateControl handles centering)
-      map.easeTo({
+      // Use jumpTo for instant rotation (no animation = less GPU load)
+      // Preserve pitch at 45° to avoid reset
+      map.jumpTo({
         bearing: heading,
-        duration: 150,
-        easing: (t) => t, // Linear for continuous motion
+        pitch: 45,
       });
     };
 
-    window.addEventListener("deviceorientationabsolute", handler);
-    window.addEventListener("deviceorientation", handler);
+    // Only add ONE listener per platform (prevents double-firing)
+    const eventName = isIOS ? "deviceorientation" : "deviceorientationabsolute";
+    window.addEventListener(eventName, handler);
 
     return () => {
-      window.removeEventListener("deviceorientationabsolute", handler);
-      window.removeEventListener("deviceorientation", handler);
-      // Reset map orientation on cleanup
-      if (map) {
-        map.easeTo({ bearing: 0, pitch: 0, duration: 300 });
-      }
+      window.removeEventListener(eventName, handler);
+      map.off("dragstart", onInteractionStart);
+      map.off("dragend", onInteractionEnd);
+      map.off("zoomstart", onInteractionStart);
+      map.off("zoomend", onInteractionEnd);
     };
+  }, [map, isMapReady]); // Note: no navState dependency - uses ref instead
+
+  // Effect 3: Set initial navigation view when entering navigation mode
+  useEffect(() => {
+    if (!map || !isMapReady || navState !== "navigating") return;
+    // Set initial navigation view: zoom in, pitch 45°
+    map.easeTo({ pitch: 45, zoom: 18, duration: 500 });
   }, [navState, map, isMapReady]);
 
   return (
@@ -544,27 +584,25 @@ function OrientationPermissionOverlay({ onGrant }) {
   );
 }
 
-// Haversine distance for finding next step
-function getDistanceSimple(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function NavigationOverlay({ map, distanceRemaining, destination, steps, userLocation, onCancel }) {
+// NavigationOverlay - memoized to prevent re-renders on every GPS update
+const NavigationOverlay = memo(function NavigationOverlay({
+  map,
+  distanceRemaining,
+  destination,
+  steps,
+  userLocation,
+  onCancel,
+}) {
   const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
 
-  // Find current step (closest upcoming maneuver)
-  const currentStep = (() => {
+  // Memoize currentStep calculation (expensive: iterates steps + calculates distance)
+  // Only recalculate when lat/lng change, not when other userLocation properties change
+  const currentStep = useMemo(() => {
     if (!steps?.length || !userLocation) return null;
 
     for (const step of steps) {
       if (!step.location) continue;
-      const dist = getDistanceSimple(
+      const dist = getDistance(
         userLocation.latitude,
         userLocation.longitude,
         step.location[1],
@@ -576,21 +614,23 @@ function NavigationOverlay({ map, distanceRemaining, destination, steps, userLoc
       }
     }
     return null;
-  })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [steps, userLocation?.latitude, userLocation?.longitude]);
 
-  const handleZoomIn = () => {
+  // Memoize zoom handlers to prevent recreating on every render
+  const handleZoomIn = useCallback(() => {
     if (map) {
       const currentZoom = map.getZoom();
       map.easeTo({ zoom: Math.min(currentZoom + 1, 20), duration: 200 });
     }
-  };
+  }, [map]);
 
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     if (map) {
       const currentZoom = map.getZoom();
       map.easeTo({ zoom: Math.max(currentZoom - 1, 14), duration: 200 });
     }
-  };
+  }, [map]);
 
   return (
     <motion.div
@@ -643,7 +683,7 @@ function NavigationOverlay({ map, distanceRemaining, destination, steps, userLoc
       </div>
     </motion.div>
   );
-}
+});
 
 function ArrivedOverlay({ destination, onNavigateAgain, onExitVillage }) {
   return (
