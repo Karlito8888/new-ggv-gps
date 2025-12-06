@@ -32,8 +32,8 @@ export function useNavigation(map, userLocation, destination) {
     setDistanceRemaining(dist);
     setBearing(getBearing(userLat, userLng, destLat, destLng));
 
-    // Set arrival state based on current distance
-    setHasArrived(dist < 20);
+    // Set arrival state based on current distance (10m threshold)
+    setHasArrived(dist < 10);
   }, [userLat, userLng, destLat, destLng]);
 
   return { distanceRemaining, bearing, hasArrived };
