@@ -389,11 +389,6 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
         <h1 className="welcome-title">Choose Destination</h1>
         <p className="welcome-tagalog">(Pumili ng Destinasyon)</p>
 
-        <p className="welcome-description">
-          Select where you want to go in the village.
-          <span className="tagalog-inline">Piliin kung saan mo gustong pumunta sa village.</span>
-        </p>
-
         <div className="welcome-type-selector">
           <button
             className={`welcome-type-btn ${selectedType === "block" ? "active" : ""}`}
