@@ -14,16 +14,56 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// Parse OSRM maneuver to simple instruction
+function parseManeuver(maneuver, distance) {
+  const type = maneuver.type;
+  const modifier = maneuver.modifier;
+
+  // Map maneuver types to simple icons/text
+  if (type === "arrive") {
+    return { type: "arrive", icon: "📍", distance: 0 };
+  }
+  if (type === "depart" || type === "continue" || type === "new name") {
+    return { type: "straight", icon: "↑", distance };
+  }
+  if (type === "turn" || type === "end of road" || type === "fork") {
+    if (modifier?.includes("left")) {
+      return { type: "left", icon: "←", distance };
+    }
+    if (modifier?.includes("right")) {
+      return { type: "right", icon: "→", distance };
+    }
+    return { type: "straight", icon: "↑", distance };
+  }
+  if (type === "roundabout" || type === "rotary") {
+    return { type: "roundabout", icon: "⟳", distance };
+  }
+  // Default
+  return { type: "straight", icon: "↑", distance };
+}
+
 // OSRM routing (primary)
 async function fetchOSRM(originLng, originLat, destLng, destLat, signal) {
-  const url = `https://router.project-osrm.org/route/v1/foot/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson`;
+  const url = `https://router.project-osrm.org/route/v1/foot/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
   const res = await fetch(url, { signal });
   const data = await res.json();
 
   if (data.code === "Ok" && data.routes?.[0]) {
+    const route = data.routes[0];
+    // Extract steps from all legs
+    const steps =
+      route.legs?.flatMap(
+        (leg) =>
+          leg.steps?.map((step) => ({
+            ...parseManeuver(step.maneuver, step.distance),
+            location: step.maneuver.location, // [lng, lat]
+          })) || [],
+      ) || [];
+
     return {
-      geometry: data.routes[0].geometry,
-      distance: data.routes[0].distance,
+      geometry: route.geometry,
+      distance: route.distance,
+      steps,
     };
   }
   return null;
@@ -50,6 +90,7 @@ async function fetchORS(originLng, originLat, destLng, destLat, signal) {
 export function useRouting(map, origin, destination) {
   const [routeGeoJSON, setRouteGeoJSON] = useState(null);
   const [distance, setDistance] = useState(0);
+  const [steps, setSteps] = useState([]);
   const abortRef = useRef(null);
   const lastOriginRef = useRef(null);
 
@@ -93,6 +134,7 @@ export function useRouting(map, origin, destination) {
           console.log("Route: OSRM");
           setRouteGeoJSON(route.geometry);
           setDistance(route.distance);
+          setSteps(route.steps || []);
           updateMapRoute(map, route.geometry);
           return;
         }
@@ -108,6 +150,7 @@ export function useRouting(map, origin, destination) {
           console.log("Route: ORS (fallback)");
           setRouteGeoJSON(route.geometry);
           setDistance(route.distance);
+          setSteps([]); // ORS doesn't provide steps in this format
           updateMapRoute(map, route.geometry);
           return;
         }
@@ -127,6 +170,13 @@ export function useRouting(map, origin, destination) {
       };
       setRouteGeoJSON(geometry);
       setDistance(getDistance(originLat, originLng, destLat, destLng));
+      setSteps([
+        {
+          type: "straight",
+          icon: "↑",
+          distance: getDistance(originLat, originLng, destLat, destLng),
+        },
+      ]);
       updateMapRoute(map, geometry);
     };
 
@@ -134,7 +184,7 @@ export function useRouting(map, origin, destination) {
     return () => abortRef.current?.abort();
   }, [map, originLat, originLng, destLat, destLng]);
 
-  return { routeGeoJSON, distance };
+  return { routeGeoJSON, distance, steps };
 }
 
 function updateMapRoute(map, geometry) {

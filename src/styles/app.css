@@ -1261,81 +1261,72 @@ button {
   border-radius: 0 0 1.5rem 1.5rem;
 }
 
-.nav-header {
+/* Compact navigation header */
+.nav-header-compact {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(18, 18, 18, 0.1);
-}
-
-.nav-destination {
-  display: flex;
-  align-items: center;
   gap: 0.75rem;
 }
 
-.nav-destination-icon {
-  width: 1.5rem;
-  height: 1.5rem;
+.nav-turn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 3.5rem;
+}
+
+.nav-turn-icon {
+  font-size: 1.5rem;
   color: var(--color-green);
 }
 
-.nav-header h2 {
-  font-size: 1.125rem;
-  font-weight: 700;
+.nav-turn-dist {
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--color-black);
-  margin: 0;
+  opacity: 0.7;
 }
 
-.nav-stop-btn {
-  width: 2.5rem;
-  height: 2.5rem;
+.nav-center {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.nav-dest-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-remaining {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-green);
+}
+
+.nav-cancel-btn {
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: #ef4444;
   padding: 0;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-normal);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  flex-shrink: 0;
 }
 
-.nav-stop-btn svg {
-  width: 1.25rem;
-  height: 1.25rem;
+.nav-cancel-btn svg {
+  width: 1rem;
+  height: 1rem;
   color: var(--color-white);
-}
-
-.nav-stop-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
-}
-
-.nav-stop-btn:active {
-  transform: scale(1.05);
-}
-
-.nav-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.nav-distance {
-  flex: 1;
-}
-
-.distance-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--color-green);
-  line-height: 1;
-  font-family: var(--font-primary);
 }
 
 .distance-label {

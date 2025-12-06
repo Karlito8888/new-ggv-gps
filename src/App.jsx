@@ -28,16 +28,15 @@ export default function App() {
   // Navigation state machine (6 states)
   const [navState, setNavState] = useState("gps-permission");
   const [destination, setDestination] = useState(null);
-  const [deviceOrientation, setDeviceOrientation] = useState(null);
 
   // Initialize map and GPS tracking
   const { map, userLocation, isMapReady, triggerGeolocate } = useMapSetup(mapContainerRef);
 
   // Calculate route when destination is selected
-  useRouting(map, userLocation, destination);
+  const { steps } = useRouting(map, userLocation, destination);
 
-  // Navigation logic (bearing, arrival detection)
-  const { bearing, distanceRemaining, hasArrived } = useNavigation(map, userLocation, destination);
+  // Navigation logic (distance, arrival detection)
+  const { distanceRemaining, hasArrived } = useNavigation(map, userLocation, destination);
 
   // Handle arrival
   useEffect(() => {
@@ -90,12 +89,6 @@ export default function App() {
 
       lastBearing = heading;
       lastUpdate = now;
-
-      // Update state for UI compass (now throttled to max 10/sec)
-      setDeviceOrientation({
-        alpha: e.alpha || 0,
-        webkitHeading: e.webkitCompassHeading || null,
-      });
 
       // Rotate map to follow device heading (GeolocateControl handles centering)
       map.easeTo({
@@ -158,10 +151,10 @@ export default function App() {
           <NavigationOverlay
             key="navigating"
             map={map}
-            bearing={bearing}
             distanceRemaining={distanceRemaining}
             destination={destination}
-            deviceOrientation={deviceOrientation}
+            steps={steps}
+            userLocation={userLocation}
             onCancel={() => {
               setNavState("welcome");
               setDestination(null);
@@ -549,22 +542,39 @@ function OrientationPermissionOverlay({ onGrant }) {
   );
 }
 
-function NavigationOverlay({
-  map,
-  bearing,
-  distanceRemaining,
-  destination,
-  deviceOrientation,
-  onCancel,
-}) {
+// Haversine distance for finding next step
+function getDistanceSimple(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function NavigationOverlay({ map, distanceRemaining, destination, steps, userLocation, onCancel }) {
   const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
 
-  // Get device heading (where phone is pointing)
-  const heading = deviceOrientation?.webkitHeading ?? deviceOrientation?.alpha ?? 0;
+  // Find current step (closest upcoming maneuver)
+  const currentStep = (() => {
+    if (!steps?.length || !userLocation) return null;
 
-  // Calculate relative direction to destination (bearing - heading)
-  // This shows "turn left/right" direction relative to where user is facing
-  const relativeDirection = (((bearing - heading) % 360) + 360) % 360;
+    for (const step of steps) {
+      if (!step.location) continue;
+      const dist = getDistanceSimple(
+        userLocation.latitude,
+        userLocation.longitude,
+        step.location[1],
+        step.location[0],
+      );
+      // Return first step that's within 200m and not yet passed
+      if (dist < 200 && step.type !== "arrive") {
+        return { ...step, distanceToStep: Math.round(dist) };
+      }
+    }
+    return null;
+  })();
 
   const handleZoomIn = () => {
     if (map) {
@@ -587,51 +597,32 @@ function NavigationOverlay({
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: -100, opacity: 0 }}
     >
-      <div className="nav-header">
-        <div className="nav-destination">
-          <svg
-            className="nav-destination-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polygon points="3 11 22 2 13 21 11 13 3 11" />
-          </svg>
-          <h2>{destination?.name || "Navigating..."}</h2>
+      <div className="nav-header-compact">
+        {/* Turn instruction (left) */}
+        <div className="nav-turn">
+          {currentStep ? (
+            <>
+              <span className="nav-turn-icon">{currentStep.icon}</span>
+              <span className="nav-turn-dist">{currentStep.distanceToStep}m</span>
+            </>
+          ) : (
+            <span className="nav-turn-icon">↑</span>
+          )}
         </div>
-        <button className="nav-stop-btn" onClick={onCancel} aria-label="Stop navigation">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+
+        {/* Destination + distance (center) */}
+        <div className="nav-center">
+          <div className="nav-dest-name">{destination?.name || "Navigating..."}</div>
+          <div className="nav-remaining">{formatDistance(distanceRemaining)}</div>
+        </div>
+
+        {/* Cancel button (right) */}
+        <button className="nav-cancel-btn" onClick={onCancel} aria-label="Stop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
-      </div>
-
-      <div className="nav-info">
-        <div className="nav-distance">
-          <div className="distance-value">{formatDistance(distanceRemaining)}</div>
-          <div className="distance-label">remaining • natitira</div>
-        </div>
-
-        <div className="nav-compass">
-          <div className="compass-ring">
-            <div className="compass-arrow" style={{ transform: `rotate(${relativeDirection}deg)` }}>
-              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                <path d="M12 2L19 21L12 17L5 21L12 2Z" />
-              </svg>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Map controls */}
