@@ -39,12 +39,35 @@ export default function App() {
   // Navigation logic (distance, arrival detection)
   const { distanceRemaining, hasArrived } = useNavigation(map, userLocation, destination);
 
-  // Handle arrival
+  // Track destination changes to prevent instant re-arrival
+  const destinationKeyRef = useRef(null);
+  const [arrivalEnabled, setArrivalEnabled] = useState(true);
+
+  // Disable arrival detection for 3 seconds when destination changes
   useEffect(() => {
-    if (hasArrived && navState === "navigating") {
+    const currentKey = destination?.coordinates
+      ? `${destination.coordinates[0]},${destination.coordinates[1]}`
+      : null;
+
+    if (currentKey !== destinationKeyRef.current) {
+      destinationKeyRef.current = currentKey;
+      setArrivalEnabled(false);
+
+      // Re-enable after 3 seconds
+      const timer = setTimeout(() => {
+        setArrivalEnabled(true);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [destination]);
+
+  // Handle arrival - only when arrival detection is enabled
+  useEffect(() => {
+    if (arrivalEnabled && hasArrived && navState === "navigating") {
       setNavState("arrived");
     }
-  }, [hasArrived, navState]);
+  }, [arrivalEnabled, hasArrived, navState]);
 
   // Track if we're currently navigating (used by orientation effect)
   const isNavigatingRef = useRef(false);
