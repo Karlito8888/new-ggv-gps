@@ -166,6 +166,7 @@ export default function App() {
         {navState === "navigating" && (
           <NavigationOverlay
             key="navigating"
+            map={map}
             bearing={bearing}
             distanceRemaining={distanceRemaining}
             destination={destination}
@@ -558,6 +559,7 @@ function OrientationPermissionOverlay({ onGrant }) {
 }
 
 function NavigationOverlay({
+  map,
   bearing,
   distanceRemaining,
   destination,
@@ -566,6 +568,29 @@ function NavigationOverlay({
 }) {
   const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
   const heading = deviceOrientation?.webkitHeading || deviceOrientation?.alpha || bearing;
+
+  const handleZoomIn = () => {
+    if (map) {
+      const currentZoom = map.getZoom();
+      map.easeTo({ zoom: Math.min(currentZoom + 1, 20), duration: 200 });
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (map) {
+      const currentZoom = map.getZoom();
+      map.easeTo({ zoom: Math.max(currentZoom - 1, 14), duration: 200 });
+    }
+  };
+
+  const handlePitchToggle = () => {
+    if (map) {
+      const currentPitch = map.getPitch();
+      // Toggle between 0° (2D) and 45° (3D)
+      const newPitch = currentPitch > 20 ? 0 : 45;
+      map.easeTo({ pitch: newPitch, duration: 300 });
+    }
+  };
 
   return (
     <motion.div
@@ -619,6 +644,29 @@ function NavigationOverlay({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Map controls */}
+      <div className="nav-map-controls">
+        <button className="map-control-btn" onClick={handleZoomIn} aria-label="Zoom in">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+        <button className="map-control-btn" onClick={handleZoomOut} aria-label="Zoom out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+        <button className="map-control-btn" onClick={handlePitchToggle} aria-label="Toggle 3D view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 3L20 7.5V16.5L12 21L4 16.5V7.5L12 3Z" />
+            <path d="M12 12L20 7.5" />
+            <path d="M12 12V21" />
+            <path d="M12 12L4 7.5" />
+          </svg>
+        </button>
       </div>
     </motion.div>
   );

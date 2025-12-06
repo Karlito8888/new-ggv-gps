@@ -1350,6 +1350,44 @@ button {
   filter: drop-shadow(0 2px 4px rgba(80, 170, 97, 0.3));
 }
 
+/* Map Controls (zoom, pitch) */
+.nav-map-controls {
+  position: fixed;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 100;
+}
+
+.map-control-btn {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-white);
+  color: var(--color-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.map-control-btn:active {
+  transform: scale(0.95);
+  background: var(--color-green);
+  color: var(--color-white);
+}
+
+.map-control-btn svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
 /* Responsive adjustments for new overlays */
 @media (max-width: 640px) {
   .welcome-modal,
