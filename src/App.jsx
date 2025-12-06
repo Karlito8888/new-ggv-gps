@@ -330,32 +330,18 @@ function WelcomeOverlay({ blocks, onSelectDestination }) {
     }
 
     setIsLoadingLots(true);
-    supabase
-      .rpc("get_lots_by_block", { block_name: selectedBlock })
-      .then(({ data, error }) => {
-        if (error || !data || data.length === 0) {
-          // Fallback: direct query if RPC fails
-          return supabase
-            .from("locations")
-            .select("lot")
-            .eq("block", selectedBlock)
-            .is("deleted_at", null)
-            .order("lot");
-        }
-        return { data, error: null };
-      })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Error fetching lots:", error);
-          setLots([]);
-        } else if (data && data.length > 0) {
-          setLots(data);
+    supabase.rpc("get_lots_by_block", { block_name: selectedBlock }).then(({ data, error }) => {
+      if (error) {
+        console.error("Error fetching lots:", error);
+        setLots([]);
+      } else if (data) {
+        setLots(data);
+        if (data.length > 0) {
           setSelectedLot(data[0].lot);
-        } else {
-          setLots([]);
         }
-        setIsLoadingLots(false);
-      });
+      }
+      setIsLoadingLots(false);
+    });
   }, [selectedBlock]);
 
   const handleNavigate = () => {
