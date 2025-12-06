@@ -5,6 +5,8 @@ import { useRouting } from "./hooks/useRouting";
 import { useNavigation } from "./hooks/useNavigation";
 import { blocks } from "./data/blocks";
 import { publicPois } from "./data/public-pois";
+import ggvLogo from "./assets/img/ggv.png";
+import stopIcon from "./assets/img/stop.png";
 import "./styles/index.css";
 
 // Village exit coordinates (from CLAUDE.md)
@@ -30,18 +32,13 @@ export default function App() {
   const [deviceOrientation, setDeviceOrientation] = useState(null);
 
   // Initialize map and GPS tracking
-  const { map, userLocation, isMapReady, setMapStyle } = useMapSetup(mapContainerRef);
+  const { map, userLocation, isMapReady, triggerGeolocate } = useMapSetup(mapContainerRef);
 
   // Calculate route when destination is selected
-  const { routeGeoJSON } = useRouting(map, userLocation, destination);
+  useRouting(map, userLocation, destination);
 
   // Navigation logic (bearing, arrival detection)
-  const { bearing, nextTurn, distanceRemaining, hasArrived } = useNavigation(
-    map,
-    userLocation,
-    routeGeoJSON,
-    destination,
-  );
+  const { bearing, distanceRemaining, hasArrived } = useNavigation(map, userLocation, destination);
 
   // Handle arrival
   useEffect(() => {
@@ -50,39 +47,94 @@ export default function App() {
     }
   }, [hasArrived, navState]);
 
-  // Handle device orientation events (iOS + Android)
+  // Handle device orientation AND map rotation (heading-up navigation)
   useEffect(() => {
-    if (navState !== "navigating") return;
+    if (!map || !isMapReady) return;
 
-    const handleOrientation = (event) => {
+    // Reset to north-up when not navigating
+    if (navState !== "navigating") {
+      map.easeTo({ bearing: 0, pitch: 0, duration: 300 });
+      return;
+    }
+
+    // Set initial navigation pitch
+    map.easeTo({ pitch: 45, duration: 300 });
+
+    // Throttle state for map rotation
+    let lastBearing = 0;
+    let lastUpdate = 0;
+    const THROTTLE_MS = 100; // Max 10 updates/sec
+    const MIN_DELTA = 2; // Ignore changes < 2 degrees
+
+    const handler = (e) => {
+      // Calculate heading (iOS vs Android)
+      let heading;
+      if (e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
+        // iOS Safari: 0-360, 0=North, clockwise
+        heading = e.webkitCompassHeading;
+      } else if (e.alpha !== null) {
+        // Android Chrome: 0-360, counter-clockwise - need to invert
+        heading = (360 - e.alpha) % 360;
+      } else {
+        return;
+      }
+
+      // Update state for UI compass in NavigationOverlay
       setDeviceOrientation({
-        alpha: event.alpha || 0, // Compass heading (0-360)
-        beta: event.beta || 0, // Front-to-back tilt
-        gamma: event.gamma || 0, // Left-to-right tilt
-        webkitHeading: event.webkitCompassHeading || null, // iOS Safari
+        alpha: e.alpha || 0,
+        webkitHeading: e.webkitCompassHeading || null,
+      });
+
+      // Throttle map rotation updates
+      const now = Date.now();
+      const bearingDelta = Math.abs(heading - lastBearing);
+      // Handle wraparound (359° → 1° is only 2°, not 358°)
+      const wrappedDelta = Math.min(bearingDelta, 360 - bearingDelta);
+
+      if (now - lastUpdate < THROTTLE_MS && wrappedDelta < MIN_DELTA) {
+        return;
+      }
+
+      lastBearing = heading;
+      lastUpdate = now;
+
+      // Rotate map smoothly to follow device heading
+      map.easeTo({
+        bearing: heading,
+        duration: 100,
+        easing: (t) => t, // Linear for continuous motion
       });
     };
 
-    // Android Chrome
-    window.addEventListener("deviceorientationabsolute", handleOrientation);
-    // iOS Safari + fallback
-    window.addEventListener("deviceorientation", handleOrientation);
+    window.addEventListener("deviceorientationabsolute", handler);
+    window.addEventListener("deviceorientation", handler);
 
     return () => {
-      window.removeEventListener("deviceorientationabsolute", handleOrientation);
-      window.removeEventListener("deviceorientation", handleOrientation);
+      window.removeEventListener("deviceorientationabsolute", handler);
+      window.removeEventListener("deviceorientation", handler);
+      // Reset map orientation on cleanup
+      if (map) {
+        map.easeTo({ bearing: 0, pitch: 0, duration: 300 });
+      }
     };
-  }, [navState]);
+  }, [navState, map, isMapReady]);
 
   return (
     <div className="app-container">
       {/* Map container - always rendered */}
       <div ref={mapContainerRef} className="map-container" />
 
+      {/* GGV Logo - top center */}
+      <img src={ggvLogo} alt="GGV" className="ggv-logo" />
+
       {/* Conditional overlays based on navState */}
       <AnimatePresence mode="wait">
         {navState === "gps-permission" && (
-          <GPSPermissionOverlay key="gps-permission" onGrant={() => setNavState("welcome")} />
+          <GPSPermissionOverlay
+            key="gps-permission"
+            onGrant={() => setNavState("welcome")}
+            triggerGeolocate={triggerGeolocate}
+          />
         )}
 
         {navState === "welcome" && (
@@ -108,7 +160,6 @@ export default function App() {
           <NavigationOverlay
             key="navigating"
             bearing={bearing}
-            nextTurn={nextTurn}
             distanceRemaining={distanceRemaining}
             destination={destination}
             deviceOrientation={deviceOrientation}
@@ -148,22 +199,6 @@ export default function App() {
           />
         )}
       </AnimatePresence>
-
-      {/* Map style toggle (always visible when map ready) */}
-      {isMapReady && (
-        <div className="map-style-toggle">
-          <button onClick={() => setMapStyle("osm")} className="style-btn" aria-label="Street map">
-            🗺️
-          </button>
-          <button
-            onClick={() => setMapStyle("satellite")}
-            className="style-btn"
-            aria-label="Satellite"
-          >
-            🛰️
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -190,24 +225,93 @@ const modalVariants = {
   exit: { scale: 0.8, opacity: 0 },
 };
 
-function GPSPermissionOverlay({ onGrant }) {
+/**
+ * GPS Permission Overlay
+ *
+ * First screen in the navigation flow. Requests native GPS permission via
+ * MapLibre's GeolocateControl before allowing the user to proceed.
+ *
+ * Flow:
+ * 1. User taps "Enable GPS" button
+ * 2. triggerGeolocate() prompts native iOS/Android permission dialog
+ * 3. If granted → onGrant() is called → proceeds to WelcomeOverlay
+ * 4. If denied → error message displayed, user must enable in browser settings
+ *
+ * @param {Object} props
+ * @param {() => void} props.onGrant - Callback when GPS permission is granted
+ * @param {() => Promise<GeolocationPosition>} props.triggerGeolocate - Triggers native GPS permission request
+ */
+function GPSPermissionOverlay({ onGrant, triggerGeolocate }) {
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleEnableGPS = async () => {
+    setIsRequesting(true);
+    setError(null);
+
+    try {
+      // Trigger the native GeolocateControl (requests permission + starts tracking)
+      await triggerGeolocate();
+      // Permission granted, proceed to welcome screen
+      onGrant();
+    } catch (err) {
+      console.error("GPS permission error:", err);
+      setError("Location access denied. Please enable in your browser settings.");
+      setIsRequesting(false);
+    }
+  };
+
   return (
     <motion.div
-      className="overlay"
+      className="overlay gps-overlay"
       variants={overlayVariants}
       initial="hidden"
       animate="visible"
       exit="exit"
     >
-      <motion.div className="modal" variants={modalVariants}>
-        <h1>📍 GPS Permission Required</h1>
-        <p>MyGGV GPS needs access to your location to provide turn-by-turn navigation.</p>
-        <button className="btn-primary" onClick={onGrant}>
-          Enable GPS
-        </button>
-        <p className="text-sm text-gray-500 mt-4">
-          The GPS control will appear on the map. Click it to start tracking.
+      <motion.div className="modal gps-modal" variants={modalVariants}>
+        {/* GPS Icon with pulse animation */}
+        <div className="gps-icon-wrapper">
+          <svg
+            className="gps-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 2v4m0 12v4M2 12h4m12 0h4" />
+          </svg>
+        </div>
+
+        <h1 className="gps-title">Enable Location</h1>
+        <p className="gps-tagalog">(I-enable ang Lokasyon)</p>
+
+        <p className="gps-description">
+          MyGGV GPS needs your location to guide you through the village.
+          <span className="tagalog-inline">
+            Kailangan ng MyGGV GPS ang iyong lokasyon para gabayan ka sa village.
+          </span>
         </p>
+
+        {error && <div className="error-message">{error}</div>}
+
+        <button className="gps-btn" onClick={handleEnableGPS} disabled={isRequesting}>
+          <svg
+            className="gps-btn-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+          {isRequesting ? "Requesting..." : "Enable GPS"}
+        </button>
       </motion.div>
     </motion.div>
   );
@@ -383,22 +487,13 @@ function OrientationPermissionOverlay({ onGrant }) {
 
 function NavigationOverlay({
   bearing,
-  nextTurn,
   distanceRemaining,
   destination,
   deviceOrientation,
   onCancel,
 }) {
-  // Format distance for display
-  const formatDistance = (meters) => {
-    if (meters >= 1000) {
-      return `${(meters / 1000).toFixed(1)} km`;
-    }
-    return `${Math.round(meters)} m`;
-  };
-
-  // Calculate compass heading (use device orientation if available)
-  const compassHeading = deviceOrientation?.webkitHeading || deviceOrientation?.alpha || bearing;
+  const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
+  const heading = deviceOrientation?.webkitHeading || deviceOrientation?.alpha || bearing;
 
   return (
     <motion.div
@@ -409,8 +504,8 @@ function NavigationOverlay({
     >
       <div className="nav-header">
         <h2>{destination?.name || "Navigating..."}</h2>
-        <button className="btn-cancel" onClick={onCancel}>
-          ✕
+        <button className="btn-stop" onClick={onCancel} aria-label="Arrêter la navigation">
+          <img src={stopIcon} alt="Stop" />
         </button>
       </div>
 
@@ -419,15 +514,8 @@ function NavigationOverlay({
         <div className="distance-label">remaining</div>
       </div>
 
-      {nextTurn && (
-        <div className="nav-turn">
-          <div className="turn-instruction">{nextTurn.instruction}</div>
-          <div className="turn-distance">{formatDistance(nextTurn.distance)}</div>
-        </div>
-      )}
-
       <div className="nav-compass">
-        <div className="compass-arrow" style={{ transform: `rotate(${compassHeading}deg)` }}>
+        <div className="compass-arrow" style={{ transform: `rotate(${heading}deg)` }}>
           ↑
         </div>
       </div>

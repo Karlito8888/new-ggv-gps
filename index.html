@@ -55,8 +55,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://routing.openstreetmap.de" />
 
-    <!-- Styles -->
-    <link rel="stylesheet" href="/src/index.css" />
+    <!-- Styles are imported via main.jsx (Vite handles CSS bundling) -->
 
     <!-- Geolocation and permissions -->
     <meta http-equiv="Permissions-Policy" content="geolocation=*, accelerometer=*, gyroscope=*" />
@@ -64,7 +63,7 @@
     <!-- Security -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; connect-src 'self' https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org https://demotiles.maplibre.org https://wlrrruemchacgyypexsu.supabase.co https://routing.openstreetmap.de https://api.openrouteservice.org https://server.arcgisonline.com; img-src 'self' data: https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org https://demotiles.maplibre.org https://server.arcgisonline.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://demotiles.maplibre.org;"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; connect-src 'self' https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org https://demotiles.maplibre.org https://wlrrruemchacgyypexsu.supabase.co https://routing.openstreetmap.de https://api.openrouteservice.org https://server.arcgisonline.com https://tiles.openfreemap.org https://router.project-osrm.org; img-src 'self' data: https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org https://demotiles.maplibre.org https://server.arcgisonline.com https://tiles.openfreemap.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://demotiles.maplibre.org;"
     />
 
     <!-- Additional Security Headers -->

@@ -3,211 +3,152 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { blocks } from "../data/blocks";
 
+const VILLAGE_CENTER = [120.95134859887523, 14.347872973134175];
+
+// Calculate centroid of polygon
+function getCentroid(coords) {
+  let x = 0,
+    y = 0;
+  for (const [lng, lat] of coords) {
+    x += lng;
+    y += lat;
+  }
+  return [x / coords.length, y / coords.length];
+}
+
+const labelsGeoJSON = {
+  type: "FeatureCollection",
+  features: blocks.map((block) => ({
+    type: "Feature",
+    properties: { name: block.name },
+    geometry: { type: "Point", coordinates: getCentroid(block.coords) },
+  })),
+};
+
+function addBlocksLayer(map) {
+  if (map.getSource("block-labels")) return;
+
+  // Block labels only
+  map.addSource("block-labels", { type: "geojson", data: labelsGeoJSON });
+  map.addLayer({
+    id: "block-labels",
+    type: "symbol",
+    source: "block-labels",
+    layout: {
+      "text-field": ["get", "name"],
+      "text-size": 14,
+      "text-anchor": "center",
+    },
+    paint: {
+      "text-color": "#333",
+      "text-halo-color": "#fff",
+      "text-halo-width": 1,
+    },
+  });
+}
+
 /**
- * useMapSetup Hook
+ * Hook to initialize MapLibre map with GPS tracking via GeolocateControl.
  *
- * Initializes MapLibre GL JS map with GPS tracking following official documentation:
- * - https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/
- * - https://maplibre.org/maplibre-gl-js/docs/API/classes/GeolocateControl/
- *
- * @param {React.RefObject} containerRef - Ref to DOM element for map container
- * @param {Object} options - Map initialization options
- * @param {[number, number]} options.center - Initial center [lng, lat]
- * @param {number} options.zoom - Initial zoom level
- * @param {number} options.pitch - Initial pitch (tilt) in degrees
- * @param {number} options.bearing - Initial bearing (rotation) in degrees
- *
- * @returns {Object} Hook return values
- * @returns {maplibregl.Map|null} map - MapLibre map instance
- * @returns {Object|null} userLocation - GPS location {latitude, longitude, accuracy, heading}
- * @returns {boolean} isMapReady - Whether map is loaded and ready
- * @returns {Function} setMapStyle - Function to change map style ('osm' | 'satellite')
+ * @param {React.RefObject<HTMLDivElement>} containerRef - Ref to the map container element
+ * @returns {{
+ *   map: maplibregl.Map | null,
+ *   userLocation: { latitude: number, longitude: number } | null,
+ *   isMapReady: boolean,
+ *   triggerGeolocate: () => Promise<GeolocationPosition>
+ * }}
  */
-export function useMapSetup(containerRef, options = {}) {
+export function useMapSetup(containerRef) {
   const [map, setMap] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [mapStyle, setMapStyle] = useState("osm");
   const geolocateRef = useRef(null);
 
-  // Map style URLs
-  const getMapStyleUrl = (style) => {
-    switch (style) {
-      case "satellite":
-        return "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
-      case "osm":
-      default:
-        return "https://tiles.openfreemap.org/styles/liberty";
-    }
-  };
+  const styleUrl = "https://tiles.openfreemap.org/styles/liberty";
 
-  // Initialize map on mount (per official MapLibre docs)
+  // Initialize map
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Create map instance with official constructor parameters
-    // https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#constructor
     const mapInstance = new maplibregl.Map({
       container: containerRef.current,
-      style: getMapStyleUrl("osm"),
-      center: options.center || [120.95134859887523, 14.347872973134175], // Village center
-      zoom: options.zoom || 15,
-      pitch: options.pitch || 0,
-      bearing: options.bearing || 0,
+      style: styleUrl,
+      center: VILLAGE_CENTER,
+      zoom: 15,
     });
 
-    // Wait for map to load before adding sources/layers
-    // https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#load
+    // Suppress missing image warnings from the base map style
+    mapInstance.on("styleimagemissing", () => {});
+
     mapInstance.on("load", () => {
-      // Convert blocks array to GeoJSON FeatureCollection
-      const blocksGeoJSON = {
-        type: "FeatureCollection",
-        features: blocks.map((block) => ({
-          type: "Feature",
-          properties: {
-            name: block.name,
-            color: block.color || "#627BC1",
-          },
-          geometry: {
-            type: "Polygon",
-            coordinates: [block.coords],
-          },
-        })),
-      };
+      addBlocksLayer(mapInstance);
 
-      // Add blocks source
-      // https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#addsource
-      mapInstance.addSource("blocks", {
-        type: "geojson",
-        data: blocksGeoJSON,
-      });
-
-      // Add blocks fill layer
-      // https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#addlayer
-      mapInstance.addLayer({
-        id: "blocks-fill",
-        type: "fill",
-        source: "blocks",
-        paint: {
-          "fill-color": ["get", "color"],
-          "fill-opacity": 0.2,
-        },
-      });
-
-      // Add blocks outline layer
-      mapInstance.addLayer({
-        id: "blocks-outline",
-        type: "line",
-        source: "blocks",
-        paint: {
-          "line-color": "#627BC1",
-          "line-width": 2,
-        },
-      });
-
-      // Add GeolocateControl for GPS tracking
-      // https://maplibre.org/maplibre-gl-js/docs/API/classes/GeolocateControl/
       const geolocate = new maplibregl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true, // Request high accuracy GPS
-        },
-        trackUserLocation: true, // Continuously track location
-        showUserHeading: true, // Show heading indicator
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+        showUserHeading: true,
       });
-
-      // Add control to map
       mapInstance.addControl(geolocate);
       geolocateRef.current = geolocate;
 
-      // Listen for successful geolocation updates
-      // https://maplibre.org/maplibre-gl-js/docs/API/classes/GeolocateControl/#geolocate
-      geolocate.on("geolocate", (position) => {
-        // Position object follows browser Geolocation API standard
-        // https://developer.mozilla.org/en-US/docs/Web/API/Position
+      geolocate.on("geolocate", (pos) => {
         setUserLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          heading: position.coords.heading || null,
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
         });
-      });
-
-      // Listen for geolocation errors
-      geolocate.on("error", (error) => {
-        console.error("Geolocation error:", error);
       });
 
       setIsMapReady(true);
     });
 
     setMap(mapInstance);
+    return () => mapInstance.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    // Cleanup function - CRITICAL per official docs
-    // https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#remove
-    return () => {
-      mapInstance.remove();
-    };
-  }, [containerRef, options]);
-
-  // Handle map style changes
-  useEffect(() => {
-    if (!map || !isMapReady) return;
-
-    // Use setStyle method per official docs
-    // https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#setstyle
-    map.setStyle(getMapStyleUrl(mapStyle));
-
-    // Re-add sources and layers after style changes
-    map.once("styledata", () => {
-      // Check if blocks source already exists
-      if (!map.getSource("blocks")) {
-        const blocksGeoJSON = {
-          type: "FeatureCollection",
-          features: blocks.map((block) => ({
-            type: "Feature",
-            properties: {
-              name: block.name,
-              color: block.color || "#627BC1",
-            },
-            geometry: {
-              type: "Polygon",
-              coordinates: [block.coords],
-            },
-          })),
-        };
-
-        map.addSource("blocks", {
-          type: "geojson",
-          data: blocksGeoJSON,
-        });
-
-        map.addLayer({
-          id: "blocks-fill",
-          type: "fill",
-          source: "blocks",
-          paint: {
-            "fill-color": ["get", "color"],
-            "fill-opacity": 0.2,
-          },
-        });
-
-        map.addLayer({
-          id: "blocks-outline",
-          type: "line",
-          source: "blocks",
-          paint: {
-            "line-color": "#627BC1",
-            "line-width": 2,
-          },
-        });
+  /**
+   * Triggers the native GeolocateControl to request GPS permission and start tracking.
+   *
+   * This function:
+   * 1. Calls geolocate.trigger() which prompts the native iOS/Android permission dialog
+   * 2. Waits for either 'geolocate' (success) or 'error' (denied/unavailable) events
+   * 3. Returns a Promise that resolves with position or rejects with error
+   *
+   * The browser remembers the user's choice:
+   * - If granted: no popup on subsequent calls, tracking starts immediately
+   * - If denied: blocked until user changes browser settings
+   *
+   * @returns {Promise<GeolocationPosition>} Resolves with position if permission granted
+   * @throws {Error} Rejects if permission denied or GeolocateControl not ready
+   */
+  const triggerGeolocate = () => {
+    return new Promise((resolve, reject) => {
+      if (!geolocateRef.current) {
+        reject(new Error("GeolocateControl not ready"));
+        return;
       }
-    });
-  }, [mapStyle, map, isMapReady]);
 
-  return {
-    map,
-    userLocation,
-    isMapReady,
-    setMapStyle,
+      const geolocate = geolocateRef.current;
+
+      // One-time listeners for this trigger
+      const onSuccess = (pos) => {
+        geolocate.off("geolocate", onSuccess);
+        geolocate.off("error", onError);
+        resolve(pos);
+      };
+
+      const onError = (err) => {
+        geolocate.off("geolocate", onSuccess);
+        geolocate.off("error", onError);
+        reject(err);
+      };
+
+      geolocate.on("geolocate", onSuccess);
+      geolocate.on("error", onError);
+
+      geolocate.trigger();
+    });
   };
+
+  return { map, userLocation, isMapReady, triggerGeolocate };
 }

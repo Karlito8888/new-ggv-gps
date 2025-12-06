@@ -24,6 +24,29 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Language Conventions
+
+**Conversation language**: French (Français) - Claude and the developer exchange in French.
+
+**Application language**: English + Tagalog
+
+- All UI text must be in **English** (primary)
+- Each text should include a **brief Tagalog translation** in parentheses or as subtitle
+- Target audience: Filipino residents of Garden Grove Village
+
+**Example format**:
+
+```jsx
+<h1>Enable Location</h1>
+<p className="tagalog">(I-enable ang Lokasyon)</p>
+```
+
+Or inline:
+
+```jsx
+<p>Enable GPS to navigate • I-enable ang GPS para mag-navigate</p>
+```
+
 ## Project Overview
 
 MyGGV GPS is a React-based web application for GPS navigation within Garden Grove Village, Philippines. It uses **100% native MapLibre GL JS** (no wrappers) with a radically simplified architecture.
