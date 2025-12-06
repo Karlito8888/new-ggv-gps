@@ -105,7 +105,7 @@ export function useMapSetup(containerRef) {
           trackUserLocation: true,
           showUserHeading: false, // Heading shown via map rotation instead
         });
-        mapInstance.addControl(geolocate);
+        mapInstance.addControl(geolocate, "bottom-right");
         geolocateRef.current = geolocate;
 
         geolocate.on("geolocate", (pos) => {
