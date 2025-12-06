@@ -37,37 +37,47 @@ export default function App() {
   const { steps } = useRouting(map, userLocation, destination);
 
   // Navigation logic (distance, arrival detection)
-  const { distanceRemaining, hasArrived } = useNavigation(map, userLocation, destination);
+  const { distanceRemaining, hasArrived, arrivedAt } = useNavigation(map, userLocation, destination);
 
-  // Track destination changes to prevent instant re-arrival
-  const destinationKeyRef = useRef(null);
-  const [arrivalEnabled, setArrivalEnabled] = useState(true);
+  // Generate destination key for tracking
+  const destinationKey = destination?.coordinates
+    ? `${destination.coordinates[0]},${destination.coordinates[1]}`
+    : null;
 
-  // Disable arrival detection for 3 seconds when destination changes
+  // Track which destination we've already shown the arrival modal for
+  const arrivedDestinationRef = useRef(null);
+  const lastDestinationKeyRef = useRef(null);
+
+  // Reset arrival tracking when destination changes
   useEffect(() => {
-    const currentKey = destination?.coordinates
-      ? `${destination.coordinates[0]},${destination.coordinates[1]}`
-      : null;
-
-    if (currentKey !== destinationKeyRef.current) {
-      destinationKeyRef.current = currentKey;
-      setArrivalEnabled(false);
-
-      // Re-enable after 3 seconds
-      const timer = setTimeout(() => {
-        setArrivalEnabled(true);
-      }, 3000);
-
-      return () => clearTimeout(timer);
+    if (destinationKey !== lastDestinationKeyRef.current) {
+      lastDestinationKeyRef.current = destinationKey;
+      // Clear arrived ref so new destination can trigger arrival
+      arrivedDestinationRef.current = null;
     }
-  }, [destination]);
+  }, [destinationKey]);
 
-  // Handle arrival - only when arrival detection is enabled
+  // Handle arrival - only trigger once per destination
   useEffect(() => {
-    if (arrivalEnabled && hasArrived && navState === "navigating") {
-      setNavState("arrived");
+    // Must be navigating with valid arrival data
+    if (!hasArrived || navState !== "navigating" || !arrivedAt) {
+      return;
     }
-  }, [arrivalEnabled, hasArrived, navState]);
+
+    // Must match current destination (not stale data)
+    if (arrivedAt !== destinationKey) {
+      return;
+    }
+
+    // Already shown arrival for this destination? Skip.
+    if (arrivedDestinationRef.current === arrivedAt) {
+      return;
+    }
+
+    // Mark this destination as arrived and show modal
+    arrivedDestinationRef.current = arrivedAt;
+    setNavState("arrived");
+  }, [hasArrived, navState, arrivedAt, destinationKey]);
 
   // Track if we're currently navigating (used by orientation effect)
   const isNavigatingRef = useRef(false);
