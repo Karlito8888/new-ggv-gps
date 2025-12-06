@@ -56,17 +56,8 @@ export default function App() {
       return;
     }
 
-    // Set initial navigation view: zoom in, pitch 45°, center on user
-    if (userLocation) {
-      map.easeTo({
-        center: [userLocation.longitude, userLocation.latitude],
-        zoom: 18,
-        pitch: 45,
-        duration: 500,
-      });
-    } else {
-      map.easeTo({ pitch: 45, zoom: 18, duration: 500 });
-    }
+    // Set initial navigation view: zoom in, pitch 45° (GeolocateControl handles centering)
+    map.easeTo({ pitch: 45, zoom: 18, duration: 500 });
 
     // Throttle state for map rotation
     let lastBearing = 0;
@@ -106,7 +97,7 @@ export default function App() {
         webkitHeading: e.webkitCompassHeading || null,
       });
 
-      // Rotate map smoothly to follow device heading
+      // Rotate map to follow device heading (GeolocateControl handles centering)
       map.easeTo({
         bearing: heading,
         duration: 150,
@@ -567,7 +558,13 @@ function NavigationOverlay({
   onCancel,
 }) {
   const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
-  const heading = deviceOrientation?.webkitHeading || deviceOrientation?.alpha || bearing;
+
+  // Get device heading (where phone is pointing)
+  const heading = deviceOrientation?.webkitHeading ?? deviceOrientation?.alpha ?? 0;
+
+  // Calculate relative direction to destination (bearing - heading)
+  // This shows "turn left/right" direction relative to where user is facing
+  const relativeDirection = (((bearing - heading) % 360) + 360) % 360;
 
   const handleZoomIn = () => {
     if (map) {
@@ -580,15 +577,6 @@ function NavigationOverlay({
     if (map) {
       const currentZoom = map.getZoom();
       map.easeTo({ zoom: Math.max(currentZoom - 1, 14), duration: 200 });
-    }
-  };
-
-  const handlePitchToggle = () => {
-    if (map) {
-      const currentPitch = map.getPitch();
-      // Toggle between 0° (2D) and 45° (3D)
-      const newPitch = currentPitch > 20 ? 0 : 45;
-      map.easeTo({ pitch: newPitch, duration: 300 });
     }
   };
 
@@ -637,7 +625,7 @@ function NavigationOverlay({
 
         <div className="nav-compass">
           <div className="compass-ring">
-            <div className="compass-arrow" style={{ transform: `rotate(${heading}deg)` }}>
+            <div className="compass-arrow" style={{ transform: `rotate(${relativeDirection}deg)` }}>
               <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
                 <path d="M12 2L19 21L12 17L5 21L12 2Z" />
               </svg>
@@ -657,14 +645,6 @@ function NavigationOverlay({
         <button className="map-control-btn" onClick={handleZoomOut} aria-label="Zoom out">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </button>
-        <button className="map-control-btn" onClick={handlePitchToggle} aria-label="Toggle 3D view">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 3L20 7.5V16.5L12 21L4 16.5V7.5L12 3Z" />
-            <path d="M12 12L20 7.5" />
-            <path d="M12 12V21" />
-            <path d="M12 12L4 7.5" />
           </svg>
         </button>
       </div>

@@ -103,7 +103,7 @@ export function useMapSetup(containerRef) {
         const geolocate = new maplibregl.GeolocateControl({
           positionOptions: { enableHighAccuracy: true },
           trackUserLocation: true,
-          showUserHeading: true,
+          showUserHeading: false, // Heading shown via map rotation instead
         });
         mapInstance.addControl(geolocate);
         geolocateRef.current = geolocate;
