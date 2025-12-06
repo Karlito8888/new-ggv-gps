@@ -4,7 +4,6 @@ import { useMapSetup } from "./hooks/useMapSetup";
 import { useRouting } from "./hooks/useRouting";
 import { useNavigation } from "./hooks/useNavigation";
 import { blocks } from "./data/blocks";
-import { publicPois } from "./data/public-pois";
 import ggvLogo from "./assets/img/ggv.png";
 import "./styles/index.css";
 
@@ -140,7 +139,6 @@ export default function App() {
           <WelcomeOverlay
             key="welcome"
             blocks={blocks}
-            pois={publicPois}
             onSelectDestination={(dest) => {
               setDestination(dest);
               setNavState("orientation-permission");
@@ -316,8 +314,7 @@ function GPSPermissionOverlay({ onGrant, triggerGeolocate }) {
   );
 }
 
-function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
-  const [selectedType, setSelectedType] = useState("block");
+function WelcomeOverlay({ blocks, onSelectDestination }) {
   const [selectedBlock, setSelectedBlock] = useState("");
 
   useEffect(() => {
@@ -331,7 +328,7 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
   }, [blocks, selectedBlock]);
 
   const handleNavigate = () => {
-    if (selectedType === "block" && selectedBlock) {
+    if (selectedBlock) {
       const block = blocks.find((b) => b.name === selectedBlock);
       if (block) {
         // Calculate center of block polygon
@@ -344,14 +341,6 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
           name: `Block ${block.name}`,
         });
       }
-    } else if (selectedType === "poi") {
-      // For simplicity, navigate to Guard Post (only active POI)
-      const guardPost = pois[0];
-      onSelectDestination({
-        type: "poi",
-        coordinates: guardPost.coords,
-        name: guardPost.name,
-      });
     }
   };
 
@@ -383,57 +372,23 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
         <h1 className="welcome-title">Choose Destination</h1>
         <p className="welcome-tagalog">(Pumili ng Destinasyon)</p>
 
-        <div className="welcome-type-selector">
-          <button
-            className={`welcome-type-btn ${selectedType === "block" ? "active" : ""}`}
-            onClick={() => setSelectedType("block")}
+        <div className="welcome-block-selector">
+          <label htmlFor="block-select">Select Block:</label>
+          <select
+            id="block-select"
+            value={selectedBlock}
+            onChange={(e) => setSelectedBlock(e.target.value)}
+            className="welcome-select"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7" />
-              <rect x="14" y="3" width="7" height="7" />
-              <rect x="14" y="14" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" />
-            </svg>
-            Block
-          </button>
-          <button
-            className={`welcome-type-btn ${selectedType === "poi" ? "active" : ""}`}
-            onClick={() => setSelectedType("poi")}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            Guard Post
-          </button>
+            {blocks
+              .filter((block) => block.name && block.name.trim() !== "")
+              .map((block) => (
+                <option key={block.name} value={block.name}>
+                  Block {block.name}
+                </option>
+              ))}
+          </select>
         </div>
-
-        {selectedType === "block" && (
-          <div className="welcome-block-selector">
-            <label htmlFor="block-select">Select Block:</label>
-            <select
-              id="block-select"
-              value={selectedBlock}
-              onChange={(e) => setSelectedBlock(e.target.value)}
-              className="welcome-select"
-            >
-              {blocks
-                .filter((block) => block.name && block.name.trim() !== "")
-                .map((block) => (
-                  <option key={block.name} value={block.name}>
-                    Block {block.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-        )}
-
-        {selectedType === "poi" && (
-          <p className="welcome-info">
-            Navigate to the Guard Post at the village entrance.
-            <span className="tagalog-inline">Pumunta sa Guard Post sa pasukan ng village.</span>
-          </p>
-        )}
 
         <button className="welcome-btn" onClick={handleNavigate}>
           <svg
