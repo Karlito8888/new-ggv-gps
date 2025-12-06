@@ -322,7 +322,11 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
 
   useEffect(() => {
     if (blocks.length > 0 && !selectedBlock) {
-      setSelectedBlock(blocks[0].name);
+      // Find first block with a valid name
+      const firstValidBlock = blocks.find((b) => b.name && b.name.trim() !== "");
+      if (firstValidBlock) {
+        setSelectedBlock(firstValidBlock.name);
+      }
     }
   }, [blocks, selectedBlock]);
 
@@ -435,11 +439,13 @@ function WelcomeOverlay({ blocks, pois, onSelectDestination }) {
               onChange={(e) => setSelectedBlock(e.target.value)}
               className="welcome-select"
             >
-              {blocks.map((block) => (
-                <option key={block.name} value={block.name}>
-                  Block {block.name}
-                </option>
-              ))}
+              {blocks
+                .filter((block) => block.name && block.name.trim() !== "")
+                .map((block) => (
+                  <option key={block.name} value={block.name}>
+                    Block {block.name}
+                  </option>
+                ))}
             </select>
           </div>
         )}
