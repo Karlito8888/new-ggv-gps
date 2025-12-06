@@ -87,13 +87,7 @@ export default function App() {
         return;
       }
 
-      // Update state for UI compass in NavigationOverlay
-      setDeviceOrientation({
-        alpha: e.alpha || 0,
-        webkitHeading: e.webkitCompassHeading || null,
-      });
-
-      // Throttle map rotation updates
+      // Throttle all updates (map rotation + React state)
       const now = Date.now();
       const bearingDelta = Math.abs(heading - lastBearing);
       // Handle wraparound (359° → 1° is only 2°, not 358°)
@@ -106,10 +100,16 @@ export default function App() {
       lastBearing = heading;
       lastUpdate = now;
 
+      // Update state for UI compass (now throttled to max 10/sec)
+      setDeviceOrientation({
+        alpha: e.alpha || 0,
+        webkitHeading: e.webkitCompassHeading || null,
+      });
+
       // Rotate map smoothly to follow device heading
       map.easeTo({
         bearing: heading,
-        duration: 100,
+        duration: 150,
         easing: (t) => t, // Linear for continuous motion
       });
     };
