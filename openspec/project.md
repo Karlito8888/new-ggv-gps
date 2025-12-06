@@ -17,26 +17,21 @@ MyGGV GPS is a web application providing turn-by-turn GPS navigation within Gard
 
 - **React 19.1** - UI framework (hooks-only, no class components)
 - **Vite 6.3** - Build tool with Terser minification
+- **Bun 1.3+** - Package manager (replaces npm)
 
 ### Mapping & Navigation
 
-- **MapLibre GL 5.6** - Primary mapping library
-- **react-map-gl 8.0** - React bindings for MapLibre
-- **@maplibre/maplibre-gl-directions** - Directions plugin
-- **@turf/turf 7.2** - Geographic calculations (used sparingly, prefer native MapLibre)
+- **MapLibre GL 5.6** - Primary mapping library (100% native, no wrappers)
+- Direct MapLibre GL JS - No react-map-gl wrapper
 
 ### Backend & Data
 
 - **Supabase** - Backend-as-a-service (database, auth)
-- **@tanstack/react-query 5.86** - Server state management
 
 ### UI Components
 
-- **Radix UI** - Accessible primitives (Dialog, Select)
-- **@radix-ui/themes** - Themed component system
-- **DaisyUI** - Tailwind-based component library
-- **react-icons** - Icon library
-- **clsx** - Conditional class names
+- **Radix UI** - Accessible primitives (Dialog, Select, Themes)
+- **Framer Motion** - Animation library
 
 ### Development
 
@@ -57,21 +52,17 @@ MyGGV GPS is a web application providing turn-by-turn GPS navigation within Gard
 
 ### Architecture Patterns
 
-**Navigation State Machine** (`useNavigationState`):
+**Navigation State Machine** (simple `useState` in App.jsx):
 
 ```
 gps-permission → welcome → orientation-permission → navigating → arrived → exit-complete
 ```
 
-**Hook-Based Architecture:**
+**Hook-Based Architecture** (3 hooks total):
 
-- `useNavigationState` - State machine and transitions
-- `useRouteManager` - Route creation, updates, deviation detection
-- `useMapTransitions` - Camera animations and orientation
-- `useMapConfig` - Map style and initial view
-- `useDeviceOrientation` - Compass heading (cross-browser)
-- `useBlockPolygons` - Village block data
-- `useLocations` - Supabase location queries
+- `useMapSetup` - Map initialization, GPS tracking, GeolocateControl
+- `useRouting` - OSRM routing with cascading fallback, deviation detection
+- `useNavigation` - Turn-by-turn instructions, arrival detection
 
 **MapLibre Native Optimizations** (prefer over Turf.js):
 
@@ -90,7 +81,7 @@ gps-permission → welcome → orientation-permission → navigating → arrived
 
 - Manual testing on target devices (Android Chrome, iOS Safari)
 - ESLint for static analysis
-- Build verification via `npm run build:netlify`
+- Build verification via `bun run build:netlify`
 
 ### Git Workflow
 
@@ -160,4 +151,4 @@ gps-permission → welcome → orientation-permission → navigating → arrived
 
 - **Netlify** - Hosting and CI/CD
 - Auto-deploy on push to main
-- Build command: `npm run build:netlify`
+- Build command: `bun run build:netlify`

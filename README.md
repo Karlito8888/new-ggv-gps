@@ -130,7 +130,8 @@ open tests/integration/test-transitions.html
 ### **Prérequis:**
 
 ```bash
-Node.js 18+ et npm 9+
+Node.js 18+
+Bun 1.3+ (https://bun.sh)
 ```
 
 ### **Installation:**
@@ -141,10 +142,10 @@ git clone [repository-url]
 cd new-ggv-gps
 
 # Installer les dépendances
-npm install
+bun install
 
 # Lancer le serveur de développement
-npm run dev
+bun run dev
 
 # Ouvrir http://localhost:5173
 ```
@@ -152,8 +153,8 @@ npm run dev
 ### **Build Production:**
 
 ```bash
-npm run build
-npm run preview
+bun run build
+bun run preview
 ```
 
 ## 🌍 Données du Projet
@@ -186,9 +187,9 @@ VITE_OPENROUTE_API_KEY=your_openroute_key  # Optionnel
 ### **Optimisations Build:**
 
 ```bash
-npm run build:netlify  # Build avec vérifications Netlify
-npm run lint           # Vérification ESLint
-npm run lint:fix       # Correction automatique
+bun run build:netlify  # Build avec vérifications Netlify
+bun run lint           # Vérification ESLint
+bun run lint:fix       # Correction automatique
 ```
 
 ## 🤝 Contribution

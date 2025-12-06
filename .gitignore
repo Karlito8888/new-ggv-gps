@@ -194,10 +194,11 @@ Dockerfile.local
 *.tar.gz
 *.rar
 
-# Lock files (keep package-lock.json mais pas les autres)
+# Lock files (keep bun.lock, ignore others)
 yarn.lock
 pnpm-lock.yaml
-# !package-lock.json (on garde celui-ci)
+package-lock.json
+!bun.lock
 
 # Runtime data
 pids/

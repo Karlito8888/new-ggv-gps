@@ -36,15 +36,20 @@ MyGGV GPS is a React-based web application for GPS navigation within Garden Grov
 - No routing library (conditional rendering)
 - No external state management (simple useState)
 
+## Requirements
+
+- **Bun** (>= 1.0) - Install from https://bun.sh
+- **Node.js** (>= 18.0) - For runtime compatibility
+
 ## Commands
 
 ```bash
-npm run dev          # Start development server (port 5173)
-npm run build        # Production build with Terser minification
-npm run build:netlify # Build with lint + Netlify checks
-npm run lint         # ESLint check
-npm run lint:fix     # ESLint auto-fix
-npm run preview      # Preview production build
+bun run dev          # Start development server (port 5173)
+bun run build        # Production build with Terser minification
+bun run build:netlify # Build with lint + Netlify checks
+bun run lint         # ESLint check
+bun run lint:fix     # ESLint auto-fix
+bun run preview      # Preview production build
 ```
 
 ## Architecture
@@ -333,9 +338,8 @@ window.addEventListener("deviceorientation", (e) => {
 - ✅ `maplibre-gl` (5.6.0) - Core mapping library
 - ✅ `react` (19.1.0) + `react-dom` (19.1.0)
 - ✅ `@supabase/supabase-js` (2.50.0) - Backend client (optional)
-- ✅ `@radix-ui/*` - UI components (Dialog, Select)
+- ✅ `@radix-ui/*` - UI components (Dialog, Select, Themes)
 - ✅ `framer-motion` - Smooth animations
-- ✅ `tailwindcss` via `daisyui` - Styling
 
 ## Performance Metrics
 
