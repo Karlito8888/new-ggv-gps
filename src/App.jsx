@@ -321,16 +321,6 @@ function WelcomeOverlay({ blocks, onSelectDestination }) {
   const [lots, setLots] = useState([]);
   const [isLoadingLots, setIsLoadingLots] = useState(false);
 
-  // Auto-select first block on mount
-  useEffect(() => {
-    if (blocks.length > 0 && !selectedBlock) {
-      const firstValidBlock = blocks.find((b) => b.name && b.name.trim() !== "");
-      if (firstValidBlock) {
-        setSelectedBlock(firstValidBlock.name);
-      }
-    }
-  }, [blocks, selectedBlock]);
-
   // Fetch lots from Supabase when block changes
   useEffect(() => {
     if (!selectedBlock) {
@@ -409,15 +399,15 @@ function WelcomeOverlay({ blocks, onSelectDestination }) {
         <p className="welcome-tagalog">(Pumili ng Destinasyon)</p>
 
         <div className="welcome-block-selector">
-          <label htmlFor="block-select">
-            Select Block: <span className="tagalog">(Pumili ng Block)</span>
-          </label>
           <select
             id="block-select"
             value={selectedBlock}
             onChange={(e) => setSelectedBlock(e.target.value)}
             className="welcome-select"
           >
+            <option value="" disabled>
+              Select Block (Pumili ng Block)
+            </option>
             {blocks
               .filter((block) => block.name && block.name.trim() !== "")
               .map((block) => (
@@ -428,30 +418,28 @@ function WelcomeOverlay({ blocks, onSelectDestination }) {
           </select>
         </div>
 
-        {selectedBlock && (
-          <div className="welcome-block-selector">
-            <label htmlFor="lot-select">
-              Select Lot: <span className="tagalog">(Pumili ng Lot)</span>
-            </label>
-            <select
-              id="lot-select"
-              value={selectedLot}
-              onChange={(e) => setSelectedLot(e.target.value)}
-              className="welcome-select"
-              disabled={isLoadingLots}
-            >
-              {isLoadingLots ? (
-                <option>Loading...</option>
-              ) : (
-                lots.map((l) => (
-                  <option key={l.lot} value={l.lot}>
-                    Lot {l.lot}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
-        )}
+        <div className="welcome-block-selector">
+          <select
+            id="lot-select"
+            value={selectedLot}
+            onChange={(e) => setSelectedLot(e.target.value)}
+            className="welcome-select"
+            disabled={!selectedBlock || isLoadingLots}
+          >
+            <option value="" disabled>
+              Select Lot (Pumili ng Lot)
+            </option>
+            {isLoadingLots ? (
+              <option value="">Loading...</option>
+            ) : (
+              lots.map((l) => (
+                <option key={l.lot} value={l.lot}>
+                  Lot {l.lot}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
 
         <button
           className="welcome-btn"
