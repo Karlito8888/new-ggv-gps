@@ -56,8 +56,17 @@ export default function App() {
       return;
     }
 
-    // Set initial navigation pitch
-    map.easeTo({ pitch: 45, duration: 300 });
+    // Set initial navigation view: zoom in, pitch 45°, center on user
+    if (userLocation) {
+      map.easeTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        zoom: 18,
+        pitch: 45,
+        duration: 500,
+      });
+    } else {
+      map.easeTo({ pitch: 45, zoom: 18, duration: 500 });
+    }
 
     // Throttle state for map rotation
     let lastBearing = 0;
@@ -542,21 +551,6 @@ function OrientationPermissionOverlay({ onGrant }) {
             />
           </svg>
           {isRequesting ? "Requesting..." : "Enable Compass"}
-        </button>
-
-        <button className="orientation-btn-skip" onClick={onGrant}>
-          <svg
-            className="orientation-skip-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
-          Skip for now
         </button>
       </motion.div>
     </motion.div>
