@@ -4,6 +4,7 @@ import { useMapSetup } from "./hooks/useMapSetup";
 import { useRouting } from "./hooks/useRouting";
 import { useNavigation } from "./hooks/useNavigation";
 import { blocks } from "./data/blocks";
+import { supabase } from "./lib/supabase";
 import ggvLogo from "./assets/img/ggv.png";
 import "./styles/index.css";
 
@@ -316,10 +317,13 @@ function GPSPermissionOverlay({ onGrant, triggerGeolocate }) {
 
 function WelcomeOverlay({ blocks, onSelectDestination }) {
   const [selectedBlock, setSelectedBlock] = useState("");
+  const [selectedLot, setSelectedLot] = useState("");
+  const [lots, setLots] = useState([]);
+  const [isLoadingLots, setIsLoadingLots] = useState(false);
 
+  // Auto-select first block on mount
   useEffect(() => {
     if (blocks.length > 0 && !selectedBlock) {
-      // Find first block with a valid name
       const firstValidBlock = blocks.find((b) => b.name && b.name.trim() !== "");
       if (firstValidBlock) {
         setSelectedBlock(firstValidBlock.name);
@@ -327,18 +331,50 @@ function WelcomeOverlay({ blocks, onSelectDestination }) {
     }
   }, [blocks, selectedBlock]);
 
-  const handleNavigate = () => {
-    if (selectedBlock) {
-      const block = blocks.find((b) => b.name === selectedBlock);
-      if (block) {
-        // Calculate center of block polygon
-        const centerLng = block.coords.reduce((sum, c) => sum + c[0], 0) / block.coords.length;
-        const centerLat = block.coords.reduce((sum, c) => sum + c[1], 0) / block.coords.length;
+  // Fetch lots from Supabase when block changes
+  useEffect(() => {
+    if (!selectedBlock) {
+      setLots([]);
+      setSelectedLot("");
+      return;
+    }
 
+    setIsLoadingLots(true);
+    supabase
+      .from("locations")
+      .select("lot, coordinates")
+      .eq("block", selectedBlock)
+      .is("deleted_at", null)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Error fetching lots:", error);
+          setLots([]);
+        } else if (data) {
+          // Sort lots numerically
+          const sorted = data.sort((a, b) => {
+            const numA = parseInt(a.lot, 10);
+            const numB = parseInt(b.lot, 10);
+            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+            return a.lot.localeCompare(b.lot);
+          });
+          setLots(sorted);
+          if (sorted.length > 0) {
+            setSelectedLot(sorted[0].lot);
+          }
+        }
+        setIsLoadingLots(false);
+      });
+  }, [selectedBlock]);
+
+  const handleNavigate = () => {
+    if (selectedBlock && selectedLot) {
+      const lot = lots.find((l) => l.lot === selectedLot);
+      if (lot?.coordinates) {
+        // PostGIS returns GeoJSON: {type: "Point", coordinates: [lng, lat]}
         onSelectDestination({
-          type: "block",
-          coordinates: [centerLng, centerLat],
-          name: `Block ${block.name}`,
+          type: "lot",
+          coordinates: [lot.coordinates.coordinates[0], lot.coordinates.coordinates[1]],
+          name: `Block ${selectedBlock}, Lot ${selectedLot}`,
         });
       }
     }
@@ -373,7 +409,9 @@ function WelcomeOverlay({ blocks, onSelectDestination }) {
         <p className="welcome-tagalog">(Pumili ng Destinasyon)</p>
 
         <div className="welcome-block-selector">
-          <label htmlFor="block-select">Select Block:</label>
+          <label htmlFor="block-select">
+            Select Block: <span className="tagalog">(Pumili ng Block)</span>
+          </label>
           <select
             id="block-select"
             value={selectedBlock}
@@ -390,7 +428,36 @@ function WelcomeOverlay({ blocks, onSelectDestination }) {
           </select>
         </div>
 
-        <button className="welcome-btn" onClick={handleNavigate}>
+        {selectedBlock && (
+          <div className="welcome-block-selector">
+            <label htmlFor="lot-select">
+              Select Lot: <span className="tagalog">(Pumili ng Lot)</span>
+            </label>
+            <select
+              id="lot-select"
+              value={selectedLot}
+              onChange={(e) => setSelectedLot(e.target.value)}
+              className="welcome-select"
+              disabled={isLoadingLots}
+            >
+              {isLoadingLots ? (
+                <option>Loading...</option>
+              ) : (
+                lots.map((l) => (
+                  <option key={l.lot} value={l.lot}>
+                    Lot {l.lot}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+        )}
+
+        <button
+          className="welcome-btn"
+          onClick={handleNavigate}
+          disabled={!selectedBlock || !selectedLot || isLoadingLots}
+        >
           <svg
             className="welcome-btn-icon"
             viewBox="0 0 24 24"

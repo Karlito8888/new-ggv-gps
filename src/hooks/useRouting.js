@@ -77,7 +77,8 @@ function updateMapRoute(map, geometry) {
       id: "route-line",
       type: "line",
       source: "route",
-      paint: { "line-color": "#4285F4", "line-width": 5, "line-cap": "round" },
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": "#4285F4", "line-width": 5 },
     });
   }
 }
