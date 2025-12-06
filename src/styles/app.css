@@ -34,10 +34,38 @@
   pointer-events: none;
 }
 
-/* GeolocateControl - center right */
+/* GeolocateControl - positioned below custom map controls */
 .maplibregl-ctrl-top-right {
-  top: 50% !important;
-  transform: translateY(-50%);
+  top: calc(50% + 5.5rem) !important;
+  right: 1rem !important;
+}
+
+.maplibregl-ctrl-group {
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.maplibregl-ctrl-geolocate {
+  width: 3rem !important;
+  height: 3rem !important;
+  border-radius: 50% !important;
+  border: none !important;
+  background: var(--color-white) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.2s ease !important;
+}
+
+.maplibregl-ctrl-geolocate:active {
+  transform: scale(0.95) !important;
+  background: var(--color-green) !important;
+}
+
+.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2350aa61' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cline x1='12' y1='2' x2='12' y2='6'/%3E%3Cline x1='12' y1='18' x2='12' y2='22'/%3E%3Cline x1='2' y1='12' x2='6' y2='12'/%3E%3Cline x1='18' y1='12' x2='22' y2='12'/%3E%3C/svg%3E") !important;
+}
+
+.maplibregl-ctrl-geolocate:active .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cline x1='12' y1='2' x2='12' y2='6'/%3E%3Cline x1='12' y1='18' x2='12' y2='22'/%3E%3Cline x1='2' y1='12' x2='6' y2='12'/%3E%3Cline x1='18' y1='12' x2='22' y2='12'/%3E%3C/svg%3E") !important;
 }
 
 /* Overlay base (full screen modals) */
