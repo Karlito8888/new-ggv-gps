@@ -250,8 +250,10 @@ temp-*
 .claude/mcp.json
 
 # Serena
-.serena/memories/
-.serena/cache/
+.serena/
+
+# MCP config
+.mcp.json
 
 # Dev dist
 dev-dist/
