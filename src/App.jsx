@@ -74,10 +74,14 @@ export default function App() {
       return;
     }
 
-    // Mark this destination as arrived and show modal
+    // Mark this destination as arrived and show appropriate modal
     arrivedDestinationRef.current = arrivedAt;
-    setNavState("arrived");
-  }, [hasArrived, navState, arrivedAt, destinationKey]);
+    if (destination?.type === "exit") {
+      setNavState("exit-complete");
+    } else {
+      setNavState("arrived");
+    }
+  }, [hasArrived, navState, arrivedAt, destinationKey, destination]);
 
   // Track if we're currently navigating (used by orientation effect)
   const isNavigatingRef = useRef(false);
@@ -288,13 +292,7 @@ export default function App() {
         )}
 
         {navState === "exit-complete" && (
-          <ExitCompleteOverlay
-            key="exit-complete"
-            onReset={() => {
-              setNavState("welcome");
-              setDestination(null);
-            }}
-          />
+          <ExitCompleteOverlay key="exit-complete" />
         )}
       </AnimatePresence>
     </div>
@@ -823,7 +821,7 @@ function ArrivedOverlay({ destination, onNavigateAgain, onExitVillage }) {
   );
 }
 
-function ExitCompleteOverlay({ onReset }) {
+function ExitCompleteOverlay() {
   return (
     <motion.div
       className="overlay exit-overlay"
@@ -856,28 +854,17 @@ function ExitCompleteOverlay({ onReset }) {
         <p className="exit-tagalog">(Ingat sa byahe!)</p>
 
         <p className="exit-description">
-          You have exited Garden Grove Village. Thank you for using MyGGV GPS!
+          You have exited Garden Grove Village.
+          <br />
+          Thank you for using MyGGV GPS!
           <span className="tagalog-inline">
-            Lumabas ka na sa Garden Grove Village. Salamat sa paggamit ng MyGGV GPS!
+            Lumabas ka na sa Garden Grove Village.
+            <br />
+            Salamat sa paggamit ng MyGGV GPS!
           </span>
         </p>
 
-        <button className="exit-btn" onClick={onReset}>
-          <svg
-            className="exit-btn-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
-          </svg>
-          Start New Navigation
-        </button>
-      </motion.div>
+              </motion.div>
     </motion.div>
   );
 }
