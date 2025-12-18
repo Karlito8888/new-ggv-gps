@@ -12,7 +12,10 @@
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
     "serve": "vite preview --port 3000",
-    "postbuild": "echo 'Build completed successfully for Netlify deployment'"
+    "postbuild": "echo 'Build completed successfully for Netlify deployment'",
+    "release:patch": "npm version patch && git push && git push --tags",
+    "release:minor": "npm version minor && git push && git push --tags",
+    "release:major": "npm version major && git push && git push --tags"
   },
   "engines": {
     "node": ">=20.19.0"
