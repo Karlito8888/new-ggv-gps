@@ -1,13 +1,11 @@
-import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react";
+import { useState, useRef, useEffect, startTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useMapSetup } from "./hooks/useMapSetup";
+import { useMapSetup, updateDestinationMarker } from "./hooks/useMapSetup";
 import { useRouting } from "./hooks/useRouting";
 import { useNavigation } from "./hooks/useNavigation";
 import { getDistance } from "./lib/geo";
-import { blocks } from "./data/blocks";
 import { supabase } from "./lib/supabase";
 import ggvLogo from "./assets/img/ggv.png";
-import "./styles/index.css";
 
 // Village exit coordinates (from CLAUDE.md)
 const VILLAGE_EXIT = [120.951863, 14.35098];
@@ -29,6 +27,33 @@ export default function App() {
   // Navigation state machine (6 states)
   const [navState, setNavState] = useState("gps-permission");
   const [destination, setDestination] = useState(null);
+  const [hasOrientationPermission, setHasOrientationPermission] = useState(false);
+
+  // Blocks data (pre-loaded during GPS permission screen)
+  const [blocks, setBlocks] = useState([]);
+  const [isLoadingBlocks, setIsLoadingBlocks] = useState(true);
+  const [blocksError, setBlocksError] = useState(null);
+
+  // Load blocks from Supabase (called on mount and retry)
+  const loadBlocks = () => {
+    setBlocksError(null);
+    setIsLoadingBlocks(true);
+    supabase.rpc("get_blocks").then(({ data, error }) => {
+      if (error) {
+        console.error("Error fetching blocks:", error);
+        setBlocksError("Failed to load blocks");
+        setBlocks([]);
+      } else if (data) {
+        setBlocks(data);
+      }
+      setIsLoadingBlocks(false);
+    });
+  };
+
+  // Pre-load blocks on mount (during GPS permission screen)
+  useEffect(() => {
+    loadBlocks();
+  }, []);
 
   // Initialize map and GPS tracking
   const { map, userLocation, isMapReady, triggerGeolocate } = useMapSetup(mapContainerRef);
@@ -58,6 +83,7 @@ export default function App() {
   }, [destinationKey]);
 
   // Handle arrival - only trigger once per destination
+  // Uses startTransition to avoid cascading renders (React Compiler compliant)
   useEffect(() => {
     // Must be navigating with valid arrival data
     if (!hasArrived || navState !== "navigating" || !arrivedAt) {
@@ -76,16 +102,20 @@ export default function App() {
 
     // Mark this destination as arrived and show appropriate modal
     arrivedDestinationRef.current = arrivedAt;
-    if (destination?.type === "exit") {
-      setNavState("exit-complete");
-    } else {
-      setNavState("arrived");
-    }
+    startTransition(() => {
+      if (destination?.type === "exit") {
+        setNavState("exit-complete");
+      } else {
+        setNavState("arrived");
+      }
+    });
   }, [hasArrived, navState, arrivedAt, destinationKey, destination]);
 
   // Track if we're currently navigating (used by orientation effect)
   const isNavigatingRef = useRef(false);
-  isNavigatingRef.current = navState === "navigating";
+  useEffect(() => {
+    isNavigatingRef.current = navState === "navigating";
+  }, [navState]);
 
   // Effect 1: Reset map to north-up when leaving navigation mode
   useEffect(() => {
@@ -94,6 +124,13 @@ export default function App() {
       map.easeTo({ bearing: 0, pitch: 0, duration: 300 });
     }
   }, [navState, map, isMapReady]);
+
+  // Effect: Update destination marker on map when destination changes
+  useEffect(() => {
+    if (map && isMapReady) {
+      updateDestinationMarker(map, destination);
+    }
+  }, [map, isMapReady, destination]);
 
   // Track user interaction for auto-recenter
   const userInteractionTimeRef = useRef(null);
@@ -243,9 +280,12 @@ export default function App() {
           <WelcomeOverlay
             key="welcome"
             blocks={blocks}
+            isLoadingBlocks={isLoadingBlocks}
+            blocksError={blocksError}
+            onRetryBlocks={loadBlocks}
             onSelectDestination={(dest) => {
               setDestination(dest);
-              setNavState("orientation-permission");
+              setNavState(hasOrientationPermission ? "navigating" : "orientation-permission");
             }}
           />
         )}
@@ -253,7 +293,10 @@ export default function App() {
         {navState === "orientation-permission" && (
           <OrientationPermissionOverlay
             key="orientation-permission"
-            onGrant={() => setNavState("navigating")}
+            onGrant={() => {
+              setHasOrientationPermission(true);
+              setNavState("navigating");
+            }}
           />
         )}
 
@@ -413,21 +456,29 @@ function GPSPermissionOverlay({ onGrant, triggerGeolocate }) {
   );
 }
 
-function WelcomeOverlay({ blocks, onSelectDestination }) {
+function WelcomeOverlay({ blocks, isLoadingBlocks, blocksError, onRetryBlocks, onSelectDestination }) {
   const [selectedBlock, setSelectedBlock] = useState("");
   const [selectedLot, setSelectedLot] = useState("");
   const [lots, setLots] = useState([]);
   const [isLoadingLots, setIsLoadingLots] = useState(false);
 
-  // Fetch lots from Supabase when block changes
-  useEffect(() => {
-    if (!selectedBlock) {
-      setLots([]);
-      setSelectedLot("");
-      return;
+  // Handle block selection change - reset lots and start loading in event handler
+  const handleBlockChange = (value) => {
+    setSelectedBlock(value);
+    // Reset lots immediately when block changes (OK in event handler)
+    setLots([]);
+    setSelectedLot("");
+    // Set loading state in handler to avoid setState in effect
+    if (value) {
+      setIsLoadingLots(true);
     }
+  };
 
-    setIsLoadingLots(true);
+  // Fetch lots from Supabase when block changes (async only, no sync setState)
+  useEffect(() => {
+    if (!selectedBlock) return;
+
+    // Fetch is async - setState in .then() callback is OK
     supabase.rpc("get_lots_by_block", { block_name: selectedBlock }).then(({ data, error }) => {
       if (error) {
         console.error("Error fetching lots:", error);
@@ -484,69 +535,85 @@ function WelcomeOverlay({ blocks, onSelectDestination }) {
         <h1 className="welcome-title">Choose Destination</h1>
         <p className="welcome-tagalog">(Pumili ng Destinasyon)</p>
 
-        <div className="welcome-block-selector">
-          <select
-            id="block-select"
-            value={selectedBlock}
-            onChange={(e) => setSelectedBlock(e.target.value)}
-            className="welcome-select"
-          >
-            <option value="" disabled>
-              Select Block (Pumili ng Block)
-            </option>
-            {blocks
-              .filter((block) => block.name && block.name.trim() !== "")
-              .map((block) => (
+        {blocksError ? (
+          <div className="welcome-error">
+            <p className="welcome-error-text">
+              {blocksError}
+              <br />
+              <span className="welcome-error-tagalog">(Hindi ma-load ang mga block)</span>
+            </p>
+            <button className="welcome-retry-btn" onClick={onRetryBlocks}>
+              Retry (Subukan muli)
+            </button>
+          </div>
+        ) : (
+          <div className="welcome-block-selector">
+            <select
+              id="block-select"
+              value={selectedBlock}
+              onChange={(e) => handleBlockChange(e.target.value)}
+              className="welcome-select"
+              disabled={isLoadingBlocks}
+            >
+              <option value="" disabled>
+                {isLoadingBlocks ? "Loading... (Nag-lo-load...)" : "Select Block (Pumili ng Block)"}
+              </option>
+              {blocks.map((block) => (
                 <option key={block.name} value={block.name}>
                   Block {block.name}
                 </option>
               ))}
-          </select>
-        </div>
+            </select>
+          </div>
+        )}
 
-        <div className="welcome-block-selector">
-          <select
-            id="lot-select"
-            value={selectedLot}
-            onChange={(e) => setSelectedLot(e.target.value)}
-            className="welcome-select"
-            disabled={!selectedBlock || isLoadingLots || lots.length === 0}
-          >
-            <option value="" disabled>
-              {isLoadingLots
-                ? "Loading... (Nag-lo-load...)"
-                : !selectedBlock
-                  ? "Select a block first (Pumili muna ng Block)"
-                  : lots.length === 0
-                    ? "No lots available (Walang available na Lot)"
-                    : "Select Lot (Pumili ng Lot)"}
-            </option>
-            {lots.map((l) => (
-              <option key={l.lot} value={l.lot}>
-                Lot {l.lot}
-              </option>
-            ))}
-          </select>
-        </div>
+        {!blocksError && (
+          <>
+            <div className="welcome-block-selector">
+              <select
+                id="lot-select"
+                value={selectedLot}
+                onChange={(e) => setSelectedLot(e.target.value)}
+                className="welcome-select"
+                disabled={!selectedBlock || isLoadingLots || lots.length === 0}
+              >
+                <option value="" disabled>
+                  {isLoadingLots
+                    ? "Loading... (Nag-lo-load...)"
+                    : !selectedBlock
+                      ? "Select a block first (Pumili muna ng Block)"
+                      : lots.length === 0
+                        ? "No lots available (Walang available na Lot)"
+                        : "Select Lot (Pumili ng Lot)"}
+                </option>
+                {lots.map((l) => (
+                  <option key={l.lot} value={l.lot}>
+                    Lot {l.lot}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <button
-          className="welcome-btn"
-          onClick={handleNavigate}
-          disabled={!selectedBlock || !selectedLot || isLoadingLots}
-        >
-          <svg
-            className="welcome-btn-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polygon points="3 11 22 2 13 21 11 13 3 11" />
-          </svg>
-          Navigate
-        </button>
+            <button
+              className="welcome-btn"
+              onClick={handleNavigate}
+              disabled={!selectedBlock || !selectedLot || isLoadingLots}
+            >
+              <svg
+                className="welcome-btn-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polygon points="3 11 22 2 13 21 11 13 3 11" />
+              </svg>
+              Navigate
+            </button>
+          </>
+        )}
       </motion.div>
     </motion.div>
   );
@@ -648,8 +715,8 @@ function OrientationPermissionOverlay({ onGrant }) {
   );
 }
 
-// NavigationOverlay - memoized to prevent re-renders on every GPS update
-const NavigationOverlay = memo(function NavigationOverlay({
+// NavigationOverlay - React Compiler handles memoization automatically
+function NavigationOverlay({
   map,
   distanceRemaining,
   destination,
@@ -659,9 +726,8 @@ const NavigationOverlay = memo(function NavigationOverlay({
 }) {
   const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
 
-  // Memoize currentStep calculation (expensive: iterates steps + calculates distance)
-  // Only recalculate when lat/lng change, not when other userLocation properties change
-  const currentStep = useMemo(() => {
+  // Calculate current step - React Compiler handles memoization automatically
+  const currentStep = (() => {
     if (!steps?.length || !userLocation) return null;
 
     for (const step of steps) {
@@ -678,23 +744,22 @@ const NavigationOverlay = memo(function NavigationOverlay({
       }
     }
     return null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [steps, userLocation?.latitude, userLocation?.longitude]);
+  })();
 
-  // Memoize zoom handlers to prevent recreating on every render
-  const handleZoomIn = useCallback(() => {
+  // Zoom handlers - React Compiler handles memoization automatically
+  const handleZoomIn = () => {
     if (map) {
       const currentZoom = map.getZoom();
       map.easeTo({ zoom: Math.min(currentZoom + 1, 20), duration: 200 });
     }
-  }, [map]);
+  };
 
-  const handleZoomOut = useCallback(() => {
+  const handleZoomOut = () => {
     if (map) {
       const currentZoom = map.getZoom();
       map.easeTo({ zoom: Math.max(currentZoom - 1, 14), duration: 200 });
     }
-  }, [map]);
+  };
 
   return (
     <motion.div
@@ -747,7 +812,7 @@ const NavigationOverlay = memo(function NavigationOverlay({
       </div>
     </motion.div>
   );
-});
+}
 
 function ArrivedOverlay({ destination, onNavigateAgain, onExitVillage }) {
   return (
