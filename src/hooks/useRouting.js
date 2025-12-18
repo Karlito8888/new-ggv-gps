@@ -119,11 +119,11 @@ export function useRouting(map, origin, destination) {
   // Track destination to detect changes (recalculate immediately on new destination)
   const lastDestRef = useRef(null);
 
+  // Track if params are valid (used for derived return value)
+  const hasValidParams = map && originLat && originLng && destLat && destLng;
+
   useEffect(() => {
-    if (!map || !originLat || !originLng || !destLat || !destLng) {
-      setRouteGeoJSON(null);
-      return;
-    }
+    if (!hasValidParams) return; // Early return, no sync setState
 
     // Check if destination changed (always recalculate on new destination)
     const destChanged =
@@ -227,9 +227,14 @@ export function useRouting(map, origin, destination) {
       }
       abortRef.current?.abort();
     };
-  }, [map, originLat, originLng, destLat, destLng]);
+  }, [hasValidParams, map, originLat, originLng, destLat, destLng]);
 
-  return { routeGeoJSON, distance, steps };
+  // Derive return values - return null/empty when params invalid (no sync setState needed)
+  return {
+    routeGeoJSON: hasValidParams ? routeGeoJSON : null,
+    distance: hasValidParams ? distance : 0,
+    steps: hasValidParams ? steps : [],
+  };
 }
 
 function updateMapRoute(map, geometry) {

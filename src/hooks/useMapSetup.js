@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { blocks } from "../data/blocks";
+import destinationMarkerImg from "../assets/default-marker.png";
 
 const VILLAGE_CENTER = [120.95134859887523, 14.347872973134175];
 
@@ -64,8 +65,6 @@ export function useMapSetup(containerRef) {
   const [userLocation, setUserLocation] = useState(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const geolocateRef = useRef(null);
-  // Track if initial position was set by triggerGeolocate to avoid double setState
-  const initialPositionSetRef = useRef(false);
 
   // Initialize map
   useEffect(() => {
@@ -102,6 +101,15 @@ export function useMapSetup(containerRef) {
       // Fix: Create transparent placeholder for missing sprite images
       mapInstance.on("styleimagemissing", onStyleImageMissing);
 
+      // Suppress non-critical style errors (null values in tile data)
+      // See: https://github.com/mapbox/mapbox-gl-js/issues/7097
+      mapInstance.on("error", (e) => {
+        if (e.error?.message?.includes("Expected value to be of type")) {
+          return; // Ignore style expression errors from OpenFreeMap tiles
+        }
+        console.error("Map error:", e.error);
+      });
+
       mapInstance.on("load", () => {
         addBlocksLayer(mapInstance);
 
@@ -113,13 +121,8 @@ export function useMapSetup(containerRef) {
         mapInstance.addControl(geolocate, "bottom-right");
         geolocateRef.current = geolocate;
 
-        // Persistent listener for GPS updates (skips first event handled by triggerGeolocate)
+        // Persistent listener for all GPS updates
         geolocate.on("geolocate", (pos) => {
-          // Skip if this is the initial position (already handled by triggerGeolocate promise)
-          if (!initialPositionSetRef.current) {
-            initialPositionSetRef.current = true;
-            return;
-          }
           setUserLocation({
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
@@ -145,52 +148,91 @@ export function useMapSetup(containerRef) {
 
   /**
    * Triggers the native GeolocateControl to request GPS permission and start tracking.
-   *
-   * This function:
-   * 1. Calls geolocate.trigger() which prompts the native iOS/Android permission dialog
-   * 2. Waits for either 'geolocate' (success) or 'error' (denied/unavailable) events
-   * 3. Returns a Promise that resolves with position or rejects with error
-   *
-   * The browser remembers the user's choice:
-   * - If granted: no popup on subsequent calls, tracking starts immediately
-   * - If denied: blocked until user changes browser settings
+   * Uses MapLibre's once() method for clean one-time event handling.
    *
    * @returns {Promise<GeolocationPosition>} Resolves with position if permission granted
    * @throws {Error} Rejects if permission denied or GeolocateControl not ready
    */
-  const triggerGeolocate = () => {
-    return new Promise((resolve, reject) => {
-      if (!geolocateRef.current) {
-        reject(new Error("GeolocateControl not ready"));
-        return;
-      }
+  const triggerGeolocate = async () => {
+    if (!geolocateRef.current) {
+      throw new Error("GeolocateControl not ready");
+    }
 
-      const geolocate = geolocateRef.current;
+    const geolocate = geolocateRef.current;
 
-      // One-time listeners for this trigger
-      const onSuccess = (pos) => {
-        geolocate.off("geolocate", onSuccess);
-        geolocate.off("error", onError);
-        // Set initial userLocation here (persistent listener skips first event)
-        setUserLocation({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        });
-        resolve(pos);
-      };
+    // Setup one-time listeners BEFORE triggering (auto-cleanup via once())
+    const resultPromise = Promise.race([
+      geolocate.once("geolocate"),
+      geolocate.once("error").then((err) => Promise.reject(err)),
+    ]);
 
-      const onError = (err) => {
-        geolocate.off("geolocate", onSuccess);
-        geolocate.off("error", onError);
-        reject(err);
-      };
+    // Trigger GPS permission dialog
+    geolocate.trigger();
 
-      geolocate.on("geolocate", onSuccess);
-      geolocate.on("error", onError);
-
-      geolocate.trigger();
-    });
+    return resultPromise;
   };
 
   return { map, userLocation, isMapReady, triggerGeolocate };
+}
+
+/**
+ * Updates or creates a destination marker on the map.
+ * Uses the default-marker.png image as an icon.
+ *
+ * @param {maplibregl.Map} map - MapLibre map instance
+ * @param {{ coordinates: [number, number], name: string } | null} destination - Destination object or null to hide
+ */
+export async function updateDestinationMarker(map, destination) {
+  if (!map || !map.isStyleLoaded()) return;
+
+  const sourceId = "destination-marker";
+  const layerId = "destination-marker-layer";
+  const imageId = "destination-icon";
+
+  // Load image if not already loaded (MapLibre official method)
+  if (!map.hasImage(imageId)) {
+    try {
+      const image = await map.loadImage(destinationMarkerImg);
+      if (!map.hasImage(imageId)) {
+        map.addImage(imageId, image.data);
+      }
+    } catch (err) {
+      console.error("Failed to load destination marker image:", err);
+      return;
+    }
+  }
+
+  // Create GeoJSON data
+  const geojson = {
+    type: "FeatureCollection",
+    features: destination
+      ? [
+          {
+            type: "Feature",
+            properties: { name: destination.name },
+            geometry: {
+              type: "Point",
+              coordinates: destination.coordinates,
+            },
+          },
+        ]
+      : [],
+  };
+
+  // Update or create source and layer
+  if (map.getSource(sourceId)) {
+    map.getSource(sourceId).setData(geojson);
+  } else {
+    map.addSource(sourceId, { type: "geojson", data: geojson });
+    map.addLayer({
+      id: layerId,
+      type: "symbol",
+      source: sourceId,
+      layout: {
+        "icon-image": imageId,
+        "icon-size": 0.5,
+        "icon-anchor": "bottom",
+      },
+    });
+  }
 }

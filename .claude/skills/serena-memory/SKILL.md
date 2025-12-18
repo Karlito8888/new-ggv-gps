@@ -2,8 +2,9 @@
 name: serena-memory
 description: Gestion de la mémoire projet avec Serena MCP. Utiliser pour stocker et récupérer des informations persistantes sur le projet, les décisions architecturales, et le contexte entre sessions.
 allowed-tools:
-  - mcp__serena__store_memory
-  - mcp__serena__recall_memory
+  - mcp__serena__write_memory
+  - mcp__serena__read_memory
+  - mcp__serena__edit_memory
   - mcp__serena__list_memories
   - mcp__serena__delete_memory
   - mcp__serena__check_onboarding_performed

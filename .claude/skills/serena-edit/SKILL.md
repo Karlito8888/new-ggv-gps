@@ -4,10 +4,10 @@ description: Édition de code par symboles avec Serena MCP. Utiliser pour modifi
 allowed-tools:
   - mcp__serena__find_symbol
   - mcp__serena__replace_symbol_body
-  - mcp__serena__rename_symbol
-  - mcp__serena__add_symbol
-  - mcp__serena__delete_symbol
+  - mcp__serena__insert_after_symbol
+  - mcp__serena__insert_before_symbol
   - mcp__serena__get_symbols_overview
+  - mcp__serena__find_referencing_symbols
 ---
 
 # Serena Edit - Édition Symbolique

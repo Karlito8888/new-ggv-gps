@@ -6,8 +6,8 @@ allowed-tools:
   - mcp__serena__find_symbol
   - mcp__serena__search_for_pattern
   - mcp__serena__check_onboarding_performed
-  - mcp__serena__get_related_symbols
-  - mcp__serena__get_symbol_references
+  - mcp__serena__find_referencing_symbols
+  - mcp__serena__list_dir
 ---
 
 # Serena Explore - Navigation Symbolique
