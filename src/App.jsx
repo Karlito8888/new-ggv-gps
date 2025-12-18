@@ -460,6 +460,8 @@ function GPSPermissionOverlay({ onGrant, triggerGeolocate }) {
           </svg>
           {isRequesting ? "Requesting..." : "Enable GPS"}
         </button>
+
+        <p className="gps-version">v{__APP_VERSION__}</p>
       </motion.div>
     </motion.div>
   );
