@@ -1,7 +1,109 @@
-/**
- * App Styles - Simplified Navigation App
- * Uses CSS variables from index.css + custom components
- */
+/* ===================================================================
+   CSS VARIABLES
+   =================================================================== */
+
+:root {
+  /* Couleurs principales */
+  --color-white: #f4f4f4;
+  --color-green: #50aa61;
+  --color-yellow: #f3c549;
+  --color-black: #121212;
+
+  /* Typography */
+  --font-primary: "Madimi One", cursive, sans-serif;
+
+  /* Shadows */
+  --shadow-strong: 0 8px 25px rgba(0, 0, 0, 0.2);
+  --shadow-dialog: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  /* Transitions */
+  --transition-normal: 0.2s ease;
+
+  /* Optimisations de rendu */
+  font-synthesis: none;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===================================================================
+   RESET CSS
+   =================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  min-height: 100%;
+  height: 100dvh;
+  height: 100svh;
+}
+
+body {
+  height: 100dvh;
+  height: 100svh;
+  min-height: -webkit-fill-available;
+  font-family: var(--font-primary);
+  background: linear-gradient(135deg, var(--color-green), var(--color-yellow), var(--color-green));
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+#root {
+  height: 100dvh;
+  height: 100svh;
+  min-height: -webkit-fill-available;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ===================================================================
+   TYPOGRAPHY
+   =================================================================== */
+
+h1 {
+  font-size: 1.2em;
+  line-height: 1.1;
+}
+
+p {
+  text-decoration: none;
+  border: none;
+}
+
+/* Empêcher le zoom sur les inputs (iOS) */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+/* ===================================================================
+   MAPLIBRE OVERRIDES
+   =================================================================== */
+
+/* Attribution control - fermé par défaut */
+.maplibregl-ctrl-attrib.maplibregl-compact-show:not(:focus):not(:hover) {
+  padding: 2px 24px 2px 0;
+  visibility: visible;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact-show:not(:focus):not(:hover)
+  .maplibregl-ctrl-attrib-inner {
+  display: none;
+}
+
+/* ===================================================================
+   APP COMPONENTS
+   =================================================================== */
 
 /* Global container */
 .app-container {
@@ -59,14 +161,14 @@
 .modal {
   background: var(--color-white);
   border-radius: 1rem;
-  padding: 2rem;
-  max-width: 400px;
+  padding: 1.5rem;
+  max-width: 100%;
   width: 100%;
   box-shadow: var(--shadow-dialog);
 }
 
 .modal h1 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 1rem;
   text-align: center;
@@ -80,106 +182,6 @@
   line-height: 1.6;
 }
 
-/* Buttons */
-.btn-primary {
-  width: 100%;
-  padding: 0.75rem 1.5rem;
-  background: var(--color-green);
-  color: var(--color-white);
-  font-weight: 600;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  font-size: 1rem;
-}
-
-.btn-primary:hover {
-  filter: brightness(0.9);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(80, 170, 97, 0.3);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-secondary {
-  width: 100%;
-  padding: 0.75rem 1.5rem;
-  background: rgba(18, 18, 18, 0.1);
-  color: var(--color-black);
-  font-weight: 600;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  font-size: 1rem;
-}
-
-.btn-secondary:hover {
-  background: rgba(18, 18, 18, 0.15);
-}
-
-/* Destination type selector (tabs) */
-.destination-type-selector {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.type-btn {
-  flex: 1;
-  padding: 0.5rem 1rem;
-  background: var(--color-white);
-  border: 2px solid rgba(18, 18, 18, 0.15);
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-}
-
-.type-btn:hover {
-  border-color: rgba(18, 18, 18, 0.25);
-}
-
-.type-btn.active {
-  background: var(--color-green);
-  color: var(--color-white);
-  border-color: var(--color-green);
-}
-
-/* Block selector */
-.block-selector {
-  margin-bottom: 1rem;
-}
-
-.block-selector label {
-  display: block;
-  font-weight: 600;
-  color: var(--color-black);
-  margin-bottom: 0.5rem;
-}
-
-.select-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 2px solid rgba(18, 18, 18, 0.15);
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  background: var(--color-white);
-  cursor: pointer;
-  transition: all var(--transition-normal);
-}
-
-.select-input:focus {
-  outline: none;
-  border-color: var(--color-green);
-  box-shadow: 0 0 0 3px rgba(80, 170, 97, 0.15);
-}
-
 /* Error message */
 .error-message {
   padding: 0.75rem;
@@ -188,137 +190,6 @@
   border-radius: 0.5rem;
   margin-bottom: 1rem;
   font-size: 0.875rem;
-}
-
-/* Navigation overlay (top bar during navigation) */
-.navigation-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: var(--color-white);
-  box-shadow: var(--shadow-medium);
-  z-index: 900;
-  padding: 1rem;
-}
-
-.nav-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.nav-header h2 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--color-black);
-}
-
-.btn-cancel {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  border: none;
-  background: rgba(18, 18, 18, 0.1);
-  color: var(--color-black);
-  font-size: 1.25rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-normal);
-}
-
-.btn-cancel:hover {
-  background: rgba(18, 18, 18, 0.15);
-}
-
-/* Stop navigation button (with image) */
-.btn-stop {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  border: none;
-  background: #ef4444;
-  padding: 0.5rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-normal);
-}
-
-.btn-stop img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.btn-stop:hover {
-  background: #dc2626;
-  transform: scale(1.05);
-}
-
-.nav-distance {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.distance-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--color-green);
-  line-height: 1;
-}
-
-.distance-label {
-  font-size: 0.875rem;
-  color: var(--color-black);
-  opacity: 0.5;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.nav-turn {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
-  background: var(--color-white);
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.turn-instruction {
-  font-weight: 600;
-  color: var(--color-black);
-}
-
-.turn-distance {
-  color: var(--color-black);
-  opacity: 0.7;
-  font-size: 0.875rem;
-}
-
-.nav-compass {
-  display: flex;
-  justify-content: center;
-  padding: 1rem 0;
-}
-
-.compass-arrow {
-  width: 4rem;
-  height: 4rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.5rem;
-  background: var(--color-green);
-  color: var(--color-white);
-  border-radius: 50%;
-  box-shadow: 0 4px 6px -1px rgba(80, 170, 97, 0.3);
-  transition: transform 0.3s ease-out;
 }
 
 /* ===================================================================
@@ -332,7 +203,7 @@
 .gps-modal {
   background: var(--color-white);
   border-radius: 1.5rem;
-  padding: 2.5rem 2rem;
+  padding: 2rem 1.5rem;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -350,8 +221,8 @@
 }
 
 .gps-icon-wrapper {
-  width: 6rem;
-  height: 6rem;
+  width: 5rem;
+  height: 5rem;
   margin: 0 auto 1.5rem;
   background: linear-gradient(135deg, var(--color-green), var(--color-yellow));
   border-radius: 50%;
@@ -385,14 +256,14 @@
 }
 
 .gps-icon {
-  width: 3rem;
-  height: 3rem;
+  width: 2.5rem;
+  height: 2.5rem;
   color: var(--color-white);
 }
 
 .gps-title {
   font-family: var(--font-primary);
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-black);
   margin-bottom: 0.25rem;
@@ -455,30 +326,6 @@
   opacity: 0.4;
 }
 
-.gps-hint {
-  margin-top: 1.5rem;
-  padding: 1rem 1.25rem;
-  background: rgba(80, 170, 97, 0.1);
-  border-radius: 0.75rem;
-  border-left: 4px solid var(--color-yellow);
-  text-align: left;
-}
-
-.gps-hint-label {
-  color: var(--color-green);
-  font-weight: 700;
-  font-size: 0.875rem;
-  margin-bottom: 0.25rem;
-}
-
-.gps-hint-text {
-  color: var(--color-black);
-  opacity: 0.7;
-  font-size: 0.875rem;
-  line-height: 1.4;
-  margin: 0;
-}
-
 /* Tagalog translation styles */
 .tagalog-inline {
   display: block;
@@ -490,92 +337,11 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Utility classes */
-.mt-2 {
-  margin-top: 0.5rem;
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.text-sm {
-  font-size: 0.875rem;
-}
-
-.text-lg {
-  font-size: 1.125rem;
-}
-
-.text-gray-500 {
-  color: var(--color-black);
-  opacity: 0.5;
-}
-
-.text-gray-600 {
-  color: var(--color-black);
-  opacity: 0.7;
-}
-
-/* Responsive adjustments for mobile */
-@media (max-width: 640px) {
-  .modal {
-    padding: 1.5rem;
-    max-width: 100%;
-  }
-
-  .modal h1 {
-    font-size: 1.25rem;
-  }
-
-  .gps-modal {
-    padding: 2rem 1.5rem;
-  }
-
-  .gps-icon-wrapper {
-    width: 5rem;
-    height: 5rem;
-  }
-
-  .gps-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-
-  .gps-title {
-    font-size: 1.5rem;
-  }
-
-  .navigation-overlay {
-    padding: 0.75rem;
-  }
-
-  .nav-header h2 {
-    font-size: 1rem;
-  }
-
-  .distance-value {
-    font-size: 2rem;
-  }
-}
-
 /* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
   .app-container {
     height: -webkit-fill-available;
   }
-}
-
-/* Prevent zoom on input focus (iOS) */
-input,
-select,
-textarea,
-button {
-  font-size: 16px; /* Minimum to prevent iOS zoom */
 }
 
 /* ===================================================================
@@ -589,7 +355,7 @@ button {
 .welcome-modal {
   background: var(--color-white);
   border-radius: 1.5rem;
-  padding: 2.5rem 2rem;
+  padding: 2rem 1.5rem;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -607,8 +373,8 @@ button {
 }
 
 .welcome-icon-wrapper {
-  width: 6rem;
-  height: 6rem;
+  width: 5rem;
+  height: 5rem;
   margin: 0 auto 1.5rem;
   background: linear-gradient(135deg, var(--color-green), var(--color-yellow));
   border-radius: 50%;
@@ -630,14 +396,14 @@ button {
 }
 
 .welcome-icon {
-  width: 3rem;
-  height: 3rem;
+  width: 2.5rem;
+  height: 2.5rem;
   color: var(--color-white);
 }
 
 .welcome-title {
   font-family: var(--font-primary);
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-black);
   margin-bottom: 0.25rem;
@@ -667,12 +433,12 @@ button {
 
 .welcome-type-btn {
   flex: 1;
-  padding: 0.75rem 0.5rem;
+  padding: 0.625rem 0.375rem;
   background: var(--color-white);
   border: 2px solid rgba(18, 18, 18, 0.15);
   border-radius: 0.75rem;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   cursor: pointer;
   transition: all var(--transition-normal);
   display: flex;
@@ -682,8 +448,8 @@ button {
 }
 
 .welcome-type-btn svg {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .welcome-type-btn:hover {
@@ -733,13 +499,43 @@ button {
   box-shadow: 0 0 0 3px rgba(80, 170, 97, 0.15);
 }
 
-.welcome-info {
-  color: var(--color-black);
-  opacity: 0.7;
+/* Error state in Welcome overlay */
+.welcome-error {
+  padding: 1rem;
+  background: #fef2f2;
+  border-radius: 0.75rem;
+  border-left: 4px solid #ef4444;
   margin-bottom: 1.5rem;
-  line-height: 1.6;
-  font-size: 0.9375rem;
-  text-align: center;
+}
+
+.welcome-error-text {
+  color: #991b1b;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.welcome-error-tagalog {
+  display: block;
+  color: #dc2626;
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.welcome-retry-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.75rem;
+  transition: background var(--transition-normal);
+}
+
+.welcome-retry-btn:hover {
+  background: #dc2626;
 }
 
 .welcome-btn {
@@ -786,7 +582,7 @@ button {
 .orientation-modal {
   background: var(--color-white);
   border-radius: 1.5rem;
-  padding: 2.5rem 2rem;
+  padding: 2rem 1.5rem;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -804,8 +600,8 @@ button {
 }
 
 .orientation-icon-wrapper {
-  width: 6rem;
-  height: 6rem;
+  width: 5rem;
+  height: 5rem;
   margin: 0 auto 1.5rem;
   background: linear-gradient(135deg, var(--color-green), var(--color-yellow));
   border-radius: 50%;
@@ -846,14 +642,14 @@ button {
 }
 
 .orientation-icon {
-  width: 3rem;
-  height: 3rem;
+  width: 2.5rem;
+  height: 2.5rem;
   color: var(--color-white);
 }
 
 .orientation-title {
   font-family: var(--font-primary);
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-black);
   margin-bottom: 0.25rem;
@@ -953,7 +749,7 @@ button {
 .arrived-modal {
   background: var(--color-white);
   border-radius: 1.5rem;
-  padding: 2.5rem 2rem;
+  padding: 2rem 1.5rem;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -971,8 +767,8 @@ button {
 }
 
 .arrived-icon-wrapper {
-  width: 6rem;
-  height: 6rem;
+  width: 5rem;
+  height: 5rem;
   margin: 0 auto 1.5rem;
   background: linear-gradient(135deg, var(--color-green), #34d399);
   border-radius: 50%;
@@ -1020,14 +816,14 @@ button {
 }
 
 .arrived-icon {
-  width: 3rem;
-  height: 3rem;
+  width: 2.5rem;
+  height: 2.5rem;
   color: var(--color-white);
 }
 
 .arrived-title {
   font-family: var(--font-primary);
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-black);
   margin-bottom: 0.25rem;
@@ -1121,7 +917,7 @@ button {
 .exit-modal {
   background: var(--color-white);
   border-radius: 1.5rem;
-  padding: 2.5rem 2rem;
+  padding: 2rem 1.5rem;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -1139,8 +935,8 @@ button {
 }
 
 .exit-icon-wrapper {
-  width: 6rem;
-  height: 6rem;
+  width: 5rem;
+  height: 5rem;
   margin: 0 auto 1.5rem;
   background: linear-gradient(135deg, var(--color-yellow), #fbbf24);
   border-radius: 50%;
@@ -1162,14 +958,14 @@ button {
 }
 
 .exit-icon {
-  width: 3rem;
-  height: 3rem;
+  width: 2.5rem;
+  height: 2.5rem;
   color: var(--color-white);
 }
 
 .exit-title {
   font-family: var(--font-primary);
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-black);
   margin-bottom: 0.25rem;
@@ -1236,7 +1032,7 @@ button {
   background: linear-gradient(180deg, var(--color-white) 0%, rgba(244, 244, 244, 0.98) 100%);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   z-index: 900;
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1rem;
   border-radius: 0 0 1.5rem 1.5rem;
 }
 
@@ -1316,22 +1112,13 @@ button {
   color: var(--color-white);
 }
 
-.distance-label {
-  font-size: 0.8125rem;
-  color: var(--color-black);
-  opacity: 0.5;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-top: 0.25rem;
-}
-
 .nav-compass {
   flex-shrink: 0;
 }
 
 .compass-ring {
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(80, 170, 97, 0.1), rgba(243, 197, 73, 0.1));
   border: 2px solid rgba(80, 170, 97, 0.3);
@@ -1341,8 +1128,8 @@ button {
 }
 
 .compass-arrow {
-  width: 3rem;
-  height: 3rem;
+  width: 2.5rem;
+  height: 2.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1350,8 +1137,8 @@ button {
 }
 
 .compass-arrow svg {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 2rem;
   color: var(--color-green);
   filter: drop-shadow(0 2px 4px rgba(80, 170, 97, 0.3));
 }
@@ -1394,68 +1181,146 @@ button {
   height: 1.5rem;
 }
 
-/* Responsive adjustments for new overlays */
-@media (max-width: 640px) {
-  .welcome-modal,
-  .orientation-modal,
-  .arrived-modal,
-  .exit-modal {
-    padding: 2rem 1.5rem;
+/* ===================================================================
+   DESKTOP ENHANCEMENTS (min-width: 641px)
+   Mobile-first: base styles are mobile, these enhance for larger screens
+   =================================================================== */
+
+@media (min-width: 641px) {
+  /* Modal */
+  .modal {
+    padding: 2rem;
+    max-width: 400px;
   }
 
-  .welcome-icon-wrapper,
-  .orientation-icon-wrapper,
-  .arrived-icon-wrapper,
-  .exit-icon-wrapper {
-    width: 5rem;
-    height: 5rem;
-  }
-
-  .welcome-icon,
-  .orientation-icon,
-  .arrived-icon,
-  .exit-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-
-  .welcome-title,
-  .orientation-title,
-  .arrived-title,
-  .exit-title {
+  .modal h1 {
     font-size: 1.5rem;
   }
 
+  /* GPS Overlay */
+  .gps-modal {
+    padding: 2.5rem 2rem;
+  }
+
+  .gps-icon-wrapper {
+    width: 6rem;
+    height: 6rem;
+  }
+
+  .gps-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .gps-title {
+    font-size: 1.75rem;
+  }
+
+  /* Navigation */
+  .navigation-overlay {
+    padding: 1rem 1.25rem;
+  }
+
+  /* Welcome Overlay */
+  .welcome-modal {
+    padding: 2.5rem 2rem;
+  }
+
+  .welcome-icon-wrapper {
+    width: 6rem;
+    height: 6rem;
+  }
+
+  .welcome-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .welcome-title {
+    font-size: 1.75rem;
+  }
+
   .welcome-type-btn {
-    padding: 0.625rem 0.375rem;
-    font-size: 0.75rem;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
   }
 
   .welcome-type-btn svg {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 1.5rem;
+    height: 1.5rem;
   }
 
-  .navigation-overlay {
-    padding: 0.875rem 1rem;
+  /* Orientation Overlay */
+  .orientation-modal {
+    padding: 2.5rem 2rem;
   }
 
-  .distance-value {
-    font-size: 2rem;
+  .orientation-icon-wrapper {
+    width: 6rem;
+    height: 6rem;
   }
 
+  .orientation-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .orientation-title {
+    font-size: 1.75rem;
+  }
+
+  /* Arrived Overlay */
+  .arrived-modal {
+    padding: 2.5rem 2rem;
+  }
+
+  .arrived-icon-wrapper {
+    width: 6rem;
+    height: 6rem;
+  }
+
+  .arrived-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .arrived-title {
+    font-size: 1.75rem;
+  }
+
+  /* Exit Overlay */
+  .exit-modal {
+    padding: 2.5rem 2rem;
+  }
+
+  .exit-icon-wrapper {
+    width: 6rem;
+    height: 6rem;
+  }
+
+  .exit-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .exit-title {
+    font-size: 1.75rem;
+  }
+
+  /* Compass */
   .compass-ring {
-    width: 3.5rem;
-    height: 3.5rem;
+    width: 4.5rem;
+    height: 4.5rem;
   }
 
   .compass-arrow {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 3rem;
+    height: 3rem;
   }
 
   .compass-arrow svg {
-    width: 2rem;
-    height: 2rem;
+    width: 2.5rem;
+    height: 2.5rem;
   }
 }
+

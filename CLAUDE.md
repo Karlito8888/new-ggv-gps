@@ -31,7 +31,7 @@ MyGGV GPS is a React-based web application for GPS navigation within Garden Grov
 
 **Architecture Philosophy**: Extreme simplification following KISS principle
 
-- 8 total files (~1,250 LOC core)
+- 7 total files (~1,250 LOC core)
 - 3 essential hooks
 - Direct MapLibre GL JS (no react-map-gl)
 - No routing library (conditional rendering)
@@ -55,7 +55,7 @@ bun run preview      # Preview production build
 
 ## Architecture
 
-### File Structure (8 files total)
+### File Structure (7 files total)
 
 ```
 src/
@@ -66,8 +66,7 @@ src/
 │   ├── useRouting.js (300 LOC)    # OSRM routing + deviation detection
 │   └── useNavigation.js (237 LOC) # Turn-by-turn + arrival detection
 ├── data/
-│   ├── blocks.js                   # Village block polygons
-│   └── public-pois.js              # Points of interest
+│   └── blocks.js                   # Village block polygons
 └── lib/
     └── supabase.js                 # Supabase client (optional)
 ```
@@ -323,7 +322,6 @@ window.addEventListener("deviceorientation", (e) => {
 - **Default center**: `[120.95134859887523, 14.347872973134175]`
 - **Village exit**: `[120.951863, 14.35098]`
 - **Block polygons**: `src/data/blocks.js`
-- **POIs**: `src/data/public-pois.js`
 
 ## Key Dependencies
 
@@ -344,7 +342,7 @@ window.addEventListener("deviceorientation", (e) => {
 
 ## Performance Metrics
 
-- **Total files**: 8 (7 core + 1 optional Supabase client)
+- **Total files**: 7 (6 core + 1 optional Supabase client)
 - **Lines of code**: ~1,250 (core architecture)
 - **Custom hooks**: 3
 - **Bundle size**: ~121 KB gzipped (index), ~264 KB gzipped (maps)
@@ -354,7 +352,7 @@ window.addEventListener("deviceorientation", (e) => {
 
 ### Add a new destination type
 
-1. Update `src/data/blocks.js` or `src/data/public-pois.js`
+1. Update `src/data/blocks.js`
 2. Map markers will auto-render in `useMapSetup.js`
 
 ### Modify navigation flow
