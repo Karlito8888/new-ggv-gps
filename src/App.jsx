@@ -34,8 +34,8 @@ export default function App() {
   const [isLoadingBlocks, setIsLoadingBlocks] = useState(true);
   const [blocksError, setBlocksError] = useState(null);
 
-  // Load blocks from Supabase (called on mount and retry)
-  const loadBlocks = () => {
+  // Load blocks from Supabase (for retry button - OK to call setState in event handler)
+  const retryLoadBlocks = () => {
     setBlocksError(null);
     setIsLoadingBlocks(true);
     supabase.rpc("get_blocks").then(({ data, error }) => {
@@ -50,9 +50,18 @@ export default function App() {
     });
   };
 
-  // Pre-load blocks on mount (during GPS permission screen)
+  // Pre-load blocks on mount (async fetch - setState only in .then callback)
   useEffect(() => {
-    loadBlocks();
+    supabase.rpc("get_blocks").then(({ data, error }) => {
+      if (error) {
+        console.error("Error fetching blocks:", error);
+        setBlocksError("Failed to load blocks");
+        setBlocks([]);
+      } else if (data) {
+        setBlocks(data);
+      }
+      setIsLoadingBlocks(false);
+    });
   }, []);
 
   // Initialize map and GPS tracking
@@ -282,7 +291,7 @@ export default function App() {
             blocks={blocks}
             isLoadingBlocks={isLoadingBlocks}
             blocksError={blocksError}
-            onRetryBlocks={loadBlocks}
+            onRetryBlocks={retryLoadBlocks}
             onSelectDestination={(dest) => {
               setDestination(dest);
               setNavState(hasOrientationPermission ? "navigating" : "orientation-permission");
