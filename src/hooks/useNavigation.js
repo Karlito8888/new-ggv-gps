@@ -1,4 +1,4 @@
-import { getDistance, getBearing } from "../lib/geo";
+import { getDistance } from "../lib/geo";
 
 /**
  * useNavigation - Pure computation hook (no effects, no state)
@@ -23,11 +23,10 @@ export function useNavigation(map, userLocation, destination) {
   }
 
   const dist = getDistance(userLat, userLng, destLat, destLng);
-  const isArrived = dist < 10;
+  const isArrived = dist < 12;
 
   return {
     distanceRemaining: dist,
-    bearing: getBearing(userLat, userLng, destLat, destLng),
     hasArrived: isArrived,
     // Include destination key so caller can verify it's the right one
     arrivedAt: isArrived ? `${destLng},${destLat}` : null,

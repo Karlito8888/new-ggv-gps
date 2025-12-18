@@ -68,7 +68,7 @@ export default function App() {
   const { map, userLocation, isMapReady, triggerGeolocate } = useMapSetup(mapContainerRef);
 
   // Calculate route when destination is selected
-  const { steps } = useRouting(map, userLocation, destination);
+  const { steps, routeSource } = useRouting(map, userLocation, destination);
 
   // Navigation logic (distance, arrival detection)
   const { distanceRemaining, hasArrived, arrivedAt } = useNavigation(map, userLocation, destination);
@@ -111,6 +111,10 @@ export default function App() {
 
     // Mark this destination as arrived and show appropriate modal
     arrivedDestinationRef.current = arrivedAt;
+
+    // Haptic feedback on arrival (Android only, iOS silently ignores)
+    navigator.vibrate?.([100, 50, 100]);
+
     startTransition(() => {
       if (destination?.type === "exit") {
         setNavState("exit-complete");
@@ -316,6 +320,7 @@ export default function App() {
             distanceRemaining={distanceRemaining}
             destination={destination}
             steps={steps}
+            routeSource={routeSource}
             userLocation={userLocation}
             onCancel={() => {
               setNavState("welcome");
@@ -732,6 +737,7 @@ function NavigationOverlay({
   distanceRemaining,
   destination,
   steps,
+  routeSource,
   userLocation,
   onCancel,
 }) {
@@ -796,6 +802,7 @@ function NavigationOverlay({
         <div className="nav-center">
           <div className="nav-dest-name">{destination?.name || "Navigating..."}</div>
           <div className="nav-remaining">{formatDistance(distanceRemaining)}</div>
+          {routeSource && <div className="nav-source">{routeSource.toUpperCase()}</div>}
         </div>
 
         {/* Cancel button (right) */}

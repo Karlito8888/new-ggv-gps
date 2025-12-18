@@ -1288,6 +1288,14 @@ button {
   color: var(--color-green);
 }
 
+.nav-source {
+  font-size: 0.625rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.125rem;
+}
+
 .nav-cancel-btn {
   width: 2rem;
   height: 2rem;

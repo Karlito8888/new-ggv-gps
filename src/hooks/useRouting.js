@@ -103,13 +103,19 @@ async function fetchORS(originLng, originLat, destLng, destLat, signal) {
 // Debounce delay for origin changes (prevents API spam when GPS updates rapidly)
 const DEBOUNCE_MS = 500;
 
+// Retry delays for OSRM when it fails (exponential backoff)
+const RETRY_DELAYS = [10000, 30000, 60000]; // 10s, 30s, 60s
+
 export function useRouting(map, origin, destination) {
   const [routeGeoJSON, setRouteGeoJSON] = useState(null);
   const [distance, setDistance] = useState(0);
   const [steps, setSteps] = useState([]);
+  const [routeSource, setRouteSource] = useState(null); // "osrm" | "ors" | "direct"
   const abortRef = useRef(null);
   const lastOriginRef = useRef(null);
   const debounceTimerRef = useRef(null);
+  const retryTimerRef = useRef(null);
+  const retryCountRef = useRef(0);
 
   const originLat = origin?.latitude;
   const originLng = origin?.longitude;
@@ -144,7 +150,14 @@ export function useRouting(map, origin, destination) {
       }
     }
 
-    // Update destination ref
+    // Update destination ref and reset retry on destination change
+    if (destChanged) {
+      retryCountRef.current = 0;
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
+    }
     lastDestRef.current = { lat: destLat, lng: destLng };
 
     const fetchRoute = async () => {
@@ -164,6 +177,7 @@ export function useRouting(map, origin, destination) {
           setRouteGeoJSON(route.geometry);
           setDistance(route.distance);
           setSteps(route.steps || []);
+          setRouteSource("osrm");
           updateMapRoute(map, route.geometry);
           return;
         }
@@ -180,6 +194,7 @@ export function useRouting(map, origin, destination) {
           setRouteGeoJSON(route.geometry);
           setDistance(route.distance);
           setSteps([]); // ORS doesn't provide steps in this format
+          setRouteSource("ors");
           updateMapRoute(map, route.geometry);
           return;
         }
@@ -206,7 +221,44 @@ export function useRouting(map, origin, destination) {
           distance: getDistance(originLat, originLng, destLat, destLng),
         },
       ]);
+      setRouteSource("direct");
       updateMapRoute(map, geometry);
+
+      // Schedule OSRM retry in background
+      scheduleRetry();
+    };
+
+    // Retry OSRM in background with exponential backoff
+    const scheduleRetry = () => {
+      if (retryCountRef.current >= RETRY_DELAYS.length) {
+        console.log("Route: Max retries reached, staying on direct line");
+        return;
+      }
+
+      const delay = RETRY_DELAYS[retryCountRef.current];
+      console.log(`Route: Scheduling OSRM retry in ${delay / 1000}s`);
+
+      retryTimerRef.current = setTimeout(async () => {
+        retryCountRef.current++;
+        try {
+          const route = await fetchOSRM(originLng, originLat, destLng, destLat, abortRef.current?.signal);
+          if (route) {
+            console.log("Route: OSRM retry successful!");
+            setRouteGeoJSON(route.geometry);
+            setDistance(route.distance);
+            setSteps(route.steps || []);
+            setRouteSource("osrm");
+            updateMapRoute(map, route.geometry);
+            retryCountRef.current = 0; // Reset for next time
+            return;
+          }
+        } catch (e) {
+          if (e.name === "AbortError") return;
+          console.warn("OSRM retry failed:", e.message);
+        }
+        // Still failed, schedule next retry
+        scheduleRetry();
+      }, delay);
     };
 
     // Clear previous debounce timer
@@ -225,6 +277,9 @@ export function useRouting(map, origin, destination) {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
       abortRef.current?.abort();
     };
   }, [hasValidParams, map, originLat, originLng, destLat, destLng]);
@@ -234,6 +289,7 @@ export function useRouting(map, origin, destination) {
     routeGeoJSON: hasValidParams ? routeGeoJSON : null,
     distance: hasValidParams ? distance : 0,
     steps: hasValidParams ? steps : [],
+    routeSource: hasValidParams ? routeSource : null,
   };
 }
 
