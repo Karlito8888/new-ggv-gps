@@ -4,32 +4,56 @@ import { getDistance } from "../lib/geo";
 // ORS API Key from environment
 const ORS_API_KEY = import.meta.env.VITE_OPENROUTE_API_KEY;
 
-// Parse OSRM maneuver to simple instruction
-function parseManeuver(maneuver, distance) {
-  const type = maneuver.type;
-  const modifier = maneuver.modifier;
+// Icon mapping for turn modifiers
+const TURN_ICONS = {
+  uturn: "↩",
+  "sharp left": "↰",
+  left: "←",
+  "slight left": "↖",
+  straight: "↑",
+  "slight right": "↗",
+  right: "→",
+  "sharp right": "↱",
+};
 
-  // Map maneuver types to simple icons/text
+/**
+ * Parse OSRM maneuver to navigation instruction
+ * Returns null for steps that should be filtered out (depart)
+ */
+function parseManeuver(maneuver, distance) {
+  const { type, modifier } = maneuver;
+
+  // Filter out "depart" - it's the start point, not a real instruction
+  if (type === "depart") {
+    return null;
+  }
+
+  // Arrival
   if (type === "arrive") {
-    return { type: "arrive", icon: "📍", distance: 0 };
+    return { type: "arrive", icon: "📍", modifier: null, distance: 0, isSignificant: true };
   }
-  if (type === "depart" || type === "continue" || type === "new name") {
-    return { type: "straight", icon: "↑", distance };
-  }
-  if (type === "turn" || type === "end of road" || type === "fork") {
-    if (modifier?.includes("left")) {
-      return { type: "left", icon: "←", distance };
-    }
-    if (modifier?.includes("right")) {
-      return { type: "right", icon: "→", distance };
-    }
-    return { type: "straight", icon: "↑", distance };
-  }
+
+  // Roundabout/rotary
   if (type === "roundabout" || type === "rotary") {
-    return { type: "roundabout", icon: "⟳", distance };
+    return { type: "roundabout", icon: "⟳", modifier, distance, isSignificant: true };
   }
-  // Default
-  return { type: "straight", icon: "↑", distance };
+
+  // For turns, end of road, fork - use modifier to determine direction
+  if (type === "turn" || type === "end of road" || type === "fork") {
+    const icon = TURN_ICONS[modifier] || "↑";
+    const isSignificant = modifier && modifier !== "straight";
+    return { type: modifier || "straight", icon, modifier, distance, isSignificant };
+  }
+
+  // Continue/new name - only significant if there's a direction change
+  if (type === "continue" || type === "new name") {
+    const icon = TURN_ICONS[modifier] || "↑";
+    const isSignificant = modifier && modifier !== "straight";
+    return { type: modifier || "straight", icon, modifier, distance, isSignificant };
+  }
+
+  // Default: straight
+  return { type: "straight", icon: "↑", modifier: null, distance, isSignificant: false };
 }
 
 // Request timeout (3 seconds to fail fast)
@@ -63,14 +87,20 @@ async function fetchOSRM(originLng, originLat, destLng, destLat, signal) {
 
   if (data.code === "Ok" && data.routes?.[0]) {
     const route = data.routes[0];
-    // Extract steps from all legs
+    // Extract steps from all legs, filtering out null (depart steps)
     const steps =
       route.legs?.flatMap(
         (leg) =>
-          leg.steps?.map((step) => ({
-            ...parseManeuver(step.maneuver, step.distance),
-            location: step.maneuver.location, // [lng, lat]
-          })) || [],
+          leg.steps
+            ?.map((step) => {
+              const parsed = parseManeuver(step.maneuver, step.distance);
+              if (!parsed) return null; // Skip depart steps
+              return {
+                ...parsed,
+                location: step.maneuver.location, // [lng, lat]
+              };
+            })
+            .filter(Boolean) || [],
       ) || [];
 
     return {

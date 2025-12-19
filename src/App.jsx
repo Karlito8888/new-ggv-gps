@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMapSetup, updateDestinationMarker } from "./hooks/useMapSetup";
 import { useRouting } from "./hooks/useRouting";
 import { useNavigation } from "./hooks/useNavigation";
-import { getDistance } from "./lib/geo";
+import { getDistanceAlongRoute } from "./lib/geo";
 import { supabase } from "./lib/supabase";
 import ggvLogo from "./assets/img/ggv.png";
 
@@ -68,7 +68,7 @@ export default function App() {
   const { map, userLocation, isMapReady, triggerGeolocate } = useMapSetup(mapContainerRef);
 
   // Calculate route when destination is selected
-  const { steps, routeSource } = useRouting(map, userLocation, destination);
+  const { steps, routeSource, routeGeoJSON } = useRouting(map, userLocation, destination);
 
   // Navigation logic (distance, arrival detection)
   const { distanceRemaining, hasArrived, arrivedAt } = useNavigation(map, userLocation, destination);
@@ -321,6 +321,7 @@ export default function App() {
             destination={destination}
             steps={steps}
             routeSource={routeSource}
+            routeGeoJSON={routeGeoJSON}
             userLocation={userLocation}
             onCancel={() => {
               setNavState("welcome");
@@ -738,29 +739,39 @@ function NavigationOverlay({
   destination,
   steps,
   routeSource,
+  routeGeoJSON,
   userLocation,
   onCancel,
 }) {
   const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
 
-  // Calculate current step - React Compiler handles memoization automatically
+  // Calculate current step using distance along route (not crow-flies)
   const currentStep = (() => {
-    if (!steps?.length || !userLocation) return null;
+    if (!steps?.length || !userLocation || !routeGeoJSON?.coordinates) return null;
 
+    const routeCoords = routeGeoJSON.coordinates;
+
+    // Find the next significant step that's ahead of the user on the route
     for (const step of steps) {
-      if (!step.location) continue;
-      const dist = getDistance(
-        userLocation.latitude,
+      if (!step.location || !step.isSignificant) continue;
+      if (step.type === "arrive") continue; // Skip arrival step
+
+      const distAlongRoute = getDistanceAlongRoute(
         userLocation.longitude,
-        step.location[1],
+        userLocation.latitude,
         step.location[0],
+        step.location[1],
+        routeCoords,
       );
-      // Return first step that's within 200m and not yet passed
-      if (dist < 200 && step.type !== "arrive") {
-        return { ...step, distanceToStep: Math.round(dist) };
-      }
+
+      // Distance < 0 means step is behind us, skip it
+      if (distAlongRoute < 0) continue;
+
+      // Found the next upcoming significant step
+      return { ...step, distanceToStep: Math.round(distAlongRoute) };
     }
-    return null;
+
+    return null; // No significant steps ahead = continue straight
   })();
 
   // Zoom handlers - React Compiler handles memoization automatically
