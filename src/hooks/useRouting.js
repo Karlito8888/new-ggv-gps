@@ -30,30 +30,60 @@ function parseManeuver(maneuver, distance) {
 
   // Arrival
   if (type === "arrive") {
-    return { type: "arrive", icon: "📍", modifier: null, distance: 0, isSignificant: true };
+    return {
+      type: "arrive",
+      icon: "📍",
+      modifier: null,
+      distance: 0,
+      isSignificant: true,
+    };
   }
 
   // Roundabout/rotary
   if (type === "roundabout" || type === "rotary") {
-    return { type: "roundabout", icon: "⟳", modifier, distance, isSignificant: true };
+    return {
+      type: "roundabout",
+      icon: "⟳",
+      modifier,
+      distance,
+      isSignificant: true,
+    };
   }
 
   // For turns, end of road, fork - use modifier to determine direction
   if (type === "turn" || type === "end of road" || type === "fork") {
     const icon = TURN_ICONS[modifier] || "↑";
     const isSignificant = modifier && modifier !== "straight";
-    return { type: modifier || "straight", icon, modifier, distance, isSignificant };
+    return {
+      type: modifier || "straight",
+      icon,
+      modifier,
+      distance,
+      isSignificant,
+    };
   }
 
   // Continue/new name - only significant if there's a direction change
   if (type === "continue" || type === "new name") {
     const icon = TURN_ICONS[modifier] || "↑";
     const isSignificant = modifier && modifier !== "straight";
-    return { type: modifier || "straight", icon, modifier, distance, isSignificant };
+    return {
+      type: modifier || "straight",
+      icon,
+      modifier,
+      distance,
+      isSignificant,
+    };
   }
 
   // Default: straight
-  return { type: "straight", icon: "↑", modifier: null, distance, isSignificant: false };
+  return {
+    type: "straight",
+    icon: "↑",
+    modifier: null,
+    distance,
+    isSignificant: false,
+  };
 }
 
 // Request timeout (3 seconds to fail fast)
@@ -271,7 +301,13 @@ export function useRouting(map, origin, destination) {
       retryTimerRef.current = setTimeout(async () => {
         retryCountRef.current++;
         try {
-          const route = await fetchOSRM(originLng, originLat, destLng, destLat, abortRef.current?.signal);
+          const route = await fetchOSRM(
+            originLng,
+            originLat,
+            destLng,
+            destLat,
+            abortRef.current?.signal,
+          );
           if (route) {
             console.log("Route: OSRM retry successful!");
             setRouteGeoJSON(route.geometry);

@@ -97,7 +97,8 @@ export function useMapSetup(containerRef) {
       const style = await styleResponse.json();
 
       // Fix: Use MapLibre official font server (OpenFreeMap fonts return 404)
-      style.glyphs = "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf";
+      style.glyphs =
+        "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf";
 
       const MapLibre = maplibregl.default || maplibregl;
       mapInstance = new MapLibre.Map({

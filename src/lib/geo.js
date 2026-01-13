@@ -17,7 +17,9 @@ export function getDistance(lat1, lon1, lat2, lon2) {
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -30,7 +32,12 @@ export function getDistance(lat1, lon1, lat2, lon2) {
  */
 export function projectPointOnLine(pointLng, pointLat, lineCoordinates) {
   if (!lineCoordinates || lineCoordinates.length < 2) {
-    return { projectedPoint: [pointLng, pointLat], segmentIndex: 0, progressOnSegment: 0, deviationDistance: 0 };
+    return {
+      projectedPoint: [pointLng, pointLat],
+      segmentIndex: 0,
+      progressOnSegment: 0,
+      deviationDistance: 0,
+    };
   }
 
   let minDistance = Infinity;
@@ -49,7 +56,13 @@ export function projectPointOnLine(pointLng, pointLat, lineCoordinates) {
 
     let t = 0;
     if (segmentLengthSq > 0) {
-      t = Math.max(0, Math.min(1, ((pointLng - x1) * dx + (pointLat - y1) * dy) / segmentLengthSq));
+      t = Math.max(
+        0,
+        Math.min(
+          1,
+          ((pointLng - x1) * dx + (pointLat - y1) * dy) / segmentLengthSq,
+        ),
+      );
     }
 
     const projectedX = x1 + t * dx;
@@ -82,7 +95,13 @@ export function projectPointOnLine(pointLng, pointLat, lineCoordinates) {
  * @param {Array<[number, number]>} routeCoordinates - Route coordinates [lng, lat]
  * @returns {number} Distance in meters, or -1 if target is behind
  */
-export function getDistanceAlongRoute(userLng, userLat, targetLng, targetLat, routeCoordinates) {
+export function getDistanceAlongRoute(
+  userLng,
+  userLat,
+  targetLng,
+  targetLat,
+  routeCoordinates,
+) {
   if (!routeCoordinates || routeCoordinates.length < 2) {
     return getDistance(userLat, userLng, targetLat, targetLng);
   }
@@ -105,7 +124,13 @@ export function getDistanceAlongRoute(userLng, userLat, targetLng, targetLat, ro
 
     let t = 0;
     if (segmentLengthSq > 0) {
-      t = Math.max(0, Math.min(1, ((targetLng - x1) * dx + (targetLat - y1) * dy) / segmentLengthSq));
+      t = Math.max(
+        0,
+        Math.min(
+          1,
+          ((targetLng - x1) * dx + (targetLat - y1) * dy) / segmentLengthSq,
+        ),
+      );
     }
 
     const projectedX = x1 + t * dx;
@@ -123,7 +148,10 @@ export function getDistanceAlongRoute(userLng, userLat, targetLng, targetLat, ro
   if (targetSegmentIndex < userProjection.segmentIndex) {
     return -1; // Target is behind
   }
-  if (targetSegmentIndex === userProjection.segmentIndex && targetProgress < userProjection.progressOnSegment) {
+  if (
+    targetSegmentIndex === userProjection.segmentIndex &&
+    targetProgress < userProjection.progressOnSegment
+  ) {
     return -1; // Same segment but target is behind
   }
 
@@ -137,11 +165,22 @@ export function getDistanceAlongRoute(userLng, userLat, targetLng, targetLat, ro
     const [x2, y2] = routeCoordinates[targetSegmentIndex + 1];
     const targetProjX = x1 + targetProgress * (x2 - x1);
     const targetProjY = y1 + targetProgress * (y2 - y1);
-    totalDistance = getDistance(userProjLat, userProjLng, targetProjY, targetProjX);
+    totalDistance = getDistance(
+      userProjLat,
+      userProjLng,
+      targetProjY,
+      targetProjX,
+    );
   } else {
     // Distance from user projection to end of current segment
-    const [segEndLng, segEndLat] = routeCoordinates[userProjection.segmentIndex + 1];
-    totalDistance += getDistance(userProjLat, userProjLng, segEndLat, segEndLng);
+    const [segEndLng, segEndLat] =
+      routeCoordinates[userProjection.segmentIndex + 1];
+    totalDistance += getDistance(
+      userProjLat,
+      userProjLng,
+      segEndLat,
+      segEndLng,
+    );
 
     // Distance through intermediate segments
     for (let i = userProjection.segmentIndex + 1; i < targetSegmentIndex; i++) {
@@ -153,9 +192,16 @@ export function getDistanceAlongRoute(userLng, userLat, targetLng, targetLat, ro
     // Distance from start of target segment to target projection
     const [tSegStartLng, tSegStartLat] = routeCoordinates[targetSegmentIndex];
     const [tSegEndLng, tSegEndLat] = routeCoordinates[targetSegmentIndex + 1];
-    const targetProjX = tSegStartLng + targetProgress * (tSegEndLng - tSegStartLng);
-    const targetProjY = tSegStartLat + targetProgress * (tSegEndLat - tSegStartLat);
-    totalDistance += getDistance(tSegStartLat, tSegStartLng, targetProjY, targetProjX);
+    const targetProjX =
+      tSegStartLng + targetProgress * (tSegEndLng - tSegStartLng);
+    const targetProjY =
+      tSegStartLat + targetProgress * (tSegEndLat - tSegStartLat);
+    totalDistance += getDistance(
+      tSegStartLat,
+      tSegStartLng,
+      targetProjY,
+      targetProjX,
+    );
   }
 
   return totalDistance;

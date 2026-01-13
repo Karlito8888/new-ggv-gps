@@ -27,7 +27,8 @@ export default function App() {
   // Navigation state machine (6 states)
   const [navState, setNavState] = useState("gps-permission");
   const [destination, setDestination] = useState(null);
-  const [hasOrientationPermission, setHasOrientationPermission] = useState(false);
+  const [hasOrientationPermission, setHasOrientationPermission] =
+    useState(false);
 
   // Blocks data (pre-loaded during GPS permission screen)
   const [blocks, setBlocks] = useState([]);
@@ -65,13 +66,22 @@ export default function App() {
   }, []);
 
   // Initialize map and GPS tracking
-  const { map, userLocation, isMapReady, triggerGeolocate } = useMapSetup(mapContainerRef);
+  const { map, userLocation, isMapReady, triggerGeolocate } =
+    useMapSetup(mapContainerRef);
 
   // Calculate route when destination is selected
-  const { steps, routeSource, routeGeoJSON } = useRouting(map, userLocation, destination);
+  const { steps, routeSource, routeGeoJSON } = useRouting(
+    map,
+    userLocation,
+    destination,
+  );
 
   // Navigation logic (distance, arrival detection)
-  const { distanceRemaining, hasArrived, arrivedAt } = useNavigation(map, userLocation, destination);
+  const { distanceRemaining, hasArrived, arrivedAt } = useNavigation(
+    map,
+    userLocation,
+    destination,
+  );
 
   // Generate destination key for tracking
   const destinationKey = destination?.coordinates
@@ -203,7 +213,11 @@ export default function App() {
 
       // Calculate heading based on platform
       let heading;
-      if (isIOS && e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
+      if (
+        isIOS &&
+        e.webkitCompassHeading !== null &&
+        e.webkitCompassHeading !== undefined
+      ) {
         // iOS Safari: 0-360, 0=North, clockwise
         heading = e.webkitCompassHeading;
       } else if (!isIOS && e.alpha !== null) {
@@ -252,7 +266,8 @@ export default function App() {
 
   // Effect: Keep user ALWAYS centered during navigation
   useEffect(() => {
-    if (!map || !isMapReady || navState !== "navigating" || !userLocation) return;
+    if (!map || !isMapReady || navState !== "navigating" || !userLocation)
+      return;
 
     // Skip centering if user recently interacted (within 5 seconds)
     if (userInteractionTimeRef.current) {
@@ -298,7 +313,11 @@ export default function App() {
             onRetryBlocks={retryLoadBlocks}
             onSelectDestination={(dest) => {
               setDestination(dest);
-              setNavState(hasOrientationPermission ? "navigating" : "orientation-permission");
+              setNavState(
+                hasOrientationPermission
+                  ? "navigating"
+                  : "orientation-permission",
+              );
             }}
           />
         )}
@@ -410,7 +429,9 @@ function GPSPermissionOverlay({ onGrant, triggerGeolocate }) {
       onGrant();
     } catch (err) {
       console.error("GPS permission error:", err);
-      setError("Location access denied. Please enable in your browser settings.");
+      setError(
+        "Location access denied. Please enable in your browser settings.",
+      );
       setIsRequesting(false);
     }
   };
@@ -446,13 +467,18 @@ function GPSPermissionOverlay({ onGrant, triggerGeolocate }) {
         <p className="gps-description">
           MyGGV GPS needs your location to guide you through the village.
           <span className="tagalog-inline">
-            Kailangan ng MyGGV GPS ang iyong lokasyon para gabayan ka sa village.
+            Kailangan ng MyGGV GPS ang iyong lokasyon para gabayan ka sa
+            village.
           </span>
         </p>
 
         {error && <div className="error-message">{error}</div>}
 
-        <button className="gps-btn" onClick={handleEnableGPS} disabled={isRequesting}>
+        <button
+          className="gps-btn"
+          onClick={handleEnableGPS}
+          disabled={isRequesting}
+        >
           <svg
             className="gps-btn-icon"
             viewBox="0 0 24 24"
@@ -473,7 +499,13 @@ function GPSPermissionOverlay({ onGrant, triggerGeolocate }) {
   );
 }
 
-function WelcomeOverlay({ blocks, isLoadingBlocks, blocksError, onRetryBlocks, onSelectDestination }) {
+function WelcomeOverlay({
+  blocks,
+  isLoadingBlocks,
+  blocksError,
+  onRetryBlocks,
+  onSelectDestination,
+}) {
   const [selectedBlock, setSelectedBlock] = useState("");
   const [selectedLot, setSelectedLot] = useState("");
   const [lots, setLots] = useState([]);
@@ -496,18 +528,20 @@ function WelcomeOverlay({ blocks, isLoadingBlocks, blocksError, onRetryBlocks, o
     if (!selectedBlock) return;
 
     // Fetch is async - setState in .then() callback is OK
-    supabase.rpc("get_lots_by_block", { block_name: selectedBlock }).then(({ data, error }) => {
-      if (error) {
-        console.error("Error fetching lots:", error);
-        setLots([]);
-      } else if (data) {
-        setLots(data);
-        if (data.length > 0) {
-          setSelectedLot(data[0].lot);
+    supabase
+      .rpc("get_lots_by_block", { block_name: selectedBlock })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Error fetching lots:", error);
+          setLots([]);
+        } else if (data) {
+          setLots(data);
+          if (data.length > 0) {
+            setSelectedLot(data[0].lot);
+          }
         }
-      }
-      setIsLoadingLots(false);
-    });
+        setIsLoadingLots(false);
+      });
   }, [selectedBlock]);
 
   const handleNavigate = () => {
@@ -517,7 +551,10 @@ function WelcomeOverlay({ blocks, isLoadingBlocks, blocksError, onRetryBlocks, o
         // PostGIS returns GeoJSON: {type: "Point", coordinates: [lng, lat]}
         onSelectDestination({
           type: "lot",
-          coordinates: [lot.coordinates.coordinates[0], lot.coordinates.coordinates[1]],
+          coordinates: [
+            lot.coordinates.coordinates[0],
+            lot.coordinates.coordinates[1],
+          ],
           name: `Block ${selectedBlock}, Lot ${selectedLot}`,
         });
       }
@@ -557,7 +594,9 @@ function WelcomeOverlay({ blocks, isLoadingBlocks, blocksError, onRetryBlocks, o
             <p className="welcome-error-text">
               {blocksError}
               <br />
-              <span className="welcome-error-tagalog">(Hindi ma-load ang mga block)</span>
+              <span className="welcome-error-tagalog">
+                (Hindi ma-load ang mga block)
+              </span>
             </p>
             <button className="welcome-retry-btn" onClick={onRetryBlocks}>
               Retry (Subukan muli)
@@ -573,7 +612,9 @@ function WelcomeOverlay({ blocks, isLoadingBlocks, blocksError, onRetryBlocks, o
               disabled={isLoadingBlocks}
             >
               <option value="" disabled>
-                {isLoadingBlocks ? "Loading... (Nag-lo-load...)" : "Select Block (Pumili ng Block)"}
+                {isLoadingBlocks
+                  ? "Loading... (Nag-lo-load...)"
+                  : "Select Block (Pumili ng Block)"}
               </option>
               {blocks.map((block) => (
                 <option key={block.name} value={block.name}>
@@ -701,15 +742,21 @@ function OrientationPermissionOverlay({ onGrant }) {
         <p className="orientation-tagalog">(I-enable ang Compass)</p>
 
         <p className="orientation-description">
-          Enable device orientation for accurate compass heading during navigation.
+          Enable device orientation for accurate compass heading during
+          navigation.
           <span className="tagalog-inline">
-            I-enable ang device orientation para sa tamang direksyon habang nag-navigate.
+            I-enable ang device orientation para sa tamang direksyon habang
+            nag-navigate.
           </span>
         </p>
 
         {error && <div className="error-message">{error}</div>}
 
-        <button className="orientation-btn" onClick={handleRequest} disabled={isRequesting}>
+        <button
+          className="orientation-btn"
+          onClick={handleRequest}
+          disabled={isRequesting}
+        >
           <svg
             className="orientation-btn-icon"
             viewBox="0 0 24 24"
@@ -743,11 +790,13 @@ function NavigationOverlay({
   userLocation,
   onCancel,
 }) {
-  const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
+  const formatDistance = (m) =>
+    m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
 
   // Calculate current step using distance along route (not crow-flies)
   const currentStep = (() => {
-    if (!steps?.length || !userLocation || !routeGeoJSON?.coordinates) return null;
+    if (!steps?.length || !userLocation || !routeGeoJSON?.coordinates)
+      return null;
 
     const routeCoords = routeGeoJSON.coordinates;
 
@@ -802,7 +851,9 @@ function NavigationOverlay({
           {currentStep ? (
             <>
               <span className="nav-turn-icon">{currentStep.icon}</span>
-              <span className="nav-turn-dist">{currentStep.distanceToStep}m</span>
+              <span className="nav-turn-dist">
+                {currentStep.distanceToStep}m
+              </span>
             </>
           ) : (
             <span className="nav-turn-icon">↑</span>
@@ -811,14 +862,25 @@ function NavigationOverlay({
 
         {/* Destination + distance (center) */}
         <div className="nav-center">
-          <div className="nav-dest-name">{destination?.name || "Navigating..."}</div>
-          <div className="nav-remaining">{formatDistance(distanceRemaining)}</div>
-          {routeSource && <div className="nav-source">{routeSource.toUpperCase()}</div>}
+          <div className="nav-dest-name">
+            {destination?.name || "Navigating..."}
+          </div>
+          <div className="nav-remaining">
+            {formatDistance(distanceRemaining)}
+          </div>
+          {routeSource && (
+            <div className="nav-source">{routeSource.toUpperCase()}</div>
+          )}
         </div>
 
         {/* Cancel button (right) */}
         <button className="nav-cancel-btn" onClick={onCancel} aria-label="Stop">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -827,14 +889,32 @@ function NavigationOverlay({
 
       {/* Map controls */}
       <div className="nav-map-controls">
-        <button className="map-control-btn" onClick={handleZoomIn} aria-label="Zoom in">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <button
+          className="map-control-btn"
+          onClick={handleZoomIn}
+          aria-label="Zoom in"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
         </button>
-        <button className="map-control-btn" onClick={handleZoomOut} aria-label="Zoom out">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <button
+          className="map-control-btn"
+          onClick={handleZoomOut}
+          aria-label="Zoom out"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
         </button>
@@ -873,7 +953,8 @@ function ArrivedOverlay({ destination, onNavigateAgain, onExitVillage }) {
         <p className="arrived-tagalog">(Nakarating ka na!)</p>
 
         <p className="arrived-description">
-          You have reached <strong>{destination?.name || "your destination"}</strong>.
+          You have reached{" "}
+          <strong>{destination?.name || "your destination"}</strong>.
           <span className="tagalog-inline">
             Nakarating ka na sa {destination?.name || "iyong destinasyon"}.
           </span>
@@ -957,8 +1038,7 @@ function ExitCompleteOverlay() {
             Salamat sa paggamit ng MyGGV GPS!
           </span>
         </p>
-
-              </motion.div>
+      </motion.div>
     </motion.div>
   );
 }
