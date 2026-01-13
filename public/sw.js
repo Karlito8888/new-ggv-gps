@@ -166,10 +166,11 @@ async function handleExternalRequest(request) {
   const cached = await caches.match(request);
 
   const fetchPromise = fetch(request)
-    .then((response) => {
+    .then(async (response) => {
       if (response.ok) {
-        const cache = caches.open(DYNAMIC_CACHE);
-        cache.then((c) => c.put(request, response.clone()));
+        const responseToCache = response.clone();
+        const cache = await caches.open(DYNAMIC_CACHE);
+        await cache.put(request, responseToCache);
       }
       return response;
     })
