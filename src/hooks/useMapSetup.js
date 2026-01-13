@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
 import { blocks } from "../data/blocks";
 import destinationMarkerImg from "../assets/default-marker.png";
+import "../styles/maplibre-gl.css";
 
 const VILLAGE_CENTER = [120.95134859887523, 14.347872973134175];
 
@@ -51,6 +50,7 @@ function addBlocksLayer(map) {
 
 /**
  * Hook to initialize MapLibre map with GPS tracking via GeolocateControl.
+ * Uses dynamic import for MapLibre to enable code-splitting and lazy loading.
  *
  * @param {React.RefObject<HTMLDivElement>} containerRef - Ref to the map container element
  * @returns {{
@@ -66,11 +66,12 @@ export function useMapSetup(containerRef) {
   const [isMapReady, setIsMapReady] = useState(false);
   const geolocateRef = useRef(null);
 
-  // Initialize map
+  // Initialize map with lazy-loaded MapLibre
   useEffect(() => {
     if (!containerRef.current) return;
 
     let mapInstance = null;
+    let isCancelled = false;
 
     // Named handler for proper cleanup
     const onStyleImageMissing = (e) => {
@@ -84,14 +85,22 @@ export function useMapSetup(containerRef) {
     };
 
     const initMap = async () => {
-      // Fetch and fix the OpenFreeMap Liberty style
-      const response = await fetch("https://tiles.openfreemap.org/styles/liberty");
-      const style = await response.json();
+      // Dynamic import - MapLibre loads only when map is initialized
+      const [maplibregl, styleResponse] = await Promise.all([
+        import("maplibre-gl"),
+        fetch("https://tiles.openfreemap.org/styles/liberty"),
+      ]);
+
+      // Check if component unmounted during async load
+      if (isCancelled) return;
+
+      const style = await styleResponse.json();
 
       // Fix: Use MapLibre official font server (OpenFreeMap fonts return 404)
       style.glyphs = "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf";
 
-      mapInstance = new maplibregl.Map({
+      const MapLibre = maplibregl.default || maplibregl;
+      mapInstance = new MapLibre.Map({
         container: containerRef.current,
         style: style,
         center: VILLAGE_CENTER,
@@ -102,7 +111,6 @@ export function useMapSetup(containerRef) {
       mapInstance.on("styleimagemissing", onStyleImageMissing);
 
       // Suppress non-critical style errors (null values in tile data)
-      // See: https://github.com/mapbox/mapbox-gl-js/issues/7097
       mapInstance.on("error", (e) => {
         if (e.error?.message?.includes("Expected value to be of type")) {
           return; // Ignore style expression errors from OpenFreeMap tiles
@@ -111,9 +119,11 @@ export function useMapSetup(containerRef) {
       });
 
       mapInstance.on("load", () => {
+        if (isCancelled) return;
+
         addBlocksLayer(mapInstance);
 
-        const geolocate = new maplibregl.GeolocateControl({
+        const geolocate = new MapLibre.GeolocateControl({
           positionOptions: { enableHighAccuracy: true },
           trackUserLocation: true,
           showUserHeading: false, // Heading shown via map rotation instead
@@ -138,6 +148,7 @@ export function useMapSetup(containerRef) {
     initMap();
 
     return () => {
+      isCancelled = true;
       if (mapInstance) {
         mapInstance.off("styleimagemissing", onStyleImageMissing);
         mapInstance.remove();

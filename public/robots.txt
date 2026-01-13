@@ -1,0 +1,6 @@
+# MyGGV GPS - Robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://myggv-gps.netlify.app/sitemap.xml

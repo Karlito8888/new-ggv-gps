@@ -19,12 +19,36 @@ export default defineConfig({
     outDir: "dist",
     sourcemap: false, // Disable for production
     target: "esnext", // Optimize for modern smartphones
+    cssCodeSplit: true, // Split CSS for better caching
+    modulePreload: {
+      polyfill: false, // Modern browsers support modulepreload natively
+    },
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ["react", "react-dom"],
-          maps: ["maplibre-gl"],
-          supabase: ["@supabase/supabase-js"],
+        // Improved chunking strategy for lazy loading
+        manualChunks: (id) => {
+          // Core React - small, always needed
+          if (id.includes("node_modules/react-dom")) {
+            return "vendor";
+          }
+          if (id.includes("node_modules/react/")) {
+            return "vendor";
+          }
+
+          // MapLibre - large, lazy loaded
+          if (id.includes("node_modules/maplibre-gl")) {
+            return "maps";
+          }
+
+          // Supabase - medium, lazy loaded
+          if (id.includes("node_modules/@supabase")) {
+            return "supabase";
+          }
+
+          // Framer Motion - animations
+          if (id.includes("node_modules/framer-motion")) {
+            return "animations";
+          }
         },
       },
     },
