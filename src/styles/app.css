@@ -192,10 +192,9 @@ textarea {
 
 /* Error message */
 .error-message {
-  padding: 0.75rem;
-  background: #fed7d7;
-  color: #c53030;
-  border-radius: 0.5rem;
+  padding: 0.75rem 0;
+  background: none;
+  color: #6b7280;
   margin-bottom: 1rem;
   font-size: 0.875rem;
 }

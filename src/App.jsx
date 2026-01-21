@@ -429,9 +429,7 @@ function GPSPermissionOverlay({ onGrant, triggerGeolocate }) {
       onGrant();
     } catch (err) {
       console.error("GPS permission error:", err);
-      setError(
-        "Location access denied. Please enable in your browser settings.",
-      );
+      setError("Please, try again");
       setIsRequesting(false);
     }
   };
