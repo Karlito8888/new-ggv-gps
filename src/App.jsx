@@ -301,6 +301,7 @@ export default function App() {
             key="gps-permission"
             onGrant={() => setNavState("welcome")}
             triggerGeolocate={triggerGeolocate}
+            isMapReady={isMapReady}
           />
         )}
 
@@ -414,7 +415,7 @@ const modalVariants = {
  * @param {() => void} props.onGrant - Callback when GPS permission is granted
  * @param {() => Promise<GeolocationPosition>} props.triggerGeolocate - Triggers native GPS permission request
  */
-function GPSPermissionOverlay({ onGrant, triggerGeolocate }) {
+function GPSPermissionOverlay({ onGrant, triggerGeolocate, isMapReady }) {
   const [isRequesting, setIsRequesting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -475,20 +476,32 @@ function GPSPermissionOverlay({ onGrant, triggerGeolocate }) {
         <button
           className="gps-btn"
           onClick={handleEnableGPS}
-          disabled={isRequesting}
+          disabled={isRequesting || !isMapReady}
+          style={
+            !isMapReady ? { backgroundColor: "#888", opacity: 0.6 } : undefined
+          }
         >
-          <svg
-            className="gps-btn-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
-          {isRequesting ? "Requesting..." : "Enable GPS"}
+          {!isMapReady && (
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              style={{
+                animation: "spin 1s linear infinite",
+                marginRight: "8px",
+              }}
+            >
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+          )}
+          {!isMapReady
+            ? "Please wait, map is loading..."
+            : isRequesting
+              ? "Requesting..."
+              : "Enable GPS"}
         </button>
 
         <p className="gps-version">v{__APP_VERSION__}</p>
