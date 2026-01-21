@@ -106,6 +106,10 @@ export function useMapSetup(containerRef) {
         style: style,
         center: VILLAGE_CENTER,
         zoom: 15,
+        maxBounds: [
+          [120.942, 14.34],
+          [120.962, 14.358],
+        ], // Village bounds + margin (limits tile loading)
       });
 
       // Fix: Create transparent placeholder for missing sprite images
