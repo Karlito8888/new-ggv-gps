@@ -87,6 +87,17 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Handle HTML pages (network-first for immediate updates)
+  if (
+    url.origin === self.location.origin &&
+    (request.destination === "document" ||
+      url.pathname === "/" ||
+      url.pathname.endsWith(".html"))
+  ) {
+    event.respondWith(handleHtmlRequest(request));
+    return;
+  }
+
   // Handle static assets (cache-first)
   if (url.origin === self.location.origin) {
     event.respondWith(handleStaticRequest(request));
@@ -96,6 +107,24 @@ self.addEventListener("fetch", (event) => {
   // Handle external resources (stale-while-revalidate)
   event.respondWith(handleExternalRequest(request));
 });
+
+// Network-first for HTML pages (ensures immediate updates)
+async function handleHtmlRequest(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(STATIC_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    // Fallback to cache if offline
+    const cached = await caches.match(request);
+    return (
+      cached || caches.match("/") || new Response("Offline", { status: 503 })
+    );
+  }
+}
 
 // Cache-first for static assets
 async function handleStaticRequest(request) {
