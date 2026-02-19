@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+package.json
+bun.lock
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+dev-dist/
+.next/
+.nuxt/
+.output/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# IDE & Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+
+# Logs
+logs/
+*.log
+debug.log
+error.log
+
+# Development
+coverage/
+.nyc_output/
+.cache/
+.temp/
+.tmp/
+
+# Tools
+.netlify/
+.vercel/
+.firebase/
+.turbo/
+
+# Project-specific
+_bmad/
+_bmad-output/
+docs/
+scripts/temp/

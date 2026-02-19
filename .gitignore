@@ -243,11 +243,11 @@ scripts/temp/
 temp-*
 
 # ========================================
-# AI ASSISTANTS
+# AI ASSISTANTS & DEVELOPMENT TOOLS
 # ========================================
 # Claude Code
-.claude/settings.local.json
-.claude/mcp.json
+.claude/
+.agents/
 
 # Serena
 .serena/
@@ -257,3 +257,10 @@ temp-*
 
 # Dev dist
 dev-dist/
+
+# BMAD (editorial/markdown tools)
+_bmad/
+_bmad-output/
+
+# Generated documentation
+docs/
