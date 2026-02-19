@@ -95,9 +95,7 @@ async function fetchWithTimeout(url, signal) {
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   // Combine external signal with timeout signal
-  const combinedSignal = signal
-    ? AbortSignal.any([signal, controller.signal])
-    : controller.signal;
+  const combinedSignal = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
 
   try {
     const res = await fetch(url, { signal: combinedSignal });
@@ -130,7 +128,7 @@ async function fetchOSRM(originLng, originLat, destLng, destLat, signal) {
                 location: step.maneuver.location, // [lng, lat]
               };
             })
-            .filter(Boolean) || [],
+            .filter(Boolean) || []
       ) || [];
 
     return {
@@ -203,7 +201,7 @@ export function useRouting(map, origin, destination) {
         lastOriginRef.current.lat,
         lastOriginRef.current.lng,
         originLat,
-        originLng,
+        originLng
       );
       if (movedDistance < 30) {
         return; // Skip recalculation, user hasn't moved enough
@@ -233,7 +231,7 @@ export function useRouting(map, origin, destination) {
       try {
         route = await fetchOSRM(originLng, originLat, destLng, destLat, signal);
         if (route) {
-          console.log("Route: OSRM");
+          console.info("Route: OSRM");
           setRouteGeoJSON(route.geometry);
           setDistance(route.distance);
           setSteps(route.steps || []);
@@ -250,7 +248,7 @@ export function useRouting(map, origin, destination) {
       try {
         route = await fetchORS(originLng, originLat, destLng, destLat, signal);
         if (route) {
-          console.log("Route: ORS (fallback)");
+          console.info("Route: ORS (fallback)");
           setRouteGeoJSON(route.geometry);
           setDistance(route.distance);
           setSteps([]); // ORS doesn't provide steps in this format
@@ -264,7 +262,7 @@ export function useRouting(map, origin, destination) {
       }
 
       // 3. Fallback: direct line
-      console.log("Route: Direct line (fallback)");
+      console.info("Route: Direct line (fallback)");
       const geometry = {
         type: "LineString",
         coordinates: [
@@ -291,12 +289,12 @@ export function useRouting(map, origin, destination) {
     // Retry OSRM in background with exponential backoff
     const scheduleRetry = () => {
       if (retryCountRef.current >= RETRY_DELAYS.length) {
-        console.log("Route: Max retries reached, staying on direct line");
+        console.info("Route: Max retries reached, staying on direct line");
         return;
       }
 
       const delay = RETRY_DELAYS[retryCountRef.current];
-      console.log(`Route: Scheduling OSRM retry in ${delay / 1000}s`);
+      console.info(`Route: Scheduling OSRM retry in ${delay / 1000}s`);
 
       retryTimerRef.current = setTimeout(async () => {
         retryCountRef.current++;
@@ -306,10 +304,10 @@ export function useRouting(map, origin, destination) {
             originLat,
             destLng,
             destLat,
-            abortRef.current?.signal,
+            abortRef.current?.signal
           );
           if (route) {
-            console.log("Route: OSRM retry successful!");
+            console.info("Route: OSRM retry successful!");
             setRouteGeoJSON(route.geometry);
             setDistance(route.distance);
             setSteps(route.steps || []);
