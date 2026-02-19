@@ -52,12 +52,7 @@ body {
   height: 100svh;
   min-height: -webkit-fill-available;
   font-family: var(--font-primary);
-  background: linear-gradient(
-    135deg,
-    var(--color-green),
-    var(--color-yellow),
-    var(--color-green)
-  );
+  background: linear-gradient(135deg, var(--color-green), var(--color-yellow), var(--color-green));
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -204,11 +199,7 @@ textarea {
    =================================================================== */
 
 .gps-overlay {
-  background: linear-gradient(
-    135deg,
-    rgba(80, 170, 97, 0.75) 0%,
-    rgba(243, 197, 73, 0.7) 100%
-  );
+  background: linear-gradient(135deg, rgba(80, 170, 97, 0.75) 0%, rgba(243, 197, 73, 0.7) 100%);
 }
 
 .gps-modal {
@@ -360,11 +351,7 @@ textarea {
    =================================================================== */
 
 .welcome-overlay {
-  background: linear-gradient(
-    135deg,
-    rgba(80, 170, 97, 0.75) 0%,
-    rgba(243, 197, 73, 0.7) 100%
-  );
+  background: linear-gradient(135deg, rgba(80, 170, 97, 0.75) 0%, rgba(243, 197, 73, 0.7) 100%);
 }
 
 .welcome-modal {
@@ -591,11 +578,7 @@ textarea {
    =================================================================== */
 
 .orientation-overlay {
-  background: linear-gradient(
-    135deg,
-    rgba(80, 170, 97, 0.75) 0%,
-    rgba(243, 197, 73, 0.7) 100%
-  );
+  background: linear-gradient(135deg, rgba(80, 170, 97, 0.75) 0%, rgba(243, 197, 73, 0.7) 100%);
 }
 
 .orientation-modal {
@@ -762,11 +745,7 @@ textarea {
    =================================================================== */
 
 .arrived-overlay {
-  background: linear-gradient(
-    135deg,
-    rgba(80, 170, 97, 0.8) 0%,
-    rgba(52, 211, 153, 0.75) 100%
-  );
+  background: linear-gradient(135deg, rgba(80, 170, 97, 0.8) 0%, rgba(52, 211, 153, 0.75) 100%);
 }
 
 .arrived-modal {
@@ -934,11 +913,7 @@ textarea {
    =================================================================== */
 
 .exit-overlay {
-  background: linear-gradient(
-    135deg,
-    rgba(243, 197, 73, 0.8) 0%,
-    rgba(251, 191, 36, 0.75) 100%
-  );
+  background: linear-gradient(135deg, rgba(243, 197, 73, 0.8) 0%, rgba(251, 191, 36, 0.75) 100%);
 }
 
 .exit-modal {
@@ -1056,11 +1031,7 @@ textarea {
   top: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(
-    180deg,
-    var(--color-white) 0%,
-    rgba(244, 244, 244, 0.98) 100%
-  );
+  background: linear-gradient(180deg, var(--color-white) 0%, rgba(244, 244, 244, 0.98) 100%);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   z-index: 900;
   padding: 0.875rem 1rem;
@@ -1151,11 +1122,7 @@ textarea {
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    rgba(80, 170, 97, 0.1),
-    rgba(243, 197, 73, 0.1)
-  );
+  background: linear-gradient(135deg, rgba(80, 170, 97, 0.1), rgba(243, 197, 73, 0.1));
   border: 2px solid rgba(80, 170, 97, 0.3);
   display: flex;
   align-items: center;

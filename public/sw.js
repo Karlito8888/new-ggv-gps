@@ -32,7 +32,7 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
-    }),
+    })
   );
   // Activate immediately
   self.skipWaiting();
@@ -52,9 +52,9 @@ self.addEventListener("activate", (event) => {
               key !== TILE_CACHE
             );
           })
-          .map((key) => caches.delete(key)),
+          .map((key) => caches.delete(key))
       );
-    }),
+    })
   );
   // Take control of all pages immediately
   self.clients.claim();
@@ -90,9 +90,7 @@ self.addEventListener("fetch", (event) => {
   // Handle HTML pages (network-first for immediate updates)
   if (
     url.origin === self.location.origin &&
-    (request.destination === "document" ||
-      url.pathname === "/" ||
-      url.pathname.endsWith(".html"))
+    (request.destination === "document" || url.pathname === "/" || url.pathname.endsWith(".html"))
   ) {
     event.respondWith(handleHtmlRequest(request));
     return;
@@ -120,9 +118,7 @@ async function handleHtmlRequest(request) {
   } catch {
     // Fallback to cache if offline
     const cached = await caches.match(request);
-    return (
-      cached || caches.match("/") || new Response("Offline", { status: 503 })
-    );
+    return cached || caches.match("/") || new Response("Offline", { status: 503 });
   }
 }
 
