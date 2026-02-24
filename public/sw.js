@@ -1,7 +1,7 @@
 // Service Worker for MyGGV GPS PWA
 // Provides offline support and caching for better performance
 
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const STATIC_CACHE = `myggv-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `myggv-dynamic-${CACHE_VERSION}`;
 const TILE_CACHE = `myggv-tiles-${CACHE_VERSION}`;
@@ -15,13 +15,8 @@ const STATIC_ASSETS = [
   "/icons/icon-512x512.png",
 ];
 
-// Tile servers to cache (external raster tiles only — vector tiles now served locally via PMTiles)
-const TILE_HOSTS = [
-  "a.tile.openstreetmap.org",
-  "b.tile.openstreetmap.org",
-  "c.tile.openstreetmap.org",
-  "server.arcgisonline.com",
-];
+// Tile servers to cache — currently empty (vector tiles served locally via PMTiles)
+const TILE_HOSTS = [];
 
 // Max tiles to cache (prevent storage bloat)
 const MAX_TILE_CACHE_SIZE = 500;

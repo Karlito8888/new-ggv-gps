@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { blocks } from "../data/blocks";
 import destinationMarkerImg from "../assets/default-marker.png";
+import protomapsLightLayers from "../data/protomaps-light-layers.json";
 import "../styles/maplibre-gl.css";
+
+// Eagerly start downloading map libraries at module parse time
+// (overlaps with React render cycle instead of waiting for useEffect)
+const mapLibsPromise = Promise.all([import("maplibre-gl"), import("pmtiles")]);
 
 /** @type {[number, number]} */
 const VILLAGE_CENTER = [120.95134859887523, 14.347872973134175];
@@ -87,16 +92,9 @@ export function useMapSetup(containerRef) {
     };
 
     const initMap = async () => {
-      // Lazy-load MapLibre, PMTiles protocol adapter, and Protomaps theme together
-      const [maplibregl, { Protocol }, protoModule] = await Promise.all([
-        import("maplibre-gl"),
-        import("pmtiles"),
-        import("protomaps-themes-base"),
-      ]);
-      // Defensive interop: handle both ESM default and CJS module.exports shapes
-      const protoLayers = protoModule.default || protoModule;
+      // Await pre-started map library downloads (initiated at module level)
+      const [maplibregl, { Protocol }] = await mapLibsPromise;
 
-      // Check if component unmounted during async load
       if (isCancelled) return;
 
       const MapLibre = maplibregl.default || maplibregl;
@@ -106,7 +104,7 @@ export function useMapSetup(containerRef) {
       const protocol = new Protocol();
       MapLibre.addProtocol("pmtiles", protocol.tile);
 
-      // Build Protomaps style inline — no external style.json needed
+      // Protomaps style with pre-generated layers (build-time, no runtime dependency)
       const mapStyle = {
         version: 8,
         glyphs: "/map-fonts/{fontstack}/{range}.pbf",
@@ -118,7 +116,7 @@ export function useMapSetup(containerRef) {
             attribution: "© OpenStreetMap contributors",
           },
         },
-        layers: protoLayers("protomaps", "light", "en"),
+        layers: protomapsLightLayers,
       };
 
       mapInstance = new MapLibre.Map({

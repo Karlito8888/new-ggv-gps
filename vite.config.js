@@ -35,12 +35,8 @@ export default defineConfig({
             return "vendor";
           }
 
-          // MapLibre + PMTiles + Protomaps theme - all lazy loaded together
-          if (
-            id.includes("node_modules/maplibre-gl") ||
-            id.includes("node_modules/pmtiles") ||
-            id.includes("node_modules/protomaps-themes-base")
-          ) {
+          // MapLibre + PMTiles - lazy loaded together (protomaps-themes-base replaced by pre-generated JSON)
+          if (id.includes("node_modules/maplibre-gl") || id.includes("node_modules/pmtiles")) {
             return "maps";
           }
 
