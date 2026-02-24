@@ -1,7 +1,7 @@
 // Service Worker for MyGGV GPS PWA
 // Provides offline support and caching for better performance
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const STATIC_CACHE = `myggv-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `myggv-dynamic-${CACHE_VERSION}`;
 const TILE_CACHE = `myggv-tiles-${CACHE_VERSION}`;
@@ -128,7 +128,8 @@ async function handleStaticRequest(request) {
 
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    // Skip caching partial responses (HTTP 206) — e.g. PMTiles range requests
+    if (response.ok && response.status !== 206) {
       const cache = await caches.open(STATIC_CACHE);
       cache.put(request, response.clone());
     }

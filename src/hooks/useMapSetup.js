@@ -110,7 +110,7 @@ export function useMapSetup(containerRef) {
       const mapStyle = {
         version: 8,
         glyphs: "/map-fonts/{fontstack}/{range}.pbf",
-        sprite: "https://protomaps.github.io/basemaps-assets/sprites/v4/light",
+        sprite: new URL("/sprites/light", window.location.origin).href,
         sources: {
           protomaps: {
             type: "vector",
