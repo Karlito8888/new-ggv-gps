@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 import { fileURLToPath, URL } from "node:url";
 import { readFileSync } from "node:fs";
 
@@ -57,6 +58,22 @@ export default defineConfig({
     react({
       babel: {
         plugins: ["babel-plugin-react-compiler"],
+      },
+    }),
+    VitePWA({
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.js",
+      injectRegister: false,
+      manifest: false,
+      injectManifest: {
+        globPatterns: [
+          "**/*.{js,css,html}",
+          "sprites/**/*.{json,png}",
+          "icons/**/*.png",
+          "manifest.json",
+        ],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },
     }),
   ],

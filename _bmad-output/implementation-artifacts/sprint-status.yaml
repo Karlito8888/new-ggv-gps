@@ -44,7 +44,7 @@ development_status:
   epic-1: in-progress
   1-1-self-hosted-map-style-glyphs-sprites: done
   1-2-village-pmtiles-offline-tile-hosting: done
-  1-3-workbox-service-worker-offline-first-caching: backlog
+  1-3-workbox-service-worker-offline-first-caching: review
   1-4-pwa-manifest-install-experience: backlog
   1-5-hostinger-hosting-deployment-configuration: backlog
   epic-1-retrospective: optional
