@@ -39,7 +39,7 @@ function projectPointOnLine(pointLng, pointLat, lineCoordinates) {
   }
 
   let minDistance = Infinity;
-  let closestPoint = [pointLng, pointLat];
+  let closestPoint = /** @type {[number, number]} */ ([pointLng, pointLat]);
   let segmentIndex = 0;
   let progressOnSegment = 0;
 
