@@ -66,6 +66,7 @@ export function useMapSetup(containerRef) {
   const [userLocation, setUserLocation] = useState(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const geolocateRef = useRef(null);
+  const maplibreRefForCleanup = useRef(null);
 
   // Initialize map with lazy-loaded MapLibre
   useEffect(() => {
@@ -86,16 +87,43 @@ export function useMapSetup(containerRef) {
     };
 
     const initMap = async () => {
-      // Dynamic import - MapLibre loads only when map is initialized
-      const maplibregl = await import("maplibre-gl");
+      // Lazy-load MapLibre, PMTiles protocol adapter, and Protomaps theme together
+      const [maplibregl, { Protocol }, protoModule] = await Promise.all([
+        import("maplibre-gl"),
+        import("pmtiles"),
+        import("protomaps-themes-base"),
+      ]);
+      // Defensive interop: handle both ESM default and CJS module.exports shapes
+      const protoLayers = protoModule.default || protoModule;
 
       // Check if component unmounted during async load
       if (isCancelled) return;
 
       const MapLibre = maplibregl.default || maplibregl;
+      maplibreRefForCleanup.current = MapLibre;
+
+      // Register PMTiles protocol BEFORE map construction
+      const protocol = new Protocol();
+      MapLibre.addProtocol("pmtiles", protocol.tile);
+
+      // Build Protomaps style inline — no external style.json needed
+      const mapStyle = {
+        version: 8,
+        glyphs: "/map-fonts/{fontstack}/{range}.pbf",
+        sprite: "https://protomaps.github.io/basemaps-assets/sprites/v4/light",
+        sources: {
+          protomaps: {
+            type: "vector",
+            url: "pmtiles:///tiles/ggv.pmtiles",
+            attribution: "© OpenStreetMap contributors",
+          },
+        },
+        layers: protoLayers("protomaps", "light", "en"),
+      };
+
       mapInstance = new MapLibre.Map({
         container: containerRef.current,
-        style: "/style/style.json",
+        style: mapStyle,
         center: VILLAGE_CENTER,
         zoom: 15,
         maxBounds: [
@@ -110,7 +138,7 @@ export function useMapSetup(containerRef) {
       // Suppress non-critical style errors (null values in tile data)
       mapInstance.on("error", (e) => {
         if (e.error?.message?.includes("Expected value to be of type")) {
-          return; // Ignore style expression errors from OpenFreeMap tiles
+          return; // Ignore style expression errors from tile data
         }
         console.error("Map error:", e.error);
       });
@@ -148,6 +176,9 @@ export function useMapSetup(containerRef) {
       if (mapInstance) {
         mapInstance.off("styleimagemissing", onStyleImageMissing);
         mapInstance.remove();
+      }
+      if (maplibreRefForCleanup.current) {
+        maplibreRefForCleanup.current.removeProtocol("pmtiles");
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

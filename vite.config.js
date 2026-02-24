@@ -35,8 +35,12 @@ export default defineConfig({
             return "vendor";
           }
 
-          // MapLibre - large, lazy loaded
-          if (id.includes("node_modules/maplibre-gl")) {
+          // MapLibre + PMTiles + Protomaps theme - all lazy loaded together
+          if (
+            id.includes("node_modules/maplibre-gl") ||
+            id.includes("node_modules/pmtiles") ||
+            id.includes("node_modules/protomaps-themes-base")
+          ) {
             return "maps";
           }
 

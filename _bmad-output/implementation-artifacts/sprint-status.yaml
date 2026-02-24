@@ -43,7 +43,7 @@ development_status:
   # Epic 1: Navigation Offline-First & PWA Performante
   epic-1: in-progress
   1-1-self-hosted-map-style-glyphs-sprites: done
-  1-2-village-pmtiles-offline-tile-hosting: backlog
+  1-2-village-pmtiles-offline-tile-hosting: review
   1-3-workbox-service-worker-offline-first-caching: backlog
   1-4-pwa-manifest-install-experience: backlog
   1-5-hostinger-hosting-deployment-configuration: backlog

@@ -15,12 +15,11 @@ const STATIC_ASSETS = [
   "/icons/icon-512x512.png",
 ];
 
-// Tile servers to cache
+// Tile servers to cache (external raster tiles only — vector tiles now served locally via PMTiles)
 const TILE_HOSTS = [
   "a.tile.openstreetmap.org",
   "b.tile.openstreetmap.org",
   "c.tile.openstreetmap.org",
-  "tiles.openfreemap.org",
   "server.arcgisonline.com",
 ];
 

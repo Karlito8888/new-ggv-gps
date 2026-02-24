@@ -57,7 +57,7 @@
     <meta property="twitter:image" content="https://myggv-gps.netlify.app/icons/icon-512x512.png" />
 
     <!-- Preloading critical resources -->
-    <link rel="preconnect" href="https://tiles.openfreemap.org" />
+    <link rel="preconnect" href="https://protomaps.github.io" />
     <link rel="preconnect" href="https://wlrrruemchacgyypexsu.supabase.co" />
     <link rel="dns-prefetch" href="https://a.tile.openstreetmap.org" />
     <link rel="dns-prefetch" href="https://b.tile.openstreetmap.org" />
@@ -72,8 +72,6 @@
       type="font/woff2"
       crossorigin
     />
-    <!-- Preload self-hosted map style for faster initial load -->
-    <link rel="preload" href="/style/style.json" as="fetch" crossorigin="anonymous" />
 
     <!-- Styles are imported via main.jsx (Vite handles CSS bundling) -->
 
@@ -83,7 +81,7 @@
     <!-- Security -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; connect-src 'self' https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org https://wlrrruemchacgyypexsu.supabase.co https://routing.openstreetmap.de https://api.openrouteservice.org https://server.arcgisonline.com https://tiles.openfreemap.org https://router.project-osrm.org; img-src 'self' data: https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org https://server.arcgisonline.com https://tiles.openfreemap.org; style-src 'self' 'unsafe-inline'; font-src 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; connect-src 'self' https://wlrrruemchacgyypexsu.supabase.co https://routing.openstreetmap.de https://api.openrouteservice.org https://server.arcgisonline.com https://router.project-osrm.org; img-src 'self' data: https://protomaps.github.io https://server.arcgisonline.com; style-src 'self' 'unsafe-inline'; font-src 'self';"
     />
 
     <!-- Additional Security Headers -->

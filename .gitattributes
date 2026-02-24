@@ -1,2 +1,4 @@
 # Binary map font files (PBF glyph ranges)
 *.pbf binary
+# Binary map tile archives
+*.pmtiles binary
