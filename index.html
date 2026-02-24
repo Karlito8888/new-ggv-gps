@@ -58,7 +58,6 @@
 
     <!-- Preloading critical resources -->
     <link rel="preconnect" href="https://tiles.openfreemap.org" />
-    <link rel="preconnect" href="https://demotiles.maplibre.org" />
     <link rel="preconnect" href="https://wlrrruemchacgyypexsu.supabase.co" />
     <link rel="dns-prefetch" href="https://a.tile.openstreetmap.org" />
     <link rel="dns-prefetch" href="https://b.tile.openstreetmap.org" />
@@ -73,13 +72,8 @@
       type="font/woff2"
       crossorigin
     />
-    <!-- Preload map style for faster initial load -->
-    <link
-      rel="preload"
-      href="https://tiles.openfreemap.org/styles/liberty"
-      as="fetch"
-      crossorigin="anonymous"
-    />
+    <!-- Preload self-hosted map style for faster initial load -->
+    <link rel="preload" href="/style/style.json" as="fetch" crossorigin="anonymous" />
 
     <!-- Styles are imported via main.jsx (Vite handles CSS bundling) -->
 

@@ -87,23 +87,15 @@ export function useMapSetup(containerRef) {
 
     const initMap = async () => {
       // Dynamic import - MapLibre loads only when map is initialized
-      const [maplibregl, styleResponse] = await Promise.all([
-        import("maplibre-gl"),
-        fetch("https://tiles.openfreemap.org/styles/liberty"),
-      ]);
+      const maplibregl = await import("maplibre-gl");
 
       // Check if component unmounted during async load
       if (isCancelled) return;
 
-      const style = await styleResponse.json();
-
-      // Fix: Use MapLibre official font server (OpenFreeMap fonts return 404)
-      style.glyphs = "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf";
-
       const MapLibre = maplibregl.default || maplibregl;
       mapInstance = new MapLibre.Map({
         container: containerRef.current,
-        style: style,
+        style: "/style/style.json",
         center: VILLAGE_CENTER,
         zoom: 15,
         maxBounds: [
