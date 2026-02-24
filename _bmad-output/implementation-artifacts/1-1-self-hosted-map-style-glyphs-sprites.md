@@ -1,6 +1,6 @@
 # Story 1.1: Self-Hosted Map Style, Glyphs & Sprites
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -216,8 +216,11 @@ claude-sonnet-4-6
 - `public/map-fonts/Noto Sans Bold/*.pbf` (new — 256 files)
 - `public/map-fonts/Noto Sans Italic/*.pbf` (new — 256 files)
 - `src/hooks/useMapSetup.js` (modified — simplified map init, removed external fetch/glyphs override)
-- `index.html` (modified — replaced external style preload with local `/style/style.json` preload; removed stale `preconnect` to `demotiles.maplibre.org`)
+- `index.html` (modified — replaced external style preload with local `/style/style.json` preload; removed stale `preconnect` and CSP references to `demotiles.maplibre.org`)
+- `netlify.toml` (modified — added cache headers for `/style/*`, `/sprites/*`, `/map-fonts/*`)
+- `.gitattributes` (new — marks `*.pbf` as binary)
 
 ## Change Log
 
 - 2026-02-24: Implemented Story 1.1 — self-hosted map style, glyphs, and sprites. Removed external dependencies on tiles.openfreemap.org style API and demotiles.maplibre.org font API. Map now loads all static assets from local paths.
+- 2026-02-24: Code review fixes — removed stale `demotiles.maplibre.org` from CSP (index.html), added cache headers for self-hosted map assets (netlify.toml), removed stray `public/map-fonts/Noto` binary file, added `.gitattributes` for PBF binary handling.

@@ -34,6 +34,22 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# Cache pour assets cartographiques self-hosted (Story 1.1)
+[[headers]]
+  for = "/style/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/sprites/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/map-fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 # Variables d'environnement (à configurer dans Netlify UI)
 # REQUIS :
 # VITE_SUPABASE_URL
