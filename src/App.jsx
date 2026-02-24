@@ -196,6 +196,7 @@ export default function App() {
     // Detect platform once (iOS uses webkitCompassHeading, Android uses alpha)
     const isIOS =
       typeof DeviceOrientationEvent !== "undefined" &&
+      // @ts-expect-error iOS 13+ API not in standard TypeScript DOM types
       typeof DeviceOrientationEvent.requestPermission === "function";
 
     const handler = (e) => {
@@ -376,15 +377,15 @@ const overlayVariants = {
   exit: { opacity: 0 },
 };
 
-const modalVariants = {
+const modalVariants = /** @type {const} */ ({
   hidden: { scale: 0.8, opacity: 0 },
   visible: {
     scale: 1,
     opacity: 1,
-    transition: { type: "spring", damping: 25 },
+    transition: /** @type {const} */ ({ type: "spring", damping: 25 }),
   },
   exit: { scale: 0.8, opacity: 0 },
-};
+});
 
 /**
  * GPS Permission Overlay
@@ -401,6 +402,7 @@ const modalVariants = {
  * @param {Object} props
  * @param {() => void} props.onGrant - Callback when GPS permission is granted
  * @param {() => Promise<GeolocationPosition>} props.triggerGeolocate - Triggers native GPS permission request
+ * @param {boolean} props.isMapReady - Whether the map has finished loading
  */
 function GPSPermissionOverlay({ onGrant, triggerGeolocate, isMapReady }) {
   const [isRequesting, setIsRequesting] = useState(false);
@@ -675,6 +677,7 @@ function OrientationPermissionOverlay({ onGrant }) {
     // https://developer.apple.com/documentation/safari-release-notes/safari-13-release-notes#Media
     const needsPermission =
       typeof DeviceOrientationEvent !== "undefined" &&
+      // @ts-expect-error iOS 13+ API not in standard TypeScript DOM types
       typeof DeviceOrientationEvent.requestPermission === "function";
 
     if (!needsPermission) {
@@ -685,6 +688,7 @@ function OrientationPermissionOverlay({ onGrant }) {
     }
 
     try {
+      // @ts-expect-error iOS 13+ API not in standard TypeScript DOM types
       const permission = await DeviceOrientationEvent.requestPermission();
       if (permission === "granted") {
         onGrant();

@@ -359,7 +359,7 @@ export function useRouting(map, origin, destination) {
 
 function updateMapRoute(map, geometry) {
   if (map.getSource("route")) {
-    map.getSource("route").setData(geometry);
+    /** @type {import('maplibre-gl').GeoJSONSource} */ (map.getSource("route")).setData(geometry);
   } else {
     map.addSource("route", { type: "geojson", data: geometry });
     map.addLayer({

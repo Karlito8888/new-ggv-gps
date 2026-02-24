@@ -3,6 +3,7 @@ import { blocks } from "../data/blocks";
 import destinationMarkerImg from "../assets/default-marker.png";
 import "../styles/maplibre-gl.css";
 
+/** @type {[number, number]} */
 const VILLAGE_CENTER = [120.95134859887523, 14.347872973134175];
 
 // Calculate centroid of polygon
@@ -130,7 +131,6 @@ export function useMapSetup(containerRef) {
         const geolocate = new MapLibre.GeolocateControl({
           positionOptions: { enableHighAccuracy: true },
           trackUserLocation: true,
-          showUserHeading: false, // Heading shown via map rotation instead
         });
         mapInstance.addControl(geolocate, "bottom-right");
         geolocateRef.current = geolocate;
@@ -218,6 +218,7 @@ export async function updateDestinationMarker(map, destination) {
   }
 
   // Create GeoJSON data
+  /** @type {GeoJSON.FeatureCollection} */
   const geojson = {
     type: "FeatureCollection",
     features: destination
@@ -236,7 +237,7 @@ export async function updateDestinationMarker(map, destination) {
 
   // Update or create source and layer
   if (map.getSource(sourceId)) {
-    map.getSource(sourceId).setData(geojson);
+    /** @type {import('maplibre-gl').GeoJSONSource} */ (map.getSource(sourceId)).setData(geojson);
   } else {
     map.addSource(sourceId, { type: "geojson", data: geojson });
     map.addLayer({
