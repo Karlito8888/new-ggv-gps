@@ -1,0 +1,2004 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyGGV GPS — Design Direction Showcase</title>
+    <style>
+      /* ===== RESET & BASE ===== */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      @font-face {
+        font-family: "Madimi One";
+        font-style: normal;
+        font-weight: 400;
+        src:
+          local("Madimi One"),
+          url("https://fonts.gstatic.com/s/madimione/v2/2V0YKIEADpA8U6RygDnZZFQoBoHMd2U.woff2")
+            format("woff2");
+      }
+
+      :root {
+        --color-green: #50aa61;
+        --color-green-dark: #3d8a4d;
+        --color-yellow: #f3c549;
+        --color-yellow-dark: #d97706;
+        --color-white: #f4f4f4;
+        --color-black: #121212;
+        --color-success: #34d399;
+        --color-error: #ef4444;
+        --shadow-strong: 0 8px 25px rgba(0, 0, 0, 0.2);
+        --shadow-dialog: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        --font-primary: "Madimi One", cursive, sans-serif;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0f0f0f;
+        color: #e0e0e0;
+        min-height: 100vh;
+      }
+
+      /* ===== SHOWCASE LAYOUT ===== */
+      .showcase-header {
+        text-align: center;
+        padding: 3rem 1.5rem 2rem;
+        background: linear-gradient(
+          135deg,
+          rgba(80, 170, 97, 0.15),
+          rgba(243, 197, 73, 0.1)
+        );
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .showcase-header h1 {
+        font-family: var(--font-primary);
+        font-size: 2.5rem;
+        background: linear-gradient(
+          135deg,
+          var(--color-green),
+          var(--color-yellow)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+      }
+      .showcase-header p {
+        color: #999;
+        font-size: 1.1rem;
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      .showcase-nav {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(15, 15, 15, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 0.75rem 1rem;
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .showcase-nav a {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 2rem;
+        color: #bbb;
+        text-decoration: none;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        transition: all 0.2s;
+      }
+      .showcase-nav a:hover {
+        background: rgba(80, 170, 97, 0.15);
+        border-color: var(--color-green);
+        color: var(--color-green);
+      }
+
+      .direction-section {
+        padding: 3rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .direction-section:nth-child(even) {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .direction-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+      }
+      .direction-number {
+        display: inline-block;
+        width: 2.5rem;
+        height: 2.5rem;
+        line-height: 2.5rem;
+        border-radius: 50%;
+        background: linear-gradient(
+          135deg,
+          var(--color-green),
+          var(--color-yellow)
+        );
+        color: white;
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin-bottom: 0.75rem;
+      }
+      .direction-header h2 {
+        font-size: 1.8rem;
+        color: #fff;
+        margin-bottom: 0.5rem;
+      }
+      .direction-header .subtitle {
+        color: #888;
+        font-size: 1rem;
+      }
+      .direction-header .tags {
+        margin-top: 0.75rem;
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .direction-header .tag {
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #aaa;
+      }
+      .tag.pro {
+        border-color: rgba(80, 170, 97, 0.4);
+        color: var(--color-green);
+      }
+      .tag.con {
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #ef4444;
+      }
+
+      /* Phone mockup frame */
+      .mockups-row {
+        display: flex;
+        gap: 2rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+      }
+      .mockup-card {
+        text-align: center;
+      }
+      .mockup-label {
+        color: #777;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.75rem;
+      }
+      .phone-frame {
+        width: 280px;
+        height: 560px;
+        border-radius: 2rem;
+        border: 3px solid #333;
+        overflow: hidden;
+        position: relative;
+        background: #fff;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+      .phone-frame .notch {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 24px;
+        background: #333;
+        border-radius: 0 0 1rem 1rem;
+        z-index: 10;
+      }
+
+      /* Map placeholder */
+      .map-bg {
+        width: 100%;
+        height: 100%;
+        background:
+          linear-gradient(90deg, rgba(200, 220, 200, 0.3) 1px, transparent 1px),
+          linear-gradient(rgba(200, 220, 200, 0.3) 1px, transparent 1px),
+          linear-gradient(135deg, #e8f0e8 0%, #d4e4d4 50%, #c8dcc8 100%);
+        background-size:
+          40px 40px,
+          40px 40px,
+          100% 100%;
+        position: relative;
+      }
+      .map-bg::before {
+        content: "";
+        position: absolute;
+        top: 45%;
+        left: 20%;
+        width: 60%;
+        height: 3px;
+        background: #4285f4;
+        border-radius: 2px;
+        transform: rotate(-15deg);
+        box-shadow: 0 0 8px rgba(66, 133, 244, 0.5);
+      }
+      .map-bg::after {
+        content: "📍";
+        position: absolute;
+        top: 38%;
+        right: 22%;
+        font-size: 1.5rem;
+      }
+      .user-dot {
+        position: absolute;
+        top: 52%;
+        left: 22%;
+        width: 14px;
+        height: 14px;
+        background: #4285f4;
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(66, 133, 244, 0.6);
+      }
+
+      /* Evaluation criteria */
+      .evaluation {
+        max-width: 600px;
+        margin: 1.5rem auto 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+      }
+      .eval-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: #999;
+      }
+      .eval-score {
+        display: flex;
+        gap: 2px;
+      }
+      .eval-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .eval-dot.filled {
+        background: var(--color-green);
+      }
+      .eval-dot.half {
+        background: var(--color-yellow);
+      }
+
+      /* ===================================================================
+     DIRECTION 1: Current Refined
+     =================================================================== */
+      .d1-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(80, 170, 97, 0.75),
+          rgba(243, 197, 73, 0.7)
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+      .d1-modal {
+        background: var(--color-white);
+        border-radius: 1.5rem;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-dialog);
+      }
+      .d1-modal::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(
+          90deg,
+          var(--color-green),
+          var(--color-yellow)
+        );
+      }
+      .d1-icon {
+        width: 5rem;
+        height: 5rem;
+        margin: 0 auto 1.25rem;
+        background: linear-gradient(
+          135deg,
+          var(--color-green),
+          var(--color-yellow)
+        );
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        box-shadow: var(--shadow-strong);
+      }
+      .d1-title {
+        font-family: var(--font-primary);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--color-black);
+        margin-bottom: 0.25rem;
+      }
+      .d1-tagalog {
+        font-size: 1rem;
+        color: var(--color-green);
+        font-style: italic;
+        margin-bottom: 0.75rem;
+        opacity: 0.9;
+      }
+      .d1-desc {
+        color: var(--color-black);
+        opacity: 0.7;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+        font-size: 0.95rem;
+      }
+      .d1-btn {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(
+          135deg,
+          var(--color-green),
+          var(--color-green-dark)
+        );
+        color: var(--color-white);
+        font-family: var(--font-primary);
+        font-weight: 700;
+        font-size: 1.125rem;
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 4px 15px rgba(80, 170, 97, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+      .d1-btn.disabled {
+        opacity: 0.5;
+      }
+
+      /* D1 Nav bar */
+      .d1-nav-bar {
+        position: absolute;
+        top: 24px;
+        left: 0;
+        right: 0;
+        background: linear-gradient(
+          180deg,
+          var(--color-white) 0%,
+          rgba(244, 244, 244, 0.98) 100%
+        );
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        padding: 0.75rem 0.75rem;
+        border-radius: 0 0 1.25rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+      .d1-nav-turn {
+        font-size: 1.25rem;
+      }
+      .d1-nav-center {
+        flex: 1;
+        text-align: center;
+      }
+      .d1-nav-dest {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--color-black);
+      }
+      .d1-nav-dist {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--color-green);
+        font-family: var(--font-primary);
+      }
+      .d1-nav-src {
+        font-size: 0.55rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .d1-nav-cancel {
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 50%;
+        background: var(--color-error);
+        border: none;
+        color: white;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .d1-compass {
+        width: 3.5rem;
+        height: 3.5rem;
+        border-radius: 50%;
+        background: linear-gradient(
+          135deg,
+          rgba(80, 170, 97, 0.1),
+          rgba(243, 197, 73, 0.1)
+        );
+        border: 2px solid rgba(80, 170, 97, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--color-green);
+      }
+
+      /* ===================================================================
+     DIRECTION 2: Bottom Sheet
+     =================================================================== */
+      .d2-sheet {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 1.5rem 1.5rem 0 0;
+        padding: 1.25rem 1.5rem 1.5rem;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2);
+        text-align: center;
+      }
+      .d2-handle {
+        width: 40px;
+        height: 4px;
+        background: #ddd;
+        border-radius: 2px;
+        margin: 0 auto 1rem;
+      }
+      .d2-icon {
+        width: 3.5rem;
+        height: 3.5rem;
+        margin: 0 auto 1rem;
+        background: linear-gradient(
+          135deg,
+          var(--color-green),
+          var(--color-yellow)
+        );
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+      .d2-title {
+        font-family: var(--font-primary);
+        font-size: 1.3rem;
+        color: var(--color-black);
+        margin-bottom: 0.15rem;
+      }
+      .d2-tagalog {
+        font-size: 0.9rem;
+        color: var(--color-green);
+        font-style: italic;
+        margin-bottom: 0.5rem;
+      }
+      .d2-desc {
+        color: #555;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin-bottom: 1.25rem;
+      }
+      .d2-btn {
+        width: 100%;
+        padding: 0.9rem;
+        background: linear-gradient(
+          135deg,
+          var(--color-green),
+          var(--color-green-dark)
+        );
+        color: white;
+        font-family: var(--font-primary);
+        font-weight: 700;
+        font-size: 1.05rem;
+        border: none;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 15px rgba(80, 170, 97, 0.4);
+      }
+
+      /* D2 Nav */
+      .d2-nav-bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 1.25rem 1.25rem 0 0;
+        padding: 1rem 1.25rem;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .d2-nav-compass {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        background: linear-gradient(
+          135deg,
+          rgba(80, 170, 97, 0.1),
+          rgba(243, 197, 73, 0.1)
+        );
+        border: 2px solid rgba(80, 170, 97, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: var(--color-green);
+        flex-shrink: 0;
+      }
+      .d2-nav-info {
+        flex: 1;
+        text-align: left;
+      }
+      .d2-nav-dest-name {
+        font-size: 0.75rem;
+        color: #666;
+      }
+      .d2-nav-distance {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--color-green);
+        font-family: var(--font-primary);
+      }
+      .d2-nav-turn-text {
+        font-size: 0.7rem;
+        color: #999;
+      }
+
+      /* ===================================================================
+     DIRECTION 3: Full Map First
+     =================================================================== */
+      .d3-floating {
+        position: absolute;
+        bottom: 1.5rem;
+        left: 1rem;
+        right: 1rem;
+        text-align: center;
+      }
+      .d3-chip {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.8rem;
+        color: var(--color-black);
+        margin-bottom: 0.75rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      }
+      .d3-chip .tagalog {
+        color: var(--color-green);
+        font-style: italic;
+        font-size: 0.75rem;
+      }
+      .d3-fab {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(
+          135deg,
+          var(--color-green),
+          var(--color-green-dark)
+        );
+        color: white;
+        font-family: var(--font-primary);
+        font-weight: 700;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 4px 20px rgba(80, 170, 97, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      /* D3 Nav */
+      .d3-nav-pill {
+        position: absolute;
+        top: 30px;
+        left: 0.75rem;
+        right: 0.75rem;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px);
+        border-radius: 1rem;
+        padding: 0.6rem 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+      }
+      .d3-nav-turn {
+        font-size: 1.1rem;
+      }
+      .d3-nav-info {
+        flex: 1;
+      }
+      .d3-nav-dist {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--color-green);
+        font-family: var(--font-primary);
+      }
+      .d3-nav-label {
+        font-size: 0.65rem;
+        color: #888;
+      }
+      .d3-nav-x {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.9);
+        border: none;
+        color: white;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .d3-bottom-strip {
+        position: absolute;
+        bottom: 0.75rem;
+        left: 0.75rem;
+        right: 0.75rem;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px);
+        border-radius: 0.75rem;
+        padding: 0.5rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .d3-strip-dest {
+        font-size: 0.75rem;
+        color: #555;
+      }
+      .d3-strip-compass {
+        width: 2.5rem;
+        height: 2.5rem;
+        background: linear-gradient(
+          135deg,
+          rgba(80, 170, 97, 0.1),
+          rgba(243, 197, 73, 0.1)
+        );
+        border: 2px solid rgba(80, 170, 97, 0.3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: var(--color-green);
+      }
+
+      /* ===================================================================
+     DIRECTION 4: Card Stack
+     =================================================================== */
+      .d4-stack {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 0 0.75rem 0.75rem;
+      }
+      .d4-card-behind {
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 1rem 1rem 0 0;
+        height: 0.75rem;
+        margin: 0 1rem;
+      }
+      .d4-card-main {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.25rem;
+        box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.2);
+        text-align: center;
+      }
+      .d4-step-indicator {
+        display: flex;
+        gap: 0.25rem;
+        justify-content: center;
+        margin-bottom: 0.75rem;
+      }
+      .d4-step-dot {
+        width: 2rem;
+        height: 3px;
+        border-radius: 2px;
+        background: #ddd;
+      }
+      .d4-step-dot.active {
+        background: var(--color-green);
+      }
+      .d4-step-dot.done {
+        background: var(--color-yellow);
+      }
+      .d4-title {
+        font-family: var(--font-primary);
+        font-size: 1.2rem;
+        color: var(--color-black);
+        margin-bottom: 0.1rem;
+      }
+      .d4-tagalog {
+        font-size: 0.8rem;
+        color: var(--color-green);
+        font-style: italic;
+        margin-bottom: 0.5rem;
+      }
+      .d4-desc {
+        color: #666;
+        font-size: 0.8rem;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+      }
+      .d4-btn {
+        width: 100%;
+        padding: 0.85rem;
+        background: linear-gradient(
+          135deg,
+          var(--color-green),
+          var(--color-green-dark)
+        );
+        color: white;
+        font-family: var(--font-primary);
+        font-weight: 700;
+        font-size: 1rem;
+        border: none;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 12px rgba(80, 170, 97, 0.4);
+      }
+
+      /* D4 Nav */
+      .d4-nav-top {
+        position: absolute;
+        top: 24px;
+        left: 0.5rem;
+        right: 0.5rem;
+        display: flex;
+        gap: 0.5rem;
+      }
+      .d4-nav-card {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px);
+        border-radius: 0.75rem;
+        padding: 0.5rem;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .d4-nav-card-label {
+        font-size: 0.55rem;
+        color: #999;
+        text-transform: uppercase;
+      }
+      .d4-nav-card-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--color-green);
+        font-family: var(--font-primary);
+      }
+      .d4-nav-card-value.turn {
+        font-size: 1.2rem;
+      }
+
+      /* ===================================================================
+     DIRECTION 5: Bold Mono
+     =================================================================== */
+      .d5-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(18, 18, 18, 0.85);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 1.5rem;
+      }
+      .d5-content {
+        text-align: left;
+      }
+      .d5-title {
+        font-family: var(--font-primary);
+        font-size: 2rem;
+        color: white;
+        line-height: 1.1;
+        margin-bottom: 0.25rem;
+      }
+      .d5-tagalog {
+        font-size: 1.1rem;
+        color: var(--color-yellow);
+        font-style: italic;
+        margin-bottom: 1rem;
+      }
+      .d5-desc {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 2rem;
+      }
+      .d5-btn {
+        width: 100%;
+        padding: 1.1rem;
+        background: var(--color-green);
+        color: white;
+        font-family: var(--font-primary);
+        font-weight: 700;
+        font-size: 1.2rem;
+        border: none;
+        border-radius: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      /* D5 Nav */
+      .d5-nav-bar {
+        position: absolute;
+        top: 24px;
+        left: 0;
+        right: 0;
+        background: rgba(18, 18, 18, 0.9);
+        backdrop-filter: blur(10px);
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .d5-nav-dist-big {
+        font-family: var(--font-primary);
+        font-size: 2rem;
+        color: white;
+        line-height: 1;
+      }
+      .d5-nav-unit {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.5);
+      }
+      .d5-nav-sep {
+        width: 1px;
+        height: 2.5rem;
+        background: rgba(255, 255, 255, 0.15);
+      }
+      .d5-nav-turn-big {
+        font-size: 1.8rem;
+      }
+      .d5-nav-turn-text {
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.5);
+      }
+      .d5-nav-x {
+        margin-left: auto;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.5rem;
+        background: var(--color-error);
+        border: none;
+        color: white;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* ===================================================================
+     DIRECTION 6: Split Screen
+     =================================================================== */
+      .d6-split-top {
+        height: 50%;
+        position: relative;
+      }
+      .d6-split-bottom {
+        height: 50%;
+        background: white;
+        padding: 1.25rem 1.5rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+      }
+      .d6-split-bottom::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(
+          90deg,
+          var(--color-green),
+          var(--color-yellow)
+        );
+      }
+      .d6-icon {
+        width: 3.5rem;
+        height: 3.5rem;
+        margin: 0 auto 0.75rem;
+        background: linear-gradient(
+          135deg,
+          var(--color-green),
+          var(--color-yellow)
+        );
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+      .d6-title {
+        font-family: var(--font-primary);
+        font-size: 1.3rem;
+        color: var(--color-black);
+        margin-bottom: 0.1rem;
+      }
+      .d6-tagalog {
+        font-size: 0.85rem;
+        color: var(--color-green);
+        font-style: italic;
+        margin-bottom: 0.4rem;
+      }
+      .d6-desc {
+        color: #555;
+        font-size: 0.8rem;
+        line-height: 1.4;
+        margin-bottom: 1rem;
+      }
+      .d6-btn {
+        width: 100%;
+        padding: 0.85rem;
+        background: linear-gradient(
+          135deg,
+          var(--color-green),
+          var(--color-green-dark)
+        );
+        color: white;
+        font-family: var(--font-primary);
+        font-weight: 700;
+        font-size: 1rem;
+        border: none;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 12px rgba(80, 170, 97, 0.4);
+      }
+
+      /* D6 Nav */
+      .d6-nav-top-half {
+        height: 65%;
+        position: relative;
+      }
+      .d6-nav-bottom-half {
+        height: 35%;
+        background: white;
+        padding: 0.75rem 1rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.5rem;
+        position: relative;
+      }
+      .d6-nav-bottom-half::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          var(--color-green),
+          var(--color-yellow)
+        );
+      }
+      .d6-nav-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .d6-nav-compass {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        background: linear-gradient(
+          135deg,
+          rgba(80, 170, 97, 0.1),
+          rgba(243, 197, 73, 0.1)
+        );
+        border: 2px solid rgba(80, 170, 97, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: var(--color-green);
+        flex-shrink: 0;
+      }
+      .d6-nav-info {
+        flex: 1;
+      }
+      .d6-nav-dest {
+        font-size: 0.7rem;
+        color: #888;
+      }
+      .d6-nav-dist {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--color-green);
+        font-family: var(--font-primary);
+      }
+      .d6-nav-turn-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(80, 170, 97, 0.08);
+        border-radius: 0.5rem;
+      }
+      .d6-nav-turn-icon {
+        font-size: 1.25rem;
+      }
+      .d6-nav-turn-label {
+        font-size: 0.75rem;
+        color: #555;
+        flex: 1;
+      }
+      .d6-nav-turn-dist {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--color-green);
+      }
+      .d6-nav-cancel-row {
+        text-align: center;
+      }
+      .d6-nav-cancel-btn {
+        padding: 0.4rem 1.5rem;
+        background: none;
+        border: 1px solid var(--color-error);
+        color: var(--color-error);
+        border-radius: 2rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ===== HEADER ===== -->
+    <header class="showcase-header">
+      <h1>MyGGV GPS</h1>
+      <p>
+        Design Direction Showcase — 6 visual approaches for the navigation
+        app.<br />
+        Each shows the GPS Permission screen and the Active Navigation screen.
+      </p>
+    </header>
+
+    <!-- ===== NAVIGATION ===== -->
+    <nav class="showcase-nav">
+      <a href="#d1">1. Current Refined</a>
+      <a href="#d2">2. Bottom Sheet</a>
+      <a href="#d3">3. Full Map First</a>
+      <a href="#d4">4. Card Stack</a>
+      <a href="#d5">5. Bold Mono</a>
+      <a href="#d6">6. Split Screen</a>
+    </nav>
+
+    <!-- ===================================================================
+     DIRECTION 1: Current Refined
+     =================================================================== -->
+    <section class="direction-section" id="d1">
+      <div class="direction-header">
+        <div class="direction-number">1</div>
+        <h2>Current Refined</h2>
+        <p class="subtitle">
+          The existing design, cleaned up with accessibility fixes and aligned
+          tokens
+        </p>
+        <div class="tags">
+          <span class="tag pro">+ Zero migration effort</span>
+          <span class="tag pro">+ Proven in production</span>
+          <span class="tag pro">+ Users already trained</span>
+          <span class="tag con">- Map hidden behind overlay</span>
+          <span class="tag con">- Modal feels heavy</span>
+        </div>
+      </div>
+
+      <div class="mockups-row">
+        <!-- GPS Permission -->
+        <div class="mockup-card">
+          <div class="mockup-label">GPS Permission</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="map-bg">
+              <div class="user-dot"></div>
+              <div class="d1-overlay">
+                <div class="d1-modal">
+                  <div class="d1-icon">📍</div>
+                  <div class="d1-title">Enable Location</div>
+                  <div class="d1-tagalog">I-enable ang Lokasyon</div>
+                  <div class="d1-desc">
+                    We need your GPS to show your location on the map and guide
+                    you to your destination.
+                  </div>
+                  <div class="d1-btn">📍 Enable GPS</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mockup-card">
+          <div class="mockup-label">Active Navigation</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="map-bg">
+              <div class="user-dot"></div>
+              <div class="d1-nav-bar">
+                <div class="d1-nav-turn">↗️</div>
+                <div class="d1-compass">🧭</div>
+                <div class="d1-nav-center">
+                  <div class="d1-nav-dest">Block 47, Lot 23</div>
+                  <div class="d1-nav-dist">142 m</div>
+                  <div class="d1-nav-src">OSRM</div>
+                </div>
+                <div class="d1-nav-cancel">✕</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="evaluation">
+        <div class="eval-item">
+          Map visibility
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Information clarity
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Touch friendliness
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Migration cost
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+     DIRECTION 2: Bottom Sheet
+     =================================================================== -->
+    <section class="direction-section" id="d2">
+      <div class="direction-header">
+        <div class="direction-number">2</div>
+        <h2>Bottom Sheet</h2>
+        <p class="subtitle">
+          Grab/Lalamove pattern — map always visible, interactions slide up from
+          bottom
+        </p>
+        <div class="tags">
+          <span class="tag pro">+ Map always visible</span>
+          <span class="tag pro">+ Familiar SE Asian pattern</span>
+          <span class="tag pro">+ One-hand reachable</span>
+          <span class="tag con">- More CSS to write</span>
+          <span class="tag con">- Sheet height management</span>
+        </div>
+      </div>
+
+      <div class="mockups-row">
+        <!-- GPS Permission -->
+        <div class="mockup-card">
+          <div class="mockup-label">GPS Permission</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="map-bg">
+              <div class="user-dot"></div>
+              <div class="d2-sheet">
+                <div class="d2-handle"></div>
+                <div class="d2-icon">📍</div>
+                <div class="d2-title">Enable Location</div>
+                <div class="d2-tagalog">I-enable ang Lokasyon</div>
+                <div class="d2-desc">
+                  We need GPS to show your location on the map and guide you.
+                </div>
+                <div class="d2-btn">📍 Enable GPS</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mockup-card">
+          <div class="mockup-label">Active Navigation</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="map-bg">
+              <div class="user-dot"></div>
+              <div class="d2-nav-bottom">
+                <div class="d2-nav-compass">🧭</div>
+                <div class="d2-nav-info">
+                  <div class="d2-nav-dest-name">Block 47, Lot 23</div>
+                  <div class="d2-nav-distance">142 m</div>
+                  <div class="d2-nav-turn-text">↗️ Turn right in 30 m</div>
+                </div>
+                <div
+                  class="d1-nav-cancel"
+                  style="width: 2.5rem; height: 2.5rem; font-size: 0.85rem"
+                >
+                  ✕
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="evaluation">
+        <div class="eval-item">
+          Map visibility
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Information clarity
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Touch friendliness
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Migration cost
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+     DIRECTION 3: Full Map First
+     =================================================================== -->
+    <section class="direction-section" id="d3">
+      <div class="direction-header">
+        <div class="direction-number">3</div>
+        <h2>Full Map First</h2>
+        <p class="subtitle">
+          Maximum map real estate — floating pills and FAB button,
+          glass-morphism overlays
+        </p>
+        <div class="tags">
+          <span class="tag pro">+ Maximum map space</span>
+          <span class="tag pro">+ Modern/minimal feel</span>
+          <span class="tag pro">+ Nav bar super lightweight</span>
+          <span class="tag con">- Less text space for explanations</span>
+          <span class="tag con">- Glass-morphism on budget phones?</span>
+        </div>
+      </div>
+
+      <div class="mockups-row">
+        <!-- GPS Permission -->
+        <div class="mockup-card">
+          <div class="mockup-label">GPS Permission</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="map-bg">
+              <div class="user-dot"></div>
+              <div class="d3-floating">
+                <div class="d3-chip">
+                  Enable GPS to navigate<br />
+                  <span class="tagalog"
+                    >I-enable ang GPS para mag-navigate</span
+                  >
+                </div>
+                <div class="d3-fab">📍 Enable GPS</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mockup-card">
+          <div class="mockup-label">Active Navigation</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="map-bg">
+              <div class="user-dot"></div>
+              <div class="d3-nav-pill">
+                <div class="d3-nav-turn">↗️</div>
+                <div class="d3-nav-info">
+                  <div class="d3-nav-dist">142 m</div>
+                  <div class="d3-nav-label">to Block 47, Lot 23</div>
+                </div>
+                <div class="d3-nav-x">✕</div>
+              </div>
+              <div class="d3-bottom-strip">
+                <div>
+                  <div class="d3-strip-dest" style="font-weight: 600">
+                    Block 47, Lot 23
+                  </div>
+                  <div class="d3-strip-dest">Turn right in 30 m</div>
+                </div>
+                <div class="d3-strip-compass">🧭</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="evaluation">
+        <div class="eval-item">
+          Map visibility
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Information clarity
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Touch friendliness
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Migration cost
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+     DIRECTION 4: Card Stack
+     =================================================================== -->
+    <section class="direction-section" id="d4">
+      <div class="direction-header">
+        <div class="direction-number">4</div>
+        <h2>Card Stack</h2>
+        <p class="subtitle">
+          Progress-aware cards that stack and advance — visual step progression
+        </p>
+        <div class="tags">
+          <span class="tag pro">+ Visual progress tracking</span>
+          <span class="tag pro">+ Map visible above cards</span>
+          <span class="tag pro">+ Compact and efficient</span>
+          <span class="tag con">- Step dots add complexity</span>
+          <span class="tag con">- Card height varies</span>
+        </div>
+      </div>
+
+      <div class="mockups-row">
+        <!-- GPS Permission -->
+        <div class="mockup-card">
+          <div class="mockup-label">GPS Permission</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="map-bg">
+              <div class="user-dot"></div>
+              <div class="d4-stack">
+                <div class="d4-card-behind"></div>
+                <div class="d4-card-main">
+                  <div class="d4-step-indicator">
+                    <div class="d4-step-dot active"></div>
+                    <div class="d4-step-dot"></div>
+                    <div class="d4-step-dot"></div>
+                    <div class="d4-step-dot"></div>
+                  </div>
+                  <div class="d4-title">Enable Location</div>
+                  <div class="d4-tagalog">I-enable ang Lokasyon</div>
+                  <div class="d4-desc">
+                    GPS is needed to show your position and navigate you to your
+                    destination.
+                  </div>
+                  <div class="d4-btn">📍 Enable GPS</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mockup-card">
+          <div class="mockup-label">Active Navigation</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="map-bg">
+              <div class="user-dot"></div>
+              <div class="d4-nav-top">
+                <div class="d4-nav-card">
+                  <div class="d4-nav-card-label">Distance</div>
+                  <div class="d4-nav-card-value">142 m</div>
+                </div>
+                <div class="d4-nav-card">
+                  <div class="d4-nav-card-label">Next turn</div>
+                  <div class="d4-nav-card-value turn">↗️ 30m</div>
+                </div>
+                <div class="d4-nav-card">
+                  <div class="d4-nav-card-label">Compass</div>
+                  <div class="d4-nav-card-value">🧭</div>
+                </div>
+              </div>
+              <div class="d4-stack" style="padding-bottom: 0.5rem">
+                <div class="d4-card-main" style="padding: 0.75rem">
+                  <div class="d4-step-indicator">
+                    <div class="d4-step-dot done"></div>
+                    <div class="d4-step-dot done"></div>
+                    <div class="d4-step-dot done"></div>
+                    <div class="d4-step-dot active"></div>
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                    "
+                  >
+                    <div style="text-align: left">
+                      <div style="font-size: 0.7rem; color: #888">
+                        Navigating to
+                      </div>
+                      <div
+                        style="
+                          font-weight: 600;
+                          font-size: 0.9rem;
+                          color: #121212;
+                        "
+                      >
+                        Block 47, Lot 23
+                      </div>
+                    </div>
+                    <div
+                      class="d1-nav-cancel"
+                      style="width: 2rem; height: 2rem; font-size: 0.75rem"
+                    >
+                      ✕
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="evaluation">
+        <div class="eval-item">
+          Map visibility
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Information clarity
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Touch friendliness
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Migration cost
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+     DIRECTION 5: Bold Mono
+     =================================================================== -->
+    <section class="direction-section" id="d5">
+      <div class="direction-header">
+        <div class="direction-number">5</div>
+        <h2>Bold Mono</h2>
+        <p class="subtitle">
+          Maximum contrast dark overlay — giant type, industrial minimalism
+        </p>
+        <div class="tags">
+          <span class="tag pro">+ Extreme readability</span>
+          <span class="tag pro">+ Works in bright sunlight</span>
+          <span class="tag pro">+ Bold brand identity</span>
+          <span class="tag con">- Departs from current style</span>
+          <span class="tag con">- Dark theme = more battery on LCD</span>
+          <span class="tag con">- Map hidden behind dark overlay</span>
+        </div>
+      </div>
+
+      <div class="mockups-row">
+        <!-- GPS Permission -->
+        <div class="mockup-card">
+          <div class="mockup-label">GPS Permission</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="map-bg">
+              <div class="user-dot"></div>
+              <div class="d5-overlay">
+                <div class="d5-content">
+                  <div class="d5-title">Enable<br />Location</div>
+                  <div class="d5-tagalog">I-enable ang Lokasyon</div>
+                  <div class="d5-desc">
+                    GPS is required to show your position on the map and
+                    navigate you through the village.
+                  </div>
+                  <div class="d5-btn">ENABLE GPS →</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mockup-card">
+          <div class="mockup-label">Active Navigation</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="map-bg">
+              <div class="user-dot"></div>
+              <div class="d5-nav-bar">
+                <div>
+                  <div class="d5-nav-dist-big">142</div>
+                  <div class="d5-nav-unit">meters left</div>
+                </div>
+                <div class="d5-nav-sep"></div>
+                <div>
+                  <div class="d5-nav-turn-big">↗️</div>
+                  <div class="d5-nav-turn-text">in 30 m</div>
+                </div>
+                <div class="d5-nav-x">✕</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="evaluation">
+        <div class="eval-item">
+          Map visibility
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Information clarity
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Touch friendliness
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Migration cost
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+     DIRECTION 6: Split Screen
+     =================================================================== -->
+    <section class="direction-section" id="d6">
+      <div class="direction-header">
+        <div class="direction-number">6</div>
+        <h2>Split Screen</h2>
+        <p class="subtitle">
+          Map on top, interaction on bottom — clear separation of content zones
+        </p>
+        <div class="tags">
+          <span class="tag pro">+ Clear visual zones</span>
+          <span class="tag pro">+ Map always visible (50%)</span>
+          <span class="tag pro">+ Plenty of space for text</span>
+          <span class="tag con">- Map only gets half the screen</span>
+          <span class="tag con">- Navigation needs larger map</span>
+          <span class="tag con">- Less immersive</span>
+        </div>
+      </div>
+
+      <div class="mockups-row">
+        <!-- GPS Permission -->
+        <div class="mockup-card">
+          <div class="mockup-label">GPS Permission</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div style="height: 100%; display: flex; flex-direction: column">
+              <div class="d6-split-top">
+                <div class="map-bg" style="height: 100%">
+                  <div class="user-dot"></div>
+                </div>
+              </div>
+              <div class="d6-split-bottom">
+                <div class="d6-icon">📍</div>
+                <div class="d6-title">Enable Location</div>
+                <div class="d6-tagalog">I-enable ang Lokasyon</div>
+                <div class="d6-desc">
+                  We need GPS to show your location and guide you through the
+                  village.
+                </div>
+                <div class="d6-btn">📍 Enable GPS</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mockup-card">
+          <div class="mockup-label">Active Navigation</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div style="height: 100%; display: flex; flex-direction: column">
+              <div class="d6-nav-top-half">
+                <div class="map-bg" style="height: 100%">
+                  <div class="user-dot"></div>
+                </div>
+              </div>
+              <div class="d6-nav-bottom-half">
+                <div class="d6-nav-row">
+                  <div class="d6-nav-compass">🧭</div>
+                  <div class="d6-nav-info">
+                    <div class="d6-nav-dest">
+                      Navigating to Block 47, Lot 23
+                    </div>
+                    <div class="d6-nav-dist">142 m remaining</div>
+                  </div>
+                </div>
+                <div class="d6-nav-turn-row">
+                  <div class="d6-nav-turn-icon">↗️</div>
+                  <div class="d6-nav-turn-label">Turn right ahead</div>
+                  <div class="d6-nav-turn-dist">30 m</div>
+                </div>
+                <div class="d6-nav-cancel-row">
+                  <button class="d6-nav-cancel-btn">Cancel Navigation</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="evaluation">
+        <div class="eval-item">
+          Map visibility
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Information clarity
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Touch friendliness
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+        <div class="eval-item">
+          Migration cost
+          <div class="eval-score">
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot filled"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+            <div class="eval-dot"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== COMPARISON SUMMARY ===== -->
+    <section class="direction-section" style="padding-bottom: 4rem">
+      <div class="direction-header">
+        <h2>Comparison Summary</h2>
+        <p class="subtitle">Side-by-side evaluation of all 6 directions</p>
+      </div>
+      <div style="max-width: 800px; margin: 0 auto; overflow-x: auto">
+        <table
+          style="width: 100%; border-collapse: collapse; font-size: 0.85rem"
+        >
+          <thead>
+            <tr style="border-bottom: 2px solid rgba(255, 255, 255, 0.1)">
+              <th
+                style="text-align: left; padding: 0.75rem 0.5rem; color: #888"
+              >
+                Direction
+              </th>
+              <th
+                style="text-align: center; padding: 0.75rem 0.5rem; color: #888"
+              >
+                Map Visibility
+              </th>
+              <th
+                style="text-align: center; padding: 0.75rem 0.5rem; color: #888"
+              >
+                Clarity
+              </th>
+              <th
+                style="text-align: center; padding: 0.75rem 0.5rem; color: #888"
+              >
+                Touch
+              </th>
+              <th
+                style="text-align: center; padding: 0.75rem 0.5rem; color: #888"
+              >
+                Migration
+              </th>
+              <th
+                style="text-align: center; padding: 0.75rem 0.5rem; color: #888"
+              >
+                Best For
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05)">
+              <td style="padding: 0.75rem 0.5rem; color: #ddd">
+                1. Current Refined
+              </td>
+              <td style="text-align: center; color: var(--color-yellow)">
+                ⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: #999; font-size: 0.75rem">
+                Quick ship, minimal risk
+              </td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05)">
+              <td style="padding: 0.75rem 0.5rem; color: #ddd">
+                2. Bottom Sheet
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-yellow)">
+                ⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: #999; font-size: 0.75rem">
+                SE Asian standard
+              </td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05)">
+              <td style="padding: 0.75rem 0.5rem; color: #ddd">
+                3. Full Map First
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-yellow)">
+                ⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-error)">
+                ⭐⭐
+              </td>
+              <td style="text-align: center; color: #999; font-size: 0.75rem">
+                Map-centric, modern
+              </td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05)">
+              <td style="padding: 0.75rem 0.5rem; color: #ddd">
+                4. Card Stack
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-error)">
+                ⭐⭐
+              </td>
+              <td style="text-align: center; color: #999; font-size: 0.75rem">
+                Progress-aware flow
+              </td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05)">
+              <td style="padding: 0.75rem 0.5rem; color: #ddd">5. Bold Mono</td>
+              <td style="text-align: center; color: var(--color-error)">⭐</td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-error)">⭐</td>
+              <td style="text-align: center; color: #999; font-size: 0.75rem">
+                Extreme readability
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 0.75rem 0.5rem; color: #ddd">
+                6. Split Screen
+              </td>
+              <td style="text-align: center; color: var(--color-yellow)">
+                ⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-green)">
+                ⭐⭐⭐⭐
+              </td>
+              <td style="text-align: center; color: var(--color-error)">
+                ⭐⭐
+              </td>
+              <td style="text-align: center; color: #999; font-size: 0.75rem">
+                Clear content zones
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </body>
+</html>

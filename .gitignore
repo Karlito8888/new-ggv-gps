@@ -260,5 +260,5 @@ dev-dist/
 
 # BMAD (editorial/markdown tools)
 _bmad/
-_bmad-output/
+# _bmad-output/ versioned — contains planning artifacts (PRD, architecture, epics)
 
