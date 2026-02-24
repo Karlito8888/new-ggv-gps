@@ -104,7 +104,7 @@ Every step gates the next. The map must load before GPS can be enabled. GPS must
 
 - Navigation itself — the blue route line, camera following, turn instructions should "just work" without any user input after destination selection
 - Route recalculation on deviation — happens silently and automatically when user strays >25m from route
-- Arrival detection — the app knows when you've arrived (<12m) without the user needing to confirm
+- Arrival detection — the app knows when you've arrived (<15m) without the user needing to confirm
 - Camera tracking — map automatically follows user position and heading during navigation
 
 **What must feel instant:**
@@ -547,7 +547,7 @@ MyGGV GPS does not need to teach users anything new. Every interaction uses patt
 
 **6. Completion: Arrival**
 
-- Trigger: User is within 12m of destination
+- Trigger: User is within 15m of destination
 - System: Arrival overlay appears — "You have arrived" / "Nakarating ka na"
 - User sees: Confirmation with two clear options: "Navigate Again" (new destination) or "Exit Village" (route to gate)
 - User action: Tap one of the two options, or close the app
@@ -868,7 +868,7 @@ flowchart TD
     NAV_ACTIVE -->|"User follows route"| PROGRESS["Distance countdown<br/>Camera auto-follows<br/>Turn instructions update"]
     PROGRESS --> DEVIATION{"User >25m<br/>from route?"}
 
-    DEVIATION -->|"No"| ARRIVAL{"User <12m<br/>from destination?"}
+    DEVIATION -->|"No"| ARRIVAL{"User <15m<br/>from destination?"}
     DEVIATION -->|"Yes (check every 5s)"| RECALC["Silent route recalculation<br/>Blue line updates on map<br/>(no toast, no interruption)"]
     RECALC --> NAV_ACTIVE
 
@@ -928,7 +928,7 @@ flowchart TD
     RECALC_CHECK -->|"No"| FALLBACK_AGAIN["Fallback: new direct line<br/>from current position"]
     FALLBACK_AGAIN --> NAV
 
-    DEVIATION -->|"No"| ARRIVAL{"Arrived <12m?"}
+    DEVIATION -->|"No"| ARRIVAL{"Arrived <15m?"}
     ARRIVAL -->|"No"| NAV
     ARRIVAL -->|"Yes"| DONE["🟢 Arrived Overlay"]
 
@@ -1390,7 +1390,7 @@ Enable GPS to navigate
 | `gps-permission` | GPS granted | `welcome` | Overlay crossfade (Framer Motion) |
 | `welcome` | "Navigate" tapped | `orientation-permission` (iOS) or `navigating` (Android) | Overlay crossfade |
 | `orientation-permission` | Permission granted/skipped | `navigating` | Overlay fades out, map revealed |
-| `navigating` | Arrival <12m detected | `arrived` | Map fades, overlay fades in |
+| `navigating` | Arrival <15m detected | `arrived` | Map fades, overlay fades in |
 | `arrived` | "Navigate Again" | `welcome` | Overlay crossfade |
 | `arrived` | "Exit Village" | `navigating` (to gate) | Overlay fades out |
 | `navigating` (to gate) | Arrival at gate | `exit-complete` | Overlay fades in |

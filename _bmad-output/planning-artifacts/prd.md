@@ -20,6 +20,8 @@ stepsCompleted:
   ]
 lastEdited: "2026-02-19"
 editHistory:
+  - date: "2026-02-24"
+    changes: "Removed FR5 (satellite map style toggle) per UX spec anti-pattern #5 — map style is fixed. Removed satellite references from Journey 1 and capabilities summary. Changed arrival threshold from 12m to 15m in FR16 and all journey references."
   - date: "2026-02-19"
     changes: "Removed implementation leakage from FRs (12 fixes), added Village Exit user journey (Journey 5), added accessibility section, enriched Journey 1 with map style switching, fixed arrival threshold 20m→12m to match codebase, fixed subjective adjective in FR22"
   - date: "2026-02-19"
@@ -97,7 +99,7 @@ MyGGV GPS exists because no other solution can. The village's ~2,500 lots are in
 - **Map loads in under 5 seconds on 3G** (first visit) and **under 2 seconds on subsequent visits** (cached via Service Worker). See NFR1-NFR4 for detailed performance targets.
 - **100% offline navigation** after first visit — map, tiles, fonts, and styles all cached
 - **Zero disruption to existing user experience** — QR scan → block → lot → navigate flow remains identical
-- Navigation accuracy unchanged: arrival detection (<12m), deviation detection (>25m), route recalculation all working
+- Navigation accuracy unchanged: arrival detection (<15m), deviation detection (>25m), route recalculation all working
 
 ### Business Success
 
@@ -136,11 +138,11 @@ Marco is a Lalamove rider delivering a package to Lot 23, Block 47 in Garden Gro
 
 **Rising Action:** He scans the QR code with his phone camera — a budget Vivo on Globe 3G. The PWA loads. No app to install, no signup. He sees the Welcome screen, selects Block 47 from the list, then Lot 23. The map appears with a blue route line.
 
-**Climax:** Turn-by-turn navigation guides him through the village's winding streets. He switches to satellite view to better identify lot boundaries in the dense neighborhood. He takes a wrong turn — the app detects he's >25m off-route and automatically recalculates. Within seconds, a new route appears.
+**Climax:** Turn-by-turn navigation guides him through the village's winding streets. He takes a wrong turn — the app detects he's >25m off-route and automatically recalculates. Within seconds, a new route appears.
 
-**Resolution:** The app announces arrival when he's within 12m of Lot 23. He delivers the package in under 4 minutes. He didn't ask a single person for directions.
+**Resolution:** The app announces arrival when he's within 15m of Lot 23. He delivers the package in under 4 minutes. He didn't ask a single person for directions.
 
-**Capabilities revealed:** QR code entry, block/lot selection, route calculation (OSRM), deviation detection + auto-recalculation, arrival detection, map style switching (satellite view to identify lot boundaries), fast map loading on 3G.
+**Capabilities revealed:** QR code entry, block/lot selection, route calculation (OSRM), deviation detection + auto-recalculation, arrival detection, fast map loading on 3G.
 
 ### Journey 2: Marco the Delivery Rider — Slow Network / Error Recovery
 
@@ -196,7 +198,7 @@ Marco has finished his delivery to Lot 23, Block 47. Now he needs to exit the vi
 
 **Climax:** Turn-by-turn navigation guides Marco back through the winding streets toward the main gate. The route is different from how he came in — the app calculates the shortest path to the exit.
 
-**Resolution:** The app detects Marco is within 12m of the village gate and confirms departure. The exit flow completes, and the app resets to the welcome screen — ready for the next visitor who scans the QR code.
+**Resolution:** The app detects Marco is within 15m of the village gate and confirms departure. The exit flow completes, and the app resets to the welcome screen — ready for the next visitor who scans the QR code.
 
 **Capabilities revealed:** Village exit navigation, exit point routing, departure confirmation, app state reset after exit.
 
@@ -204,7 +206,7 @@ Marco has finished his delivery to Lot 23, Block 47. Now he needs to exit the vi
 
 | Journey              | Key Capabilities Required                                                                                              |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Marco — Happy Path   | QR entry, block/lot selection, OSRM routing, deviation detection, arrival detection, map style switching, fast 3G load |
+| Marco — Happy Path   | QR entry, block/lot selection, OSRM routing, deviation detection, arrival detection, fast 3G load |
 | Marco — Slow Network | Offline-first caching, precached tiles/fonts/style, routing fallback cascade, network resilience                       |
 | Ate Lina's Niece     | iOS permission flows (GPS + orientation), pedestrian navigation, zero-install PWA                                      |
 | Charles — Admin      | Data store management, analytics dashboard, usage monitoring                                                           |
@@ -324,7 +326,7 @@ All existing capabilities (routing, deviation, arrival, permissions) are already
 - **FR2:** Users can pan, zoom, and interact with the map on touch devices
 - **FR3:** Users can see their real-time GPS position on the map
 - **FR4:** Users can see their heading direction on the map (compass)
-- **FR5:** Users can switch between OSM and satellite map styles
+- ~~**FR5:** Users can switch between OSM and satellite map styles~~ *[REMOVED — v3.0.0: map style is fixed per UX spec anti-pattern #5]*
 - **FR6:** The system displays block polygon boundaries with distinct visual styling
 - **FR7:** The system displays lot markers within each block
 
@@ -341,7 +343,7 @@ All existing capabilities (routing, deviation, arrival, permissions) are already
 - **FR13:** The system displays the calculated route as a visual line on the map
 - **FR14:** The system provides turn-by-turn navigation instructions
 - **FR15:** The system detects when the user deviates >25m from the route and automatically recalculates
-- **FR16:** The system detects arrival when the user is within 12m of the destination
+- **FR16:** The system detects arrival when the user is within 15m of the destination *(updated from 12m → 15m on 2026-02-24)*
 - **FR17:** The system falls back to a direct line when route calculation fails (network error)
 - **FR18:** Users can follow a compass bearing toward their destination
 - **FR19:** The system animates the camera to follow the user during navigation

@@ -231,7 +231,7 @@ The PRD frontmatter indicates `briefs: 0`. Input documents were `CLAUDE.md` and 
 
 - FR5 (map style switching): Now traced to Journey 1 — "He switches to satellite view to better identify lot boundaries" (line 137). Also listed in Journey 1 capabilities (line 141).
 - FR33 (village exit initiation): Now traced to Journey 5 — "Marco taps 'Exit Village'" (line 194).
-- FR34 (village exit guidance): Now traced to Journey 5 — "The app detects Marco is within 12m of the village gate and confirms departure" (line 197).
+- FR34 (village exit guidance): Now traced to Journey 5 — "The app detects Marco is within 15m of the village gate and confirms departure" (line 197).
 
 **Unsupported Success Criteria:** 0
 **User Journeys Without FRs:** 0

@@ -38,7 +38,7 @@ FR1: Users can view an interactive map of Garden Grove Village with labeled bloc
 FR2: Users can pan, zoom, and interact with the map on touch devices
 FR3: Users can see their real-time GPS position on the map
 FR4: Users can see their heading direction on the map (compass)
-FR5: Users can switch between OSM and satellite map styles
+~~FR5: Users can switch between OSM and satellite map styles~~ *[REMOVED — map style is fixed per UX spec]*
 FR6: The system displays block polygon boundaries with distinct visual styling
 FR7: The system displays lot markers within each block
 
@@ -55,7 +55,7 @@ FR12: The system calculates a route from the user's GPS position to the selected
 FR13: The system displays the calculated route as a visual line on the map
 FR14: The system provides turn-by-turn navigation instructions
 FR15: The system detects when the user deviates >25m from the route and automatically recalculates
-FR16: The system detects arrival when the user is within 12m of the destination
+FR16: The system detects arrival when the user is within 15m of the destination
 FR17: The system falls back to a direct line when route calculation fails (network error)
 FR18: Users can follow a compass bearing toward their destination
 FR19: The system animates the camera to follow the user during navigation
@@ -147,7 +147,7 @@ NFR21: Total network loss → full offline navigation with cached map, tiles, bl
 - Phase 3: Testing with Vitest 4.0.x + @testing-library/react — focus on `geo.ts` pure functions and critical hook behavior
 - Phase 3: GitHub Actions CI/CD pipeline: lint → typecheck → test → build → deploy to Hostinger
 - Hostinger hosting migration (Phase 1): `.htaccess` for SPA redirect + security headers + cache-control
-- All thresholds as named constants: `DEVIATION_THRESHOLD_M = 25`, `ARRIVAL_THRESHOLD_M = 20`, `RECALC_DEBOUNCE_MS = 10000`, `OSRM_TIMEOUT_MS = 3000`, `DEVIATION_CHECK_INTERVAL_MS = 5000`
+- All thresholds as named constants: `DEVIATION_THRESHOLD_M = 25`, `ARRIVAL_THRESHOLD_M = 15`, `RECALC_DEBOUNCE_MS = 10000`, `OSRM_TIMEOUT_MS = 3000`, `DEVIATION_CHECK_INTERVAL_MS = 5000`
 - Hook return convention: objects, never arrays; all boolean flags with `is`/`has` prefix
 - CSS custom properties namespace: `--ggv-{category}-{name}` for all design tokens
 
@@ -173,7 +173,7 @@ FR1: Epic 1 — Map display (interactive village map with labeled blocks/lots) �
 FR2: Epic 1 — Pan/zoom touch interaction — baseline maintained
 FR3: Epic 1 — Real-time GPS position on map — baseline maintained
 FR4: Epic 1 — Compass heading on map — baseline maintained
-FR5: Epic 1 — OSM/satellite style switch — baseline maintained
+~~FR5: REMOVED — map style is fixed per UX spec anti-pattern #5~~
 FR6: Epic 1 — Block polygon boundaries — baseline maintained
 FR7: Epic 1 — Lot markers within blocks — baseline maintained
 FR8: Epic 1 — Block selection from list — baseline maintained + data cached via SW
@@ -184,7 +184,7 @@ FR12: Epic 1 — Route calculation from GPS to destination — baseline maintain
 FR13: Epic 1 / Epic 2 — Route displayed as visual line (Epic 1: maintained; Epic 2: floating pills UX)
 FR14: Epic 1 / Epic 2 — Turn-by-turn instructions (Epic 1: maintained; Epic 2: NavBottomStrip)
 FR15: Epic 1 — Deviation >25m triggers auto-recalculation — baseline maintained
-FR16: Epic 1 — Arrival detection <12m — baseline maintained
+FR16: Epic 1 — Arrival detection <15m — baseline maintained
 FR17: Epic 1 — Fallback to direct line when routing fails — baseline maintained
 FR18: Epic 1 / Epic 2 — Compass bearing to destination (Epic 1: maintained; Epic 2: NavTopPill)
 FR19: Epic 1 / Epic 2 — Camera follows user during navigation (Epic 1: maintained; Epic 2: refined)
@@ -216,7 +216,7 @@ FR40: Epic 4 — Data store changes reflected on next app load without code depl
 
 Every visitor scanning the QR code at the village gate can access navigation in under 5 seconds on first visit and under 2 seconds on repeat visits — even on weak 3G or completely offline after the first load. The app installs as a PWA and auto-updates silently.
 
-**FRs covered:** FR1-FR34 (FR1-FR22 and FR33-FR34 as baseline maintained; FR23-FR32 as new offline/PWA capabilities)
+**FRs covered:** FR1-FR4, FR6-FR34 (FR1-FR4, FR6-FR22, FR33-FR34 as baseline maintained; FR23-FR32 as new offline/PWA capabilities; FR5 removed — map style is fixed)
 **NFRs covered:** NFR1-NFR21 (all performance, reliability, and integration resilience targets)
 
 ### Epic 2: Architecture Propre & Migration TypeScript
@@ -264,8 +264,8 @@ So that the map appears and labels are readable without any external network dep
 **Then** the map renders with correct labels and block names without any network requests for style, glyphs, or sprites
 
 **Given** the self-hosted style.json is in place
-**When** the map switches between OSM and satellite styles (FR5)
-**Then** both styles continue to work correctly with locally served glyph files
+**When** the map initializes with the fixed OSM style
+**Then** the style renders correctly with locally served glyph files and no external CDN dependency
 
 **Given** the implementation is complete
 **When** `bun run lint && bun run build` is executed
@@ -399,7 +399,7 @@ So that I never encounter blank pages or failed loads from free tier limitations
 **Given** the full deployment is live (stories 1.1-1.4 in place)
 **When** the app is tested on a real Android device on Slow 3G (Chrome DevTools throttle)
 **Then** first paint occurs in under 3 seconds (NFR1) and the interactive map becomes usable in under 5 seconds (NFR2)
-**And** all existing navigation features work without regression (FR1-FR22, FR33-FR34)
+**And** all existing navigation features work without regression (FR1-FR4, FR6-FR22, FR33-FR34)
 
 ---
 
@@ -529,7 +529,7 @@ So that I can see more of the village map while following my route.
 **When** the `currentStep` is updated in real-time
 **Then** the NavBottomStrip updates the turn instruction and icon without layout shift
 
-**Given** the user arrives at the destination (<12m)
+**Given** the user arrives at the destination (<15m)
 **When** arrival is detected
 **Then** the NavTopPill and NavBottomStrip animate out and the ArrivedOverlay animates in smoothly
 
@@ -619,8 +619,8 @@ So that future changes to navigation logic are validated automatically and regre
 
 **Given** `useNavigation` performs arrival detection
 **When** unit tests for the arrival threshold are run
-**Then** a simulated position at exactly 12m from destination does NOT trigger arrival
-**And** a simulated position at 11.9m from destination triggers `hasArrived: true`
+**Then** a simulated position at exactly 15m from destination does NOT trigger arrival
+**And** a simulated position at 14.9m from destination triggers `hasArrived: true`
 **And** threshold constant `ARRIVAL_THRESHOLD_M` is validated against its documented value
 
 **Given** `useRouting` deviation detection logic exists

@@ -31,7 +31,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 40 FRs across 8 categories:
 - Map Display & Interaction (FR1-FR7): Interactive MapLibre map with GPS, heading, block/lot visualization
 - Destination Selection (FR8-FR11): Block → lot drill-down, data store loading
-- Navigation & Routing (FR12-FR19): OSRM routing, deviation detection (>25m), arrival detection (<12m), cascading fallback
+- Navigation & Routing (FR12-FR19): OSRM routing, deviation detection (>25m), arrival detection (<15m), cascading fallback
 - Device Permissions (FR20-FR22): GPS + iOS orientation permission flows with retry/re-enable
 - Offline & Performance — NEW Phase 1 (FR23-FR29): Workbox SW precaching, self-hosted style/fonts, tile precaching, stale-while-revalidate data
 - PWA Experience — NEW Phase 1 (FR30-FR32): Add to Home Screen, standalone display, auto-update cache
@@ -474,7 +474,7 @@ function getDistance(p1x: number, p1y: number, p2x: number, p2y: number): number
 
 ```typescript
 const DEVIATION_THRESHOLD_M = 25    // Route deviation triggers recalculation
-const ARRIVAL_THRESHOLD_M = 20      // Close enough to destination
+const ARRIVAL_THRESHOLD_M = 15      // Close enough to destination
 const RECALC_DEBOUNCE_MS = 10_000   // Minimum time between route recalculations
 const OSRM_TIMEOUT_MS = 3_000       // OSRM API request timeout
 const DEVIATION_CHECK_INTERVAL_MS = 5_000  // How often to check deviation

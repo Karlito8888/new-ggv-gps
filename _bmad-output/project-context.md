@@ -213,7 +213,7 @@ const geoJsonFormat = [gpsFormat.longitude, gpsFormat.latitude];
 - **Deviation threshold**: 25 meters (triggers route recalculation)
 - **Recalculation debounce**: 10 seconds minimum (prevents spam)
 - **Deviation check interval**: 5 seconds
-- **Arrival threshold**: 20 meters (< 20m = arrived)
+- **Arrival threshold**: 15 meters (< 15m = arrived)
 
 Location: `src/hooks/useRouting.js` and `src/hooks/useNavigation.js`
 
@@ -347,7 +347,7 @@ export function useMapSetup(containerRef) { ... }
 2. Keep inline logic if used only once
 3. Test on mobile device (iOS Safari + Android Chrome)
 4. For routing changes: Verify 25m deviation threshold still works
-5. For arrival changes: Test 20m threshold on actual device
+5. For arrival changes: Test 15m threshold on actual device
 
 **After Changes:**
 
@@ -413,7 +413,7 @@ window.addEventListener("deviceorientation", (e) => {
 - [ ] Route calculation (OSRM API working)
 - [ ] Fallback to direct line (simulate OSRM failure)
 - [ ] Deviation detection (walk >25m away from route)
-- [ ] Arrival detection at <20m threshold
+- [ ] Arrival detection at <15m threshold
 - [ ] Map style toggle (OSM ↔ Satellite)
 - [ ] Village exit flow completes
 - [ ] GPS tracking follows movement
@@ -530,7 +530,7 @@ Use these instead of external libraries (Turf.js).
 | App.jsx          | Main component + 6 inline overlays | 513 | Navigation state machine here       |
 | useMapSetup.js   | Map initialization + GPS           | 213 | Never lazy-load MapLibre here       |
 | useRouting.js    | Route calculation + deviation      | 300 | 25m threshold, 10s debounce         |
-| useNavigation.js | Turn-by-turn + arrival logic       | 237 | 20m arrival threshold               |
+| useNavigation.js | Turn-by-turn + arrival logic       | 237 | 15m arrival threshold               |
 | blocks.js        | GeoJSON block polygons             | N/A | Add/update blocks here              |
 | geo.js           | Spatial utility functions          | N/A | Use Haversine, NOT Turf.js          |
 | supabase.js      | Supabase client (lazy)             | N/A | Optional, initialized on first call |
