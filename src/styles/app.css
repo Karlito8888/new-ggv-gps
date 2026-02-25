@@ -1,28 +1,25 @@
+/* Design tokens (must be first) */
+@import "./design-tokens.css";
+
 /* Self-hosted fonts */
 @import "./fonts.css";
 
 /* ===================================================================
-   CSS VARIABLES
+   BACKWARD-COMPATIBLE ALIASES
+   Old variable names pointing to --ggv-* tokens.
    =================================================================== */
 
 :root {
-  /* Couleurs principales */
-  --color-white: #f4f4f4;
-  --color-green: #50aa61;
-  --color-yellow: #f3c549;
-  --color-black: #121212;
+  --color-white: var(--ggv-color-surface);
+  --color-green: var(--ggv-color-primary);
+  --color-yellow: var(--ggv-color-secondary);
+  --color-black: var(--ggv-color-text);
+  --font-primary: var(--ggv-font-primary);
+  --shadow-strong: var(--ggv-shadow-strong);
+  --shadow-dialog: var(--ggv-shadow-dialog);
+  --transition-normal: var(--ggv-transition-normal);
 
-  /* Typography */
-  --font-primary: "Madimi One", cursive, sans-serif;
-
-  /* Shadows */
-  --shadow-strong: 0 8px 25px rgba(0, 0, 0, 0.2);
-  --shadow-dialog: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-
-  /* Transitions */
-  --transition-normal: 0.2s ease;
-
-  /* Optimisations de rendu */
+  /* Render optimizations */
   font-synthesis: none;
   text-rendering: auto;
   -webkit-font-smoothing: antialiased;
@@ -51,8 +48,13 @@ body {
   height: 100dvh;
   height: 100svh;
   min-height: -webkit-fill-available;
-  font-family: var(--font-primary);
-  background: linear-gradient(135deg, var(--color-green), var(--color-yellow), var(--color-green));
+  font-family: var(--ggv-font-primary);
+  background: linear-gradient(
+    135deg,
+    var(--ggv-color-primary),
+    var(--ggv-color-secondary),
+    var(--ggv-color-primary)
+  );
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -125,23 +127,23 @@ textarea {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 0;
+  z-index: var(--ggv-z-map);
 }
 
 /* GGV Logo - top center */
 .ggv-logo {
   position: absolute;
-  top: 1rem;
+  top: var(--ggv-space-md);
   left: 50%;
   transform: translateX(-50%);
-  z-index: 800;
-  height: 3rem;
+  z-index: var(--ggv-z-logo);
+  height: var(--ggv-space-2xl);
   pointer-events: none;
 }
 
 /* GeolocateControl - native MapLibre style, bottom right */
 .maplibregl-ctrl-bottom-right {
-  bottom: 2rem;
+  bottom: var(--ggv-space-xl);
   right: 0.75rem;
 }
 
@@ -152,36 +154,36 @@ textarea {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: var(--ggv-color-overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
+  z-index: var(--ggv-z-overlay);
+  padding: var(--ggv-space-md);
 }
 
 /* Modal card */
 .modal {
-  background: var(--color-white);
-  border-radius: 1rem;
-  padding: 1.5rem;
+  background: var(--ggv-color-surface);
+  border-radius: var(--ggv-radius-lg);
+  padding: var(--ggv-space-lg);
   max-width: 100%;
   width: 100%;
-  box-shadow: var(--shadow-dialog);
+  box-shadow: var(--ggv-shadow-dialog);
 }
 
 .modal h1 {
   font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
+  font-weight: var(--ggv-font-weight-bold);
+  margin-bottom: var(--ggv-space-md);
   text-align: center;
-  color: var(--color-black);
+  color: var(--ggv-color-text);
 }
 
 .modal p {
-  color: var(--color-black);
-  opacity: 0.7;
-  margin-bottom: 1.5rem;
+  color: var(--ggv-color-text);
+  opacity: var(--ggv-opacity-overlay-text);
+  margin-bottom: var(--ggv-space-lg);
   line-height: 1.6;
 }
 
@@ -189,9 +191,9 @@ textarea {
 .error-message {
   padding: 0.75rem 0;
   background: none;
-  color: #6b7280;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
+  color: var(--ggv-color-gray);
+  margin-bottom: var(--ggv-space-md);
+  font-size: var(--ggv-font-size-sm);
 }
 
 /* ===================================================================
@@ -199,17 +201,17 @@ textarea {
    =================================================================== */
 
 .gps-overlay {
-  background: linear-gradient(135deg, rgba(80, 170, 97, 0.75) 0%, rgba(243, 197, 73, 0.7) 100%);
+  background: var(--ggv-gradient-overlay);
 }
 
 .gps-modal {
-  background: var(--color-white);
-  border-radius: 1.5rem;
-  padding: 2rem 1.5rem;
+  background: var(--ggv-color-surface);
+  border-radius: var(--ggv-radius-xl);
+  padding: var(--ggv-space-xl) var(--ggv-space-lg);
   text-align: center;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-dialog);
+  box-shadow: var(--ggv-shadow-dialog);
 }
 
 .gps-modal::before {
@@ -219,19 +221,19 @@ textarea {
   left: 0;
   right: 0;
   height: 5px;
-  background: linear-gradient(90deg, var(--color-green), var(--color-yellow));
+  background: var(--ggv-gradient-accent-bar);
 }
 
 .gps-icon-wrapper {
   width: 5rem;
   height: 5rem;
-  margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, var(--color-green), var(--color-yellow));
-  border-radius: 50%;
+  margin: 0 auto var(--ggv-space-lg);
+  background: var(--ggv-gradient-brand);
+  border-radius: var(--ggv-radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-strong);
+  box-shadow: var(--ggv-shadow-strong);
   position: relative;
 }
 
@@ -239,8 +241,8 @@ textarea {
   content: "";
   position: absolute;
   inset: -10px;
-  border: 3px dashed var(--color-green);
-  border-radius: 50%;
+  border: 3px dashed var(--ggv-color-primary);
+  border-radius: var(--ggv-radius-full);
   opacity: 0.4;
   animation: gps-pulse 2s ease-in-out infinite;
 }
@@ -260,47 +262,48 @@ textarea {
 .gps-icon {
   width: 2.5rem;
   height: 2.5rem;
-  color: var(--color-white);
+  color: var(--ggv-color-surface);
 }
 
 .gps-title {
-  font-family: var(--font-primary);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-black);
-  margin-bottom: 0.25rem;
+  font-family: var(--ggv-font-primary);
+  font-size: var(--ggv-font-size-xl);
+  font-weight: var(--ggv-font-weight-bold);
+  color: var(--ggv-color-text);
+  margin-bottom: var(--ggv-space-xs);
 }
 
 .gps-tagalog {
-  font-size: 1rem;
-  color: var(--color-green);
+  font-size: var(--ggv-font-size-base);
+  color: var(--ggv-color-primary);
   font-style: italic;
-  margin-bottom: 1rem;
+  margin-bottom: var(--ggv-space-md);
   opacity: 0.9;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  text-shadow: var(--ggv-shadow-text);
 }
 
 .gps-description {
-  color: var(--color-black);
-  opacity: 0.7;
-  margin-bottom: 2rem;
+  color: var(--ggv-color-text);
+  opacity: var(--ggv-opacity-overlay-text);
+  margin-bottom: var(--ggv-space-xl);
   line-height: 1.6;
   font-size: 1.0625rem;
 }
 
 .gps-btn {
   width: 100%;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, var(--color-green) 0%, #3d8a4d 100%);
-  color: var(--color-white);
-  font-family: var(--font-primary);
-  font-weight: 700;
-  font-size: 1.125rem;
+  padding: var(--ggv-space-md) var(--ggv-space-lg);
+  min-height: var(--ggv-touch-target-cta);
+  background: var(--ggv-gradient-primary);
+  color: var(--ggv-color-surface);
+  font-family: var(--ggv-font-primary);
+  font-weight: var(--ggv-font-weight-bold);
+  font-size: var(--ggv-font-size-lg);
   border: none;
-  border-radius: 1rem;
+  border-radius: var(--ggv-radius-lg);
   cursor: pointer;
-  transition: all var(--transition-normal);
-  box-shadow: 0 4px 15px rgba(80, 170, 97, 0.4);
+  transition: all var(--ggv-transition-normal);
+  box-shadow: var(--ggv-shadow-button);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -309,7 +312,7 @@ textarea {
 
 .gps-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(80, 170, 97, 0.5);
+  box-shadow: var(--ggv-shadow-button-hover);
 }
 
 .gps-btn:active {
@@ -322,21 +325,27 @@ textarea {
 }
 
 .gps-version {
-  margin-top: 1.5rem;
-  font-size: 0.75rem;
-  color: var(--color-black);
+  margin-top: var(--ggv-space-lg);
+  font-size: var(--ggv-font-size-xs);
+  color: var(--ggv-color-text);
   opacity: 0.4;
+}
+
+/* Disabled GPS button style */
+.gps-btn-disabled {
+  background: var(--ggv-color-disabled);
+  opacity: var(--ggv-opacity-disabled);
 }
 
 /* Tagalog translation styles */
 .tagalog-inline {
   display: block;
   font-style: italic;
-  color: var(--color-green);
+  color: var(--ggv-color-primary);
   font-size: 0.9em;
-  margin-top: 0.5rem;
-  opacity: 0.85;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  margin-top: var(--ggv-space-sm);
+  opacity: var(--ggv-opacity-tagalog);
+  text-shadow: var(--ggv-shadow-text);
 }
 
 /* iOS Safari specific fixes */
@@ -351,17 +360,17 @@ textarea {
    =================================================================== */
 
 .welcome-overlay {
-  background: linear-gradient(135deg, rgba(80, 170, 97, 0.75) 0%, rgba(243, 197, 73, 0.7) 100%);
+  background: var(--ggv-gradient-overlay);
 }
 
 .welcome-modal {
-  background: var(--color-white);
-  border-radius: 1.5rem;
-  padding: 2rem 1.5rem;
+  background: var(--ggv-color-surface);
+  border-radius: var(--ggv-radius-xl);
+  padding: var(--ggv-space-xl) var(--ggv-space-lg);
   text-align: center;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-dialog);
+  box-shadow: var(--ggv-shadow-dialog);
 }
 
 .welcome-modal::before {
@@ -371,19 +380,19 @@ textarea {
   left: 0;
   right: 0;
   height: 5px;
-  background: linear-gradient(90deg, var(--color-green), var(--color-yellow));
+  background: var(--ggv-gradient-accent-bar);
 }
 
 .welcome-icon-wrapper {
   width: 5rem;
   height: 5rem;
-  margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, var(--color-green), var(--color-yellow));
-  border-radius: 50%;
+  margin: 0 auto var(--ggv-space-lg);
+  background: var(--ggv-gradient-brand);
+  border-radius: var(--ggv-radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-strong);
+  box-shadow: var(--ggv-shadow-strong);
   position: relative;
 }
 
@@ -391,8 +400,8 @@ textarea {
   content: "";
   position: absolute;
   inset: -10px;
-  border: 3px dashed var(--color-green);
-  border-radius: 50%;
+  border: 3px dashed var(--ggv-color-primary);
+  border-radius: var(--ggv-radius-full);
   opacity: 0.4;
   animation: gps-pulse 2s ease-in-out infinite;
 }
@@ -400,53 +409,53 @@ textarea {
 .welcome-icon {
   width: 2.5rem;
   height: 2.5rem;
-  color: var(--color-white);
+  color: var(--ggv-color-surface);
 }
 
 .welcome-title {
-  font-family: var(--font-primary);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-black);
-  margin-bottom: 0.25rem;
+  font-family: var(--ggv-font-primary);
+  font-size: var(--ggv-font-size-xl);
+  font-weight: var(--ggv-font-weight-bold);
+  color: var(--ggv-color-text);
+  margin-bottom: var(--ggv-space-xs);
 }
 
 .welcome-tagalog {
-  font-size: 1rem;
-  color: var(--color-green);
+  font-size: var(--ggv-font-size-base);
+  color: var(--ggv-color-primary);
   font-style: italic;
-  margin-bottom: 1rem;
+  margin-bottom: var(--ggv-space-md);
   opacity: 0.9;
 }
 
 .welcome-description {
-  color: var(--color-black);
-  opacity: 0.7;
-  margin-bottom: 1.5rem;
+  color: var(--ggv-color-text);
+  opacity: var(--ggv-opacity-overlay-text);
+  margin-bottom: var(--ggv-space-lg);
   line-height: 1.6;
-  font-size: 1rem;
+  font-size: var(--ggv-font-size-base);
 }
 
 .welcome-type-selector {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  gap: var(--ggv-space-sm);
+  margin-bottom: var(--ggv-space-lg);
 }
 
 .welcome-type-btn {
   flex: 1;
   padding: 0.625rem 0.375rem;
-  background: var(--color-white);
-  border: 2px solid rgba(18, 18, 18, 0.15);
-  border-radius: 0.75rem;
-  font-weight: 600;
-  font-size: 0.75rem;
+  background: var(--ggv-color-surface);
+  border: 2px solid rgba(18, 18, 18, var(--ggv-opacity-border));
+  border-radius: var(--ggv-radius-md);
+  font-weight: var(--ggv-font-weight-semibold);
+  font-size: var(--ggv-font-size-xs);
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: all var(--ggv-transition-normal);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--ggv-space-sm);
 }
 
 .welcome-type-btn svg {
@@ -455,104 +464,105 @@ textarea {
 }
 
 .welcome-type-btn:hover {
-  border-color: var(--color-green);
+  border-color: var(--ggv-color-primary);
   background: rgba(80, 170, 97, 0.05);
 }
 
 .welcome-type-btn.active {
-  background: linear-gradient(135deg, var(--color-green), #3d8a4d);
-  color: var(--color-white);
-  border-color: var(--color-green);
-  box-shadow: 0 4px 12px rgba(80, 170, 97, 0.3);
+  background: var(--ggv-gradient-primary);
+  color: var(--ggv-color-surface);
+  border-color: var(--ggv-color-primary);
+  box-shadow: 0 4px 12px var(--ggv-color-primary-tint);
 }
 
 .welcome-block-selector {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--ggv-space-lg);
   text-align: left;
 }
 
 .welcome-block-selector label {
   display: block;
-  font-weight: 600;
-  color: var(--color-black);
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  font-weight: var(--ggv-font-weight-semibold);
+  color: var(--ggv-color-text);
+  margin-bottom: var(--ggv-space-sm);
+  font-size: var(--ggv-font-size-sm);
 }
 
 .welcome-select {
   width: 100%;
-  padding: 0.875rem 1rem;
-  border: 2px solid rgba(18, 18, 18, 0.15);
-  border-radius: 0.75rem;
-  font-size: 1rem;
-  background: var(--color-white);
+  padding: 0.875rem var(--ggv-space-md);
+  border: 2px solid rgba(18, 18, 18, var(--ggv-opacity-border));
+  border-radius: var(--ggv-radius-md);
+  font-size: var(--ggv-font-size-base);
+  background: var(--ggv-color-surface);
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: all var(--ggv-transition-normal);
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23121212' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 1rem center;
-  background-size: 1rem;
+  background-position: right var(--ggv-space-md) center;
+  background-size: var(--ggv-space-md);
 }
 
 .welcome-select:focus {
   outline: none;
-  border-color: var(--color-green);
+  border-color: var(--ggv-color-primary);
   box-shadow: 0 0 0 3px rgba(80, 170, 97, 0.15);
 }
 
 /* Error state in Welcome overlay */
 .welcome-error {
-  padding: 1rem;
-  background: #fef2f2;
-  border-radius: 0.75rem;
-  border-left: 4px solid #ef4444;
-  margin-bottom: 1.5rem;
+  padding: var(--ggv-space-md);
+  background: var(--ggv-color-error-bg);
+  border-radius: var(--ggv-radius-md);
+  border-left: 4px solid var(--ggv-color-error);
+  margin-bottom: var(--ggv-space-lg);
 }
 
 .welcome-error-text {
-  color: #991b1b;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+  color: var(--ggv-color-error-darkest);
+  font-weight: var(--ggv-font-weight-semibold);
+  margin-bottom: var(--ggv-space-xs);
 }
 
 .welcome-error-tagalog {
   display: block;
-  color: #dc2626;
+  color: var(--ggv-color-error-dark);
   font-style: italic;
-  font-size: 0.875rem;
+  font-size: var(--ggv-font-size-sm);
 }
 
 .welcome-retry-btn {
   width: 100%;
   padding: 0.75rem;
-  background: #ef4444;
-  color: white;
+  background: var(--ggv-color-error);
+  color: var(--ggv-color-surface-white);
   border: none;
-  border-radius: 0.5rem;
-  font-weight: 600;
+  border-radius: var(--ggv-radius-sm);
+  font-weight: var(--ggv-font-weight-semibold);
   cursor: pointer;
   margin-top: 0.75rem;
-  transition: background var(--transition-normal);
+  transition: background var(--ggv-transition-normal);
 }
 
 .welcome-retry-btn:hover {
-  background: #dc2626;
+  background: var(--ggv-color-error-dark);
 }
 
 .welcome-btn {
   width: 100%;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, var(--color-green) 0%, #3d8a4d 100%);
-  color: var(--color-white);
-  font-family: var(--font-primary);
-  font-weight: 700;
-  font-size: 1.125rem;
+  padding: var(--ggv-space-md) var(--ggv-space-lg);
+  min-height: var(--ggv-touch-target-cta);
+  background: var(--ggv-gradient-primary);
+  color: var(--ggv-color-surface);
+  font-family: var(--ggv-font-primary);
+  font-weight: var(--ggv-font-weight-bold);
+  font-size: var(--ggv-font-size-lg);
   border: none;
-  border-radius: 1rem;
+  border-radius: var(--ggv-radius-lg);
   cursor: pointer;
-  transition: all var(--transition-normal);
-  box-shadow: 0 4px 15px rgba(80, 170, 97, 0.4);
+  transition: all var(--ggv-transition-normal);
+  box-shadow: var(--ggv-shadow-button);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -561,7 +571,7 @@ textarea {
 
 .welcome-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(80, 170, 97, 0.5);
+  box-shadow: var(--ggv-shadow-button-hover);
 }
 
 .welcome-btn:active {
@@ -578,17 +588,17 @@ textarea {
    =================================================================== */
 
 .orientation-overlay {
-  background: linear-gradient(135deg, rgba(80, 170, 97, 0.75) 0%, rgba(243, 197, 73, 0.7) 100%);
+  background: var(--ggv-gradient-overlay);
 }
 
 .orientation-modal {
-  background: var(--color-white);
-  border-radius: 1.5rem;
-  padding: 2rem 1.5rem;
+  background: var(--ggv-color-surface);
+  border-radius: var(--ggv-radius-xl);
+  padding: var(--ggv-space-xl) var(--ggv-space-lg);
   text-align: center;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-dialog);
+  box-shadow: var(--ggv-shadow-dialog);
 }
 
 .orientation-modal::before {
@@ -598,19 +608,19 @@ textarea {
   left: 0;
   right: 0;
   height: 5px;
-  background: linear-gradient(90deg, var(--color-green), var(--color-yellow));
+  background: var(--ggv-gradient-accent-bar);
 }
 
 .orientation-icon-wrapper {
   width: 5rem;
   height: 5rem;
-  margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, var(--color-green), var(--color-yellow));
-  border-radius: 50%;
+  margin: 0 auto var(--ggv-space-lg);
+  background: var(--ggv-gradient-brand);
+  border-radius: var(--ggv-radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-strong);
+  box-shadow: var(--ggv-shadow-strong);
   position: relative;
   animation: compass-spin 4s linear infinite;
 }
@@ -637,8 +647,8 @@ textarea {
   content: "";
   position: absolute;
   inset: -10px;
-  border: 3px dashed var(--color-green);
-  border-radius: 50%;
+  border: 3px dashed var(--ggv-color-primary);
+  border-radius: var(--ggv-radius-full);
   opacity: 0.4;
   animation: gps-pulse 2s ease-in-out infinite;
 }
@@ -646,46 +656,47 @@ textarea {
 .orientation-icon {
   width: 2.5rem;
   height: 2.5rem;
-  color: var(--color-white);
+  color: var(--ggv-color-surface);
 }
 
 .orientation-title {
-  font-family: var(--font-primary);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-black);
-  margin-bottom: 0.25rem;
+  font-family: var(--ggv-font-primary);
+  font-size: var(--ggv-font-size-xl);
+  font-weight: var(--ggv-font-weight-bold);
+  color: var(--ggv-color-text);
+  margin-bottom: var(--ggv-space-xs);
 }
 
 .orientation-tagalog {
-  font-size: 1rem;
-  color: var(--color-green);
+  font-size: var(--ggv-font-size-base);
+  color: var(--ggv-color-primary);
   font-style: italic;
-  margin-bottom: 1rem;
+  margin-bottom: var(--ggv-space-md);
   opacity: 0.9;
 }
 
 .orientation-description {
-  color: var(--color-black);
-  opacity: 0.7;
-  margin-bottom: 2rem;
+  color: var(--ggv-color-text);
+  opacity: var(--ggv-opacity-overlay-text);
+  margin-bottom: var(--ggv-space-xl);
   line-height: 1.6;
-  font-size: 1rem;
+  font-size: var(--ggv-font-size-base);
 }
 
 .orientation-btn {
   width: 100%;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, var(--color-green) 0%, #3d8a4d 100%);
-  color: var(--color-white);
-  font-family: var(--font-primary);
-  font-weight: 700;
-  font-size: 1.125rem;
+  padding: var(--ggv-space-md) var(--ggv-space-lg);
+  min-height: var(--ggv-touch-target-cta);
+  background: var(--ggv-gradient-primary);
+  color: var(--ggv-color-surface);
+  font-family: var(--ggv-font-primary);
+  font-weight: var(--ggv-font-weight-bold);
+  font-size: var(--ggv-font-size-lg);
   border: none;
-  border-radius: 1rem;
+  border-radius: var(--ggv-radius-lg);
   cursor: pointer;
-  transition: all var(--transition-normal);
-  box-shadow: 0 4px 15px rgba(80, 170, 97, 0.4);
+  transition: all var(--ggv-transition-normal);
+  box-shadow: var(--ggv-shadow-button);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -695,7 +706,7 @@ textarea {
 
 .orientation-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(80, 170, 97, 0.5);
+  box-shadow: var(--ggv-shadow-button-hover);
 }
 
 .orientation-btn:active {
@@ -703,7 +714,7 @@ textarea {
 }
 
 .orientation-btn:disabled {
-  opacity: 0.6;
+  opacity: var(--ggv-opacity-disabled);
   cursor: not-allowed;
   transform: none;
 }
@@ -715,29 +726,29 @@ textarea {
 
 .orientation-btn-skip {
   width: 100%;
-  padding: 0.875rem 1.5rem;
-  background: rgba(18, 18, 18, 0.08);
-  color: var(--color-black);
-  font-weight: 600;
-  font-size: 1rem;
+  padding: 0.875rem var(--ggv-space-lg);
+  background: var(--ggv-color-text-tint);
+  color: var(--ggv-color-text);
+  font-weight: var(--ggv-font-weight-semibold);
+  font-size: var(--ggv-font-size-base);
   border: none;
-  border-radius: 0.75rem;
+  border-radius: var(--ggv-radius-md);
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: all var(--ggv-transition-normal);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--ggv-space-sm);
 }
 
 .orientation-btn-skip:hover {
-  background: rgba(18, 18, 18, 0.12);
+  background: var(--ggv-color-text-tint-hover);
 }
 
 .orientation-skip-icon {
-  width: 1.125rem;
-  height: 1.125rem;
-  opacity: 0.7;
+  width: var(--ggv-font-size-lg);
+  height: var(--ggv-font-size-lg);
+  opacity: var(--ggv-opacity-overlay-text);
 }
 
 /* ===================================================================
@@ -745,17 +756,17 @@ textarea {
    =================================================================== */
 
 .arrived-overlay {
-  background: linear-gradient(135deg, rgba(80, 170, 97, 0.8) 0%, rgba(52, 211, 153, 0.75) 100%);
+  background: var(--ggv-gradient-arrived);
 }
 
 .arrived-modal {
-  background: var(--color-white);
-  border-radius: 1.5rem;
-  padding: 2rem 1.5rem;
+  background: var(--ggv-color-surface);
+  border-radius: var(--ggv-radius-xl);
+  padding: var(--ggv-space-xl) var(--ggv-space-lg);
   text-align: center;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-dialog);
+  box-shadow: var(--ggv-shadow-dialog);
 }
 
 .arrived-modal::before {
@@ -765,19 +776,19 @@ textarea {
   left: 0;
   right: 0;
   height: 5px;
-  background: linear-gradient(90deg, var(--color-green), #34d399);
+  background: linear-gradient(90deg, var(--ggv-color-primary), var(--ggv-color-success));
 }
 
 .arrived-icon-wrapper {
   width: 5rem;
   height: 5rem;
-  margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, var(--color-green), #34d399);
-  border-radius: 50%;
+  margin: 0 auto var(--ggv-space-lg);
+  background: linear-gradient(135deg, var(--ggv-color-primary), var(--ggv-color-success));
+  border-radius: var(--ggv-radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-strong);
+  box-shadow: var(--ggv-shadow-strong);
   position: relative;
   animation: success-bounce 0.6s ease-out;
 }
@@ -800,8 +811,8 @@ textarea {
   content: "";
   position: absolute;
   inset: -10px;
-  border: 3px solid var(--color-green);
-  border-radius: 50%;
+  border: 3px solid var(--ggv-color-primary);
+  border-radius: var(--ggv-radius-full);
   opacity: 0;
   animation: success-ring 1s ease-out 0.3s forwards;
 }
@@ -820,46 +831,47 @@ textarea {
 .arrived-icon {
   width: 2.5rem;
   height: 2.5rem;
-  color: var(--color-white);
+  color: var(--ggv-color-surface);
 }
 
 .arrived-title {
-  font-family: var(--font-primary);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-black);
-  margin-bottom: 0.25rem;
+  font-family: var(--ggv-font-primary);
+  font-size: var(--ggv-font-size-xl);
+  font-weight: var(--ggv-font-weight-bold);
+  color: var(--ggv-color-text);
+  margin-bottom: var(--ggv-space-xs);
 }
 
 .arrived-tagalog {
-  font-size: 1rem;
-  color: var(--color-green);
+  font-size: var(--ggv-font-size-base);
+  color: var(--ggv-color-primary);
   font-style: italic;
-  margin-bottom: 1rem;
+  margin-bottom: var(--ggv-space-md);
   opacity: 0.9;
 }
 
 .arrived-description {
-  color: var(--color-black);
-  opacity: 0.7;
-  margin-bottom: 2rem;
+  color: var(--ggv-color-text);
+  opacity: var(--ggv-opacity-overlay-text);
+  margin-bottom: var(--ggv-space-xl);
   line-height: 1.6;
   font-size: 1.0625rem;
 }
 
 .arrived-btn {
   width: 100%;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, var(--color-green) 0%, #3d8a4d 100%);
-  color: var(--color-white);
-  font-family: var(--font-primary);
-  font-weight: 700;
-  font-size: 1.125rem;
+  padding: var(--ggv-space-md) var(--ggv-space-lg);
+  min-height: var(--ggv-touch-target-cta);
+  background: var(--ggv-gradient-primary);
+  color: var(--ggv-color-surface);
+  font-family: var(--ggv-font-primary);
+  font-weight: var(--ggv-font-weight-bold);
+  font-size: var(--ggv-font-size-lg);
   border: none;
-  border-radius: 1rem;
+  border-radius: var(--ggv-radius-lg);
   cursor: pointer;
-  transition: all var(--transition-normal);
-  box-shadow: 0 4px 15px rgba(80, 170, 97, 0.4);
+  transition: all var(--ggv-transition-normal);
+  box-shadow: var(--ggv-shadow-button);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -869,7 +881,7 @@ textarea {
 
 .arrived-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(80, 170, 97, 0.5);
+  box-shadow: var(--ggv-shadow-button-hover);
 }
 
 .arrived-btn:active {
@@ -883,29 +895,29 @@ textarea {
 
 .arrived-btn-secondary {
   width: 100%;
-  padding: 0.875rem 1.5rem;
-  background: rgba(18, 18, 18, 0.08);
-  color: var(--color-black);
-  font-weight: 600;
-  font-size: 1rem;
+  padding: 0.875rem var(--ggv-space-lg);
+  background: var(--ggv-color-text-tint);
+  color: var(--ggv-color-text);
+  font-weight: var(--ggv-font-weight-semibold);
+  font-size: var(--ggv-font-size-base);
   border: none;
-  border-radius: 0.75rem;
+  border-radius: var(--ggv-radius-md);
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: all var(--ggv-transition-normal);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--ggv-space-sm);
 }
 
 .arrived-btn-secondary:hover {
-  background: rgba(18, 18, 18, 0.12);
+  background: var(--ggv-color-text-tint-hover);
 }
 
 .arrived-exit-icon {
-  width: 1.125rem;
-  height: 1.125rem;
-  opacity: 0.7;
+  width: var(--ggv-font-size-lg);
+  height: var(--ggv-font-size-lg);
+  opacity: var(--ggv-opacity-overlay-text);
 }
 
 /* ===================================================================
@@ -913,17 +925,17 @@ textarea {
    =================================================================== */
 
 .exit-overlay {
-  background: linear-gradient(135deg, rgba(243, 197, 73, 0.8) 0%, rgba(251, 191, 36, 0.75) 100%);
+  background: var(--ggv-gradient-exit-overlay);
 }
 
 .exit-modal {
-  background: var(--color-white);
-  border-radius: 1.5rem;
-  padding: 2rem 1.5rem;
+  background: var(--ggv-color-surface);
+  border-radius: var(--ggv-radius-xl);
+  padding: var(--ggv-space-xl) var(--ggv-space-lg);
   text-align: center;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-dialog);
+  box-shadow: var(--ggv-shadow-dialog);
 }
 
 .exit-modal::before {
@@ -933,19 +945,19 @@ textarea {
   left: 0;
   right: 0;
   height: 5px;
-  background: linear-gradient(90deg, var(--color-yellow), #fbbf24);
+  background: linear-gradient(90deg, var(--ggv-color-secondary), var(--ggv-color-amber));
 }
 
 .exit-icon-wrapper {
   width: 5rem;
   height: 5rem;
-  margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, var(--color-yellow), #fbbf24);
-  border-radius: 50%;
+  margin: 0 auto var(--ggv-space-lg);
+  background: linear-gradient(135deg, var(--ggv-color-secondary), var(--ggv-color-amber));
+  border-radius: var(--ggv-radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-strong);
+  box-shadow: var(--ggv-shadow-strong);
   position: relative;
 }
 
@@ -953,8 +965,8 @@ textarea {
   content: "";
   position: absolute;
   inset: -10px;
-  border: 3px dashed var(--color-yellow);
-  border-radius: 50%;
+  border: 3px dashed var(--ggv-color-secondary);
+  border-radius: var(--ggv-radius-full);
   opacity: 0.4;
   animation: gps-pulse 2s ease-in-out infinite;
 }
@@ -962,46 +974,47 @@ textarea {
 .exit-icon {
   width: 2.5rem;
   height: 2.5rem;
-  color: var(--color-white);
+  color: var(--ggv-color-surface);
 }
 
 .exit-title {
-  font-family: var(--font-primary);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-black);
-  margin-bottom: 0.25rem;
+  font-family: var(--ggv-font-primary);
+  font-size: var(--ggv-font-size-xl);
+  font-weight: var(--ggv-font-weight-bold);
+  color: var(--ggv-color-text);
+  margin-bottom: var(--ggv-space-xs);
 }
 
 .exit-tagalog {
-  font-size: 1rem;
-  color: #d97706;
+  font-size: var(--ggv-font-size-base);
+  color: var(--ggv-color-secondary-dark);
   font-style: italic;
-  margin-bottom: 1rem;
+  margin-bottom: var(--ggv-space-md);
   opacity: 0.9;
 }
 
 .exit-description {
-  color: var(--color-black);
-  opacity: 0.7;
-  margin-bottom: 2rem;
+  color: var(--ggv-color-text);
+  opacity: var(--ggv-opacity-overlay-text);
+  margin-bottom: var(--ggv-space-xl);
   line-height: 1.6;
   font-size: 1.0625rem;
 }
 
 .exit-btn {
   width: 100%;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, var(--color-yellow) 0%, #d97706 100%);
-  color: var(--color-white);
-  font-family: var(--font-primary);
-  font-weight: 700;
-  font-size: 1.125rem;
+  padding: var(--ggv-space-md) var(--ggv-space-lg);
+  min-height: var(--ggv-touch-target-cta);
+  background: var(--ggv-gradient-exit);
+  color: var(--ggv-color-surface);
+  font-family: var(--ggv-font-primary);
+  font-weight: var(--ggv-font-weight-bold);
+  font-size: var(--ggv-font-size-lg);
   border: none;
-  border-radius: 1rem;
+  border-radius: var(--ggv-radius-lg);
   cursor: pointer;
-  transition: all var(--transition-normal);
-  box-shadow: 0 4px 15px rgba(243, 197, 73, 0.4);
+  transition: all var(--ggv-transition-normal);
+  box-shadow: var(--ggv-shadow-button-exit);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1010,7 +1023,7 @@ textarea {
 
 .exit-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(243, 197, 73, 0.5);
+  box-shadow: var(--ggv-shadow-button-exit-hover);
 }
 
 .exit-btn:active {
@@ -1031,11 +1044,11 @@ textarea {
   top: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(180deg, var(--color-white) 0%, rgba(244, 244, 244, 0.98) 100%);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  z-index: 900;
-  padding: 0.875rem 1rem;
-  border-radius: 0 0 1.5rem 1.5rem;
+  background: linear-gradient(180deg, var(--ggv-color-surface) 0%, rgba(244, 244, 244, 0.98) 100%);
+  box-shadow: var(--ggv-shadow-overlay);
+  z-index: var(--ggv-z-nav);
+  padding: 0.875rem var(--ggv-space-md);
+  border-radius: 0 0 var(--ggv-radius-xl) var(--ggv-radius-xl);
 }
 
 /* Compact navigation header */
@@ -1049,20 +1062,20 @@ textarea {
 .nav-turn {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--ggv-space-xs);
   min-width: 3.5rem;
 }
 
 .nav-turn-icon {
-  font-size: 1.5rem;
-  color: var(--color-green);
+  font-size: var(--ggv-font-size-xl);
+  color: var(--ggv-color-primary);
 }
 
 .nav-turn-dist {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-black);
-  opacity: 0.7;
+  font-size: var(--ggv-font-size-xs);
+  font-weight: var(--ggv-font-weight-semibold);
+  color: var(--ggv-color-text);
+  opacity: var(--ggv-opacity-overlay-text);
 }
 
 .nav-center {
@@ -1072,9 +1085,9 @@ textarea {
 }
 
 .nav-dest-name {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-black);
+  font-size: var(--ggv-font-size-sm);
+  font-weight: var(--ggv-font-weight-semibold);
+  color: var(--ggv-color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1082,24 +1095,24 @@ textarea {
 
 .nav-remaining {
   font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--color-green);
+  font-weight: var(--ggv-font-weight-bold);
+  color: var(--ggv-color-primary);
 }
 
 .nav-source {
   font-size: 0.625rem;
-  color: #9ca3af;
+  color: var(--ggv-color-gray-light);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-top: 0.125rem;
 }
 
 .nav-cancel-btn {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
+  min-width: var(--ggv-touch-target-min);
+  min-height: var(--ggv-touch-target-min);
+  border-radius: var(--ggv-radius-full);
   border: none;
-  background: #ef4444;
+  background: var(--ggv-color-error);
   padding: 0;
   cursor: pointer;
   display: flex;
@@ -1109,9 +1122,9 @@ textarea {
 }
 
 .nav-cancel-btn svg {
-  width: 1rem;
-  height: 1rem;
-  color: var(--color-white);
+  width: var(--ggv-space-md);
+  height: var(--ggv-space-md);
+  color: var(--ggv-color-surface);
 }
 
 .nav-compass {
@@ -1121,9 +1134,9 @@ textarea {
 .compass-ring {
   width: 3.5rem;
   height: 3.5rem;
-  border-radius: 50%;
+  border-radius: var(--ggv-radius-full);
   background: linear-gradient(135deg, rgba(80, 170, 97, 0.1), rgba(243, 197, 73, 0.1));
-  border: 2px solid rgba(80, 170, 97, 0.3);
+  border: 2px solid var(--ggv-color-primary-tint);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1139,48 +1152,48 @@ textarea {
 }
 
 .compass-arrow svg {
-  width: 2rem;
-  height: 2rem;
-  color: var(--color-green);
-  filter: drop-shadow(0 2px 4px rgba(80, 170, 97, 0.3));
+  width: var(--ggv-space-xl);
+  height: var(--ggv-space-xl);
+  color: var(--ggv-color-primary);
+  filter: drop-shadow(0 2px 4px var(--ggv-color-primary-tint));
 }
 
 /* Map Controls (zoom, pitch) */
 .nav-map-controls {
   position: fixed;
-  right: 1rem;
+  right: var(--ggv-space-md);
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  z-index: 100;
+  gap: var(--ggv-space-sm);
+  z-index: var(--ggv-z-map-controls);
 }
 
 .map-control-btn {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
+  width: var(--ggv-space-2xl);
+  height: var(--ggv-space-2xl);
+  border-radius: var(--ggv-radius-full);
   border: none;
-  background: var(--color-white);
-  color: var(--color-green);
+  background: var(--ggv-color-surface);
+  color: var(--ggv-color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.2s ease;
+  box-shadow: var(--ggv-shadow-control);
+  transition: all var(--ggv-transition-normal);
 }
 
 .map-control-btn:active {
   transform: scale(0.95);
-  background: var(--color-green);
-  color: var(--color-white);
+  background: var(--ggv-color-primary);
+  color: var(--ggv-color-surface);
 }
 
 .map-control-btn svg {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: var(--ggv-space-lg);
+  height: var(--ggv-space-lg);
 }
 
 /* ===================================================================
@@ -1191,17 +1204,17 @@ textarea {
 @media (min-width: 641px) {
   /* Modal */
   .modal {
-    padding: 2rem;
+    padding: var(--ggv-space-xl);
     max-width: 400px;
   }
 
   .modal h1 {
-    font-size: 1.5rem;
+    font-size: var(--ggv-font-size-xl);
   }
 
   /* GPS Overlay */
   .gps-modal {
-    padding: 2.5rem 2rem;
+    padding: 2.5rem var(--ggv-space-xl);
   }
 
   .gps-icon-wrapper {
@@ -1220,12 +1233,12 @@ textarea {
 
   /* Navigation */
   .navigation-overlay {
-    padding: 1rem 1.25rem;
+    padding: var(--ggv-space-md) 1.25rem;
   }
 
   /* Welcome Overlay */
   .welcome-modal {
-    padding: 2.5rem 2rem;
+    padding: 2.5rem var(--ggv-space-xl);
   }
 
   .welcome-icon-wrapper {
@@ -1244,7 +1257,7 @@ textarea {
 
   .welcome-type-btn {
     padding: 0.75rem 0.5rem;
-    font-size: 0.875rem;
+    font-size: var(--ggv-font-size-sm);
   }
 
   .welcome-type-btn svg {
@@ -1254,7 +1267,7 @@ textarea {
 
   /* Orientation Overlay */
   .orientation-modal {
-    padding: 2.5rem 2rem;
+    padding: 2.5rem var(--ggv-space-xl);
   }
 
   .orientation-icon-wrapper {
@@ -1273,7 +1286,7 @@ textarea {
 
   /* Arrived Overlay */
   .arrived-modal {
-    padding: 2.5rem 2rem;
+    padding: 2.5rem var(--ggv-space-xl);
   }
 
   .arrived-icon-wrapper {
@@ -1292,7 +1305,7 @@ textarea {
 
   /* Exit Overlay */
   .exit-modal {
-    padding: 2.5rem 2rem;
+    padding: 2.5rem var(--ggv-space-xl);
   }
 
   .exit-icon-wrapper {

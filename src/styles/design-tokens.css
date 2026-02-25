@@ -1,0 +1,169 @@
+/* ===================================================================
+   DESIGN TOKENS — GGV Design System
+   All --ggv-* custom properties defined here.
+   Imported first in app.css. Do NOT duplicate tokens.
+   =================================================================== */
+
+:root {
+  /* =================================================================
+     COLORS
+     ================================================================= */
+
+  /* Brand colors */
+  --ggv-color-primary: #50aa61;
+  --ggv-color-primary-dark: #3d8a4d;
+  --ggv-color-secondary: #f3c549;
+  --ggv-color-secondary-dark: #d97706;
+
+  /* Surface & background */
+  --ggv-color-surface: #f4f4f4;
+  --ggv-color-surface-white: #ffffff;
+
+  /* Text */
+  --ggv-color-text: #121212;
+  --ggv-color-text-secondary: rgba(18, 18, 18, 0.7);
+
+  /* Semantic colors */
+  --ggv-color-success: #34d399;
+  --ggv-color-error: #ef4444;
+  --ggv-color-error-dark: #dc2626;
+  --ggv-color-error-darkest: #991b1b;
+  --ggv-color-error-bg: #fef2f2;
+
+  /* Overlay & utility */
+  --ggv-color-overlay-bg: rgba(0, 0, 0, 0.7);
+  --ggv-color-gray: #6b7280;
+  --ggv-color-gray-light: #9ca3af;
+  --ggv-color-disabled: #888888;
+  --ggv-color-amber: #fbbf24;
+
+  /* Semi-transparent tints */
+  --ggv-color-text-tint: rgba(18, 18, 18, 0.08);
+  --ggv-color-text-tint-hover: rgba(18, 18, 18, 0.12);
+  --ggv-color-primary-tint: rgba(80, 170, 97, 0.3);
+
+  /* =================================================================
+     GRADIENTS
+     ================================================================= */
+
+  --ggv-gradient-primary: linear-gradient(
+    135deg,
+    var(--ggv-color-primary) 0%,
+    var(--ggv-color-primary-dark) 100%
+  );
+  --ggv-gradient-brand: linear-gradient(
+    135deg,
+    var(--ggv-color-primary),
+    var(--ggv-color-secondary)
+  );
+  --ggv-gradient-overlay: linear-gradient(
+    135deg,
+    rgba(80, 170, 97, 0.75) 0%,
+    rgba(243, 197, 73, 0.7) 100%
+  );
+  --ggv-gradient-exit: linear-gradient(
+    135deg,
+    var(--ggv-color-secondary) 0%,
+    var(--ggv-color-secondary-dark) 100%
+  );
+  --ggv-gradient-accent-bar: linear-gradient(
+    90deg,
+    var(--ggv-color-primary),
+    var(--ggv-color-secondary)
+  );
+  --ggv-gradient-arrived: linear-gradient(
+    135deg,
+    rgba(80, 170, 97, 0.8) 0%,
+    rgba(52, 211, 153, 0.75) 100%
+  );
+  --ggv-gradient-exit-overlay: linear-gradient(
+    135deg,
+    rgba(243, 197, 73, 0.8) 0%,
+    rgba(251, 191, 36, 0.75) 100%
+  );
+
+  /* =================================================================
+     SPACING
+     ================================================================= */
+
+  --ggv-space-xs: 0.25rem;
+  --ggv-space-sm: 0.5rem;
+  --ggv-space-md: 1rem;
+  --ggv-space-lg: 1.5rem;
+  --ggv-space-xl: 2rem;
+  --ggv-space-2xl: 3rem;
+
+  /* =================================================================
+     TOUCH TARGETS (WCAG 2.1 Level A)
+     ================================================================= */
+
+  --ggv-touch-target-min: 2.75rem;
+  --ggv-touch-target-cta: 3.5rem;
+
+  /* =================================================================
+     Z-INDEX
+     ================================================================= */
+
+  --ggv-z-map: 0;
+  --ggv-z-map-controls: 100;
+  --ggv-z-logo: 800;
+  --ggv-z-nav: 900;
+  --ggv-z-overlay: 1000;
+  --ggv-z-modal: 1100;
+
+  /* =================================================================
+     TYPOGRAPHY
+     ================================================================= */
+
+  --ggv-font-primary: "Madimi One", cursive, sans-serif;
+  --ggv-font-size-xs: 0.75rem;
+  --ggv-font-size-sm: 0.875rem;
+  --ggv-font-size-base: 1rem;
+  --ggv-font-size-lg: 1.125rem;
+  --ggv-font-size-xl: 1.5rem;
+  --ggv-font-size-2xl: 2rem;
+  --ggv-font-weight-normal: 400;
+  --ggv-font-weight-semibold: 600;
+  --ggv-font-weight-bold: 700;
+
+  /* =================================================================
+     BORDER RADIUS
+     ================================================================= */
+
+  --ggv-radius-sm: 0.5rem;
+  --ggv-radius-md: 0.75rem;
+  --ggv-radius-lg: 1rem;
+  --ggv-radius-xl: 1.5rem;
+  --ggv-radius-full: 50%;
+
+  /* =================================================================
+     SHADOWS
+     ================================================================= */
+
+  --ggv-shadow-text: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --ggv-shadow-button: 0 4px 15px rgba(80, 170, 97, 0.4);
+  --ggv-shadow-button-hover: 0 8px 25px rgba(80, 170, 97, 0.5);
+  --ggv-shadow-overlay: 0 4px 20px rgba(0, 0, 0, 0.15);
+  --ggv-shadow-dialog: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --ggv-shadow-control: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --ggv-shadow-strong: 0 8px 25px rgba(0, 0, 0, 0.2);
+  --ggv-shadow-button-exit: 0 4px 15px rgba(243, 197, 73, 0.4);
+  --ggv-shadow-button-exit-hover: 0 8px 25px rgba(243, 197, 73, 0.5);
+
+  /* =================================================================
+     TRANSITIONS
+     ================================================================= */
+
+  --ggv-transition-fast: 0.15s ease;
+  --ggv-transition-normal: 0.2s ease;
+  --ggv-transition-slow: 0.4s ease;
+
+  /* =================================================================
+     OPACITY
+     ================================================================= */
+
+  --ggv-opacity-overlay-text: 0.7;
+  --ggv-opacity-tagalog: 0.85;
+  --ggv-opacity-disabled: 0.6;
+  --ggv-opacity-border: 0.15;
+}

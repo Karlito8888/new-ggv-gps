@@ -70,10 +70,9 @@ export function GpsPermissionOverlay({
         {error && <div className="error-message">{error}</div>}
 
         <button
-          className="gps-btn"
+          className={`gps-btn${!isMapReady ? " gps-btn-disabled" : ""}`}
           onClick={handleEnableGPS}
           disabled={isRequesting || !isMapReady}
-          style={!isMapReady ? { backgroundColor: "#888", opacity: 0.6 } : undefined}
         >
           {!isMapReady && (
             <svg
