@@ -12,7 +12,8 @@ export function NavigationOverlay({
   userLocation,
   onCancel,
 }) {
-  const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
+  const formatDistance = (meters) =>
+    meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
 
   // Calculate current step using distance along route (not crow-flies)
   const currentStep = (() => {

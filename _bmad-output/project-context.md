@@ -148,23 +148,31 @@ const [navState, setNavState] = useState('gps-permission');
 
 ### 4. **File Organization - KISS Principle**
 
-**7 Core Files Only:**
+**Core Files:**
 
 ```
 src/
-├── App.jsx (513 LOC) - Main component + 6 inline overlays
+├── App.jsx (~370 LOC) - State machine + hook calls + conditional rendering
 ├── main.jsx (23 LOC) - Entry point only
+├── components/ - Extracted overlay components (Phase 2, Story 2.1)
+│   ├── GpsPermissionOverlay.jsx
+│   ├── WelcomeOverlay.jsx
+│   ├── OrientationOverlay.jsx
+│   ├── NavigationOverlay.jsx
+│   ├── ArrivedOverlay.jsx
+│   └── ExitCompleteOverlay.jsx
 ├── hooks/
 │   ├── useMapSetup.js (213 LOC)
 │   ├── useRouting.js (300 LOC)
 │   └── useNavigation.js (237 LOC)
 ├── data/blocks.js - GeoJSON block polygons
 └── lib/
+    ├── animations.js - Shared Framer Motion variants
     ├── geo.js - Utility functions (distance, projection)
     └── supabase.js - Lazy-loaded Supabase client
 ```
 
-**Rule: Inline components in App.jsx if used only once.** No separate overlay files - all 6 overlays defined inline.
+**Rule: Each navigation overlay is a separate file in `src/components/`.** No barrel files — import directly.
 
 ### 5. **File Extensions & Naming**
 
@@ -424,9 +432,9 @@ window.addEventListener("deviceorientation", (e) => {
 
 ## 📊 Existing Code Patterns Found
 
-### Pattern 1: Inline Overlays in App.jsx
+### Pattern 1: Extracted Overlay Components
 
-All 6 navigation overlays (GPSPermissionOverlay, WelcomeOverlay, etc.) are defined INLINE in App.jsx, not in separate files. This is intentional for simplicity.
+All 6 navigation overlays are in separate files in `src/components/` (extracted in Story 2.1). App.jsx imports them and passes props. Shared animation variants are in `src/lib/animations.js`.
 
 ### Pattern 2: MapLibre Dynamic Layer Updates
 
@@ -527,7 +535,7 @@ Use these instead of external libraries (Turf.js).
 
 | File             | Purpose                            | LOC | Critical Details                    |
 | ---------------- | ---------------------------------- | --- | ----------------------------------- |
-| App.jsx          | Main component + 6 inline overlays | 513 | Navigation state machine here       |
+| App.jsx          | State machine + hooks + rendering   | 370 | Navigation state machine here       |
 | useMapSetup.js   | Map initialization + GPS           | 213 | Never lazy-load MapLibre here       |
 | useRouting.js    | Route calculation + deviation      | 300 | 25m threshold, 10s debounce         |
 | useNavigation.js | Turn-by-turn + arrival logic       | 237 | 15m arrival threshold               |
@@ -592,7 +600,7 @@ Use these instead of external libraries (Turf.js).
 - MapLibre native API only - No wrappers or abstractions
 - Simple `useState` only - No Context/Redux/external state management
 - 3 hooks total - Never create new hooks unless absolutely reusable
-- Inline overlays - All 6 navigation overlays stay in App.jsx
+- Overlay components - Each overlay in its own file in `src/components/`
 - Manual testing only - No automated tests, device-based validation required
 
 ### For Project Maintainers
@@ -632,7 +640,7 @@ Use these instead of external libraries (Turf.js).
 
 **Core Files (MUST understand before coding):**
 
-- `App.jsx` - Navigation state machine + 6 inline overlays
+- `App.jsx` - Navigation state machine + hook calls + conditional rendering
 - `useMapSetup.js` - Map initialization + GPS tracking
 - `useRouting.js` - Route calculation + deviation detection
 - `useNavigation.js` - Turn-by-turn + arrival detection
@@ -642,10 +650,9 @@ Use these instead of external libraries (Turf.js).
 - ❌ Add react-map-gl or Turf.js
 - ❌ Create new hooks (unless absolutely reusable)
 - ❌ Use Context/Redux/state management libraries
-- ❌ Externalize inline overlays to separate files
 - ❌ Change file extensions to .ts/.tsx
 - ❌ Add React Router or routing library
-- ❌ Create new directories for "clean architecture"
+- ❌ Create barrel files (components/index.js) — use direct imports
 
 **Required (ALWAYS do these):**
 

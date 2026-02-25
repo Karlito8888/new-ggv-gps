@@ -51,8 +51,15 @@ No automated tests exist. Testing is manual on real devices (Android Chrome + iO
 
 ```
 src/
-├── App.jsx (~990 LOC)             # Main component with 6 inline overlays + state machine
+├── App.jsx (~370 LOC)             # State machine + hook calls + conditional rendering
 ├── main.jsx (14 LOC)              # Entry point + Service Worker registration
+├── components/                    # Extracted overlay components (Story 2.1)
+│   ├── GpsPermissionOverlay.jsx   # GPS permission flow
+│   ├── WelcomeOverlay.jsx         # Block/lot selector with Supabase
+│   ├── OrientationOverlay.jsx     # Compass permission (iOS/Android)
+│   ├── NavigationOverlay.jsx      # Real-time navigation display
+│   ├── ArrivedOverlay.jsx         # Arrival confirmation with 2 CTAs
+│   └── ExitCompleteOverlay.jsx    # Goodbye screen
 ├── hooks/
 │   ├── useMapSetup.js (~250 LOC)  # Map init + GPS + GeolocateControl + blocks layer
 │   ├── useRouting.js (~370 LOC)   # 3-tier routing fallback + retry + deviation detection
@@ -60,6 +67,7 @@ src/
 ├── data/
 │   └── blocks.js                   # Static village block polygons (GeoJSON)
 ├── lib/
+│   ├── animations.js              # Shared Framer Motion overlay/modal variants
 │   ├── geo.js                      # Haversine distance, point-on-line projection
 │   └── supabase.js                 # Lazy-loaded Supabase client
 └── styles/
@@ -76,7 +84,7 @@ Simple `useState` in App.jsx — no React Router, no Context:
 gps-permission → welcome → orientation-permission → navigating → arrived → exit-complete
 ```
 
-Each state renders an inline overlay component via conditional rendering.
+Each state renders an extracted overlay component from `src/components/` via conditional rendering.
 
 ### Hook Architecture
 
