@@ -1,6 +1,6 @@
 # Story 1.3: Workbox Service Worker & Offline-First Caching
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -342,7 +342,8 @@ No blocking issues encountered during implementation.
   - 6.2: Cache Storage has 21 precache entries + 1 PMTiles warm-cache + 2 map font entries
   - 6.3: All precached assets served with transferSize=0 and ~1ms duration on reload
   - 6.4: Offline mode: app loads, MapLibre canvas renders (1280x720), PMTiles tiles served from cache
-  - 6.5/6.6: SW update and OSRM timeout not tested (require rebuild and network throttling respectively)
+  - 6.5: SW update verified via agent-browser — new SW (with code review fixes) activated immediately, no waiting/installing state, skipWaiting+clientsClaim working
+  - 6.6: OSRM routing cache verified — NetworkFirst 3s intercepts requests, routing-api cache populated with 1 entry, second request served in 347ms (vs 1159ms initial)
 
 ### Implementation Plan
 
@@ -351,6 +352,8 @@ Single-pass implementation following story task order. No architectural deviatio
 ### Change Log
 
 - 2026-02-24: Implemented Workbox Service Worker with 5-tier offline-first caching (Story 1.3)
+- 2026-02-25: Code review fixes — PMTiles install error handling, ExpirationPlugin on routing-api + html-cache, exact Supabase hostname match
+- 2026-02-25: Browser verification of Tasks 6.5 (SW update: skipWaiting+clientsClaim confirmed) and 6.6 (OSRM NetworkFirst 3s: routing-api cache populated, 347ms cached response)
 
 ### File List
 

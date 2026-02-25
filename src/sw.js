@@ -43,7 +43,7 @@ registerRoute(
 
 // --- Tier 4: StaleWhileRevalidate (1h) for Supabase RPC ---
 registerRoute(
-  ({ url }) => url.hostname.includes("supabase.co"),
+  ({ url }) => url.hostname === "wlrrruemchacgyypexsu.supabase.co",
   new StaleWhileRevalidate({
     cacheName: "supabase-data",
     plugins: [
@@ -62,6 +62,12 @@ registerRoute(
   new NetworkFirst({
     cacheName: "routing-api",
     networkTimeoutSeconds: 3,
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 20,
+        maxAgeSeconds: 3600,
+      }),
+    ],
   })
 );
 
@@ -70,11 +76,25 @@ registerRoute(
   ({ request }) => request.mode === "navigate",
   new NetworkFirst({
     cacheName: "html-cache",
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 5,
+        maxAgeSeconds: 86400,
+      }),
+    ],
   })
 );
 
 // --- SW Install: warm-cache PMTiles file + skipWaiting ---
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open("pmtiles-cache").then((cache) => cache.add("/tiles/ggv.pmtiles")));
+  event.waitUntil(
+    caches
+      .open("pmtiles-cache")
+      .then((cache) => cache.add("/tiles/ggv.pmtiles"))
+      .catch(() => {
+        // PMTiles warm-cache failed (slow network, timeout) —
+        // SW still activates; map tiles work online, offline after retry
+      })
+  );
   self.skipWaiting();
 });
