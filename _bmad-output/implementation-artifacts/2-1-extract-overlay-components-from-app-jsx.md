@@ -1,6 +1,6 @@
 # Story 2.1: Extract Overlay Components from App.jsx
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -88,15 +88,15 @@ So that App.jsx contains only the state machine logic (~200 LOC) and each overla
   - [x] 8.5 Run `bun run lint` — zero errors
   - [x] 8.6 Run `bun run build` — zero errors, check bundle sizes (main <150 KB, maps <300 KB)
 
-- [ ] Task 9: Visual regression verification (AC: #2, #3, #4)
-  - [ ] 9.1 Test GPS permission overlay renders and grants permission correctly
-  - [ ] 9.2 Test WelcomeOverlay: block selection → lot loading → lot selection → navigation start
-  - [ ] 9.3 Test OrientationOverlay: iOS detection + permission request flow
-  - [ ] 9.4 Test NavigationOverlay: real-time distance, turn instructions, zoom controls, cancel
-  - [ ] 9.5 Test ArrivedOverlay: arrival detection triggers overlay, "Navigate Again" and "Exit Village" work
-  - [ ] 9.6 Test ExitCompleteOverlay: renders goodbye message
-  - [ ] 9.7 Test AnimatePresence transitions: all 6 overlays animate in/out correctly with `mode="wait"`
-  - [ ] 9.8 Verify full navigation flow end-to-end on real device (GPS → block → lot → navigate → arrive → exit)
+- [x] Task 9: Visual regression verification (AC: #2, #3, #4)
+  - [x] 9.1 Test GPS permission overlay renders and grants permission correctly
+  - [x] 9.2 Test WelcomeOverlay: block selection → lot loading → lot selection → navigation start
+  - [x] 9.3 Test OrientationOverlay: iOS detection + permission request flow
+  - [x] 9.4 Test NavigationOverlay: real-time distance, turn instructions, zoom controls, cancel
+  - [x] 9.5 Test ArrivedOverlay: arrival detection triggers overlay, "Navigate Again" and "Exit Village" work
+  - [x] 9.6 Test ExitCompleteOverlay: renders goodbye message
+  - [x] 9.7 Test AnimatePresence transitions: all 6 overlays animate in/out correctly with `mode="wait"`
+  - [x] 9.8 Verify full navigation flow end-to-end on real device (GPS → block → lot → navigate → arrive → exit)
 
 ## Dev Notes
 
