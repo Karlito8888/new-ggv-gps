@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "build:netlify": "bun run lint && vite build",
+    "typecheck": "tsc --noEmit",
+    "build:netlify": "bun run lint && bun run typecheck && vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -43,6 +44,7 @@
     "globals": "^16.5.0",
     "prettier": "^3.4.2",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1",
     "vite": "^7.3.0",
     "vite-plugin-pwa": "^1.2.0",
     "workbox-core": "^7.4.0",

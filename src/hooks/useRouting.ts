@@ -1,11 +1,57 @@
 import { useState, useEffect, useRef } from "react";
+import type { Map as MaplibreMap, GeoJSONSource } from "maplibre-gl";
+import type { Geometry } from "geojson";
 import { getDistance } from "../lib/geo";
 
+interface UserLocation {
+  latitude: number;
+  longitude: number;
+}
+
+interface Destination {
+  name: string;
+  coordinates: [number, number];
+}
+
+interface RouteStep {
+  type: string;
+  icon: string;
+  modifier?: string | null;
+  distance: number;
+  isSignificant?: boolean;
+  location?: [number, number];
+}
+
+interface RouteGeometry {
+  type: string;
+  coordinates: [number, number][] | [number, number][][];
+}
+
+interface RouteResult {
+  geometry: RouteGeometry;
+  distance: number;
+  steps?: RouteStep[];
+}
+
+interface LatLng {
+  lat: number;
+  lng: number;
+}
+
+type RouteSourceType = "osrm" | "ors" | "direct";
+
+interface UseRoutingReturn {
+  routeGeoJSON: RouteGeometry | null;
+  distance: number;
+  steps: RouteStep[];
+  routeSource: RouteSourceType | null;
+}
+
 // ORS API Key from environment
-const ORS_API_KEY = import.meta.env.VITE_OPENROUTE_API_KEY;
+const ORS_API_KEY = import.meta.env.VITE_OPENROUTE_API_KEY as string | undefined;
 
 // Icon mapping for turn modifiers
-const TURN_ICONS = {
+const TURN_ICONS: Record<string, string> = {
   uturn: "↩",
   "sharp left": "↰",
   left: "←",
@@ -16,11 +62,17 @@ const TURN_ICONS = {
   "sharp right": "↱",
 };
 
+interface OSRMManeuver {
+  type: string;
+  modifier?: string;
+  location: [number, number];
+}
+
 /**
  * Parse OSRM maneuver to navigation instruction
  * Returns null for steps that should be filtered out (depart)
  */
-function parseManeuver(maneuver, distance) {
+function parseManeuver(maneuver: OSRMManeuver, distance: number): RouteStep | null {
   const { type, modifier } = maneuver;
 
   // Filter out "depart" - it's the start point, not a real instruction
@@ -52,8 +104,8 @@ function parseManeuver(maneuver, distance) {
 
   // For turns, end of road, fork - use modifier to determine direction
   if (type === "turn" || type === "end of road" || type === "fork") {
-    const icon = TURN_ICONS[modifier] || "↑";
-    const isSignificant = modifier && modifier !== "straight";
+    const icon = (modifier && TURN_ICONS[modifier]) || "↑";
+    const isSignificant = !!modifier && modifier !== "straight";
     return {
       type: modifier || "straight",
       icon,
@@ -65,8 +117,8 @@ function parseManeuver(maneuver, distance) {
 
   // Continue/new name - only significant if there's a direction change
   if (type === "continue" || type === "new name") {
-    const icon = TURN_ICONS[modifier] || "↑";
-    const isSignificant = modifier && modifier !== "straight";
+    const icon = (modifier && TURN_ICONS[modifier]) || "↑";
+    const isSignificant = !!modifier && modifier !== "straight";
     return {
       type: modifier || "straight",
       icon,
@@ -90,7 +142,7 @@ function parseManeuver(maneuver, distance) {
 const REQUEST_TIMEOUT_MS = 3000;
 
 // Fetch with timeout helper
-async function fetchWithTimeout(url, signal) {
+async function fetchWithTimeout(url: string, signal?: AbortSignal): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
@@ -108,24 +160,30 @@ async function fetchWithTimeout(url, signal) {
 }
 
 // OSRM routing (primary)
-async function fetchOSRM(originLng, originLat, destLng, destLat, signal) {
+async function fetchOSRM(
+  originLng: number,
+  originLat: number,
+  destLng: number,
+  destLat: number,
+  signal?: AbortSignal
+): Promise<RouteResult | null> {
   const url = `https://router.project-osrm.org/route/v1/foot/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
   const res = await fetchWithTimeout(url, signal);
-  const data = await res.json();
+  const data: any = await res.json();
 
   if (data.code === "Ok" && data.routes?.[0]) {
     const route = data.routes[0];
     // Extract steps from all legs, filtering out null (depart steps)
-    const steps =
+    const steps: RouteStep[] =
       route.legs?.flatMap(
-        (leg) =>
+        (leg: any) =>
           leg.steps
-            ?.map((step) => {
+            ?.map((step: any) => {
               const parsed = parseManeuver(step.maneuver, step.distance);
               if (!parsed) return null; // Skip depart steps
               return {
                 ...parsed,
-                location: step.maneuver.location, // [lng, lat]
+                location: step.maneuver.location as [number, number],
               };
             })
             .filter(Boolean) || []
@@ -141,12 +199,18 @@ async function fetchOSRM(originLng, originLat, destLng, destLat, signal) {
 }
 
 // OpenRouteService routing (fallback)
-async function fetchORS(originLng, originLat, destLng, destLat, signal) {
+async function fetchORS(
+  originLng: number,
+  originLat: number,
+  destLng: number,
+  destLat: number,
+  signal?: AbortSignal
+): Promise<RouteResult | null> {
   if (!ORS_API_KEY) return null;
 
   const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${ORS_API_KEY}&start=${originLng},${originLat}&end=${destLng},${destLat}`;
   const res = await fetchWithTimeout(url, signal);
-  const data = await res.json();
+  const data: any = await res.json();
 
   if (data.features?.[0]) {
     const feature = data.features[0];
@@ -164,15 +228,22 @@ const DEBOUNCE_MS = 500;
 // Retry delays for OSRM when it fails (exponential backoff)
 const RETRY_DELAYS = [10000, 30000, 60000]; // 10s, 30s, 60s
 
-export function useRouting(map, origin, destination) {
-  const [routeGeoJSON, setRouteGeoJSON] = useState(null);
+// Route recalculation threshold
+const RECALC_THRESHOLD_M = 30;
+
+export function useRouting(
+  map: MaplibreMap | null,
+  origin: UserLocation | null,
+  destination: Destination | null
+): UseRoutingReturn {
+  const [routeGeoJSON, setRouteGeoJSON] = useState<RouteGeometry | null>(null);
   const [distance, setDistance] = useState(0);
-  const [steps, setSteps] = useState([]);
-  const [routeSource, setRouteSource] = useState(null); // "osrm" | "ors" | "direct"
-  const abortRef = useRef(null);
-  const lastOriginRef = useRef(null);
-  const debounceTimerRef = useRef(null);
-  const retryTimerRef = useRef(null);
+  const [steps, setSteps] = useState<RouteStep[]>([]);
+  const [routeSource, setRouteSource] = useState<RouteSourceType | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const lastOriginRef = useRef<LatLng | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryCountRef = useRef(0);
 
   const originLat = origin?.latitude;
@@ -181,10 +252,10 @@ export function useRouting(map, origin, destination) {
   const destLng = destination?.coordinates?.[0];
 
   // Track destination to detect changes (recalculate immediately on new destination)
-  const lastDestRef = useRef(null);
+  const lastDestRef = useRef<LatLng | null>(null);
 
   // Track if params are valid (used for derived return value)
-  const hasValidParams = map && originLat && originLng && destLat && destLng;
+  const hasValidParams = !!(map && originLat && originLng && destLat && destLng);
 
   useEffect(() => {
     if (!hasValidParams) return; // Early return, no sync setState
@@ -200,10 +271,10 @@ export function useRouting(map, origin, destination) {
       const movedDistance = getDistance(
         lastOriginRef.current.lat,
         lastOriginRef.current.lng,
-        originLat,
-        originLng
+        originLat!,
+        originLng!
       );
-      if (movedDistance < 30) {
+      if (movedDistance < RECALC_THRESHOLD_M) {
         return; // Skip recalculation, user hasn't moved enough
       }
     }
@@ -216,71 +287,71 @@ export function useRouting(map, origin, destination) {
         retryTimerRef.current = null;
       }
     }
-    lastDestRef.current = { lat: destLat, lng: destLng };
+    lastDestRef.current = { lat: destLat!, lng: destLng! };
 
     const fetchRoute = async () => {
       // Save current origin for next comparison
-      lastOriginRef.current = { lat: originLat, lng: originLng };
+      lastOriginRef.current = { lat: originLat!, lng: originLng! };
       abortRef.current?.abort();
       abortRef.current = new AbortController();
       const signal = abortRef.current.signal;
 
-      let route = null;
+      let route: RouteResult | null = null;
 
       // 1. Try OSRM (primary)
       try {
-        route = await fetchOSRM(originLng, originLat, destLng, destLat, signal);
+        route = await fetchOSRM(originLng!, originLat!, destLng!, destLat!, signal);
         if (route) {
           console.info("Route: OSRM");
           setRouteGeoJSON(route.geometry);
           setDistance(route.distance);
           setSteps(route.steps || []);
           setRouteSource("osrm");
-          updateMapRoute(map, route.geometry);
+          updateMapRoute(map!, route.geometry);
           return;
         }
       } catch (e) {
-        if (e.name === "AbortError") return;
-        console.warn("OSRM failed:", e.message);
+        if (e instanceof Error && e.name === "AbortError") return;
+        console.warn("OSRM failed:", e instanceof Error ? e.message : e);
       }
 
       // 2. Try ORS (fallback)
       try {
-        route = await fetchORS(originLng, originLat, destLng, destLat, signal);
+        route = await fetchORS(originLng!, originLat!, destLng!, destLat!, signal);
         if (route) {
           console.info("Route: ORS (fallback)");
           setRouteGeoJSON(route.geometry);
           setDistance(route.distance);
           setSteps([]); // ORS doesn't provide steps in this format
           setRouteSource("ors");
-          updateMapRoute(map, route.geometry);
+          updateMapRoute(map!, route.geometry);
           return;
         }
       } catch (e) {
-        if (e.name === "AbortError") return;
-        console.warn("ORS failed:", e.message);
+        if (e instanceof Error && e.name === "AbortError") return;
+        console.warn("ORS failed:", e instanceof Error ? e.message : e);
       }
 
       // 3. Fallback: direct line
       console.info("Route: Direct line (fallback)");
-      const geometry = {
+      const geometry: RouteGeometry = {
         type: "LineString",
         coordinates: [
-          [originLng, originLat],
-          [destLng, destLat],
+          [originLng!, originLat!],
+          [destLng!, destLat!],
         ],
       };
       setRouteGeoJSON(geometry);
-      setDistance(getDistance(originLat, originLng, destLat, destLng));
+      setDistance(getDistance(originLat!, originLng!, destLat!, destLng!));
       setSteps([
         {
           type: "straight",
           icon: "↑",
-          distance: getDistance(originLat, originLng, destLat, destLng),
+          distance: getDistance(originLat!, originLng!, destLat!, destLng!),
         },
       ]);
       setRouteSource("direct");
-      updateMapRoute(map, geometry);
+      updateMapRoute(map!, geometry);
 
       // Schedule OSRM retry in background
       scheduleRetry();
@@ -300,10 +371,10 @@ export function useRouting(map, origin, destination) {
         retryCountRef.current++;
         try {
           const route = await fetchOSRM(
-            originLng,
-            originLat,
-            destLng,
-            destLat,
+            originLng!,
+            originLat!,
+            destLng!,
+            destLat!,
             abortRef.current?.signal
           );
           if (route) {
@@ -312,13 +383,13 @@ export function useRouting(map, origin, destination) {
             setDistance(route.distance);
             setSteps(route.steps || []);
             setRouteSource("osrm");
-            updateMapRoute(map, route.geometry);
+            updateMapRoute(map!, route.geometry);
             retryCountRef.current = 0; // Reset for next time
             return;
           }
         } catch (e) {
-          if (e.name === "AbortError") return;
-          console.warn("OSRM retry failed:", e.message);
+          if (e instanceof Error && e.name === "AbortError") return;
+          console.warn("OSRM retry failed:", e instanceof Error ? e.message : e);
         }
         // Still failed, schedule next retry
         scheduleRetry();
@@ -357,11 +428,11 @@ export function useRouting(map, origin, destination) {
   };
 }
 
-function updateMapRoute(map, geometry) {
+function updateMapRoute(map: MaplibreMap, geometry: RouteGeometry): void {
   if (map.getSource("route")) {
-    /** @type {import('maplibre-gl').GeoJSONSource} */ (map.getSource("route")).setData(geometry);
+    (map.getSource("route") as GeoJSONSource).setData(geometry as Geometry);
   } else {
-    map.addSource("route", { type: "geojson", data: geometry });
+    map.addSource("route", { type: "geojson", data: geometry as Geometry });
     map.addLayer({
       id: "route-line",
       type: "line",

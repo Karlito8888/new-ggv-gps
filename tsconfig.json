@@ -5,14 +5,16 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "target": "esnext",
-    "allowJs": true,
-    "checkJs": true,
+    "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.d.ts", "vite.config.js", "eslint.config.js"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts", "vite.config.ts", "eslint.config.js"],
   "exclude": ["node_modules", "dist", "public", "_bmad", "_bmad-output", "docs"]
 }

@@ -1,18 +1,49 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type RefObject } from "react";
+import type {
+  Map as MaplibreMap,
+  GeolocateControl,
+  GeoJSONSource,
+  MapStyleImageMissingEvent,
+  ErrorEvent as MapErrorEvent,
+} from "maplibre-gl";
+import type { FeatureCollection } from "geojson";
 import { blocks } from "../data/blocks";
 import destinationMarkerImg from "../assets/default-marker.png";
 import protomapsLightLayers from "../data/protomaps-light-layers.json";
 import "../styles/maplibre-gl.css";
 
+interface UserLocation {
+  latitude: number;
+  longitude: number;
+}
+
+interface Destination {
+  name: string;
+  coordinates: [number, number];
+}
+
+interface UseMapSetupReturn {
+  map: MaplibreMap | null;
+  userLocation: UserLocation | null;
+  isMapReady: boolean;
+  triggerGeolocate: () => Promise<GeolocationPosition>;
+}
+
+interface MaplibreModule {
+  Map: typeof import("maplibre-gl").Map;
+  GeolocateControl: typeof import("maplibre-gl").GeolocateControl;
+  addProtocol: (protocol: string, handler: unknown) => void;
+  removeProtocol: (protocol: string) => void;
+}
+
 // Eagerly start downloading map libraries at module parse time
 // (overlaps with React render cycle instead of waiting for useEffect)
 const mapLibsPromise = Promise.all([import("maplibre-gl"), import("pmtiles")]);
 
-/** @type {[number, number]} */
-const VILLAGE_CENTER = [120.95134859887523, 14.347872973134175];
+const VILLAGE_CENTER: [number, number] = [120.95134859887523, 14.347872973134175];
 
 // Calculate centroid of polygon
-function getCentroid(coords) {
+function getCentroid(coords: [number, number][]): [number, number] {
   let x = 0,
     y = 0;
   for (const [lng, lat] of coords) {
@@ -22,16 +53,16 @@ function getCentroid(coords) {
   return [x / coords.length, y / coords.length];
 }
 
-const labelsGeoJSON = {
+const labelsGeoJSON: FeatureCollection = {
   type: "FeatureCollection",
   features: blocks.map((block) => ({
-    type: "Feature",
+    type: "Feature" as const,
     properties: { name: block.name },
-    geometry: { type: "Point", coordinates: getCentroid(block.coords) },
+    geometry: { type: "Point" as const, coordinates: getCentroid(block.coords) },
   })),
 };
 
-function addBlocksLayer(map) {
+function addBlocksLayer(map: MaplibreMap): void {
   if (map.getSource("block-labels")) return;
 
   // Block labels only
@@ -57,32 +88,24 @@ function addBlocksLayer(map) {
 /**
  * Hook to initialize MapLibre map with GPS tracking via GeolocateControl.
  * Uses dynamic import for MapLibre to enable code-splitting and lazy loading.
- *
- * @param {React.RefObject<HTMLDivElement>} containerRef - Ref to the map container element
- * @returns {{
- *   map: maplibregl.Map | null,
- *   userLocation: { latitude: number, longitude: number } | null,
- *   isMapReady: boolean,
- *   triggerGeolocate: () => Promise<GeolocationPosition>
- * }}
  */
-export function useMapSetup(containerRef) {
-  const [map, setMap] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
+export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): UseMapSetupReturn {
+  const [map, setMap] = useState<MaplibreMap | null>(null);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
-  const geolocateRef = useRef(null);
-  const maplibreRefForCleanup = useRef(null);
+  const geolocateRef = useRef<GeolocateControl | null>(null);
+  const maplibreRefForCleanup = useRef<MaplibreModule | null>(null);
 
   // Initialize map with lazy-loaded MapLibre
   useEffect(() => {
     if (!containerRef.current) return;
 
-    let mapInstance = null;
+    let mapInstance: MaplibreMap | null = null;
     let isCancelled = false;
 
     // Named handler for proper cleanup
-    const onStyleImageMissing = (e) => {
-      if (!mapInstance.hasImage(e.id)) {
+    const onStyleImageMissing = (e: MapStyleImageMissingEvent) => {
+      if (mapInstance && !mapInstance.hasImage(e.id)) {
         mapInstance.addImage(e.id, {
           width: 1,
           height: 1,
@@ -97,7 +120,7 @@ export function useMapSetup(containerRef) {
 
       if (isCancelled) return;
 
-      const MapLibre = maplibregl.default || maplibregl;
+      const MapLibre: MaplibreModule = (maplibregl as any).default || maplibregl;
       maplibreRefForCleanup.current = MapLibre;
 
       // Register PMTiles protocol BEFORE map construction
@@ -106,21 +129,21 @@ export function useMapSetup(containerRef) {
 
       // Protomaps style with pre-generated layers (build-time, no runtime dependency)
       const mapStyle = {
-        version: 8,
+        version: 8 as const,
         glyphs: "/map-fonts/{fontstack}/{range}.pbf",
         sprite: new URL("/sprites/light", window.location.origin).href,
         sources: {
           protomaps: {
-            type: "vector",
+            type: "vector" as const,
             url: "pmtiles:///tiles/ggv.pmtiles",
             attribution: "© OpenStreetMap contributors",
           },
         },
-        layers: protomapsLightLayers,
+        layers: protomapsLightLayers as unknown as import("maplibre-gl").LayerSpecification[],
       };
 
       mapInstance = new MapLibre.Map({
-        container: containerRef.current,
+        container: containerRef.current!,
         style: mapStyle,
         center: VILLAGE_CENTER,
         zoom: 15,
@@ -134,7 +157,7 @@ export function useMapSetup(containerRef) {
       mapInstance.on("styleimagemissing", onStyleImageMissing);
 
       // Suppress non-critical style errors (null values in tile data)
-      mapInstance.on("error", (e) => {
+      mapInstance.on("error", (e: MapErrorEvent) => {
         if (e.error?.message?.includes("Expected value to be of type")) {
           return; // Ignore style expression errors from tile data
         }
@@ -144,17 +167,17 @@ export function useMapSetup(containerRef) {
       mapInstance.on("load", () => {
         if (isCancelled) return;
 
-        addBlocksLayer(mapInstance);
+        addBlocksLayer(mapInstance!);
 
         const geolocate = new MapLibre.GeolocateControl({
           positionOptions: { enableHighAccuracy: true },
           trackUserLocation: true,
         });
-        mapInstance.addControl(geolocate, "bottom-right");
+        mapInstance!.addControl(geolocate, "bottom-right");
         geolocateRef.current = geolocate;
 
         // Persistent listener for all GPS updates
-        geolocate.on("geolocate", (pos) => {
+        geolocate.on("geolocate", (pos: GeolocationPosition) => {
           setUserLocation({
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
@@ -185,11 +208,8 @@ export function useMapSetup(containerRef) {
   /**
    * Triggers the native GeolocateControl to request GPS permission and start tracking.
    * Uses MapLibre's once() method for clean one-time event handling.
-   *
-   * @returns {Promise<GeolocationPosition>} Resolves with position if permission granted
-   * @throws {Error} Rejects if permission denied or GeolocateControl not ready
    */
-  const triggerGeolocate = async () => {
+  const triggerGeolocate = async (): Promise<GeolocationPosition> => {
     if (!geolocateRef.current) {
       throw new Error("GeolocateControl not ready");
     }
@@ -198,8 +218,8 @@ export function useMapSetup(containerRef) {
 
     // Setup one-time listeners BEFORE triggering (auto-cleanup via once())
     const resultPromise = Promise.race([
-      geolocate.once("geolocate"),
-      geolocate.once("error").then((err) => Promise.reject(err)),
+      geolocate.once("geolocate") as Promise<GeolocationPosition>,
+      (geolocate.once("error") as Promise<unknown>).then((err) => Promise.reject(err)),
     ]);
 
     // Trigger GPS permission dialog
@@ -214,11 +234,11 @@ export function useMapSetup(containerRef) {
 /**
  * Updates or creates a destination marker on the map.
  * Uses the default-marker.png image as an icon.
- *
- * @param {maplibregl.Map} map - MapLibre map instance
- * @param {{ coordinates: [number, number], name: string } | null} destination - Destination object or null to hide
  */
-export async function updateDestinationMarker(map, destination) {
+export async function updateDestinationMarker(
+  map: MaplibreMap | null,
+  destination: Destination | null
+): Promise<void> {
   if (!map || !map.isStyleLoaded()) return;
 
   const sourceId = "destination-marker";
@@ -239,8 +259,7 @@ export async function updateDestinationMarker(map, destination) {
   }
 
   // Create GeoJSON data
-  /** @type {GeoJSON.FeatureCollection} */
-  const geojson = {
+  const geojson: FeatureCollection = {
     type: "FeatureCollection",
     features: destination
       ? [
@@ -258,7 +277,7 @@ export async function updateDestinationMarker(map, destination) {
 
   // Update or create source and layer
   if (map.getSource(sourceId)) {
-    /** @type {import('maplibre-gl').GeoJSONSource} */ (map.getSource(sourceId)).setData(geojson);
+    (map.getSource(sourceId) as GeoJSONSource).setData(geojson);
   } else {
     map.addSource(sourceId, { type: "geojson", data: geojson });
     map.addLayer({

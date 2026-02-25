@@ -2,26 +2,19 @@ import { useState } from "react";
 import { m } from "framer-motion";
 import { overlayVariants, modalVariants } from "../lib/animations";
 
-/**
- * GPS Permission Overlay
- *
- * First screen in the navigation flow. Requests native GPS permission via
- * MapLibre's GeolocateControl before allowing the user to proceed.
- *
- * Flow:
- * 1. User taps "Enable GPS" button
- * 2. triggerGeolocate() prompts native iOS/Android permission dialog
- * 3. If granted -> onGrant() is called -> proceeds to WelcomeOverlay
- * 4. If denied -> error message displayed, user must enable in browser settings
- *
- * @param {Object} props
- * @param {() => void} props.onGrant - Callback when GPS permission is granted
- * @param {() => Promise<GeolocationPosition>} props.triggerGeolocate - Triggers native GPS permission request
- * @param {boolean} props.isMapReady - Whether the map has finished loading
- */
-export function GpsPermissionOverlay({ onGrant, triggerGeolocate, isMapReady }) {
+interface GpsPermissionOverlayProps {
+  onGrant: () => void;
+  triggerGeolocate: () => Promise<GeolocationPosition>;
+  isMapReady: boolean;
+}
+
+export function GpsPermissionOverlay({
+  onGrant,
+  triggerGeolocate,
+  isMapReady,
+}: GpsPermissionOverlayProps) {
   const [isRequesting, setIsRequesting] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleEnableGPS = async () => {
     setIsRequesting(true);

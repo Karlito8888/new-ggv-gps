@@ -52,7 +52,7 @@ development_status:
   # Epic 2: Architecture Propre & Migration TypeScript
   epic-2: in-progress
   2-1-extract-overlay-components-from-app-jsx: done
-  2-2-typescript-migration-strict-mode: backlog
+  2-2-typescript-migration-strict-mode: review
   2-3-css-design-token-system: backlog
   2-4-navigationoverlay-floating-pills: backlog
   epic-2-retrospective: optional

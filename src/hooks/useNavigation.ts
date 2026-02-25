@@ -1,4 +1,23 @@
+import type { Map as MaplibreMap } from "maplibre-gl";
 import { getDistance } from "../lib/geo";
+
+interface UserLocation {
+  latitude: number;
+  longitude: number;
+}
+
+interface Destination {
+  name: string;
+  coordinates: [number, number];
+}
+
+interface UseNavigationReturn {
+  distanceRemaining: number;
+  hasArrived: boolean;
+  arrivedAt: string | null;
+}
+
+const ARRIVAL_THRESHOLD_M = 12;
 
 /**
  * useNavigation - Pure computation hook (no effects, no state)
@@ -7,7 +26,11 @@ import { getDistance } from "../lib/geo";
  * hasArrived is a simple distance check, NOT a stateful flag.
  * React Compiler handles memoization automatically.
  */
-export function useNavigation(map, userLocation, destination) {
+export function useNavigation(
+  _map: MaplibreMap | null,
+  userLocation: UserLocation | null,
+  destination: Destination | null
+): UseNavigationReturn {
   const userLat = userLocation?.latitude;
   const userLng = userLocation?.longitude;
   const destLat = destination?.coordinates?.[1];
@@ -16,19 +39,17 @@ export function useNavigation(map, userLocation, destination) {
   if (!userLat || !userLng || !destLat || !destLng) {
     return {
       distanceRemaining: 0,
-      bearing: 0,
       hasArrived: false,
-      arrivedAt: null, // Which destination we arrived at
+      arrivedAt: null,
     };
   }
 
   const dist = getDistance(userLat, userLng, destLat, destLng);
-  const isArrived = dist < 12;
+  const isArrived = dist < ARRIVAL_THRESHOLD_M;
 
   return {
     distanceRemaining: dist,
     hasArrived: isArrived,
-    // Include destination key so caller can verify it's the right one
     arrivedAt: isArrived ? `${destLng},${destLat}` : null,
   };
 }

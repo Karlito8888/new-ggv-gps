@@ -2,9 +2,13 @@ import { useState } from "react";
 import { m } from "framer-motion";
 import { overlayVariants, modalVariants } from "../lib/animations";
 
-export function OrientationOverlay({ onGrant }) {
+interface OrientationOverlayProps {
+  onGrant: () => void;
+}
+
+export function OrientationOverlay({ onGrant }: OrientationOverlayProps) {
   const [isRequesting, setIsRequesting] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRequest = async () => {
     setIsRequesting(true);

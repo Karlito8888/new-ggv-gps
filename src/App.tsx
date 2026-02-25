@@ -13,32 +13,40 @@ import { ArrivedOverlay } from "./components/ArrivedOverlay";
 import { ExitCompleteOverlay } from "./components/ExitCompleteOverlay";
 import arrivalBellSrc from "./assets/audio/arrival-bell.mp3";
 
-// Village exit coordinates (from CLAUDE.md)
-const VILLAGE_EXIT = [120.951863, 14.35098];
+type NavState =
+  | "gps-permission"
+  | "welcome"
+  | "orientation-permission"
+  | "navigating"
+  | "arrived"
+  | "exit-complete";
 
-/**
- * App Component
- *
- * Main application with 6-state navigation flow:
- * gps-permission → welcome → orientation-permission → navigating → arrived → exit-complete
- *
- * Uses direct MapLibre GL JS (no react-map-gl wrapper)
- * Overlay components extracted to src/components/
- * Uses simple useState (no React Router, no Context)
- */
+interface Destination {
+  name: string;
+  coordinates: [number, number];
+  type?: string;
+}
+
+interface BlockData {
+  name: string;
+}
+
+// Village exit coordinates (from CLAUDE.md)
+const VILLAGE_EXIT: [number, number] = [120.951863, 14.35098];
+
 export default function App() {
   // Map container ref for MapLibre
-  const mapContainerRef = useRef(null);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Navigation state machine (6 states)
-  const [navState, setNavState] = useState("gps-permission");
-  const [destination, setDestination] = useState(null);
+  const [navState, setNavState] = useState<NavState>("gps-permission");
+  const [destination, setDestination] = useState<Destination | null>(null);
   const [hasOrientationPermission, setHasOrientationPermission] = useState(false);
 
   // Blocks data (pre-loaded during GPS permission screen)
-  const [blocks, setBlocks] = useState([]);
+  const [blocks, setBlocks] = useState<BlockData[]>([]);
   const [isLoadingBlocks, setIsLoadingBlocks] = useState(true);
-  const [blocksError, setBlocksError] = useState(null);
+  const [blocksError, setBlocksError] = useState<string | null>(null);
 
   // Load blocks from Supabase (for retry button - OK to call setState in event handler)
   const retryLoadBlocks = () => {
@@ -89,8 +97,8 @@ export default function App() {
     : null;
 
   // Track which destination we've already shown the arrival modal for
-  const arrivedDestinationRef = useRef(null);
-  const lastDestinationKeyRef = useRef(null);
+  const arrivedDestinationRef = useRef<string | null>(null);
+  const lastDestinationKeyRef = useRef<string | null>(null);
 
   // Reset arrival tracking when destination changes
   useEffect(() => {
@@ -157,8 +165,8 @@ export default function App() {
   }, [map, isMapReady, destination]);
 
   // Track user interaction for auto-recenter
-  const userInteractionTimeRef = useRef(null);
-  const recenterTimeoutRef = useRef(null);
+  const userInteractionTimeRef = useRef<number | null>(null);
+  const recenterTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Effect 2: Setup orientation listeners (only recreated when map changes, not navState)
   useEffect(() => {
@@ -206,7 +214,7 @@ export default function App() {
       // @ts-expect-error iOS 13+ API not in standard TypeScript DOM types
       typeof DeviceOrientationEvent.requestPermission === "function";
 
-    const handler = (e) => {
+    const handler = (e: DeviceOrientationEvent) => {
       // Only rotate map when navigating (check ref to avoid stale closure)
       if (!isNavigatingRef.current) return;
 
@@ -214,10 +222,11 @@ export default function App() {
       if (isUserInteracting) return;
 
       // Calculate heading based on platform
-      let heading;
-      if (isIOS && e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
+      let heading: number | undefined;
+      const webkitHeading = (e as any).webkitCompassHeading as number | undefined;
+      if (isIOS && webkitHeading !== null && webkitHeading !== undefined) {
         // iOS Safari: 0-360, 0=North, clockwise
-        heading = e.webkitCompassHeading;
+        heading = webkitHeading;
       } else if (!isIOS && e.alpha !== null) {
         // Android Chrome: 0-360, counter-clockwise - need to invert
         heading = (360 - e.alpha) % 360;

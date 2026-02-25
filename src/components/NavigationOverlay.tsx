@@ -1,5 +1,41 @@
+import type { Map as MaplibreMap } from "maplibre-gl";
 import { m } from "framer-motion";
 import { getDistanceAlongRoute } from "../lib/geo";
+
+interface RouteStep {
+  type: string;
+  icon: string;
+  modifier?: string | null;
+  distance: number;
+  isSignificant?: boolean;
+  location?: [number, number];
+}
+
+interface RouteGeometry {
+  type: string;
+  coordinates: [number, number][] | [number, number][][];
+}
+
+interface Destination {
+  name: string;
+  coordinates: [number, number];
+}
+
+interface UserLocation {
+  latitude: number;
+  longitude: number;
+}
+
+interface NavigationOverlayProps {
+  map: MaplibreMap | null;
+  distanceRemaining: number;
+  destination: Destination | null;
+  steps: RouteStep[];
+  routeSource: "osrm" | "ors" | "direct" | null;
+  routeGeoJSON: RouteGeometry | null;
+  userLocation: UserLocation | null;
+  onCancel: () => void;
+}
 
 // React Compiler handles memoization automatically
 export function NavigationOverlay({
@@ -11,15 +47,18 @@ export function NavigationOverlay({
   routeGeoJSON,
   userLocation,
   onCancel,
-}) {
-  const formatDistance = (meters) =>
+}: NavigationOverlayProps) {
+  const formatDistance = (meters: number): string =>
     meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
 
   // Calculate current step using distance along route (not crow-flies)
   const currentStep = (() => {
     if (!steps?.length || !userLocation || !routeGeoJSON?.coordinates) return null;
 
-    const routeCoords = routeGeoJSON.coordinates;
+    // Flatten MultiLineString coordinates (ORS) to simple coordinate array
+    const routeCoords: [number, number][] = Array.isArray(routeGeoJSON.coordinates[0]?.[0])
+      ? (routeGeoJSON.coordinates as [number, number][][]).flat()
+      : (routeGeoJSON.coordinates as [number, number][]);
 
     // Find the next significant step that's ahead of the user on the route
     for (const step of steps) {

@@ -3,20 +3,46 @@ import { m } from "framer-motion";
 import { overlayVariants, modalVariants } from "../lib/animations";
 import { supabase } from "../lib/supabase";
 
+interface Block {
+  name: string;
+}
+
+interface DestinationSelection {
+  type: string;
+  coordinates: [number, number];
+  name: string;
+}
+
+interface LotData {
+  lot: string;
+  coordinates: {
+    type: string;
+    coordinates: [number, number];
+  } | null;
+}
+
+interface WelcomeOverlayProps {
+  blocks: Block[];
+  isLoadingBlocks: boolean;
+  blocksError: string | null;
+  onRetryBlocks: () => void;
+  onSelectDestination: (destination: DestinationSelection) => void;
+}
+
 export function WelcomeOverlay({
   blocks,
   isLoadingBlocks,
   blocksError,
   onRetryBlocks,
   onSelectDestination,
-}) {
+}: WelcomeOverlayProps) {
   const [selectedBlock, setSelectedBlock] = useState("");
   const [selectedLot, setSelectedLot] = useState("");
-  const [lots, setLots] = useState([]);
+  const [lots, setLots] = useState<LotData[]>([]);
   const [isLoadingLots, setIsLoadingLots] = useState(false);
 
   // Handle block selection change - reset lots and start loading in event handler
-  const handleBlockChange = (value) => {
+  const handleBlockChange = (value: string) => {
     setSelectedBlock(value);
     // Reset lots immediately when block changes (OK in event handler)
     setLots([]);

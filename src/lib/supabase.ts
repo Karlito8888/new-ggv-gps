@@ -1,16 +1,14 @@
-// src/lib/supabase.js
 // Lazy-loaded Supabase client for better initial page load performance
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-let supabaseClient = null;
-let initPromise = null;
+let supabaseClient: SupabaseClient | null = null;
+let initPromise: Promise<SupabaseClient> | null = null;
 
 /**
  * Lazily initializes and returns the Supabase client.
  * The client is only created on first use, reducing initial bundle load.
- *
- * @returns {Promise<import('@supabase/supabase-js').SupabaseClient>}
  */
-async function getSupabaseClient() {
+async function getSupabaseClient(): Promise<SupabaseClient> {
   if (supabaseClient) return supabaseClient;
 
   if (!initPromise) {
@@ -37,21 +35,12 @@ async function getSupabaseClient() {
  * Maintains the same API as the original synchronous export.
  */
 export const supabase = {
-  /**
-   * Call a Supabase RPC function
-   * @param {string} fn - Function name
-   * @param {object} args - Function arguments
-   */
-  rpc: async (fn, args) => {
+  rpc: async (fn: string, args?: Record<string, unknown>) => {
     const client = await getSupabaseClient();
     return client.rpc(fn, args);
   },
 
-  /**
-   * Access a Supabase table
-   * @param {string} table - Table name
-   */
-  from: async (table) => {
+  from: async (table: string) => {
     const client = await getSupabaseClient();
     return client.from(table);
   },

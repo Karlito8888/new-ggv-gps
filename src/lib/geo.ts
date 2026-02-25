@@ -5,13 +5,8 @@
 
 /**
  * Calculate distance between two coordinates using Haversine formula
- * @param {number} lat1 - Latitude of first point
- * @param {number} lon1 - Longitude of first point
- * @param {number} lat2 - Latitude of second point
- * @param {number} lon2 - Longitude of second point
- * @returns {number} Distance in meters
  */
-export function getDistance(lat1, lon1, lat2, lon2) {
+export function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000; // Earth's radius in meters
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -21,14 +16,21 @@ export function getDistance(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+interface PointProjection {
+  projectedPoint: [number, number];
+  segmentIndex: number;
+  progressOnSegment: number;
+  deviationDistance: number;
+}
+
 /**
  * Project a point onto a line and return projection info
- * @param {number} pointLng - Longitude of point to project
- * @param {number} pointLat - Latitude of point to project
- * @param {Array<[number, number]>} lineCoordinates - Array of [lng, lat] coordinates
- * @returns {{ projectedPoint: [number, number], segmentIndex: number, progressOnSegment: number, deviationDistance: number }}
  */
-function projectPointOnLine(pointLng, pointLat, lineCoordinates) {
+function projectPointOnLine(
+  pointLng: number,
+  pointLat: number,
+  lineCoordinates: [number, number][]
+): PointProjection {
   if (!lineCoordinates || lineCoordinates.length < 2) {
     return {
       projectedPoint: [pointLng, pointLat],
@@ -39,7 +41,7 @@ function projectPointOnLine(pointLng, pointLat, lineCoordinates) {
   }
 
   let minDistance = Infinity;
-  let closestPoint = /** @type {[number, number]} */ ([pointLng, pointLat]);
+  let closestPoint: [number, number] = [pointLng, pointLat];
   let segmentIndex = 0;
   let progressOnSegment = 0;
 
@@ -80,14 +82,14 @@ function projectPointOnLine(pointLng, pointLat, lineCoordinates) {
 /**
  * Calculate distance along a route from user position to target point
  * Returns -1 if target is behind the user on the route
- * @param {number} userLng - User longitude
- * @param {number} userLat - User latitude
- * @param {number} targetLng - Target longitude
- * @param {number} targetLat - Target latitude
- * @param {Array<[number, number]>} routeCoordinates - Route coordinates [lng, lat]
- * @returns {number} Distance in meters, or -1 if target is behind
  */
-export function getDistanceAlongRoute(userLng, userLat, targetLng, targetLat, routeCoordinates) {
+export function getDistanceAlongRoute(
+  userLng: number,
+  userLat: number,
+  targetLng: number,
+  targetLat: number,
+  routeCoordinates: [number, number][]
+): number {
   if (!routeCoordinates || routeCoordinates.length < 2) {
     return getDistance(userLat, userLng, targetLat, targetLng);
   }

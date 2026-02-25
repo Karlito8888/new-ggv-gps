@@ -1,4 +1,9 @@
-export const blocks = [
+interface Block {
+  name: string;
+  coords: [number, number][];
+}
+
+export const blocks: Block[] = [
   {
     name: "1",
     coords: [

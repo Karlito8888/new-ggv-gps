@@ -1,7 +1,22 @@
 import { m } from "framer-motion";
 import { overlayVariants, modalVariants } from "../lib/animations";
 
-export function ArrivedOverlay({ destination, onNavigateAgain, onExitVillage }) {
+interface Destination {
+  name: string;
+  coordinates: [number, number];
+}
+
+interface ArrivedOverlayProps {
+  destination: Destination | null;
+  onNavigateAgain: () => void;
+  onExitVillage: () => void;
+}
+
+export function ArrivedOverlay({
+  destination,
+  onNavigateAgain,
+  onExitVillage,
+}: ArrivedOverlayProps) {
   return (
     <m.div
       className="overlay arrived-overlay"
