@@ -106,7 +106,7 @@
       "sizes": "1080x1920",
       "type": "image/webp",
       "form_factor": "narrow",
-      "label": "Village map with block selection"
+      "label": "GPS onboarding — enable location"
     },
     {
       "src": "/screenshots/navigation.webp",

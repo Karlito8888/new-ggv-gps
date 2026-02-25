@@ -1,6 +1,6 @@
 # Story 1.4: PWA Manifest & Install Experience
 
-Status: in-progress
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -234,18 +234,23 @@ Claude Opus 4.6 (claude-opus-4-6)
 ### File List
 
 - `public/manifest.json` — Modified: added `id`, `scope`, `categories`, `screenshots`; split icon `purpose` from `"any maskable"` to separate `"any"` + `"maskable"` entries
-- `public/screenshots/map-view.webp` — New: placeholder screenshot (1080x1920) for PWA install UI
-- `public/screenshots/navigation.webp` — New: placeholder screenshot (1080x1920) for PWA install UI
-- `index.html` — Modified (code review fix): aligned `apple-mobile-web-app-title` with manifest `short_name`; fixed `apple-touch-icon` sizes mismatch
+- `public/screenshots/map-view.webp` — New: real screenshot (1080x1920) showing GPS onboarding screen
+- `public/screenshots/navigation.webp` — New: real screenshot (1080x1920) showing GPS navigation with route
+- `index.html` — Modified (code review fix #1): aligned `apple-mobile-web-app-title` with manifest `short_name`; fixed `apple-touch-icon` sizes mismatch. (code review fix #2): replaced `icon-180x180.png` refs with `icon-192x192.png` for correct dimensions
+- `vite.config.js` — Modified (code review fix #2): added `icons/**/*.webp` and `screenshots/**/*.webp` to SW precache globPatterns (21→32 entries)
 
 ### Review Follow-ups (AI)
 
-- [ ] [AI-Review][MEDIUM] Replace placeholder screenshots with real app captures showing map view and navigation in action — `public/screenshots/map-view.webp`, `public/screenshots/navigation.webp`
-- [ ] [AI-Review][LOW] Add `icons/**/*.webp` to SW precache globPatterns — `vite.config.js:73`
+- [x] [AI-Review][MEDIUM] Replace placeholder screenshots with real app captures — Charles provided real screenshots ✅
+- [x] [AI-Review][LOW→MEDIUM] Add `icons/**/*.webp` + `screenshots/**/*.webp` to SW precache globPatterns — `vite.config.js:73` — FIXED in code review #2
+- [x] [AI-Review][HIGH] Screenshot label mismatch: `map-view.webp` label "Village map with block selection" but image shows Enable Location screen — FIXED label in `manifest.json` — code review #2
+- [x] [AI-Review][MEDIUM] apple-touch-icon refs used mislabeled `icon-180x180.png` (actually 192×192 px) — replaced with `icon-192x192.png` in `index.html` — code review #2
 - [ ] [AI-Review][LOW] Verify maskable icon safe zone (80% inner circle) renders correctly on Android adaptive launchers — `public/icons/icon-192x192.png`, `public/icons/icon-512x512.png`
 - [ ] [AI-Review][LOW] Align manifest description with index.html meta description for consistent branding
+- [ ] [AI-Review][LOW] `<title>` uses "MyGGV|GPS" (pipe) while manifest uses "MyGGV-GPS" (hyphen) — naming inconsistency
 
 ## Change Log
 
 - **2026-02-25**: Story 1.4 implementation — PWA manifest audit and install experience fixes. Added `id`, `scope`, `categories` fields; split icon purpose for Lighthouse compliance; added placeholder screenshots for richer Android install dialog. No source code changes — manifest and static assets only.
 - **2026-02-25**: Code review fixes — Fixed `apple-mobile-web-app-title` inconsistency ("MyGGV GPS" → "MyGGV-GPS" to match manifest `short_name`); fixed `apple-touch-icon sizes="152x152"` mismatch (→ "144x144" to match actual icon-144x144.png file). 4 LOW action items created for future follow-up.
+- **2026-02-25**: Code review #2 — Real screenshots replaced placeholders; fixed screenshot label mismatch in manifest.json; added WebP icons + screenshots to SW precache globPatterns (21→32 entries); replaced apple-touch-icon `icon-180x180.png` refs with correctly-named `icon-192x192.png`. 3 LOW action items remain.

@@ -70,7 +70,8 @@ export default defineConfig({
         globPatterns: [
           "**/*.{js,css,html}",
           "sprites/**/*.{json,png}",
-          "icons/**/*.png",
+          "icons/**/*.{png,webp}",
+          "screenshots/**/*.webp",
           "manifest.json",
         ],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
