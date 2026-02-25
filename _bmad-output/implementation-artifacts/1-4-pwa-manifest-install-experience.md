@@ -1,6 +1,6 @@
 # Story 1.4: PWA Manifest & Install Experience
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -236,7 +236,16 @@ Claude Opus 4.6 (claude-opus-4-6)
 - `public/manifest.json` — Modified: added `id`, `scope`, `categories`, `screenshots`; split icon `purpose` from `"any maskable"` to separate `"any"` + `"maskable"` entries
 - `public/screenshots/map-view.webp` — New: placeholder screenshot (1080x1920) for PWA install UI
 - `public/screenshots/navigation.webp` — New: placeholder screenshot (1080x1920) for PWA install UI
+- `index.html` — Modified (code review fix): aligned `apple-mobile-web-app-title` with manifest `short_name`; fixed `apple-touch-icon` sizes mismatch
+
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][MEDIUM] Replace placeholder screenshots with real app captures showing map view and navigation in action — `public/screenshots/map-view.webp`, `public/screenshots/navigation.webp`
+- [ ] [AI-Review][LOW] Add `icons/**/*.webp` to SW precache globPatterns — `vite.config.js:73`
+- [ ] [AI-Review][LOW] Verify maskable icon safe zone (80% inner circle) renders correctly on Android adaptive launchers — `public/icons/icon-192x192.png`, `public/icons/icon-512x512.png`
+- [ ] [AI-Review][LOW] Align manifest description with index.html meta description for consistent branding
 
 ## Change Log
 
 - **2026-02-25**: Story 1.4 implementation — PWA manifest audit and install experience fixes. Added `id`, `scope`, `categories` fields; split icon purpose for Lighthouse compliance; added placeholder screenshots for richer Android install dialog. No source code changes — manifest and static assets only.
+- **2026-02-25**: Code review fixes — Fixed `apple-mobile-web-app-title` inconsistency ("MyGGV GPS" → "MyGGV-GPS" to match manifest `short_name`); fixed `apple-touch-icon sizes="152x152"` mismatch (→ "144x144" to match actual icon-144x144.png file). 4 LOW action items created for future follow-up.
