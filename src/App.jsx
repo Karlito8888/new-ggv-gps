@@ -11,6 +11,7 @@ import { OrientationOverlay } from "./components/OrientationOverlay";
 import { NavigationOverlay } from "./components/NavigationOverlay";
 import { ArrivedOverlay } from "./components/ArrivedOverlay";
 import { ExitCompleteOverlay } from "./components/ExitCompleteOverlay";
+import arrivalBellSrc from "./assets/audio/arrival-bell.mp3";
 
 // Village exit coordinates (from CLAUDE.md)
 const VILLAGE_EXIT = [120.951863, 14.35098];
@@ -121,8 +122,9 @@ export default function App() {
     // Mark this destination as arrived and show appropriate modal
     arrivedDestinationRef.current = arrivedAt;
 
-    // Haptic feedback on arrival (Android only, iOS silently ignores)
+    // Arrival feedback: haptic (Android only, iOS silently ignores) + bell sound
     navigator.vibrate?.([100, 50, 100]);
+    new Audio(arrivalBellSrc).play().catch(() => {});
 
     startTransition(() => {
       if (destination?.type === "exit") {
