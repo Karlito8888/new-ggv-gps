@@ -1,37 +1,15 @@
 import type { Map as MaplibreMap } from "maplibre-gl";
 import { m } from "framer-motion";
 import { getDistanceAlongRoute } from "../lib/geo";
-
-interface RouteStep {
-  type: string;
-  icon: string;
-  modifier?: string | null;
-  distance: number;
-  isSignificant?: boolean;
-  location?: [number, number];
-}
-
-interface RouteGeometry {
-  type: string;
-  coordinates: [number, number][] | [number, number][][];
-}
-
-interface Destination {
-  name: string;
-  coordinates: [number, number];
-}
-
-interface UserLocation {
-  latitude: number;
-  longitude: number;
-}
+import type { UserLocation, Destination } from "../hooks/useMapSetup";
+import type { RouteStep, RouteGeometry, RouteSourceType } from "../hooks/useRouting";
 
 interface NavigationOverlayProps {
   map: MaplibreMap | null;
   distanceRemaining: number;
   destination: Destination | null;
   steps: RouteStep[];
-  routeSource: "osrm" | "ors" | "direct" | null;
+  routeSource: RouteSourceType | null;
   routeGeoJSON: RouteGeometry | null;
   userLocation: UserLocation | null;
   onCancel: () => void;

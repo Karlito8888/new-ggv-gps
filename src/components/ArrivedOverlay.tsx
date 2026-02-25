@@ -1,10 +1,6 @@
 import { m } from "framer-motion";
 import { overlayVariants, modalVariants } from "../lib/animations";
-
-interface Destination {
-  name: string;
-  coordinates: [number, number];
-}
+import type { Destination } from "../hooks/useMapSetup";
 
 interface ArrivedOverlayProps {
   destination: Destination | null;

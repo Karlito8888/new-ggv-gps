@@ -12,14 +12,15 @@ import destinationMarkerImg from "../assets/default-marker.png";
 import protomapsLightLayers from "../data/protomaps-light-layers.json";
 import "../styles/maplibre-gl.css";
 
-interface UserLocation {
+export interface UserLocation {
   latitude: number;
   longitude: number;
 }
 
-interface Destination {
+export interface Destination {
   name: string;
   coordinates: [number, number];
+  type?: string;
 }
 
 interface UseMapSetupReturn {

@@ -2,12 +2,15 @@
 
 declare const __APP_VERSION__: string;
 
-// iOS 13+ DeviceOrientationEvent type augmentation
-interface DeviceOrientationEventiOS extends DeviceOrientationEvent {
-  webkitCompassHeading?: number;
+// iOS 13+ DeviceOrientationEvent type augmentations
+// Declaration merge: adds webkitCompassHeading to all DeviceOrientationEvent instances
+interface DeviceOrientationEvent {
+  readonly webkitCompassHeading?: number;
 }
 
-interface DeviceOrientationEventConstructor {
+// iOS 13+ static method type for DeviceOrientationEvent constructor
+// Used inline via: DeviceOrientationEvent as unknown as { requestPermission?: ... }
+interface DeviceOrientationEventWithPermission {
   requestPermission?: () => Promise<"granted" | "denied">;
 }
 

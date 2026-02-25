@@ -1,15 +1,6 @@
 import type { Map as MaplibreMap } from "maplibre-gl";
 import { getDistance } from "../lib/geo";
-
-interface UserLocation {
-  latitude: number;
-  longitude: number;
-}
-
-interface Destination {
-  name: string;
-  coordinates: [number, number];
-}
+import type { UserLocation, Destination } from "./useMapSetup";
 
 interface UseNavigationReturn {
   distanceRemaining: number;

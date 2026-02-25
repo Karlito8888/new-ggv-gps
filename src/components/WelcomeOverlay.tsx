@@ -2,14 +2,9 @@ import { useState, useEffect } from "react";
 import { m } from "framer-motion";
 import { overlayVariants, modalVariants } from "../lib/animations";
 import { supabase } from "../lib/supabase";
+import type { Destination } from "../hooks/useMapSetup";
 
 interface Block {
-  name: string;
-}
-
-interface DestinationSelection {
-  type: string;
-  coordinates: [number, number];
   name: string;
 }
 
@@ -26,7 +21,7 @@ interface WelcomeOverlayProps {
   isLoadingBlocks: boolean;
   blocksError: string | null;
   onRetryBlocks: () => void;
-  onSelectDestination: (destination: DestinationSelection) => void;
+  onSelectDestination: (destination: Destination) => void;
 }
 
 export function WelcomeOverlay({

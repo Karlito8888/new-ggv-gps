@@ -2,7 +2,6 @@
 // MyGGV GPS — Workbox Service Worker
 // 5-tier caching strategy for offline-first PWA
 
-// eslint-disable-next-line no-undef
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null }>;
 };

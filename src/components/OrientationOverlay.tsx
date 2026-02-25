@@ -16,10 +16,9 @@ export function OrientationOverlay({ onGrant }: OrientationOverlayProps) {
 
     // iOS 13+ requires explicit permission
     // https://developer.apple.com/documentation/safari-release-notes/safari-13-release-notes#Media
+    const DOE = DeviceOrientationEvent as unknown as DeviceOrientationEventWithPermission;
     const needsPermission =
-      typeof DeviceOrientationEvent !== "undefined" &&
-      // @ts-expect-error iOS 13+ API not in standard TypeScript DOM types
-      typeof DeviceOrientationEvent.requestPermission === "function";
+      typeof DeviceOrientationEvent !== "undefined" && typeof DOE.requestPermission === "function";
 
     if (!needsPermission) {
       // Android doesn't need permission
@@ -29,8 +28,7 @@ export function OrientationOverlay({ onGrant }: OrientationOverlayProps) {
     }
 
     try {
-      // @ts-expect-error iOS 13+ API not in standard TypeScript DOM types
-      const permission = await DeviceOrientationEvent.requestPermission();
+      const permission = await DOE.requestPermission!();
       if (permission === "granted") {
         onGrant();
       } else {

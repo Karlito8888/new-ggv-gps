@@ -1,6 +1,6 @@
 # Story 2.2: TypeScript Migration — Strict Mode
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -417,6 +417,26 @@ Claude Opus 4.6
 | `index.html`: Script src → `/src/main.tsx` | Match renamed entry point |
 | `vite.config.ts`: VitePWA filename → `"sw.ts"` | Match renamed service worker |
 | `src/vite-env.d.ts`: Added iOS DeviceOrientationEvent types, asset module declarations | Type augmentations for non-standard APIs |
+
+### Senior Developer Review (AI) — 2026-02-26
+
+**Reviewer:** Claude Opus 4.6 (adversarial code review)
+
+**Issues Found:** 2 High, 3 Medium, 2 Low — **all HIGH and MEDIUM fixed**
+
+| # | Severity | Issue | Fix Applied |
+|---|---|---|---|
+| H1 | HIGH | Type augmentations in vite-env.d.ts defined but never used; 3x `@ts-expect-error` + 1x `as any` | Rewrote vite-env.d.ts with declaration merge + `DeviceOrientationEventIOS` type alias; removed all `@ts-expect-error` from OrientationOverlay.tsx and App.tsx; replaced `(e as any).webkitCompassHeading` with direct property access |
+| H2 | HIGH | 12+ duplicate interface definitions across 8 files (UserLocation, Destination, RouteStep, RouteGeometry) | Exported types from canonical hooks (useMapSetup, useRouting); imported via `import type` in all consumers |
+| M1 | MEDIUM | `RouteGeometry.type` was `string` instead of union literal | Changed to `"LineString" \| "MultiLineString"` |
+| M2 | MEDIUM | `DestinationSelection` in WelcomeOverlay inconsistent with `Destination` | Replaced with shared `Destination` type (added `type?: string` to canonical) |
+| M3 | MEDIUM | `as any` for webkitCompassHeading when typed alternative existed | Fixed via H1 (interface declaration merge) |
+| L1 | LOW | JSDoc removed from GpsPermissionOverlay | Not fixed (TypeScript types are sufficient, git history available) |
+| L2 | LOW | Pre-existing env var name inconsistency (VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY) | Not fixed (pre-existing, out of scope) |
+
+**Additional cleanup:** Disabled ESLint `no-undef` rule per typescript-eslint recommendation (TypeScript handles this natively); removed `eslint-disable-next-line no-undef` from sw.ts.
+
+**Verification:** `bun run lint` ✅, `tsc --noEmit` ✅, `bun run build` ✅ (1997.50 KiB precache)
 
 ### File List
 

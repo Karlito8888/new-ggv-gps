@@ -43,6 +43,8 @@ export default [
       ...reactHooks.configs.recommended.rules,
 
       // Best practices
+      // no-undef disabled: TypeScript handles this via tsc --noEmit (typescript-eslint recommendation)
+      "no-undef": "off",
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": [
         "error",

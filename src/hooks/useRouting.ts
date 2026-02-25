@@ -2,18 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import type { Map as MaplibreMap, GeoJSONSource } from "maplibre-gl";
 import type { Geometry } from "geojson";
 import { getDistance } from "../lib/geo";
+import type { UserLocation, Destination } from "./useMapSetup";
 
-interface UserLocation {
-  latitude: number;
-  longitude: number;
-}
-
-interface Destination {
-  name: string;
-  coordinates: [number, number];
-}
-
-interface RouteStep {
+export interface RouteStep {
   type: string;
   icon: string;
   modifier?: string | null;
@@ -22,8 +13,8 @@ interface RouteStep {
   location?: [number, number];
 }
 
-interface RouteGeometry {
-  type: string;
+export interface RouteGeometry {
+  type: "LineString" | "MultiLineString";
   coordinates: [number, number][] | [number, number][][];
 }
 
@@ -38,7 +29,7 @@ interface LatLng {
   lng: number;
 }
 
-type RouteSourceType = "osrm" | "ors" | "direct";
+export type RouteSourceType = "osrm" | "ors" | "direct";
 
 interface UseRoutingReturn {
   routeGeoJSON: RouteGeometry | null;

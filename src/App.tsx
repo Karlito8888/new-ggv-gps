@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, startTransition } from "react";
 import { LazyMotion, domAnimation, AnimatePresence, MotionConfig } from "framer-motion";
 import { useMapSetup, updateDestinationMarker } from "./hooks/useMapSetup";
+import type { Destination } from "./hooks/useMapSetup";
 import { useRouting } from "./hooks/useRouting";
 import { useNavigation } from "./hooks/useNavigation";
 import { supabase } from "./lib/supabase";
@@ -20,12 +21,6 @@ type NavState =
   | "navigating"
   | "arrived"
   | "exit-complete";
-
-interface Destination {
-  name: string;
-  coordinates: [number, number];
-  type?: string;
-}
 
 interface BlockData {
   name: string;
@@ -209,10 +204,9 @@ export default function App() {
     map.on("zoomend", onInteractionEnd);
 
     // Detect platform once (iOS uses webkitCompassHeading, Android uses alpha)
+    const DOE = DeviceOrientationEvent as unknown as DeviceOrientationEventWithPermission;
     const isIOS =
-      typeof DeviceOrientationEvent !== "undefined" &&
-      // @ts-expect-error iOS 13+ API not in standard TypeScript DOM types
-      typeof DeviceOrientationEvent.requestPermission === "function";
+      typeof DeviceOrientationEvent !== "undefined" && typeof DOE.requestPermission === "function";
 
     const handler = (e: DeviceOrientationEvent) => {
       // Only rotate map when navigating (check ref to avoid stale closure)
@@ -223,10 +217,9 @@ export default function App() {
 
       // Calculate heading based on platform
       let heading: number | undefined;
-      const webkitHeading = (e as any).webkitCompassHeading as number | undefined;
-      if (isIOS && webkitHeading !== null && webkitHeading !== undefined) {
+      if (isIOS && e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
         // iOS Safari: 0-360, 0=North, clockwise
-        heading = webkitHeading;
+        heading = e.webkitCompassHeading;
       } else if (!isIOS && e.alpha !== null) {
         // Android Chrome: 0-360, counter-clockwise - need to invert
         heading = (360 - e.alpha) % 360;
