@@ -41,17 +41,17 @@ story_location: _bmad-output/implementation-artifacts
 
 development_status:
   # Epic 1: Navigation Offline-First & PWA Performante
-  epic-1: in-progress
+  epic-1: done
   1-1-self-hosted-map-style-glyphs-sprites: done
   1-2-village-pmtiles-offline-tile-hosting: done
   1-3-workbox-service-worker-offline-first-caching: done
   1-4-pwa-manifest-install-experience: done
   1-5-hostinger-hosting-deployment-configuration: done
-  epic-1-retrospective: optional
+  epic-1-retrospective: done
 
   # Epic 2: Architecture Propre & Migration TypeScript
-  epic-2: backlog
-  2-1-extract-overlay-components-from-app-jsx: backlog
+  epic-2: in-progress
+  2-1-extract-overlay-components-from-app-jsx: in-progress
   2-2-typescript-migration-strict-mode: backlog
   2-3-css-design-token-system: backlog
   2-4-navigationoverlay-floating-pills: backlog
