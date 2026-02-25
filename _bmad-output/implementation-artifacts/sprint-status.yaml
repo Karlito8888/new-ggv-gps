@@ -46,7 +46,7 @@ development_status:
   1-2-village-pmtiles-offline-tile-hosting: done
   1-3-workbox-service-worker-offline-first-caching: done
   1-4-pwa-manifest-install-experience: done
-  1-5-hostinger-hosting-deployment-configuration: review
+  1-5-hostinger-hosting-deployment-configuration: done
   epic-1-retrospective: optional
 
   # Epic 2: Architecture Propre & Migration TypeScript

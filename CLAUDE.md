@@ -33,7 +33,7 @@ MyGGV GPS is a React PWA for GPS navigation within Garden Grove Village, Philipp
 ```bash
 bun run dev              # Dev server (port 5173, LAN accessible)
 bun run build            # Production build → dist/
-bun run build:netlify    # Lint + build (used by CI/deployment)
+bun run build:netlify    # Lint + build (Netlify-specific, deprecated)
 bun run lint             # ESLint check
 bun run lint:fix         # ESLint auto-fix
 bun run preview          # Preview production build (port 5173)
@@ -137,13 +137,26 @@ Single route source `"route"` with layer `"route-line"`. Updated via `map.getSou
 
 ## Deployment
 
-**Netlify** (netlify.toml):
+### Hostinger (primary — `public/.htaccess`)
+
+- Build: `bun run build` → upload `dist/` to Hostinger via FTP/SSH (manual, Phase 1)
+- Server: LiteSpeed Enterprise (reads `.htaccess` with Apache compatibility)
+- SPA redirect: `.htaccess` RewriteRule → `/index.html`
+- Security headers: X-Frame-Options DENY, X-Content-Type-Options nosniff, X-XSS-Protection, Permissions-Policy (geolocation=self), Referrer-Policy strict-origin-when-cross-origin
+- Cache: static assets 1 year immutable, HTML no-cache, `sw.js` no-store
+- MIME types: `.pbf` (protobuf), `.pmtiles` (PMTiles)
+- Gzip: enabled for text/JS/CSS/JSON/SVG/protobuf, disabled for `.pmtiles` (range request compatibility)
+- HSTS: disabled by default, uncomment in `.htaccess` after SSL is confirmed working
+- Phase 3 (Story 3.4) will automate deployment via GitHub Actions
+
+### Netlify (deprecated — `netlify.toml`)
 
 - Build: `bun run build:netlify` (lint + build)
 - Publish: `dist/`
 - SPA redirect: all routes → `/index.html`
 - Security headers + geolocation restricted to `self`
 - Static assets cached 1 year (immutable)
+- **Note:** `netlify.toml` kept during DNS transition period. Remove after full cutover to Hostinger.
 
 **Build pipeline**: ESLint → Vite build with code splitting (vendor, maps, supabase, animations chunks). Console logs stripped in production. ES2020+ target.
 

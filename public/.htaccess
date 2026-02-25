@@ -1,0 +1,101 @@
+# =============================================================================
+# MyGGV GPS — Hostinger (LiteSpeed Enterprise) Configuration
+# Story 1.5: Hostinger Hosting Deployment & Configuration
+# =============================================================================
+
+# =============================================================================
+# 1. HTTPS Redirect
+# =============================================================================
+# LiteSpeed terminates SSL at reverse proxy level — %{HTTPS} may always be off.
+# Use AND (implicit) to avoid redirect loops: HTTPS off AND proxy says not HTTPS.
+RewriteEngine On
+
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# =============================================================================
+# 2. PMTiles Gzip Exclusion (must be after RewriteEngine On)
+# =============================================================================
+# Gzip compression breaks HTTP range requests needed by the PMTiles protocol.
+# LiteSpeed respects the no-gzip env variable set via RewriteRule [E=] flag.
+RewriteRule \.pmtiles$ - [E=no-gzip:1]
+
+# =============================================================================
+# 3. SPA Fallback Redirect
+# =============================================================================
+# Serve existing files/directories as-is, fallback everything else to index.html
+Options -MultiViews
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /index.html [QSA,L]
+
+# =============================================================================
+# 4. Security Headers
+# =============================================================================
+# LiteSpeed docs recommend "Header set" over "Header always set"
+<IfModule mod_headers.c>
+  Header set X-Frame-Options "DENY"
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-XSS-Protection "1; mode=block"
+  Header set Permissions-Policy "geolocation=(self), camera=(), microphone=()"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header unset X-Powered-By
+</IfModule>
+
+# =============================================================================
+# 5. HSTS (enable ONLY after SSL is confirmed working on production domain)
+# =============================================================================
+# Uncomment the line below once SSL/TLS is verified active on the domain.
+# WARNING: Enabling prematurely can lock users out for max-age duration.
+# <IfModule mod_headers.c>
+#   Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+# </IfModule>
+
+# =============================================================================
+# 6. MIME Types
+# =============================================================================
+AddType application/x-protobuf .pbf
+AddType application/vnd.pmtiles .pmtiles
+
+# =============================================================================
+# 7. Cache-Control for Static Assets (1 year, immutable)
+# =============================================================================
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css|woff2|png|webp|svg|ico|pbf|pmtiles|json)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+# =============================================================================
+# 8. Cache-Control Overrides
+# =============================================================================
+# HTML files: always fresh for SW update detection
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+# PWA manifest: not content-hashed, must revalidate on each deploy
+<IfModule mod_headers.c>
+  <FilesMatch "^manifest\.json$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+# Service Worker: must NEVER be cached by HTTP cache
+<IfModule mod_headers.c>
+  <FilesMatch "^sw\.js$">
+    Header set Cache-Control "no-store, no-cache"
+  </FilesMatch>
+</IfModule>
+
+# =============================================================================
+# 9. Compression Note
+# =============================================================================
+# LiteSpeed Enterprise has native GZIP/Brotli compression enabled by default.
+# It compresses text/*, application/javascript, application/json, image/svg+xml
+# automatically. No mod_deflate directives needed (mod_deflate is not used by
+# LiteSpeed). The PMTiles exclusion above (section 2) handles the only exception.
