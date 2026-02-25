@@ -37,6 +37,7 @@ export default function App() {
   const [navState, setNavState] = useState<NavState>("gps-permission");
   const [destination, setDestination] = useState<Destination | null>(null);
   const [hasOrientationPermission, setHasOrientationPermission] = useState(false);
+  const [heading, setHeading] = useState<number | null>(null);
 
   // Blocks data (pre-loaded during GPS permission screen)
   const [blocks, setBlocks] = useState<BlockData[]>([]);
@@ -239,6 +240,7 @@ export default function App() {
 
       lastBearing = heading;
       lastUpdate = now;
+      setHeading(heading);
 
       // Use jumpTo for instant rotation (no animation = less GPU load)
       // Preserve pitch at 45° to avoid reset
@@ -340,9 +342,11 @@ export default function App() {
                 routeSource={routeSource}
                 routeGeoJSON={routeGeoJSON}
                 userLocation={userLocation}
+                heading={heading}
                 onCancel={() => {
                   setNavState("welcome");
                   setDestination(null);
+                  setHeading(null);
                 }}
               />
             )}

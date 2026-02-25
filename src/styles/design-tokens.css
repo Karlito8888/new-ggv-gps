@@ -37,6 +37,10 @@
   --ggv-color-disabled: #888888;
   --ggv-color-amber: #fbbf24;
 
+  /* Glass-morphism */
+  --ggv-glass-bg: rgba(255, 255, 255, 0.85);
+  --ggv-glass-bg-fallback: rgba(255, 255, 255, 0.95);
+
   /* Semi-transparent tints */
   --ggv-color-text-tint: rgba(18, 18, 18, 0.08);
   --ggv-color-text-tint-hover: rgba(18, 18, 18, 0.12);
@@ -88,6 +92,8 @@
 
   --ggv-space-xs: 0.25rem;
   --ggv-space-sm: 0.5rem;
+  --ggv-space-pill-y: 0.625rem;
+  --ggv-space-pill-inset: 0.75rem;
   --ggv-space-md: 1rem;
   --ggv-space-lg: 1.5rem;
   --ggv-space-xl: 2rem;
@@ -147,6 +153,7 @@
   --ggv-shadow-dialog: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   --ggv-shadow-control: 0 2px 8px rgba(0, 0, 0, 0.15);
   --ggv-shadow-strong: 0 8px 25px rgba(0, 0, 0, 0.2);
+  --ggv-shadow-pill: 0 2px 12px rgba(0, 0, 0, 0.15);
   --ggv-shadow-button-exit: 0 4px 15px rgba(243, 197, 73, 0.4);
   --ggv-shadow-button-exit-hover: 0 8px 25px rgba(243, 197, 73, 0.5);
 

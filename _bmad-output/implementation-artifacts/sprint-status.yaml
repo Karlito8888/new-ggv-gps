@@ -54,7 +54,7 @@ development_status:
   2-1-extract-overlay-components-from-app-jsx: done
   2-2-typescript-migration-strict-mode: done
   2-3-css-design-token-system: done
-  2-4-navigationoverlay-floating-pills: backlog
+  2-4-navigationoverlay-floating-pills: done
   epic-2-retrospective: optional
 
   # Epic 3: Analytics Usage & Pipeline Qualite

@@ -12,8 +12,16 @@ interface NavigationOverlayProps {
   routeSource: RouteSourceType | null;
   routeGeoJSON: RouteGeometry | null;
   userLocation: UserLocation | null;
+  heading: number | null;
   onCancel: () => void;
 }
+
+const CARDINAL_DIRECTIONS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+
+const formatBearing = (degrees: number): string => {
+  const index = Math.round(degrees / 45) % 8;
+  return `${CARDINAL_DIRECTIONS[index]} ${Math.round(degrees) % 360}°`;
+};
 
 // React Compiler handles memoization automatically
 export function NavigationOverlay({
@@ -24,6 +32,7 @@ export function NavigationOverlay({
   routeSource,
   routeGeoJSON,
   userLocation,
+  heading,
   onCancel,
 }: NavigationOverlayProps) {
   const formatDistance = (meters: number): string =>
@@ -77,42 +86,67 @@ export function NavigationOverlay({
   };
 
   return (
-    <m.div
-      className="navigation-overlay"
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: -100, opacity: 0 }}
-    >
-      <div className="nav-header-compact">
-        {/* Turn instruction (left) */}
+    <>
+      {/* Top pill — turn instruction + distance + cancel */}
+      <m.nav
+        className="nav-top-pill"
+        aria-label="Navigation info"
+        initial={{ y: -80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -80, opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      >
         <div className="nav-turn">
           {currentStep ? (
             <>
               <span className="nav-turn-icon">{currentStep.icon}</span>
-              <span className="nav-turn-dist">{currentStep.distanceToStep}m</span>
+              <span className="nav-turn-text" aria-live="polite">
+                {currentStep.modifier
+                  ? `${currentStep.type === "turn" ? "Turn" : ""} ${currentStep.modifier}`.trim()
+                  : "Continue"}
+              </span>
             </>
+          ) : routeSource === "direct" ? (
+            <span className="nav-turn-text" aria-live="polite">
+              Head toward destination
+            </span>
           ) : (
             <span className="nav-turn-icon">↑</span>
           )}
         </div>
 
-        {/* Destination + distance (center) */}
-        <div className="nav-center">
-          <div className="nav-dest-name">{destination?.name || "Navigating..."}</div>
-          <div className="nav-remaining">{formatDistance(distanceRemaining)}</div>
-          {routeSource && <div className="nav-source">{routeSource.toUpperCase()}</div>}
+        <div className="nav-turn-dist" aria-live="off">
+          {currentStep ? `${currentStep.distanceToStep}m` : formatDistance(distanceRemaining)}
         </div>
 
-        {/* Cancel button (right) */}
-        <button className="nav-cancel-btn" onClick={onCancel} aria-label="Stop">
+        <button className="nav-cancel-btn" onClick={onCancel} aria-label="Cancel navigation">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
-      </div>
+      </m.nav>
 
-      {/* Map controls */}
+      {/* Bottom strip — destination + compass/distance */}
+      <m.nav
+        className="nav-bottom-strip"
+        aria-label={`Destination info${destination?.name ? `: navigating to ${destination.name}` : ""}`}
+        initial={{ y: 80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 80, opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      >
+        <div className="nav-dest-name">
+          <span className="nav-dest-icon">📍</span>
+          <span className="nav-dest-text">{destination?.name || "Navigating..."}</span>
+        </div>
+
+        <div className="nav-compass-text" aria-live="off">
+          {heading !== null ? formatBearing(heading) : formatDistance(distanceRemaining)}
+        </div>
+      </m.nav>
+
+      {/* Map controls — separate floating element */}
       <div className="nav-map-controls">
         <button className="map-control-btn" onClick={handleZoomIn} aria-label="Zoom in">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -126,6 +160,6 @@ export function NavigationOverlay({
           </svg>
         </button>
       </div>
-    </m.div>
+    </>
   );
 }

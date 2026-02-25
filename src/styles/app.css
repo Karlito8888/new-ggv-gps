@@ -1036,77 +1036,87 @@ textarea {
 }
 
 /* ===================================================================
-   NAVIGATION OVERLAY - Enhanced Top Bar
+   NAVIGATION — Floating Pills (NavTopPill + NavBottomStrip)
    =================================================================== */
 
-.navigation-overlay {
+.nav-top-pill {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(180deg, var(--ggv-color-surface) 0%, rgba(244, 244, 244, 0.98) 100%);
-  box-shadow: var(--ggv-shadow-overlay);
+  top: calc(env(safe-area-inset-top, 0px) + var(--ggv-space-pill-inset));
+  left: var(--ggv-space-md);
+  right: var(--ggv-space-md);
   z-index: var(--ggv-z-nav);
-  padding: 0.875rem var(--ggv-space-md);
-  border-radius: 0 0 var(--ggv-radius-xl) var(--ggv-radius-xl);
-}
-
-/* Compact navigation header */
-.nav-header-compact {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  padding: var(--ggv-space-pill-y) var(--ggv-space-md);
+  gap: var(--ggv-space-pill-inset);
+  background: var(--ggv-glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--ggv-radius-xl);
+  box-shadow: var(--ggv-shadow-pill);
+  font-family: var(--ggv-font-primary);
+  color: var(--ggv-color-text);
 }
 
+.nav-bottom-strip {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--ggv-space-pill-inset));
+  left: var(--ggv-space-md);
+  right: var(--ggv-space-md);
+  z-index: var(--ggv-z-nav);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ggv-space-pill-inset) var(--ggv-space-md);
+  background: var(--ggv-glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--ggv-radius-xl);
+  box-shadow: var(--ggv-shadow-pill);
+  font-family: var(--ggv-font-primary);
+  color: var(--ggv-color-text);
+}
+
+@supports not (backdrop-filter: blur(10px)) {
+  .nav-top-pill,
+  .nav-bottom-strip {
+    background: var(--ggv-glass-bg-fallback);
+  }
+}
+
+/* Turn instruction (top pill — left) */
 .nav-turn {
   display: flex;
   align-items: center;
   gap: var(--ggv-space-xs);
-  min-width: 3.5rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .nav-turn-icon {
   font-size: var(--ggv-font-size-xl);
   color: var(--ggv-color-primary);
+  flex-shrink: 0;
 }
 
-.nav-turn-dist {
-  font-size: var(--ggv-font-size-xs);
-  font-weight: var(--ggv-font-weight-semibold);
-  color: var(--ggv-color-text);
-  opacity: var(--ggv-opacity-overlay-text);
-}
-
-.nav-center {
-  flex: 1;
-  text-align: center;
-  min-width: 0;
-}
-
-.nav-dest-name {
+.nav-turn-text {
   font-size: var(--ggv-font-size-sm);
-  font-weight: var(--ggv-font-weight-semibold);
-  color: var(--ggv-color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.nav-remaining {
-  font-size: 1.25rem;
+/* Distance (top pill — center) */
+.nav-turn-dist {
+  font-size: var(--ggv-font-size-base);
   font-weight: var(--ggv-font-weight-bold);
   color: var(--ggv-color-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.nav-source {
-  font-size: 0.625rem;
-  color: var(--ggv-color-gray-light);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-top: 0.125rem;
-}
-
+/* Cancel button (top pill — right) */
 .nav-cancel-btn {
   min-width: var(--ggv-touch-target-min);
   min-height: var(--ggv-touch-target-min);
@@ -1119,6 +1129,11 @@ textarea {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: var(--ggv-transition-fast);
+}
+
+.nav-cancel-btn:active {
+  transform: scale(0.95);
 }
 
 .nav-cancel-btn svg {
@@ -1127,7 +1142,36 @@ textarea {
   color: var(--ggv-color-surface);
 }
 
-.nav-compass {
+/* Destination (bottom strip — left) */
+.nav-dest-name {
+  display: flex;
+  align-items: center;
+  gap: var(--ggv-space-xs);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.nav-dest-icon {
+  flex-shrink: 0;
+}
+
+.nav-dest-text {
+  font-size: var(--ggv-font-size-sm);
+  font-weight: var(--ggv-font-weight-semibold);
+  color: var(--ggv-color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Compass / distance (bottom strip — right) */
+.nav-compass-text {
+  font-size: var(--ggv-font-size-sm);
+  font-weight: var(--ggv-font-weight-semibold);
+  color: var(--ggv-color-primary);
+  min-width: 4rem;
+  text-align: right;
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
@@ -1231,9 +1275,12 @@ textarea {
     font-size: 1.75rem;
   }
 
-  /* Navigation */
-  .navigation-overlay {
-    padding: var(--ggv-space-md) 1.25rem;
+  /* Navigation pills */
+  .nav-top-pill,
+  .nav-bottom-strip {
+    left: var(--ggv-space-lg);
+    right: var(--ggv-space-lg);
+    padding: var(--ggv-space-pill-inset) var(--ggv-space-lg);
   }
 
   /* Welcome Overlay */
