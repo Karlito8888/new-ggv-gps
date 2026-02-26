@@ -236,6 +236,7 @@ export function useRouting(
   const lastOriginRef = useRef<LatLng | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryAbortRef = useRef<AbortController | null>(null);
   const retryCountRef = useRef(0);
   // Vibration debounce (max once per 5 seconds)
   const lastVibrationRef = useRef(0);
@@ -243,6 +244,8 @@ export function useRouting(
   const lastOffRouteRecalcRef = useRef(0);
   // Last trim projected point (jitter suppression)
   const lastTrimPointRef = useRef<[number, number] | null>(null);
+  // Destination generation token (stale closure prevention)
+  const destGenerationRef = useRef(0);
 
   const originLat = origin?.latitude;
   const originLng = origin?.longitude;
@@ -286,6 +289,9 @@ export function useRouting(
     // Update destination ref and reset retry on destination change
     if (destChanged) {
       retryCountRef.current = 0;
+      destGenerationRef.current++;
+      retryAbortRef.current?.abort();
+      retryAbortRef.current = null;
       if (retryTimerRef.current) {
         clearTimeout(retryTimerRef.current);
         retryTimerRef.current = null;
@@ -293,7 +299,15 @@ export function useRouting(
     }
     lastDestRef.current = { lat: destLat!, lng: destLng! };
 
+    // Capture generation token to detect stale results
+    const generation = destGenerationRef.current;
+
     const applyRoute = (result: RouteResult, source: RouteSourceType) => {
+      // Reject stale results from previous destination
+      if (generation !== destGenerationRef.current) {
+        console.info("Route: Discarding stale result (destination changed)");
+        return;
+      }
       setFullRoute(result.geometry);
       setRouteGeoJSON(result.geometry);
       setDistance(result.distance);
@@ -321,24 +335,28 @@ export function useRouting(
           return;
         }
       } catch (e) {
-        if (e instanceof Error && e.name === "AbortError") return;
+        if (signal.aborted) return; // New cycle started, exit cleanly
         console.warn("OSRM failed:", e instanceof Error ? e.message : e);
       }
 
       // 2. Try ORS (fallback)
-      try {
-        route = await fetchORS(originLng!, originLat!, destLng!, destLat!, signal);
-        if (route) {
-          console.info("Route: ORS (fallback)");
-          applyRoute(route, "ors");
-          return;
+      if (!signal.aborted) {
+        try {
+          route = await fetchORS(originLng!, originLat!, destLng!, destLat!, signal);
+          if (route) {
+            console.info("Route: ORS (fallback)");
+            applyRoute(route, "ors");
+            return;
+          }
+        } catch (e) {
+          if (signal.aborted) return; // New cycle started, exit cleanly
+          console.warn("ORS failed:", e instanceof Error ? e.message : e);
         }
-      } catch (e) {
-        if (e instanceof Error && e.name === "AbortError") return;
-        console.warn("ORS failed:", e instanceof Error ? e.message : e);
       }
 
-      // 3. Fallback: direct line
+      // 3. Fallback: direct line (ALWAYS reached unless signal aborted)
+      if (signal.aborted) return;
+
       console.info("Route: Direct line (fallback)");
       const directDist = getDistance(originLat!, originLng!, destLat!, destLng!);
       applyRoute(
@@ -372,18 +390,27 @@ export function useRouting(
 
       retryTimerRef.current = setTimeout(async () => {
         retryCountRef.current++;
+
+        // Read CURRENT destination and origin from refs (not stale closure)
+        const currentDest = lastDestRef.current;
+        const currentOrigin = lastOriginRef.current;
+        if (!currentDest || !currentOrigin) return;
+
+        // Use dedicated retry abort controller
+        retryAbortRef.current = new AbortController();
+
         try {
           const route = await fetchOSRM(
-            originLng!,
-            originLat!,
-            destLng!,
-            destLat!,
-            abortRef.current?.signal
+            currentOrigin.lng,
+            currentOrigin.lat,
+            currentDest.lng,
+            currentDest.lat,
+            retryAbortRef.current.signal
           );
           if (route) {
             console.info("Route: OSRM retry successful!");
             applyRoute(route, "osrm");
-            retryCountRef.current = 0; // Reset for next time
+            retryCountRef.current = 0;
             return;
           }
         } catch (e) {
@@ -414,6 +441,7 @@ export function useRouting(
       if (retryTimerRef.current) {
         clearTimeout(retryTimerRef.current);
       }
+      retryAbortRef.current?.abort();
       abortRef.current?.abort();
     };
   }, [hasValidParams, map, originLat, originLng, destLat, destLng]);
