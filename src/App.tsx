@@ -141,8 +141,13 @@ export default function App() {
 
   // Track if we're currently navigating (used by orientation effect)
   const isNavigatingRef = useRef(false);
+  const hasInitialNavViewRef = useRef(false);
+  const initialNavViewTimeRef = useRef<number>(0);
   useEffect(() => {
     isNavigatingRef.current = navState === "navigating";
+    if (navState !== "navigating") {
+      hasInitialNavViewRef.current = false;
+    }
   }, [navState]);
 
   // Effect 1: Reset map to north-up when leaving navigation mode
@@ -276,16 +281,28 @@ export default function App() {
       if (timeSinceInteraction < 5000) return;
     }
 
+    // Skip centering during initial easeTo animation (500ms + 100ms buffer)
+    if (Date.now() - initialNavViewTimeRef.current < 600) return;
+
     // Center map on user position
     map.setCenter([userLocation.longitude, userLocation.latitude]);
   }, [map, isMapReady, navState, userLocation]);
 
-  // Effect 3: Set initial navigation view when entering navigation mode
+  // Effect 3: Set initial navigation view when entering navigation mode (one-shot)
   useEffect(() => {
-    if (!map || !isMapReady || navState !== "navigating") return;
-    // Set initial navigation view: zoom in, pitch 45°
-    map.easeTo({ pitch: 45, zoom: 20, duration: 500 });
-  }, [navState, map, isMapReady]);
+    if (!map || !isMapReady || navState !== "navigating" || !userLocation) return;
+    if (hasInitialNavViewRef.current) return;
+    hasInitialNavViewRef.current = true;
+    initialNavViewTimeRef.current = Date.now();
+
+    map.easeTo({
+      center: [userLocation.longitude, userLocation.latitude],
+      ...(heading !== null && { bearing: heading }),
+      pitch: 45,
+      zoom: 20,
+      duration: 500,
+    });
+  }, [navState, map, isMapReady, userLocation, heading]);
 
   return (
     <div className="app-container">
