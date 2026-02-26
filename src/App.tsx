@@ -38,6 +38,7 @@ export default function App() {
   const [destination, setDestination] = useState<Destination | null>(null);
   const [hasOrientationPermission, setHasOrientationPermission] = useState(false);
   const [heading, setHeading] = useState<number | null>(null);
+  const [isOffCenter, setIsOffCenter] = useState(false);
 
   // Blocks data (pre-loaded during GPS permission screen)
   const [blocks, setBlocks] = useState<BlockData[]>([]);
@@ -75,10 +76,15 @@ export default function App() {
   }, []);
 
   // Initialize map and GPS tracking
-  const { map, userLocation, isMapReady, triggerGeolocate } = useMapSetup(mapContainerRef);
+  const { map, userLocation, isMapReady, triggerGeolocate, userMarkerRef } =
+    useMapSetup(mapContainerRef);
 
   // Calculate route when destination is selected
-  const { steps, routeSource, routeGeoJSON } = useRouting(map, userLocation, destination);
+  const { steps, routeSource, routeGeoJSON, isRecalculating } = useRouting(
+    map,
+    userLocation,
+    destination
+  );
 
   // Navigation logic (distance, arrival detection)
   const { distanceRemaining, hasArrived, arrivedAt } = useNavigation(
@@ -150,6 +156,34 @@ export default function App() {
     }
   }, [navState]);
 
+  // Effect: Show/hide custom user marker + toggle native dot based on navState
+  useEffect(() => {
+    const marker = userMarkerRef.current;
+    if (!marker) return;
+    const el = marker.getElement();
+    const isNav = navState === "navigating";
+    el.style.display = isNav ? "block" : "none";
+    // Toggle CSS class on app container to hide native GeolocateControl dot
+    const container = mapContainerRef.current?.parentElement;
+    if (container) {
+      container.classList.toggle("navigating", isNav);
+    }
+  }, [navState, userMarkerRef]);
+
+  // Effect: Rotate custom user marker with heading
+  useEffect(() => {
+    const marker = userMarkerRef.current;
+    if (!marker || navState !== "navigating") return;
+    const el = marker.getElement();
+    if (heading !== null) {
+      marker.setRotation(heading);
+      el.classList.remove("no-heading");
+    } else {
+      marker.setRotation(0);
+      el.classList.add("no-heading");
+    }
+  }, [heading, navState, userMarkerRef]);
+
   // Effect 1: Reset map to north-up when leaving navigation mode
   useEffect(() => {
     if (!map || !isMapReady) return;
@@ -185,6 +219,9 @@ export default function App() {
     const onInteractionStart = () => {
       isUserInteracting = true;
       userInteractionTimeRef.current = Date.now();
+      if (isNavigatingRef.current) {
+        setIsOffCenter(true);
+      }
       // Clear any pending recenter timeout
       if (recenterTimeoutRef.current) {
         clearTimeout(recenterTimeoutRef.current);
@@ -200,6 +237,7 @@ export default function App() {
       if (isNavigatingRef.current) {
         recenterTimeoutRef.current = setTimeout(() => {
           userInteractionTimeRef.current = null;
+          setIsOffCenter(false);
         }, 5000);
       }
     };
@@ -247,11 +285,11 @@ export default function App() {
       lastUpdate = now;
       setHeading(heading);
 
-      // Use jumpTo for instant rotation (no animation = less GPU load)
-      // Preserve pitch at 45° to avoid reset
-      map.jumpTo({
+      // Smooth bearing transition — 150ms easeTo cancels previous animation
+      map.easeTo({
         bearing: heading,
         pitch: 45,
+        duration: 150,
       });
     };
 
@@ -303,6 +341,20 @@ export default function App() {
       duration: 500,
     });
   }, [navState, map, isMapReady, userLocation, heading]);
+
+  // Re-center button handler
+  const handleRecenter = () => {
+    if (!map || !userLocation) return;
+    userInteractionTimeRef.current = null;
+    setIsOffCenter(false);
+    map.easeTo({
+      center: [userLocation.longitude, userLocation.latitude],
+      bearing: heading ?? 0,
+      pitch: 45,
+      zoom: 20,
+      duration: 500,
+    });
+  };
 
   return (
     <div className="app-container">
@@ -359,7 +411,9 @@ export default function App() {
                 routeSource={routeSource}
                 routeGeoJSON={routeGeoJSON}
                 userLocation={userLocation}
-                heading={heading}
+                isRecalculating={isRecalculating}
+                isOffCenter={isOffCenter}
+                onRecenter={handleRecenter}
                 onCancel={() => {
                   setNavState("welcome");
                   setDestination(null);

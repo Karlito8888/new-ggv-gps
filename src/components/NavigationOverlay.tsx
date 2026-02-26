@@ -1,6 +1,6 @@
 import type { Map as MaplibreMap } from "maplibre-gl";
 import { m } from "framer-motion";
-import { getDistanceAlongRoute } from "../lib/geo";
+import { getDistanceAlongRoute, flattenCoordinates } from "../lib/geo";
 import type { UserLocation, Destination } from "../hooks/useMapSetup";
 import type { RouteStep, RouteGeometry, RouteSourceType } from "../hooks/useRouting";
 
@@ -12,16 +12,11 @@ interface NavigationOverlayProps {
   routeSource: RouteSourceType | null;
   routeGeoJSON: RouteGeometry | null;
   userLocation: UserLocation | null;
-  heading: number | null;
+  isRecalculating: boolean;
+  isOffCenter: boolean;
+  onRecenter: () => void;
   onCancel: () => void;
 }
-
-const CARDINAL_DIRECTIONS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
-
-const formatBearing = (degrees: number): string => {
-  const index = Math.round(degrees / 45) % 8;
-  return `${CARDINAL_DIRECTIONS[index]} ${Math.round(degrees) % 360}°`;
-};
 
 // React Compiler handles memoization automatically
 export function NavigationOverlay({
@@ -32,20 +27,22 @@ export function NavigationOverlay({
   routeSource,
   routeGeoJSON,
   userLocation,
-  heading,
+  isRecalculating,
+  isOffCenter,
+  onRecenter,
   onCancel,
 }: NavigationOverlayProps) {
   const formatDistance = (meters: number): string =>
     meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
 
+  // Flatten route coordinates once for reuse
+  const routeCoords: [number, number][] | null = routeGeoJSON?.coordinates
+    ? flattenCoordinates(routeGeoJSON)
+    : null;
+
   // Calculate current step using distance along route (not crow-flies)
   const currentStep = (() => {
-    if (!steps?.length || !userLocation || !routeGeoJSON?.coordinates) return null;
-
-    // Flatten MultiLineString coordinates (ORS) to simple coordinate array
-    const routeCoords: [number, number][] = Array.isArray(routeGeoJSON.coordinates[0]?.[0])
-      ? (routeGeoJSON.coordinates as [number, number][][]).flat()
-      : (routeGeoJSON.coordinates as [number, number][]);
+    if (!steps?.length || !userLocation || !routeCoords) return null;
 
     // Find the next significant step that's ahead of the user on the route
     for (const step of steps) {
@@ -68,6 +65,20 @@ export function NavigationOverlay({
     }
 
     return null; // No significant steps ahead = continue straight
+  })();
+
+  // Compute total along-route distance to destination
+  const totalDistanceRemaining = (() => {
+    if (!userLocation || !destination || !routeCoords) return distanceRemaining;
+    const dist = getDistanceAlongRoute(
+      userLocation.longitude,
+      userLocation.latitude,
+      destination.coordinates[0],
+      destination.coordinates[1],
+      routeCoords
+    );
+    // Fall back to crow-flies if target is behind or calculation fails
+    return dist > 0 ? dist : distanceRemaining;
   })();
 
   // Zoom handlers - React Compiler handles memoization automatically
@@ -97,7 +108,15 @@ export function NavigationOverlay({
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
       >
         <div className="nav-turn">
-          {currentStep ? (
+          {isRecalculating ? (
+            <>
+              <span className="nav-turn-icon nav-recalc-spin">↻</span>
+              <span className="nav-turn-text" aria-live="polite">
+                Recalculating...
+                <span className="tagalog-inline">(Kinakalkula muli...)</span>
+              </span>
+            </>
+          ) : currentStep ? (
             <>
               <span className="nav-turn-icon">{currentStep.icon}</span>
               <span className="nav-turn-text" aria-live="polite">
@@ -116,7 +135,11 @@ export function NavigationOverlay({
         </div>
 
         <div className="nav-turn-dist" aria-live="off">
-          {currentStep ? `${currentStep.distanceToStep}m` : formatDistance(distanceRemaining)}
+          {isRecalculating
+            ? "..."
+            : currentStep
+              ? `${currentStep.distanceToStep}m`
+              : formatDistance(distanceRemaining)}
         </div>
 
         <button className="nav-cancel-btn" onClick={onCancel} aria-label="Cancel navigation">
@@ -142,12 +165,27 @@ export function NavigationOverlay({
         </div>
 
         <div className="nav-compass-text" aria-live="off">
-          {heading !== null ? formatBearing(heading) : formatDistance(distanceRemaining)}
+          {formatDistance(totalDistanceRemaining)}
         </div>
       </m.nav>
 
       {/* Map controls — separate floating element */}
       <div className="nav-map-controls">
+        {isOffCenter && (
+          <button
+            className="map-control-btn recenter-btn"
+            onClick={onRecenter}
+            aria-label="Re-center map (I-center muli ang mapa)"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3" />
+              <line x1="12" y1="2" x2="12" y2="6" />
+              <line x1="12" y1="18" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="6" y2="12" />
+              <line x1="18" y1="12" x2="22" y2="12" />
+            </svg>
+          </button>
+        )}
         <button className="map-control-btn" onClick={handleZoomIn} aria-label="Zoom in">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" />

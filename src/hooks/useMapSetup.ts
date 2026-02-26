@@ -2,13 +2,12 @@ import { useState, useEffect, useRef, type RefObject } from "react";
 import type {
   Map as MaplibreMap,
   GeolocateControl,
-  GeoJSONSource,
+  Marker,
   MapStyleImageMissingEvent,
   ErrorEvent as MapErrorEvent,
 } from "maplibre-gl";
 import type { FeatureCollection } from "geojson";
 import { blocks } from "../data/blocks";
-import destinationMarkerImg from "../assets/default-marker.png";
 import protomapsLightLayers from "../data/protomaps-light-layers.json";
 import "../styles/maplibre-gl.css";
 
@@ -28,11 +27,13 @@ interface UseMapSetupReturn {
   userLocation: UserLocation | null;
   isMapReady: boolean;
   triggerGeolocate: () => Promise<GeolocationPosition>;
+  userMarkerRef: React.RefObject<Marker | null>;
 }
 
 interface MaplibreModule {
   Map: typeof import("maplibre-gl").Map;
   GeolocateControl: typeof import("maplibre-gl").GeolocateControl;
+  Marker: typeof import("maplibre-gl").Marker;
   addProtocol: (protocol: string, handler: unknown) => void;
   removeProtocol: (protocol: string) => void;
 }
@@ -96,6 +97,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
   const [isMapReady, setIsMapReady] = useState(false);
   const geolocateRef = useRef<GeolocateControl | null>(null);
   const maplibreRefForCleanup = useRef<MaplibreModule | null>(null);
+  const userMarkerRef = useRef<Marker | null>(null);
 
   // Initialize map with lazy-loaded MapLibre
   useEffect(() => {
@@ -177,12 +179,26 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
         mapInstance!.addControl(geolocate, "bottom-right");
         geolocateRef.current = geolocate;
 
+        // Create custom user location arrow marker (hidden by default, shown during navigation)
+        const arrowEl = document.createElement("div");
+        arrowEl.className = "user-location-arrow";
+        const marker = new MapLibre.Marker({
+          element: arrowEl,
+          rotationAlignment: "map",
+          pitchAlignment: "map",
+        });
+        marker.setLngLat(VILLAGE_CENTER).addTo(mapInstance!);
+        arrowEl.style.display = "none"; // Hidden until navigation starts
+        userMarkerRef.current = marker;
+
         // Persistent listener for all GPS updates
         geolocate.on("geolocate", (pos: GeolocationPosition) => {
-          setUserLocation({
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-          });
+          const { latitude, longitude } = pos.coords;
+          setUserLocation({ latitude, longitude });
+          // Update custom marker position
+          if (userMarkerRef.current) {
+            userMarkerRef.current.setLngLat([longitude, latitude]);
+          }
         });
 
         setIsMapReady(true);
@@ -229,67 +245,84 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
     return resultPromise;
   };
 
-  return { map, userLocation, isMapReady, triggerGeolocate };
+  return { map, userLocation, isMapReady, triggerGeolocate, userMarkerRef };
 }
 
+// Module-level ref for the destination HTML Marker (singleton, managed outside React)
+let destMarkerInstance: import("maplibre-gl").Marker | null = null;
+let destMarkerVersion = 0; // Guards against race conditions in async marker creation
+
+const ARRIVAL_ZONE_SOURCE = "arrival-zone";
+const ARRIVAL_ZONE_LAYER = "arrival-zone-circle";
+
 /**
- * Updates or creates a destination marker on the map.
- * Uses the default-marker.png image as an icon.
+ * Updates or creates a custom destination marker (CSS pin + pulse) and arrival zone circle.
  */
-export async function updateDestinationMarker(
+export function updateDestinationMarker(
   map: MaplibreMap | null,
   destination: Destination | null
-): Promise<void> {
+): void {
   if (!map || !map.isStyleLoaded()) return;
 
-  const sourceId = "destination-marker";
-  const layerId = "destination-marker-layer";
-  const imageId = "destination-icon";
-
-  // Load image if not already loaded (MapLibre official method)
-  if (!map.hasImage(imageId)) {
-    try {
-      const image = await map.loadImage(destinationMarkerImg);
-      if (!map.hasImage(imageId)) {
-        map.addImage(imageId, image.data);
-      }
-    } catch (err) {
-      console.error("Failed to load destination marker image:", err);
-      return;
-    }
+  // Remove existing marker
+  if (destMarkerInstance) {
+    destMarkerInstance.remove();
+    destMarkerInstance = null;
   }
 
-  // Create GeoJSON data
+  // Remove arrival zone layer/source
+  if (map.getLayer(ARRIVAL_ZONE_LAYER)) {
+    map.removeLayer(ARRIVAL_ZONE_LAYER);
+  }
+  if (map.getSource(ARRIVAL_ZONE_SOURCE)) {
+    map.removeSource(ARRIVAL_ZONE_SOURCE);
+  }
+
+  if (!destination) return;
+
+  // Create HTML marker with pin + pulse
+  const el = document.createElement("div");
+  el.className = "dest-marker-container";
+  el.innerHTML = '<div class="dest-marker-pulse"></div><div class="dest-marker-pin"></div>';
+
+  // Guard against race condition: if updateDestinationMarker is called again
+  // before this .then() resolves, the version check prevents stale markers
+  const thisVersion = ++destMarkerVersion;
+  mapLibsPromise.then(([maplibregl]) => {
+    if (thisVersion !== destMarkerVersion) return; // Stale — newer call superseded us
+    const MapLibre = (maplibregl as any).default || maplibregl;
+    destMarkerInstance = new MapLibre.Marker({ element: el, anchor: "bottom" });
+    destMarkerInstance!.setLngLat(destination.coordinates).addTo(map);
+  });
+
+  // Add arrival zone circle layer (12m radius)
   const geojson: FeatureCollection = {
     type: "FeatureCollection",
-    features: destination
-      ? [
-          {
-            type: "Feature",
-            properties: { name: destination.name },
-            geometry: {
-              type: "Point",
-              coordinates: destination.coordinates,
-            },
-          },
-        ]
-      : [],
+    features: [
+      {
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "Point",
+          coordinates: destination.coordinates,
+        },
+      },
+    ],
   };
 
-  // Update or create source and layer
-  if (map.getSource(sourceId)) {
-    (map.getSource(sourceId) as GeoJSONSource).setData(geojson);
-  } else {
-    map.addSource(sourceId, { type: "geojson", data: geojson });
-    map.addLayer({
-      id: layerId,
-      type: "symbol",
-      source: sourceId,
-      layout: {
-        "icon-image": imageId,
-        "icon-size": 0.5,
-        "icon-anchor": "bottom",
-      },
-    });
-  }
+  map.addSource(ARRIVAL_ZONE_SOURCE, { type: "geojson", data: geojson });
+  map.addLayer({
+    id: ARRIVAL_ZONE_LAYER,
+    type: "circle",
+    source: ARRIVAL_ZONE_SOURCE,
+    paint: {
+      // 12m radius — convert meters to pixels using zoom-dependent expression
+      // At latitude ~14.35°, 1px at zoom 20 ≈ 0.15m, so 12m ≈ 80px at z20
+      "circle-radius": ["interpolate", ["exponential", 2], ["zoom"], 15, 5, 17, 20, 19, 50, 20, 80],
+      "circle-color": "rgba(66, 133, 244, 0.15)",
+      "circle-stroke-color": "#4285F4",
+      "circle-stroke-width": 1,
+      "circle-pitch-alignment": "map",
+    },
+  });
 }

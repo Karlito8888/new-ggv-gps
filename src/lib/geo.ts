@@ -16,7 +16,7 @@ export function getDistance(lat1: number, lon1: number, lat2: number, lon2: numb
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-interface PointProjection {
+export interface PointProjection {
   projectedPoint: [number, number];
   segmentIndex: number;
   progressOnSegment: number;
@@ -26,7 +26,7 @@ interface PointProjection {
 /**
  * Project a point onto a line and return projection info
  */
-function projectPointOnLine(
+export function projectPointOnLine(
   pointLng: number,
   pointLat: number,
   lineCoordinates: [number, number][]
@@ -172,4 +172,18 @@ export function getDistanceAlongRoute(
   }
 
   return totalDistance;
+}
+
+/**
+ * Flatten LineString or MultiLineString coordinates to a simple coordinate array.
+ * Handles both OSRM (LineString) and ORS (MultiLineString) geometries.
+ */
+export function flattenCoordinates(geometry: {
+  type: "LineString" | "MultiLineString";
+  coordinates: [number, number][] | [number, number][][];
+}): [number, number][] {
+  if (geometry.type === "MultiLineString") {
+    return (geometry.coordinates as [number, number][][]).flat();
+  }
+  return geometry.coordinates as [number, number][];
 }

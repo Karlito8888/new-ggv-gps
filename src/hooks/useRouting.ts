@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { Map as MaplibreMap, GeoJSONSource } from "maplibre-gl";
 import type { Geometry } from "geojson";
-import { getDistance } from "../lib/geo";
+import { getDistance, projectPointOnLine, flattenCoordinates } from "../lib/geo";
 import type { UserLocation, Destination } from "./useMapSetup";
 
 export interface RouteStep {
@@ -36,6 +36,7 @@ interface UseRoutingReturn {
   distance: number;
   steps: RouteStep[];
   routeSource: RouteSourceType | null;
+  isRecalculating: boolean;
 }
 
 // ORS API Key from environment
@@ -222,6 +223,12 @@ const RETRY_DELAYS = [10000, 30000, 60000]; // 10s, 30s, 60s
 // Route recalculation threshold
 const RECALC_THRESHOLD_M = 30;
 
+// Off-route detection threshold
+const OFF_ROUTE_THRESHOLD_M = 25;
+
+// Max deviation before skipping trim (GPS inaccuracy guard)
+const TRIM_SKIP_THRESHOLD_M = 50;
+
 export function useRouting(
   map: MaplibreMap | null,
   origin: UserLocation | null,
@@ -231,11 +238,16 @@ export function useRouting(
   const [distance, setDistance] = useState(0);
   const [steps, setSteps] = useState<RouteStep[]>([]);
   const [routeSource, setRouteSource] = useState<RouteSourceType | null>(null);
+  const [fullRoute, setFullRoute] = useState<RouteGeometry | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const lastOriginRef = useRef<LatLng | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryCountRef = useRef(0);
+  // Vibration debounce (max once per 5 seconds)
+  const lastVibrationRef = useRef(0);
+  // Off-route recalculation cooldown (prevent infinite loop)
+  const lastOffRouteRecalcRef = useRef(0);
 
   const originLat = origin?.latitude;
   const originLng = origin?.longitude;
@@ -247,6 +259,12 @@ export function useRouting(
 
   // Track if params are valid (used for derived return value)
   const hasValidParams = !!(map && originLat && originLng && destLat && destLng);
+
+  // Clear route layers when navigation ends (external system cleanup — no setState)
+  useEffect(() => {
+    if (hasValidParams || !map) return;
+    clearMapRoute(map);
+  }, [hasValidParams, map]);
 
   useEffect(() => {
     if (!hasValidParams) return; // Early return, no sync setState
@@ -289,16 +307,21 @@ export function useRouting(
 
       let route: RouteResult | null = null;
 
+      const applyRoute = (geom: RouteGeometry) => {
+        setFullRoute(geom);
+        setRouteGeoJSON(geom);
+        updateMapRoute(map!, geom);
+      };
+
       // 1. Try OSRM (primary)
       try {
         route = await fetchOSRM(originLng!, originLat!, destLng!, destLat!, signal);
         if (route) {
           console.info("Route: OSRM");
-          setRouteGeoJSON(route.geometry);
           setDistance(route.distance);
           setSteps(route.steps || []);
           setRouteSource("osrm");
-          updateMapRoute(map!, route.geometry);
+          applyRoute(route.geometry);
           return;
         }
       } catch (e) {
@@ -311,11 +334,10 @@ export function useRouting(
         route = await fetchORS(originLng!, originLat!, destLng!, destLat!, signal);
         if (route) {
           console.info("Route: ORS (fallback)");
-          setRouteGeoJSON(route.geometry);
           setDistance(route.distance);
           setSteps([]); // ORS doesn't provide steps in this format
           setRouteSource("ors");
-          updateMapRoute(map!, route.geometry);
+          applyRoute(route.geometry);
           return;
         }
       } catch (e) {
@@ -332,7 +354,6 @@ export function useRouting(
           [destLng!, destLat!],
         ],
       };
-      setRouteGeoJSON(geometry);
       setDistance(getDistance(originLat!, originLng!, destLat!, destLng!));
       setSteps([
         {
@@ -342,7 +363,7 @@ export function useRouting(
         },
       ]);
       setRouteSource("direct");
-      updateMapRoute(map!, geometry);
+      applyRoute(geometry);
 
       // Schedule OSRM retry in background
       scheduleRetry();
@@ -370,6 +391,7 @@ export function useRouting(
           );
           if (route) {
             console.info("Route: OSRM retry successful!");
+            setFullRoute(route.geometry);
             setRouteGeoJSON(route.geometry);
             setDistance(route.distance);
             setSteps(route.steps || []);
@@ -410,26 +432,147 @@ export function useRouting(
     };
   }, [hasValidParams, map, originLat, originLng, destLat, destLng]);
 
+  // Derive off-route status (pure computation — no state, no effect)
+  const isOffRoute = (() => {
+    if (!hasValidParams || !originLat || !originLng || !fullRoute) return false;
+    const flatCoords = flattenCoordinates(fullRoute);
+    if (flatCoords.length < 2) return false;
+    const projection = projectPointOnLine(originLng, originLat, flatCoords);
+    return projection.deviationDistance > OFF_ROUTE_THRESHOLD_M;
+  })();
+
+  // Route trimming + off-route side effects (map update, vibration, force recalc)
+  useEffect(() => {
+    if (!map || !originLat || !originLng || !fullRoute) return;
+
+    const flatCoords = flattenCoordinates(fullRoute);
+    if (flatCoords.length < 2) return;
+
+    const projection = projectPointOnLine(originLng, originLat, flatCoords);
+
+    // Off-route: vibrate + force recalculation (with 3s cooldown to prevent loop)
+    if (projection.deviationDistance > OFF_ROUTE_THRESHOLD_M) {
+      const now = Date.now();
+      if (now - lastVibrationRef.current > 5000) {
+        navigator.vibrate?.(200);
+        lastVibrationRef.current = now;
+      }
+      // Only force recalc if cooldown has elapsed (prevents infinite loop
+      // when API returns same route and user is still off-route)
+      if (now - lastOffRouteRecalcRef.current > 3000) {
+        lastOffRouteRecalcRef.current = now;
+        lastOriginRef.current = null;
+      }
+      return;
+    }
+
+    // Skip trimming if GPS is too inaccurate
+    if (projection.deviationDistance > TRIM_SKIP_THRESHOLD_M) return;
+
+    // Build trimmed coordinates: from projected point to destination
+    const trimmedCoords: [number, number][] = [projection.projectedPoint];
+    for (let i = projection.segmentIndex + 1; i < flatCoords.length; i++) {
+      trimmedCoords.push(flatCoords[i]);
+    }
+
+    if (trimmedCoords.length < 2) return;
+
+    const trimmedGeometry: RouteGeometry = {
+      type: "LineString",
+      coordinates: trimmedCoords,
+    };
+    // Update map route display (external system — allowed in effect)
+    updateMapRoute(map, trimmedGeometry);
+  }, [map, originLat, originLng, fullRoute]);
+
   // Derive return values - return null/empty when params invalid (no sync setState needed)
   return {
     routeGeoJSON: hasValidParams ? routeGeoJSON : null,
     distance: hasValidParams ? distance : 0,
     steps: hasValidParams ? steps : [],
     routeSource: hasValidParams ? routeSource : null,
+    isRecalculating: hasValidParams ? isOffRoute : false,
   };
+}
+
+/**
+ * Create a canvas-drawn chevron arrow for route direction indicators.
+ * White right-pointing triangle — MapLibre auto-rotates it along the line.
+ */
+function createRouteArrowImage(): ImageData {
+  const size = 12;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  // Right-pointing chevron
+  ctx.moveTo(2, 1);
+  ctx.lineTo(10, 6);
+  ctx.lineTo(2, 11);
+  ctx.closePath();
+  ctx.fill();
+  return ctx.getImageData(0, 0, size, size);
+}
+
+function clearMapRoute(map: MaplibreMap): void {
+  for (const layerId of ["route-arrows", "route-line", "route-outline"]) {
+    if (map.getLayer(layerId)) map.removeLayer(layerId);
+  }
+  if (map.getSource("route")) map.removeSource("route");
 }
 
 function updateMapRoute(map: MaplibreMap, geometry: RouteGeometry): void {
   if (map.getSource("route")) {
     (map.getSource("route") as GeoJSONSource).setData(geometry as Geometry);
   } else {
-    map.addSource("route", { type: "geojson", data: geometry as Geometry });
+    map.addSource("route", {
+      type: "geojson",
+      data: geometry as Geometry,
+      lineMetrics: true,
+    });
+
+    // Shadow/outline layer (below route line)
+    map.addLayer({
+      id: "route-outline",
+      type: "line",
+      source: "route",
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": "#1a56c4",
+        "line-width": 8,
+        "line-opacity": 0.5,
+      },
+    });
+
+    // Main route line
     map.addLayer({
       id: "route-line",
       type: "line",
       source: "route",
       layout: { "line-cap": "round", "line-join": "round" },
       paint: { "line-color": "#4285F4", "line-width": 5 },
+    });
+
+    // Register arrow image (once)
+    if (!map.hasImage("route-arrow")) {
+      map.addImage("route-arrow", createRouteArrowImage(), { sdf: false });
+    }
+
+    // Directional chevrons (above route line)
+    map.addLayer({
+      id: "route-arrows",
+      type: "symbol",
+      source: "route",
+      layout: {
+        "symbol-placement": "line",
+        "symbol-spacing": 100,
+        "icon-image": "route-arrow",
+        "icon-size": 0.6,
+        "icon-allow-overlap": true,
+        "icon-rotation-alignment": "map",
+      },
     });
   }
 }

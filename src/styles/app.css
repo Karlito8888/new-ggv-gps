@@ -1175,33 +1175,6 @@ textarea {
   flex-shrink: 0;
 }
 
-.compass-ring {
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: var(--ggv-radius-full);
-  background: linear-gradient(135deg, rgba(80, 170, 97, 0.1), rgba(243, 197, 73, 0.1));
-  border: 2px solid var(--ggv-color-primary-tint);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.compass-arrow {
-  width: 2.5rem;
-  height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.15s ease-out;
-}
-
-.compass-arrow svg {
-  width: var(--ggv-space-xl);
-  height: var(--ggv-space-xl);
-  color: var(--ggv-color-primary);
-  filter: drop-shadow(0 2px 4px var(--ggv-color-primary-tint));
-}
-
 /* Map Controls (zoom, pitch) */
 .nav-map-controls {
   position: fixed;
@@ -1396,5 +1369,109 @@ textarea {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Recalculating spinner in navigation pill */
+.nav-recalc-spin {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+/* Custom user location arrow marker (navigation mode) */
+.user-location-arrow {
+  width: 24px;
+  height: 24px;
+  background: #4285f4;
+  clip-path: polygon(50% 0%, 100% 100%, 50% 75%, 0% 100%);
+  border: none;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+}
+
+/* Circle fallback when heading is unavailable */
+.user-location-arrow.no-heading {
+  clip-path: circle(50%);
+}
+
+/* Hide native GeolocateControl dot during navigation */
+.navigating .maplibregl-user-location-dot,
+.navigating .maplibregl-user-location-accuracy-circle {
+  display: none !important;
+}
+
+/* Custom destination marker — pin with pulse animation */
+.dest-marker-container {
+  position: relative;
+  width: 30px;
+  height: 30px;
+}
+
+.dest-marker-pin {
+  width: 30px;
+  height: 30px;
+  background: #ea4335;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.dest-marker-pin::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.dest-marker-pulse {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  animation: dest-pulse-ring 2s ease-out infinite;
+}
+
+@keyframes dest-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(234, 67, 53, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 18px rgba(234, 67, 53, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(234, 67, 53, 0);
+  }
+}
+
+/* Re-center button — accent color + fade-in */
+.map-control-btn.recenter-btn {
+  background: var(--ggv-color-primary);
+  color: var(--ggv-color-surface);
+  animation: recenter-fade-in 0.2s ease-out;
+}
+
+.map-control-btn.recenter-btn:active {
+  background: var(--ggv-color-primary);
+  transform: scale(0.95);
+}
+
+@keyframes recenter-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
