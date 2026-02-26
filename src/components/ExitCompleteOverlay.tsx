@@ -12,9 +12,9 @@ export function ExitCompleteOverlay() {
     >
       <m.div className="modal exit-modal" variants={modalVariants}>
         {/* Wave Icon */}
-        <div className="exit-icon-wrapper">
+        <div className="overlay-icon-wrapper exit-icon-wrapper">
           <svg
-            className="exit-icon"
+            className="overlay-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -30,10 +30,10 @@ export function ExitCompleteOverlay() {
           </svg>
         </div>
 
-        <h1 className="exit-title">Safe Travels!</h1>
-        <p className="exit-tagalog">(Ingat sa byahe!)</p>
+        <h1>Safe Travels!</h1>
+        <p className="overlay-tagalog exit-tagalog">(Ingat sa byahe!)</p>
 
-        <p className="exit-description">
+        <p className="overlay-description">
           You have exited Garden Grove Village.
           <br />
           Thank you for using MyGGV GPS!

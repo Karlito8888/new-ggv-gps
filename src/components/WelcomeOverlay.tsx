@@ -91,9 +91,9 @@ export function WelcomeOverlay({
     >
       <m.div className="modal welcome-modal" variants={modalVariants}>
         {/* Destination Icon */}
-        <div className="welcome-icon-wrapper">
+        <div className="overlay-icon-wrapper">
           <svg
-            className="welcome-icon"
+            className="overlay-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -106,8 +106,8 @@ export function WelcomeOverlay({
           </svg>
         </div>
 
-        <h1 className="welcome-title">Choose Destination</h1>
-        <p className="welcome-tagalog">(Pumili ng Destinasyon)</p>
+        <h1>Choose Destination</h1>
+        <p className="overlay-tagalog">(Pumili ng Destinasyon)</p>
 
         {blocksError ? (
           <div className="welcome-error">
@@ -169,12 +169,12 @@ export function WelcomeOverlay({
             </div>
 
             <button
-              className="welcome-btn"
+              className="overlay-btn-primary"
               onClick={handleNavigate}
               disabled={!selectedBlock || !selectedLot || isLoadingLots}
             >
               <svg
-                className="welcome-btn-icon"
+                className="overlay-btn-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"

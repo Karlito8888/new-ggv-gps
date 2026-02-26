@@ -23,9 +23,9 @@ export function ArrivedOverlay({
     >
       <m.div className="modal arrived-modal" variants={modalVariants}>
         {/* Success Icon */}
-        <div className="arrived-icon-wrapper">
+        <div className="overlay-icon-wrapper arrived-icon-wrapper">
           <svg
-            className="arrived-icon"
+            className="overlay-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -38,19 +38,19 @@ export function ArrivedOverlay({
           </svg>
         </div>
 
-        <h1 className="arrived-title">You've Arrived!</h1>
-        <p className="arrived-tagalog">(Nakarating ka na!)</p>
+        <h1>You've Arrived!</h1>
+        <p className="overlay-tagalog">(Nakarating ka na!)</p>
 
-        <p className="arrived-description">
+        <p className="overlay-description">
           You have reached <strong>{destination?.name || "your destination"}</strong>.
           <span className="tagalog-inline">
             Nakarating ka na sa {destination?.name || "iyong destinasyon"}.
           </span>
         </p>
 
-        <button className="arrived-btn" onClick={onNavigateAgain}>
+        <button className="overlay-btn-primary" onClick={onNavigateAgain}>
           <svg
-            className="arrived-btn-icon"
+            className="overlay-btn-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -63,7 +63,7 @@ export function ArrivedOverlay({
           Navigate Somewhere Else
         </button>
 
-        <button className="arrived-btn-secondary" onClick={onExitVillage}>
+        <button className="overlay-btn-secondary" onClick={onExitVillage}>
           <svg
             className="arrived-exit-icon"
             viewBox="0 0 24 24"

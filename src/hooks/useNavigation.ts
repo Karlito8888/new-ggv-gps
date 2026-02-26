@@ -1,4 +1,3 @@
-import type { Map as MaplibreMap } from "maplibre-gl";
 import { getDistance } from "../lib/geo";
 import type { UserLocation, Destination } from "./useMapSetup";
 
@@ -18,7 +17,6 @@ const ARRIVAL_THRESHOLD_M = 15;
  * React Compiler handles memoization automatically.
  */
 export function useNavigation(
-  _map: MaplibreMap | null,
   userLocation: UserLocation | null,
   destination: Destination | null
 ): UseNavigationReturn {

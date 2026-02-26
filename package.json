@@ -1,21 +1,19 @@
 {
   "name": "new-ggv-gps",
   "private": true,
-  "version": "3.0.6",
+  "version": "3.0.7",
   "description": "MyGGV GPS - Optimized GPS navigation for Garden Grove Village, Philippines with MapLibre native APIs",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "build:netlify": "bun run lint && bun run typecheck && vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview",
     "serve": "vite preview --port 3000",
-    "postbuild": "echo 'Build completed successfully for Netlify deployment'",
     "release:patch": "npm version patch && git push && git push --tags",
     "release:minor": "npm version minor && git push && git push --tags",
     "release:major": "npm version major && git push && git push --tags"

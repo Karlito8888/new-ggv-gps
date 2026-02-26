@@ -51,9 +51,9 @@ export function OrientationOverlay({ onGrant }: OrientationOverlayProps) {
     >
       <m.div className="modal orientation-modal" variants={modalVariants}>
         {/* Compass Icon */}
-        <div className="orientation-icon-wrapper">
+        <div className="overlay-icon-wrapper orientation-icon-wrapper">
           <svg
-            className="orientation-icon"
+            className="overlay-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -69,10 +69,10 @@ export function OrientationOverlay({ onGrant }: OrientationOverlayProps) {
           </svg>
         </div>
 
-        <h1 className="orientation-title">Enable Compass</h1>
-        <p className="orientation-tagalog">(I-enable ang Compass)</p>
+        <h1>Enable Compass</h1>
+        <p className="overlay-tagalog">(I-enable ang Compass)</p>
 
-        <p className="orientation-description">
+        <p className="overlay-description">
           Enable device orientation for accurate compass heading during navigation.
           <span className="tagalog-inline">
             I-enable ang device orientation para sa tamang direksyon habang nag-navigate.
@@ -81,9 +81,9 @@ export function OrientationOverlay({ onGrant }: OrientationOverlayProps) {
 
         {error && <div className="error-message">{error}</div>}
 
-        <button className="orientation-btn" onClick={handleRequest} disabled={isRequesting}>
+        <button className="overlay-btn-primary" onClick={handleRequest} disabled={isRequesting}>
           <svg
-            className="orientation-btn-icon"
+            className="overlay-btn-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

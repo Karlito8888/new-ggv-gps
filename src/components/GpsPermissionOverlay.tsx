@@ -42,9 +42,9 @@ export function GpsPermissionOverlay({
     >
       <m.div className="modal gps-modal" variants={modalVariants}>
         {/* GPS Icon with pulse animation */}
-        <div className="gps-icon-wrapper">
+        <div className="overlay-icon-wrapper">
           <svg
-            className="gps-icon"
+            className="overlay-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -57,10 +57,10 @@ export function GpsPermissionOverlay({
           </svg>
         </div>
 
-        <h1 className="gps-title">Enable Location</h1>
-        <p className="gps-tagalog">(I-enable ang Lokasyon)</p>
+        <h1>Enable Location</h1>
+        <p className="overlay-tagalog gps-tagalog">(I-enable ang Lokasyon)</p>
 
-        <p className="gps-description">
+        <p className="overlay-description">
           MyGGV GPS needs your location to guide you through the village.
           <span className="tagalog-inline">
             Kailangan ng MyGGV GPS ang iyong lokasyon para gabayan ka sa village.
@@ -70,7 +70,7 @@ export function GpsPermissionOverlay({
         {error && <div className="error-message">{error}</div>}
 
         <button
-          className={`gps-btn${!isMapReady ? " gps-btn-disabled" : ""}`}
+          className={`overlay-btn-primary${!isMapReady ? " gps-btn-disabled" : ""}`}
           onClick={handleEnableGPS}
           disabled={isRequesting || !isMapReady}
         >

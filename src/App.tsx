@@ -45,10 +45,8 @@ export default function App() {
   const [isLoadingBlocks, setIsLoadingBlocks] = useState(true);
   const [blocksError, setBlocksError] = useState<string | null>(null);
 
-  // Load blocks from Supabase (for retry button - OK to call setState in event handler)
-  const retryLoadBlocks = () => {
-    setBlocksError(null);
-    setIsLoadingBlocks(true);
+  // Shared fetch logic (async only — setState in .then callback is safe)
+  const fetchBlocks = () => {
     supabase.rpc("get_blocks").then(({ data, error }) => {
       if (error) {
         console.error("Error fetching blocks:", error);
@@ -61,18 +59,16 @@ export default function App() {
     });
   };
 
-  // Pre-load blocks on mount (async fetch - setState only in .then callback)
+  // Retry button handler (event handler — sync setState is OK)
+  const retryLoadBlocks = () => {
+    setBlocksError(null);
+    setIsLoadingBlocks(true);
+    fetchBlocks();
+  };
+
+  // Pre-load blocks on mount (async fetch only, no sync setState)
   useEffect(() => {
-    supabase.rpc("get_blocks").then(({ data, error }) => {
-      if (error) {
-        console.error("Error fetching blocks:", error);
-        setBlocksError("Failed to load blocks");
-        setBlocks([]);
-      } else if (data) {
-        setBlocks(data);
-      }
-      setIsLoadingBlocks(false);
-    });
+    fetchBlocks();
   }, []);
 
   // Initialize map and GPS tracking
@@ -87,11 +83,7 @@ export default function App() {
   );
 
   // Navigation logic (distance, arrival detection)
-  const { distanceRemaining, hasArrived, arrivedAt } = useNavigation(
-    map,
-    userLocation,
-    destination
-  );
+  const { distanceRemaining, hasArrived, arrivedAt } = useNavigation(userLocation, destination);
 
   // Generate destination key for tracking
   const destinationKey = destination?.coordinates

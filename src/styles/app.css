@@ -4,21 +4,7 @@
 /* Self-hosted fonts */
 @import "./fonts.css";
 
-/* ===================================================================
-   BACKWARD-COMPATIBLE ALIASES
-   Old variable names pointing to --ggv-* tokens.
-   =================================================================== */
-
 :root {
-  --color-white: var(--ggv-color-surface);
-  --color-green: var(--ggv-color-primary);
-  --color-yellow: var(--ggv-color-secondary);
-  --color-black: var(--ggv-color-text);
-  --font-primary: var(--ggv-font-primary);
-  --shadow-strong: var(--ggv-shadow-strong);
-  --shadow-dialog: var(--ggv-shadow-dialog);
-  --transition-normal: var(--ggv-transition-normal);
-
   /* Render optimizations */
   font-synthesis: none;
   text-rendering: auto;
@@ -162,20 +148,34 @@ textarea {
   padding: var(--ggv-space-md);
 }
 
-/* Modal card */
+/* Modal card (shared base for all overlay modals) */
 .modal {
   background: var(--ggv-color-surface);
-  border-radius: var(--ggv-radius-lg);
-  padding: var(--ggv-space-lg);
+  border-radius: var(--ggv-radius-xl);
+  padding: var(--ggv-space-xl) var(--ggv-space-lg);
   max-width: 100%;
   width: 100%;
   box-shadow: var(--ggv-shadow-dialog);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--ggv-gradient-accent-bar);
 }
 
 .modal h1 {
-  font-size: 1.25rem;
+  font-family: var(--ggv-font-primary);
+  font-size: var(--ggv-font-size-xl);
   font-weight: var(--ggv-font-weight-bold);
-  margin-bottom: var(--ggv-space-md);
+  margin-bottom: var(--ggv-space-xs);
   text-align: center;
   color: var(--ggv-color-text);
 }
@@ -187,44 +187,8 @@ textarea {
   line-height: 1.6;
 }
 
-/* Error message */
-.error-message {
-  padding: 0.75rem 0;
-  background: none;
-  color: var(--ggv-color-gray);
-  margin-bottom: var(--ggv-space-md);
-  font-size: var(--ggv-font-size-sm);
-}
-
-/* ===================================================================
-   GPS PERMISSION OVERLAY - Modern Design
-   =================================================================== */
-
-.gps-overlay {
-  background: var(--ggv-gradient-overlay);
-}
-
-.gps-modal {
-  background: var(--ggv-color-surface);
-  border-radius: var(--ggv-radius-xl);
-  padding: var(--ggv-space-xl) var(--ggv-space-lg);
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--ggv-shadow-dialog);
-}
-
-.gps-modal::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 5px;
-  background: var(--ggv-gradient-accent-bar);
-}
-
-.gps-icon-wrapper {
+/* Shared overlay icon wrapper */
+.overlay-icon-wrapper {
   width: 5rem;
   height: 5rem;
   margin: 0 auto var(--ggv-space-lg);
@@ -237,7 +201,7 @@ textarea {
   position: relative;
 }
 
-.gps-icon-wrapper::after {
+.overlay-icon-wrapper::after {
   content: "";
   position: absolute;
   inset: -10px;
@@ -259,30 +223,24 @@ textarea {
   }
 }
 
-.gps-icon {
+/* Shared overlay icon */
+.overlay-icon {
   width: 2.5rem;
   height: 2.5rem;
   color: var(--ggv-color-surface);
 }
 
-.gps-title {
-  font-family: var(--ggv-font-primary);
-  font-size: var(--ggv-font-size-xl);
-  font-weight: var(--ggv-font-weight-bold);
-  color: var(--ggv-color-text);
-  margin-bottom: var(--ggv-space-xs);
-}
-
-.gps-tagalog {
+/* Shared overlay tagalog subtitle */
+.overlay-tagalog {
   font-size: var(--ggv-font-size-base);
   color: var(--ggv-color-primary);
   font-style: italic;
   margin-bottom: var(--ggv-space-md);
   opacity: 0.9;
-  text-shadow: var(--ggv-shadow-text);
 }
 
-.gps-description {
+/* Shared overlay description text */
+.overlay-description {
   color: var(--ggv-color-text);
   opacity: var(--ggv-opacity-overlay-text);
   margin-bottom: var(--ggv-space-xl);
@@ -290,7 +248,8 @@ textarea {
   font-size: 1.0625rem;
 }
 
-.gps-btn {
+/* Shared overlay primary button */
+.overlay-btn-primary {
   width: 100%;
   padding: var(--ggv-space-md) var(--ggv-space-lg);
   min-height: var(--ggv-touch-target-cta);
@@ -310,18 +269,68 @@ textarea {
   gap: 0.75rem;
 }
 
-.gps-btn:hover {
+.overlay-btn-primary:hover {
   transform: translateY(-3px);
   box-shadow: var(--ggv-shadow-button-hover);
 }
 
-.gps-btn:active {
+.overlay-btn-primary:active {
   transform: translateY(-1px);
 }
 
-.gps-btn-icon {
+.overlay-btn-primary:disabled {
+  opacity: var(--ggv-opacity-disabled);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Shared overlay secondary button */
+.overlay-btn-secondary {
+  width: 100%;
+  padding: 0.875rem var(--ggv-space-lg);
+  background: var(--ggv-color-text-tint);
+  color: var(--ggv-color-text);
+  font-weight: var(--ggv-font-weight-semibold);
+  font-size: var(--ggv-font-size-base);
+  border: none;
+  border-radius: var(--ggv-radius-md);
+  cursor: pointer;
+  transition: all var(--ggv-transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ggv-space-sm);
+}
+
+.overlay-btn-secondary:hover {
+  background: var(--ggv-color-text-tint-hover);
+}
+
+/* Shared overlay button icon */
+.overlay-btn-icon {
   width: 1.375rem;
   height: 1.375rem;
+}
+
+/* Error message */
+.error-message {
+  padding: 0.75rem 0;
+  background: none;
+  color: var(--ggv-color-gray);
+  margin-bottom: var(--ggv-space-md);
+  font-size: var(--ggv-font-size-sm);
+}
+
+/* ===================================================================
+   GPS PERMISSION OVERLAY — overrides only
+   =================================================================== */
+
+.gps-overlay {
+  background: var(--ggv-gradient-overlay);
+}
+
+.gps-tagalog {
+  text-shadow: var(--ggv-shadow-text);
 }
 
 .gps-version {
@@ -356,123 +365,11 @@ textarea {
 }
 
 /* ===================================================================
-   WELCOME OVERLAY - Destination Selection
+   WELCOME OVERLAY — overrides only
    =================================================================== */
 
 .welcome-overlay {
   background: var(--ggv-gradient-overlay);
-}
-
-.welcome-modal {
-  background: var(--ggv-color-surface);
-  border-radius: var(--ggv-radius-xl);
-  padding: var(--ggv-space-xl) var(--ggv-space-lg);
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--ggv-shadow-dialog);
-}
-
-.welcome-modal::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 5px;
-  background: var(--ggv-gradient-accent-bar);
-}
-
-.welcome-icon-wrapper {
-  width: 5rem;
-  height: 5rem;
-  margin: 0 auto var(--ggv-space-lg);
-  background: var(--ggv-gradient-brand);
-  border-radius: var(--ggv-radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--ggv-shadow-strong);
-  position: relative;
-}
-
-.welcome-icon-wrapper::after {
-  content: "";
-  position: absolute;
-  inset: -10px;
-  border: 3px dashed var(--ggv-color-primary);
-  border-radius: var(--ggv-radius-full);
-  opacity: 0.4;
-  animation: gps-pulse 2s ease-in-out infinite;
-}
-
-.welcome-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  color: var(--ggv-color-surface);
-}
-
-.welcome-title {
-  font-family: var(--ggv-font-primary);
-  font-size: var(--ggv-font-size-xl);
-  font-weight: var(--ggv-font-weight-bold);
-  color: var(--ggv-color-text);
-  margin-bottom: var(--ggv-space-xs);
-}
-
-.welcome-tagalog {
-  font-size: var(--ggv-font-size-base);
-  color: var(--ggv-color-primary);
-  font-style: italic;
-  margin-bottom: var(--ggv-space-md);
-  opacity: 0.9;
-}
-
-.welcome-description {
-  color: var(--ggv-color-text);
-  opacity: var(--ggv-opacity-overlay-text);
-  margin-bottom: var(--ggv-space-lg);
-  line-height: 1.6;
-  font-size: var(--ggv-font-size-base);
-}
-
-.welcome-type-selector {
-  display: flex;
-  gap: var(--ggv-space-sm);
-  margin-bottom: var(--ggv-space-lg);
-}
-
-.welcome-type-btn {
-  flex: 1;
-  padding: 0.625rem 0.375rem;
-  background: var(--ggv-color-surface);
-  border: 2px solid rgba(18, 18, 18, var(--ggv-opacity-border));
-  border-radius: var(--ggv-radius-md);
-  font-weight: var(--ggv-font-weight-semibold);
-  font-size: var(--ggv-font-size-xs);
-  cursor: pointer;
-  transition: all var(--ggv-transition-normal);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--ggv-space-sm);
-}
-
-.welcome-type-btn svg {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-.welcome-type-btn:hover {
-  border-color: var(--ggv-color-primary);
-  background: rgba(80, 170, 97, 0.05);
-}
-
-.welcome-type-btn.active {
-  background: var(--ggv-gradient-primary);
-  color: var(--ggv-color-surface);
-  border-color: var(--ggv-color-primary);
-  box-shadow: 0 4px 12px var(--ggv-color-primary-tint);
 }
 
 .welcome-block-selector {
@@ -549,79 +446,16 @@ textarea {
   background: var(--ggv-color-error-dark);
 }
 
-.welcome-btn {
-  width: 100%;
-  padding: var(--ggv-space-md) var(--ggv-space-lg);
-  min-height: var(--ggv-touch-target-cta);
-  background: var(--ggv-gradient-primary);
-  color: var(--ggv-color-surface);
-  font-family: var(--ggv-font-primary);
-  font-weight: var(--ggv-font-weight-bold);
-  font-size: var(--ggv-font-size-lg);
-  border: none;
-  border-radius: var(--ggv-radius-lg);
-  cursor: pointer;
-  transition: all var(--ggv-transition-normal);
-  box-shadow: var(--ggv-shadow-button);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.welcome-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--ggv-shadow-button-hover);
-}
-
-.welcome-btn:active {
-  transform: translateY(-1px);
-}
-
-.welcome-btn-icon {
-  width: 1.375rem;
-  height: 1.375rem;
-}
-
 /* ===================================================================
-   ORIENTATION PERMISSION OVERLAY
+   ORIENTATION PERMISSION OVERLAY — overrides only
    =================================================================== */
 
 .orientation-overlay {
   background: var(--ggv-gradient-overlay);
 }
 
-.orientation-modal {
-  background: var(--ggv-color-surface);
-  border-radius: var(--ggv-radius-xl);
-  padding: var(--ggv-space-xl) var(--ggv-space-lg);
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--ggv-shadow-dialog);
-}
-
-.orientation-modal::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 5px;
-  background: var(--ggv-gradient-accent-bar);
-}
-
+/* Compass wobble animation (orientation-specific) */
 .orientation-icon-wrapper {
-  width: 5rem;
-  height: 5rem;
-  margin: 0 auto var(--ggv-space-lg);
-  background: var(--ggv-gradient-brand);
-  border-radius: var(--ggv-radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--ggv-shadow-strong);
-  position: relative;
   animation: compass-spin 4s linear infinite;
 }
 
@@ -643,153 +477,21 @@ textarea {
   }
 }
 
-.orientation-icon-wrapper::after {
-  content: "";
-  position: absolute;
-  inset: -10px;
-  border: 3px dashed var(--ggv-color-primary);
-  border-radius: var(--ggv-radius-full);
-  opacity: 0.4;
-  animation: gps-pulse 2s ease-in-out infinite;
-}
-
-.orientation-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  color: var(--ggv-color-surface);
-}
-
-.orientation-title {
-  font-family: var(--ggv-font-primary);
-  font-size: var(--ggv-font-size-xl);
-  font-weight: var(--ggv-font-weight-bold);
-  color: var(--ggv-color-text);
-  margin-bottom: var(--ggv-space-xs);
-}
-
-.orientation-tagalog {
-  font-size: var(--ggv-font-size-base);
-  color: var(--ggv-color-primary);
-  font-style: italic;
-  margin-bottom: var(--ggv-space-md);
-  opacity: 0.9;
-}
-
-.orientation-description {
-  color: var(--ggv-color-text);
-  opacity: var(--ggv-opacity-overlay-text);
-  margin-bottom: var(--ggv-space-xl);
-  line-height: 1.6;
-  font-size: var(--ggv-font-size-base);
-}
-
-.orientation-btn {
-  width: 100%;
-  padding: var(--ggv-space-md) var(--ggv-space-lg);
-  min-height: var(--ggv-touch-target-cta);
-  background: var(--ggv-gradient-primary);
-  color: var(--ggv-color-surface);
-  font-family: var(--ggv-font-primary);
-  font-weight: var(--ggv-font-weight-bold);
-  font-size: var(--ggv-font-size-lg);
-  border: none;
-  border-radius: var(--ggv-radius-lg);
-  cursor: pointer;
-  transition: all var(--ggv-transition-normal);
-  box-shadow: var(--ggv-shadow-button);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.orientation-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--ggv-shadow-button-hover);
-}
-
-.orientation-btn:active {
-  transform: translateY(-1px);
-}
-
-.orientation-btn:disabled {
-  opacity: var(--ggv-opacity-disabled);
-  cursor: not-allowed;
-  transform: none;
-}
-
-.orientation-btn-icon {
-  width: 1.375rem;
-  height: 1.375rem;
-}
-
-.orientation-btn-skip {
-  width: 100%;
-  padding: 0.875rem var(--ggv-space-lg);
-  background: var(--ggv-color-text-tint);
-  color: var(--ggv-color-text);
-  font-weight: var(--ggv-font-weight-semibold);
-  font-size: var(--ggv-font-size-base);
-  border: none;
-  border-radius: var(--ggv-radius-md);
-  cursor: pointer;
-  transition: all var(--ggv-transition-normal);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ggv-space-sm);
-}
-
-.orientation-btn-skip:hover {
-  background: var(--ggv-color-text-tint-hover);
-}
-
-.orientation-skip-icon {
-  width: var(--ggv-font-size-lg);
-  height: var(--ggv-font-size-lg);
-  opacity: var(--ggv-opacity-overlay-text);
-}
-
 /* ===================================================================
-   ARRIVED OVERLAY - Success/Celebration
+   ARRIVED OVERLAY — overrides only
    =================================================================== */
 
 .arrived-overlay {
   background: var(--ggv-gradient-arrived);
 }
 
-.arrived-modal {
-  background: var(--ggv-color-surface);
-  border-radius: var(--ggv-radius-xl);
-  padding: var(--ggv-space-xl) var(--ggv-space-lg);
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--ggv-shadow-dialog);
-}
-
+/* Arrived-specific overrides (different accent bar + icon gradient + animations) */
 .arrived-modal::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 5px;
   background: linear-gradient(90deg, var(--ggv-color-primary), var(--ggv-color-success));
 }
 
 .arrived-icon-wrapper {
-  width: 5rem;
-  height: 5rem;
-  margin: 0 auto var(--ggv-space-lg);
   background: linear-gradient(135deg, var(--ggv-color-primary), var(--ggv-color-success));
-  border-radius: var(--ggv-radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--ggv-shadow-strong);
-  position: relative;
   animation: success-bounce 0.6s ease-out;
 }
 
@@ -808,11 +510,8 @@ textarea {
 }
 
 .arrived-icon-wrapper::after {
-  content: "";
-  position: absolute;
-  inset: -10px;
   border: 3px solid var(--ggv-color-primary);
-  border-radius: var(--ggv-radius-full);
+  border-style: solid;
   opacity: 0;
   animation: success-ring 1s ease-out 0.3s forwards;
 }
@@ -828,90 +527,9 @@ textarea {
   }
 }
 
-.arrived-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  color: var(--ggv-color-surface);
-}
-
-.arrived-title {
-  font-family: var(--ggv-font-primary);
-  font-size: var(--ggv-font-size-xl);
-  font-weight: var(--ggv-font-weight-bold);
-  color: var(--ggv-color-text);
-  margin-bottom: var(--ggv-space-xs);
-}
-
-.arrived-tagalog {
-  font-size: var(--ggv-font-size-base);
-  color: var(--ggv-color-primary);
-  font-style: italic;
-  margin-bottom: var(--ggv-space-md);
-  opacity: 0.9;
-}
-
-.arrived-description {
-  color: var(--ggv-color-text);
-  opacity: var(--ggv-opacity-overlay-text);
-  margin-bottom: var(--ggv-space-xl);
-  line-height: 1.6;
-  font-size: 1.0625rem;
-}
-
-.arrived-btn {
-  width: 100%;
-  padding: var(--ggv-space-md) var(--ggv-space-lg);
-  min-height: var(--ggv-touch-target-cta);
-  background: var(--ggv-gradient-primary);
-  color: var(--ggv-color-surface);
-  font-family: var(--ggv-font-primary);
-  font-weight: var(--ggv-font-weight-bold);
-  font-size: var(--ggv-font-size-lg);
-  border: none;
-  border-radius: var(--ggv-radius-lg);
-  cursor: pointer;
-  transition: all var(--ggv-transition-normal);
-  box-shadow: var(--ggv-shadow-button);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
+/* Arrived primary button needs margin-bottom for secondary button below */
+.arrived-overlay .overlay-btn-primary {
   margin-bottom: 0.75rem;
-}
-
-.arrived-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--ggv-shadow-button-hover);
-}
-
-.arrived-btn:active {
-  transform: translateY(-1px);
-}
-
-.arrived-btn-icon {
-  width: 1.375rem;
-  height: 1.375rem;
-}
-
-.arrived-btn-secondary {
-  width: 100%;
-  padding: 0.875rem var(--ggv-space-lg);
-  background: var(--ggv-color-text-tint);
-  color: var(--ggv-color-text);
-  font-weight: var(--ggv-font-weight-semibold);
-  font-size: var(--ggv-font-size-base);
-  border: none;
-  border-radius: var(--ggv-radius-md);
-  cursor: pointer;
-  transition: all var(--ggv-transition-normal);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ggv-space-sm);
-}
-
-.arrived-btn-secondary:hover {
-  background: var(--ggv-color-text-tint-hover);
 }
 
 .arrived-exit-icon {
@@ -921,118 +539,27 @@ textarea {
 }
 
 /* ===================================================================
-   EXIT COMPLETE OVERLAY
+   EXIT COMPLETE OVERLAY — overrides only
    =================================================================== */
 
 .exit-overlay {
   background: var(--ggv-gradient-exit-overlay);
 }
 
-.exit-modal {
-  background: var(--ggv-color-surface);
-  border-radius: var(--ggv-radius-xl);
-  padding: var(--ggv-space-xl) var(--ggv-space-lg);
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--ggv-shadow-dialog);
-}
-
 .exit-modal::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 5px;
   background: linear-gradient(90deg, var(--ggv-color-secondary), var(--ggv-color-amber));
 }
 
 .exit-icon-wrapper {
-  width: 5rem;
-  height: 5rem;
-  margin: 0 auto var(--ggv-space-lg);
   background: linear-gradient(135deg, var(--ggv-color-secondary), var(--ggv-color-amber));
-  border-radius: var(--ggv-radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--ggv-shadow-strong);
-  position: relative;
 }
 
 .exit-icon-wrapper::after {
-  content: "";
-  position: absolute;
-  inset: -10px;
-  border: 3px dashed var(--ggv-color-secondary);
-  border-radius: var(--ggv-radius-full);
-  opacity: 0.4;
-  animation: gps-pulse 2s ease-in-out infinite;
-}
-
-.exit-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  color: var(--ggv-color-surface);
-}
-
-.exit-title {
-  font-family: var(--ggv-font-primary);
-  font-size: var(--ggv-font-size-xl);
-  font-weight: var(--ggv-font-weight-bold);
-  color: var(--ggv-color-text);
-  margin-bottom: var(--ggv-space-xs);
+  border-color: var(--ggv-color-secondary);
 }
 
 .exit-tagalog {
-  font-size: var(--ggv-font-size-base);
   color: var(--ggv-color-secondary-dark);
-  font-style: italic;
-  margin-bottom: var(--ggv-space-md);
-  opacity: 0.9;
-}
-
-.exit-description {
-  color: var(--ggv-color-text);
-  opacity: var(--ggv-opacity-overlay-text);
-  margin-bottom: var(--ggv-space-xl);
-  line-height: 1.6;
-  font-size: 1.0625rem;
-}
-
-.exit-btn {
-  width: 100%;
-  padding: var(--ggv-space-md) var(--ggv-space-lg);
-  min-height: var(--ggv-touch-target-cta);
-  background: var(--ggv-gradient-exit);
-  color: var(--ggv-color-surface);
-  font-family: var(--ggv-font-primary);
-  font-weight: var(--ggv-font-weight-bold);
-  font-size: var(--ggv-font-size-lg);
-  border: none;
-  border-radius: var(--ggv-radius-lg);
-  cursor: pointer;
-  transition: all var(--ggv-transition-normal);
-  box-shadow: var(--ggv-shadow-button-exit);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.exit-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--ggv-shadow-button-exit-hover);
-}
-
-.exit-btn:active {
-  transform: translateY(-1px);
-}
-
-.exit-btn-icon {
-  width: 1.375rem;
-  height: 1.375rem;
 }
 
 /* ===================================================================
@@ -1219,33 +746,24 @@ textarea {
    =================================================================== */
 
 @media (min-width: 641px) {
-  /* Modal */
+  /* All overlay modals */
   .modal {
-    padding: var(--ggv-space-xl);
+    padding: 2.5rem var(--ggv-space-xl);
     max-width: 400px;
   }
 
   .modal h1 {
-    font-size: var(--ggv-font-size-xl);
+    font-size: 1.75rem;
   }
 
-  /* GPS Overlay */
-  .gps-modal {
-    padding: 2.5rem var(--ggv-space-xl);
-  }
-
-  .gps-icon-wrapper {
+  .overlay-icon-wrapper {
     width: 6rem;
     height: 6rem;
   }
 
-  .gps-icon {
+  .overlay-icon {
     width: 3rem;
     height: 3rem;
-  }
-
-  .gps-title {
-    font-size: 1.75rem;
   }
 
   /* Navigation pills */
@@ -1254,108 +772,6 @@ textarea {
     left: var(--ggv-space-lg);
     right: var(--ggv-space-lg);
     padding: var(--ggv-space-pill-inset) var(--ggv-space-lg);
-  }
-
-  /* Welcome Overlay */
-  .welcome-modal {
-    padding: 2.5rem var(--ggv-space-xl);
-  }
-
-  .welcome-icon-wrapper {
-    width: 6rem;
-    height: 6rem;
-  }
-
-  .welcome-icon {
-    width: 3rem;
-    height: 3rem;
-  }
-
-  .welcome-title {
-    font-size: 1.75rem;
-  }
-
-  .welcome-type-btn {
-    padding: 0.75rem 0.5rem;
-    font-size: var(--ggv-font-size-sm);
-  }
-
-  .welcome-type-btn svg {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-
-  /* Orientation Overlay */
-  .orientation-modal {
-    padding: 2.5rem var(--ggv-space-xl);
-  }
-
-  .orientation-icon-wrapper {
-    width: 6rem;
-    height: 6rem;
-  }
-
-  .orientation-icon {
-    width: 3rem;
-    height: 3rem;
-  }
-
-  .orientation-title {
-    font-size: 1.75rem;
-  }
-
-  /* Arrived Overlay */
-  .arrived-modal {
-    padding: 2.5rem var(--ggv-space-xl);
-  }
-
-  .arrived-icon-wrapper {
-    width: 6rem;
-    height: 6rem;
-  }
-
-  .arrived-icon {
-    width: 3rem;
-    height: 3rem;
-  }
-
-  .arrived-title {
-    font-size: 1.75rem;
-  }
-
-  /* Exit Overlay */
-  .exit-modal {
-    padding: 2.5rem var(--ggv-space-xl);
-  }
-
-  .exit-icon-wrapper {
-    width: 6rem;
-    height: 6rem;
-  }
-
-  .exit-icon {
-    width: 3rem;
-    height: 3rem;
-  }
-
-  .exit-title {
-    font-size: 1.75rem;
-  }
-
-  /* Compass */
-  .compass-ring {
-    width: 4.5rem;
-    height: 4.5rem;
-  }
-
-  .compass-arrow {
-    width: 3rem;
-    height: 3rem;
-  }
-
-  .compass-arrow svg {
-    width: 2.5rem;
-    height: 2.5rem;
   }
 }
 

@@ -12,7 +12,7 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
   publicDir: "public",
-  base: "/", // Important for Netlify
+  base: "/",
   esbuild: {
     drop: ["console", "debugger"], // Remove console.log and debugger in production
   },

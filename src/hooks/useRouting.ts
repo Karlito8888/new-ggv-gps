@@ -94,21 +94,14 @@ function parseManeuver(maneuver: OSRMManeuver, distance: number): RouteStep | nu
     };
   }
 
-  // For turns, end of road, fork - use modifier to determine direction
-  if (type === "turn" || type === "end of road" || type === "fork") {
-    const icon = (modifier && TURN_ICONS[modifier]) || "↑";
-    const isSignificant = !!modifier && modifier !== "straight";
-    return {
-      type: modifier || "straight",
-      icon,
-      modifier,
-      distance,
-      isSignificant,
-    };
-  }
-
-  // Continue/new name - only significant if there's a direction change
-  if (type === "continue" || type === "new name") {
+  // Turns, end of road, fork, continue, new name - use modifier to determine direction
+  if (
+    type === "turn" ||
+    type === "end of road" ||
+    type === "fork" ||
+    type === "continue" ||
+    type === "new name"
+  ) {
     const icon = (modifier && TURN_ICONS[modifier]) || "↑";
     const isSignificant = !!modifier && modifier !== "straight";
     return {
@@ -300,6 +293,16 @@ export function useRouting(
     }
     lastDestRef.current = { lat: destLat!, lng: destLng! };
 
+    const applyRoute = (result: RouteResult, source: RouteSourceType) => {
+      setFullRoute(result.geometry);
+      setRouteGeoJSON(result.geometry);
+      setDistance(result.distance);
+      setSteps(result.steps || []);
+      setRouteSource(source);
+      lastTrimPointRef.current = null;
+      updateMapRoute(map!, result.geometry);
+    };
+
     const fetchRoute = async () => {
       // Save current origin for next comparison
       lastOriginRef.current = { lat: originLat!, lng: originLng! };
@@ -309,22 +312,12 @@ export function useRouting(
 
       let route: RouteResult | null = null;
 
-      const applyRoute = (geom: RouteGeometry) => {
-        setFullRoute(geom);
-        setRouteGeoJSON(geom);
-        lastTrimPointRef.current = null;
-        updateMapRoute(map!, geom);
-      };
-
       // 1. Try OSRM (primary)
       try {
         route = await fetchOSRM(originLng!, originLat!, destLng!, destLat!, signal);
         if (route) {
           console.info("Route: OSRM");
-          setDistance(route.distance);
-          setSteps(route.steps || []);
-          setRouteSource("osrm");
-          applyRoute(route.geometry);
+          applyRoute(route, "osrm");
           return;
         }
       } catch (e) {
@@ -337,10 +330,7 @@ export function useRouting(
         route = await fetchORS(originLng!, originLat!, destLng!, destLat!, signal);
         if (route) {
           console.info("Route: ORS (fallback)");
-          setDistance(route.distance);
-          setSteps([]); // ORS doesn't provide steps in this format
-          setRouteSource("ors");
-          applyRoute(route.geometry);
+          applyRoute(route, "ors");
           return;
         }
       } catch (e) {
@@ -350,23 +340,21 @@ export function useRouting(
 
       // 3. Fallback: direct line
       console.info("Route: Direct line (fallback)");
-      const geometry: RouteGeometry = {
-        type: "LineString",
-        coordinates: [
-          [originLng!, originLat!],
-          [destLng!, destLat!],
-        ],
-      };
-      setDistance(getDistance(originLat!, originLng!, destLat!, destLng!));
-      setSteps([
+      const directDist = getDistance(originLat!, originLng!, destLat!, destLng!);
+      applyRoute(
         {
-          type: "straight",
-          icon: "↑",
-          distance: getDistance(originLat!, originLng!, destLat!, destLng!),
+          geometry: {
+            type: "LineString",
+            coordinates: [
+              [originLng!, originLat!],
+              [destLng!, destLat!],
+            ],
+          },
+          distance: directDist,
+          steps: [{ type: "straight", icon: "↑", distance: directDist }],
         },
-      ]);
-      setRouteSource("direct");
-      applyRoute(geometry);
+        "direct"
+      );
 
       // Schedule OSRM retry in background
       scheduleRetry();
@@ -394,13 +382,7 @@ export function useRouting(
           );
           if (route) {
             console.info("Route: OSRM retry successful!");
-            setFullRoute(route.geometry);
-            setRouteGeoJSON(route.geometry);
-            setDistance(route.distance);
-            setSteps(route.steps || []);
-            setRouteSource("osrm");
-            lastTrimPointRef.current = null;
-            updateMapRoute(map!, route.geometry);
+            applyRoute(route, "osrm");
             retryCountRef.current = 0; // Reset for next time
             return;
           }
