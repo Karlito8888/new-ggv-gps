@@ -8,7 +8,7 @@ interface UseNavigationReturn {
   arrivedAt: string | null;
 }
 
-const ARRIVAL_THRESHOLD_M = 12;
+const ARRIVAL_THRESHOLD_M = 15;
 
 /**
  * useNavigation - Pure computation hook (no effects, no state)

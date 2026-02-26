@@ -295,7 +295,7 @@ export function updateDestinationMarker(
     destMarkerInstance!.setLngLat(destination.coordinates).addTo(map);
   });
 
-  // Add arrival zone circle layer (12m radius)
+  // Add arrival zone circle layer (15m radius)
   const geojson: FeatureCollection = {
     type: "FeatureCollection",
     features: [
@@ -316,9 +316,21 @@ export function updateDestinationMarker(
     type: "circle",
     source: ARRIVAL_ZONE_SOURCE,
     paint: {
-      // 12m radius — convert meters to pixels using zoom-dependent expression
-      // At latitude ~14.35°, 1px at zoom 20 ≈ 0.15m, so 12m ≈ 80px at z20
-      "circle-radius": ["interpolate", ["exponential", 2], ["zoom"], 15, 5, 17, 20, 19, 50, 20, 80],
+      // 15m radius — convert meters to pixels using zoom-dependent expression
+      // At latitude ~14.35°, 1px at zoom 20 ≈ 0.15m, so 15m ≈ 100px at z20
+      "circle-radius": [
+        "interpolate",
+        ["exponential", 2],
+        ["zoom"],
+        15,
+        6,
+        17,
+        25,
+        19,
+        63,
+        20,
+        100,
+      ],
       "circle-color": "rgba(66, 133, 244, 0.15)",
       "circle-stroke-color": "#4285F4",
       "circle-stroke-width": 1,

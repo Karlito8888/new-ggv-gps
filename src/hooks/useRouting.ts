@@ -226,8 +226,8 @@ const RECALC_THRESHOLD_M = 30;
 // Off-route detection threshold
 const OFF_ROUTE_THRESHOLD_M = 25;
 
-// Max deviation before skipping trim (GPS inaccuracy guard)
-const TRIM_SKIP_THRESHOLD_M = 50;
+// Minimum movement along route before re-trimming (jitter suppression)
+const TRIM_MIN_MOVEMENT_M = 3;
 
 export function useRouting(
   map: MaplibreMap | null,
@@ -248,6 +248,8 @@ export function useRouting(
   const lastVibrationRef = useRef(0);
   // Off-route recalculation cooldown (prevent infinite loop)
   const lastOffRouteRecalcRef = useRef(0);
+  // Last trim projected point (jitter suppression)
+  const lastTrimPointRef = useRef<[number, number] | null>(null);
 
   const originLat = origin?.latitude;
   const originLng = origin?.longitude;
@@ -310,6 +312,7 @@ export function useRouting(
       const applyRoute = (geom: RouteGeometry) => {
         setFullRoute(geom);
         setRouteGeoJSON(geom);
+        lastTrimPointRef.current = null;
         updateMapRoute(map!, geom);
       };
 
@@ -396,6 +399,7 @@ export function useRouting(
             setDistance(route.distance);
             setSteps(route.steps || []);
             setRouteSource("osrm");
+            lastTrimPointRef.current = null;
             updateMapRoute(map!, route.geometry);
             retryCountRef.current = 0; // Reset for next time
             return;
@@ -463,20 +467,29 @@ export function useRouting(
         lastOffRouteRecalcRef.current = now;
         lastOriginRef.current = null;
       }
+      lastTrimPointRef.current = null;
       return;
     }
 
-    // Skip trimming if GPS is too inaccurate
-    if (projection.deviationDistance > TRIM_SKIP_THRESHOLD_M) return;
+    // Jitter suppression: skip map update if user hasn't moved enough along route
+    const projected = projection.projectedPoint;
+    if (lastTrimPointRef.current) {
+      const dx = projected[0] - lastTrimPointRef.current[0];
+      const dy = projected[1] - lastTrimPointRef.current[1];
+      // Rough meter conversion at ~14.35°N: 1° lng ≈ 107550m, 1° lat ≈ 110540m
+      const distM = Math.sqrt((dx * 107550) ** 2 + (dy * 110540) ** 2);
+      if (distM < TRIM_MIN_MOVEMENT_M) return;
+    }
 
     // Build trimmed coordinates: from projected point to destination
-    const trimmedCoords: [number, number][] = [projection.projectedPoint];
+    const trimmedCoords: [number, number][] = [projected];
     for (let i = projection.segmentIndex + 1; i < flatCoords.length; i++) {
       trimmedCoords.push(flatCoords[i]);
     }
 
     if (trimmedCoords.length < 2) return;
 
+    lastTrimPointRef.current = projected;
     const trimmedGeometry: RouteGeometry = {
       type: "LineString",
       coordinates: trimmedCoords,
