@@ -53,3 +53,7 @@ _bmad/
 _bmad-output/
 docs/
 scripts/temp/
+
+# Generated / large JSON
+public/sprites/*.json
+LIGHTHOUSE-AUDIT.md
