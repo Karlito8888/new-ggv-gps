@@ -1,246 +1,82 @@
-# 🗺️ MyGGV GPS - Navigation Village Garden Grove
+# MyGGV GPS
 
-![React](https://img.shields.io/badge/React-19-blue.svg)
-![MapLibre](https://img.shields.io/badge/MapLibre-5.6-green.svg)
-![Performance](https://img.shields.io/badge/Optimized-60%25%2B-orange.svg)
-![Web](https://img.shields.io/badge/Web-App-purple.svg)
+**GPS navigation for Garden Grove Village, Philippines**
 
-> **Navigation GPS intelligente pour Garden Grove Village, Philippines**  
-> _Optimisée avec les API natives MapLibre GL pour des performances exceptionnelles_
+A Progressive Web App that guides residents and visitors through Garden Grove Village. Scan the QR code at the village entrance, get instant turn-by-turn navigation — no install, no signup.
 
-## ✨ Caractéristiques Principales
+## How It Works
 
-### 🧭 **Navigation Intelligente**
+1. **Scan** the QR code at the village gate
+2. **Allow** GPS location access
+3. **Select** your destination (block, lot, or point of interest)
+4. **Navigate** with real-time directions on an interactive map
+5. **Arrive** with visual and haptic confirmation
 
-- 🎯 **Navigation GPS temps réel** avec calcul d'itinéraire optimisé
-- 🔄 **Recalcul automatique** si l'utilisateur s'écarte de la route
-- 📍 **Détection intelligente** des virages et points de décision
-- 🏁 **Arrivée automatique** avec notification
+The app runs entirely in the browser. Works on Android Chrome and iOS Safari.
 
-### ⚡ **Optimisations MapLibre Natives**
+## Features
 
-- 🚀 **Calculs géographiques 60-80% plus rapides** via `map.project()`
-- 🎨 **Rendu GPU accéléré** avec Feature State API
-- 🔄 **Transitions fluides** via `flyTo()` et `jumpTo()` natifs
-- 🎯 **Détection off-route optimisée** avec `queryRenderedFeatures()`
+- **Real-time GPS navigation** with route calculation and turn-by-turn steps
+- **3-tier routing fallback** — OSRM (primary), OpenRouteService, direct line
+- **Automatic route recalculation** when you deviate from the planned route
+- **Compass-guided map rotation** — the map follows your device orientation
+- **Arrival detection** — notification when you're within 15m of your destination
+- **Offline-capable** — service worker caches map tiles, fonts, and app assets
+- **Bilingual UI** — English with Tagalog translations
 
-### 📱 **Mobile-First Web App**
+## Quick Start
 
-- 🎯 **Design responsive** optimisé pour mobile
-- 🔋 **Performance optimisée** pour appareils low-end
-- 📡 **GPS adaptatif** avec gestion intelligente de la batterie
-
-### 🗺️ **Carte Interactive Optimisée**
-
-- 🎨 **Styles dynamiques** basés sur les états de navigation
-- 📍 **Marqueurs POI** pour services du village
-- 🏠 **Numéros de blocs** affichés dynamiquement
-- 🔄 **Mises à jour temps réel** sans rechargement
-
-## 🚀 Performance Optimisée
-
-### **Avant vs Après Optimisations:**
-
-| Fonction                    | Avant (Haversine) | Après (MapLibre) | Amélioration    |
-| --------------------------- | ----------------- | ---------------- | --------------- |
-| `calculateDistance()`       | ~2.5ms            | ~0.4ms           | **84%** ⚡      |
-| `calculateBearing()`        | ~1.8ms            | ~0.3ms           | **83%** ⚡      |
-| `findClosestPointOnRoute()` | ~5.2ms            | ~1.1ms           | **79%** ⚡      |
-| Transitions GPS             | easeTo()          | flyTo()          | **+ fluide** 🎨 |
-
-### **Optimisations Clés:**
-
-- ✅ **Projections natives MapLibre** au lieu de formules Haversine
-- ✅ **Feature State API** pour styles GPU-accélérés
-- ✅ **queryRenderedFeatures()** pour détection intelligente
-- ✅ **flyTo()/jumpTo()** pour animations naturelles
-
-## 🏗️ Architecture Technique
-
-### **Stack Technologique Optimisé:**
-
-```
-Frontend:
-├── React 19 + Vite (Build ultra-rapide)
-├── MapLibre GL 5.6 (Cartographie native)
-├── TanStack Query (État serveur optimisé)
-└── Radix UI + Tailwind (UI moderne)
-
-Optimisations MapLibre:
-├── map.project() → Calculs 80% plus rapides
-├── map.setFeatureState() → Styles GPU
-├── map.flyTo() → Transitions fluides
-└── map.queryRenderedFeatures() → Détection intelligente
-```
-
-### **Structure du Projet:**
-
-```
-src/
-├── components/          # Composants React optimisés
-├── hooks/              # Hooks personnalisés
-├── lib/                # Logique métier (navigation optimisée)
-├── utils/              # Utilitaires (calculs MapLibre)
-├── data/               # Données du village
-└── tests/              # Tests organisés
-```
-
-## 🧪 Tests & Validation
-
-### **Tests Unitaires:**
+**Prerequisites:** [Bun](https://bun.sh) (>= 1.0), Node.js (>= 20)
 
 ```bash
-# Tests des fonctions optimisées
-node tests/unit/test-maplibre-optimizations.js
-```
-
-### **Tests d'Intégration:**
-
-```bash
-# Tests navigateur des transitions
-open tests/integration/test-transitions.html
-```
-
-### **Validation Runtime:**
-
-```javascript
-# Dans la console (F12) sur http://localhost:5173
-# Copier tests/integration/validate-optimizations.js
-```
-
-## 🎯 Navigation Village
-
-### **États de Navigation:**
-
-1. **🟢 `permission`** - Demande de permission GPS
-2. **🔵 `welcome`** - Sélection de la destination
-3. **🟠 `navigating`** - Navigation active avec itinéraire
-4. **🟣 `arrived`** - Confirmation d'arrivée
-
-### **Points d'Intérêt:**
-
-- 🏫 **Écoles** - Garden Grove, École Primaire
-- ⛪ **Églises** - Multiple lieux de culte
-- 🏊 **Piscines** - Complexes aquatiques
-- 🏠 **Blocs résidentiels** - Numéros clairement affichés
-- 🛒 **Services** - Poste, commerces, équipements
-
-## 🚀 Démarrage Rapide
-
-### **Prérequis:**
-
-```bash
-Node.js 18+
-Bun 1.3+ (https://bun.sh)
-```
-
-### **Installation:**
-
-```bash
-# Cloner le projet
-git clone [repository-url]
+git clone https://github.com/Karlito8888/new-ggv-gps.git
 cd new-ggv-gps
-
-# Installer les dépendances
 bun install
-
-# Lancer le serveur de développement
 bun run dev
-
-# Ouvrir http://localhost:5173
 ```
 
-### **Build Production:**
+Open `http://localhost:5173` on your phone (LAN accessible).
+
+## Environment Variables
+
+Create a `.env` file:
 
 ```bash
-bun run build
-bun run preview
+VITE_SUPABASE_URL=...           # Supabase project URL
+VITE_SUPABASE_ANON_KEY=...      # Supabase anon key
+VITE_OPENROUTE_API_KEY=...      # Optional — ORS routing fallback
 ```
 
-## 🌍 Données du Projet
+## Tech Stack
 
-### **Garden Grove Village, Philippines:**
+- **React 19** with TypeScript
+- **MapLibre GL JS 5** — native API, no wrappers
+- **Vite 7** — build tool with code splitting
+- **Framer Motion** — overlay animations
+- **Supabase** — block/lot data backend
+- **Workbox** — service worker for offline PWA
 
-- 📍 **Coordonnées**: 14.35098, 120.951863
-- 🏘️ **Type**: Village résidentiel fermé
-- 📏 **Zone**: ~50 hectares
-- 🏠 **Blocs**: 15+ blocs résidentiels
-- 🎯 **POI**: Écoles, églises, piscines, services
+## Garden Grove Village
 
-### **Source des Données:**
+- **Location:** Dasmariñas, Cavite, Philippines
+- **Coordinates:** 14.348°N, 120.951°E
+- **Type:** Gated residential subdivision
+- **Blocks:** 15+ residential blocks with numbered lots
 
-- 📍 **Coordonnées GPS**: Validées sur le terrain
-- 🏠 **Blocs**: Plans officiels du village
-- 🎯 **POI**: Inventaire communautaire
-- 🔄 **Mises à jour**: Via Supabase
+## Deployment
 
-## 🔧 Configuration
-
-### **Variables d'Environnement:**
+Production builds are deployed to Hostinger via manual upload.
 
 ```bash
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_key
-VITE_OPENROUTE_API_KEY=your_openroute_key  # Optionnel
+bun run build    # → dist/
 ```
 
-### **Commandes Build:**
+Live at: https://myggvgps.charlesbourgault.com/
 
-```bash
-bun run build         # Production build → dist/
-bun run lint          # Vérification ESLint
-bun run lint:fix      # Correction automatique
-bun run typecheck     # Vérification TypeScript
-```
+## License
 
-## 🤝 Contribution
-
-### **Code Style:**
-
-- ✅ **ESLint** configuré avec règles strictes
-- ✅ **DRY & KISS** principes appliqués
-- ✅ **Modern React** (hooks, pas de classes)
-- ✅ **MapLibre natif** privilégié sur Turf.js
-
-### **Processus:**
-
-1. Fork le projet
-2. Créer une branche feature (`git checkout -b feature/AmazingFeature`)
-3. Commit vos changements (`git commit -m 'Add some AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrir une Pull Request
-
-## 📄 Licences & Crédits
-
-### **Licence:**
-
-- 📄 **Code**: Licence MIT (à confirmer selon le projet)
-- 🗺️ **Données**: Données village de Garden Grove
-- 🎨 **Icons**: Radix UI Icons, Lucide React
-
-### **Crédits:**
-
-- 🗺️ **MapLibre GL** - Moteur de cartographie
-- 🚀 **Vite** - Build tool ultra-rapide
-- 🎨 **Radix UI** - Composants d'interface
-- ⚡ **TanStack Query** - Gestion d'état serveur
+MIT
 
 ---
 
-## 🎉 **Résultat des Optimisations**
-
-> **"Avant"** → Calculs lents, transitions saccadées, détection basique
->
-> **"Après"** → ⚡ Calculs ultra-rapides, 🎨 transitions fluides, 🎯 détection intelligente
-
-**🚀 Navigation GPS optimisée pour Garden Grove Village!**
-
----
-
-<div align="center">
-
-**✨ Développé avec amour pour la communauté de Garden Grove Village, Philippines** 🇵🇭\*\*
-
-**📍 Optimisé avec les API natives MapLibre GL pour des performances exceptionnelles** ⚡
-
-</div>
+Built for the Garden Grove Village community.

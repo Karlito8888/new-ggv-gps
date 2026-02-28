@@ -33,7 +33,7 @@ MyGGV GPS is a React PWA for GPS navigation within Garden Grove Village, Philipp
 ```bash
 bun run dev              # Dev server (port 5173, LAN accessible)
 bun run build            # Production build → dist/
-bun run typecheck        # TypeScript type checking
+bun run typecheck        # TypeScript type checking (npx tsc --noEmit)
 bun run lint             # ESLint check
 bun run lint:fix         # ESLint auto-fix
 bun run preview          # Preview production build (port 5173)
@@ -43,6 +43,8 @@ bun run release:minor    # Bump minor version, push with git tag
 bun run release:major    # Bump major version, push with git tag
 ```
 
+**Pre-commit verification**: `bun run lint && npx tsc --noEmit && npx prettier --check "src/**/*.{ts,tsx,css}"`
+
 No automated tests exist. Testing is manual on real devices (Android Chrome + iOS Safari).
 
 ## Architecture
@@ -51,44 +53,46 @@ No automated tests exist. Testing is manual on real devices (Android Chrome + iO
 
 ```
 src/
-├── App.jsx (~370 LOC)             # State machine + hook calls + conditional rendering
-├── main.jsx (14 LOC)              # Entry point + Service Worker registration
-├── components/                    # Extracted overlay components (Story 2.1)
-│   ├── GpsPermissionOverlay.jsx   # GPS permission flow
-│   ├── WelcomeOverlay.jsx         # Block/lot selector with Supabase
-│   ├── OrientationOverlay.jsx     # Compass permission (iOS/Android)
-│   ├── NavigationOverlay.jsx      # Real-time navigation display
-│   ├── ArrivedOverlay.jsx         # Arrival confirmation with 2 CTAs
-│   └── ExitCompleteOverlay.jsx    # Goodbye screen
+├── App.tsx (~440 LOC)             # State machine + hook calls + conditional rendering
+├── main.tsx (14 LOC)              # Entry point + Service Worker registration
+├── sw.ts                          # Workbox service worker (PWA offline)
+├── components/                    # Extracted overlay components
+│   ├── GpsPermissionOverlay.tsx   # GPS permission flow
+│   ├── WelcomeOverlay.tsx         # Block/lot selector with Supabase
+│   ├── OrientationOverlay.tsx     # Compass permission (iOS/Android)
+│   ├── NavigationOverlay.tsx      # Real-time navigation display (pills)
+│   ├── ArrivedOverlay.tsx         # Floating arrival modals (non-blocking)
+│   └── ExitCompleteOverlay.tsx    # Goodbye screen
 ├── hooks/
-│   ├── useMapSetup.js (~250 LOC)  # Map init + GPS + GeolocateControl + blocks layer
-│   ├── useRouting.js (~370 LOC)   # 3-tier routing fallback + retry + deviation detection
-│   └── useNavigation.js (34 LOC)  # Pure computation: distance + arrival check
+│   ├── useMapSetup.ts (~340 LOC)  # Map init + GPS + GeolocateControl + blocks layer
+│   ├── useRouting.ts (~600 LOC)   # 3-tier routing fallback + retry + deviation detection
+│   └── useNavigation.ts (44 LOC)  # Pure computation: distance + arrival check
 ├── data/
-│   └── blocks.js                   # Static village block polygons (GeoJSON)
+│   └── blocks.ts                   # Static village block polygons (GeoJSON)
 ├── lib/
-│   ├── animations.js              # Shared Framer Motion overlay/modal variants
-│   ├── geo.js                      # Haversine distance, point-on-line projection
-│   └── supabase.js                 # Lazy-loaded Supabase client
+│   ├── animations.ts              # Shared Framer Motion overlay/modal variants
+│   ├── geo.ts                      # Haversine distance, point-on-line projection
+│   └── supabase.ts                 # Lazy-loaded Supabase client
 └── styles/
-    ├── app.css                     # App styles + design tokens
+    ├── app.css                     # App styles (imports design-tokens.css)
+    ├── design-tokens.css           # All --ggv-* CSS custom properties
     ├── fonts.css                   # Madimi One self-hosted font
     └── maplibre-gl.css             # MapLibre GL styles
 ```
 
-### Navigation State Machine (6 states)
+### Navigation State Machine (5 states)
 
-Simple `useState` in App.jsx — no React Router, no Context:
+Simple `useState` in App.tsx — no React Router, no Context:
 
 ```
-gps-permission → welcome → orientation-permission → navigating → arrived → exit-complete
+gps-permission → welcome → orientation-permission → navigating → exit-complete
 ```
 
-Each state renders an extracted overlay component from `src/components/` via conditional rendering.
+Arrival is NOT a navState — it uses a separate `showArrivedModal` boolean. When the user arrives at a destination, `navState` stays `"navigating"` and the ArrivedOverlay floats on top without blocking map interaction (GPS tracking, compass rotation, and map gestures continue).
 
 ### Hook Architecture
 
-**useMapSetup(containerRef)** — Initializes MapLibre map, GPS tracking via native `GeolocateControl`, loads block polygons as GeoJSON layers. Returns `{ map, userLocation, isMapReady }`. Single fixed map style (OpenFreeMap Liberty), no style toggle.
+**useMapSetup(containerRef)** — Initializes MapLibre map, GPS tracking via native `GeolocateControl`, loads block polygons as GeoJSON layers. Returns `{ map, userLocation, isMapReady, triggerGeolocate, userMarkerRef }`. Single fixed map style (OpenFreeMap Liberty).
 
 **useRouting(map, origin, destination)** — Calculates routes with 3-tier cascading fallback:
 
@@ -103,60 +107,70 @@ Key behaviors:
 - 500ms debounce on GPS position updates
 - Exponential backoff retry for OSRM failures (10s, 30s, 60s)
 - 3s request timeout on API calls
-- Returns `{ routeGeoJSON, distance, steps, routeSource }` where `routeSource` is `"osrm" | "ors" | "direct"`
+- Returns `{ routeGeoJSON, distance, steps, routeSource, isRecalculating }`
 
-**useNavigation(map, userLocation, destination)** — Pure computation hook (no effects, no state). Calculates distance remaining and arrival detection. Returns `{ distanceRemaining, hasArrived, arrivedAt }`. Arrival threshold: `< 12m` (code current value; planned change to 15m in v3.0.0).
+**useNavigation(userLocation, destination)** — Pure computation hook (no effects, no state). Calculates distance remaining and arrival detection. Returns `{ distanceRemaining, hasArrived, arrivedAt }`.
+
+### Arrival Flow (showArrivedModal pattern)
+
+When `hasArrived` becomes true and `destination.type !== "exit"`:
+
+- `showArrivedModal` is set to `true` (navState stays `"navigating"`)
+- NavigationOverlay hides, ArrivedOverlay appears in a separate `AnimatePresence`
+- Map remains fully interactive (`pointer-events: none` on overlay, `auto` on modals)
+- GPS tracking, compass rotation, and route line continue unchanged
+- Haptic feedback + bell sound play on arrival
+
+For exit destinations (`destination.type === "exit"`), navState transitions to `"exit-complete"` (opaque overlay).
 
 ### Data Flow
 
 ```
-main.jsx → <App />  (+ SW registration)
+main.tsx → <App />  (+ SW registration)
 
-App.jsx
+App.tsx
   ├── useMapSetup(containerRef) → map, userLocation, isMapReady
   ├── useRouting(map, userLocation, destination) → routeGeoJSON, distance, steps, routeSource
-  ├── useNavigation(map, userLocation, destination) → distanceRemaining, hasArrived, arrivedAt
+  ├── useNavigation(userLocation, destination) → distanceRemaining, hasArrived, arrivedAt
   ├── Supabase RPC (get_blocks) → block/lot data for WelcomeOverlay
-  └── Conditional overlays based on navState
+  ├── AnimatePresence (mode="wait") → state-based overlays
+  └── AnimatePresence (separate) → floating arrived modals
 ```
 
 ### Key Thresholds
 
 | Constant              | Value         | Location              |
 | --------------------- | ------------- | --------------------- |
-| Arrival detection     | < 12m         | `useNavigation.js:26` |
-| Route recalc trigger  | > 30m moved   | `useRouting.js:206`   |
-| API request timeout   | 3,000ms       | `useRouting.js`       |
-| Route recalc debounce | 500ms         | `useRouting.js:162`   |
-| OSRM retry delays     | 10s, 30s, 60s | `useRouting.js:165`   |
+| Arrival detection     | < 15m         | `useNavigation.ts:10` |
+| Route recalc trigger  | > 30m moved   | `useRouting.ts:217`   |
+| API request timeout   | 3,000ms       | `useRouting.ts:127`   |
+| Route recalc debounce | 500ms         | `useRouting.ts:211`   |
+| OSRM retry delays     | 10s, 30s, 60s | `useRouting.ts:214`   |
 
 ### MapLibre Usage
 
 100% native MapLibre GL JS — no react-map-gl, no Turf.js:
 
 - Map source IDs: `"route"` (route line), block sources from `addBlocksLayer()`
-- Layer IDs: `"route-line"` (blue #4285F4 line, width 5)
+- Layer IDs: `"route-line"` (blue #4285F4), `"route-outline"`, `"route-arrows"`
 - GPS: Native `GeolocateControl` with `trackUserLocation: true`
-- Camera: `map.flyTo()` for bearing/pitch/zoom animations
+- Camera: `map.easeTo()` for smooth transitions, `map.jumpTo()` for instant snaps
 
 ### Routing Visualization
 
-Single route source `"route"` with layer `"route-line"`. Updated via `map.getSource("route").setData(geometry)`. Created lazily on first route (addSource + addLayer if not exists).
+Single route source `"route"` with layers `"route-outline"`, `"route-line"`, `"route-arrows"`. Updated via `map.getSource("route").setData(geometry)`. Source and layers are recreated on each route update (old removed, new added).
 
 ## Deployment
 
 ### Hostinger (primary — `public/.htaccess`)
 
-- Build: `bun run build` → upload `dist/` to Hostinger via FTP/SSH (manual, Phase 1)
+- Build: `bun run build` → upload `dist/` to Hostinger via FTP/SSH (manual)
 - Server: LiteSpeed Enterprise (reads `.htaccess` with Apache compatibility)
 - Domain: https://myggvgps.charlesbourgault.com/
 - SPA redirect: `.htaccess` RewriteRule → `/index.html`
-- Security headers: X-Frame-Options DENY, X-Content-Type-Options nosniff, X-XSS-Protection, Permissions-Policy (geolocation=self), Referrer-Policy strict-origin-when-cross-origin
+- Security headers: X-Frame-Options DENY, X-Content-Type-Options nosniff, Permissions-Policy (geolocation=self)
 - Cache: static assets 1 year immutable, HTML no-cache, `sw.js` no-store
-- MIME types: `.pbf` (protobuf), `.pmtiles` (PMTiles)
-- Gzip: enabled for text/JS/CSS/JSON/SVG/protobuf, disabled for `.pmtiles` (range request compatibility)
-- HSTS: disabled by default, uncomment in `.htaccess` after SSL is confirmed working
-- Phase 3 (Story 3.4) will automate deployment via GitHub Actions
+- Gzip: enabled for text/JS/CSS/JSON/SVG/protobuf, disabled for `.pmtiles`
 
 **Build pipeline**: ESLint → Vite build with code splitting (vendor, maps, supabase, animations chunks). Console logs stripped in production. ES2020+ target.
 
@@ -172,18 +186,20 @@ Vite-specific (`VITE_` prefix), inlined at build time.
 
 ## Code Conventions
 
-- **Modern React** — Hooks only, no classes. React 19 compiler optimization enabled.
-- **ESLint** enforced — `no-console` allows `warn`, `error`, `info` only (console.log forbidden)
-- **JSX** extension for all component files
+- **TypeScript** — All source files use `.tsx` (components) and `.ts` (hooks, libs, utils)
+- **React 19** — Hooks only, no classes. React Compiler optimization enabled.
+- **ESLint** enforced — `no-console` allows `warn`, `error`, `info` only (console.log forbidden). `react-hooks/set-state-in-effect` forbids synchronous `setState` inside `useEffect`.
 - **GeoJSON coordinates**: `[longitude, latitude]` — GPS location objects: `{latitude, longitude}`
 - **Constants**: `UPPER_SNAKE_CASE`. **State/props**: `camelCase`. **Components**: `PascalCase`.
 - **No commented-out code** — use git history instead
+- **CSS**: Design tokens in `design-tokens.css` (all `--ggv-*` prefixed). Component styles in `app.css`.
 
-## Utility Library — `src/lib/geo.js`
+## Utility Library — `src/lib/geo.ts`
 
 - `getDistance(lat1, lon1, lat2, lon2)` — Haversine distance in meters
 - `projectPointOnLine(pointLng, pointLat, lineCoordinates)` — Project point onto nearest line segment
 - `getDistanceAlongRoute(userLng, userLat, targetLng, targetLat, routeCoordinates)` — Distance along polyline
+- `flattenCoordinates(routeGeoJSON)` — Flatten MultiLineString/LineString to coordinate array
 
 ## Key Dependencies
 
@@ -195,7 +211,7 @@ Vite-specific (`VITE_` prefix), inlined at build time.
 
 - **Center**: `[120.95134859887523, 14.347872973134175]`
 - **Village exit**: `[120.951863, 14.35098]`
-- **Block polygons**: `src/data/blocks.js` (static GeoJSON, also loaded from Supabase RPC `get_blocks`)
+- **Block polygons**: `src/data/blocks.ts` (static GeoJSON, also loaded from Supabase RPC `get_blocks`)
 
 ## Browser Compatibility
 
@@ -206,14 +222,3 @@ Critical patterns:
 - **iOS orientation**: `DeviceOrientationEvent.requestPermission()` required on iOS 13+
 - **CSS viewport**: `100dvh` → `100svh` → `-webkit-fill-available` cascade
 - **Input zoom prevention**: `font-size: 16px` minimum on all inputs (iOS Safari)
-
-## v3.0.0 Refactoring Plan
-
-Planning artifacts in `_bmad-output/planning-artifacts/` define a 4-phase refactoring:
-
-- **Phase 1**: Offline-first PWA (Workbox SW, self-hosted tiles/fonts/style, Hostinger migration)
-- **Phase 2**: Architecture cleanup (extract overlays to `src/components/`, TypeScript migration, CSS design tokens, NavigationOverlay → floating pills)
-- **Phase 3**: Analytics (Supabase) + unit tests (Vitest) + CI/CD (GitHub Actions)
-- **Phase 4**: Admin UI for block/lot management (future, no timeline)
-
-Planned threshold change: arrival detection from 12m → **15m** (standardized across all planning docs).
