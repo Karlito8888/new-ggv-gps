@@ -482,7 +482,8 @@ textarea {
    =================================================================== */
 
 .arrived-overlay {
-  background: var(--ggv-gradient-arrived-veil);
+  background: transparent;
+  pointer-events: none;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
@@ -490,6 +491,10 @@ textarea {
   padding: var(--ggv-space-lg) var(--ggv-space-md);
   padding-top: calc(var(--ggv-space-lg) + env(safe-area-inset-top, 0px));
   padding-bottom: calc(var(--ggv-space-lg) + env(safe-area-inset-bottom, 0px));
+}
+
+.arrived-overlay .modal {
+  pointer-events: auto;
 }
 
 .arrived-top-modal .overlay-description {

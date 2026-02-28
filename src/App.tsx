@@ -19,7 +19,6 @@ type NavState =
   | "welcome"
   | "orientation-permission"
   | "navigating"
-  | "arrived"
   | "exit-complete";
 
 interface BlockData {
@@ -39,6 +38,7 @@ export default function App() {
   const [hasOrientationPermission, setHasOrientationPermission] = useState(false);
   const [heading, setHeading] = useState<number | null>(null);
   const [isOffCenter, setIsOffCenter] = useState(false);
+  const [showArrivedModal, setShowArrivedModal] = useState(false);
 
   // Blocks data (pre-loaded during GPS permission screen)
   const [blocks, setBlocks] = useState<BlockData[]>([]);
@@ -128,22 +128,14 @@ export default function App() {
     navigator.vibrate?.([100, 50, 100]);
     new Audio(arrivalBellSrc).play().catch(() => {});
 
-    const isExitDestination = destination?.type === "exit";
-
-    // Snap map to user position at max zoom for arrival view
-    if (!isExitDestination && map && map.isStyleLoaded() && userLocation) {
-      map.jumpTo({
-        center: [userLocation.longitude, userLocation.latitude],
-        zoom: 20,
-        bearing: heading ?? 0,
-        pitch: 20,
-      });
-    }
-
     startTransition(() => {
-      setNavState(isExitDestination ? "exit-complete" : "arrived");
+      if (destination?.type === "exit") {
+        setNavState("exit-complete");
+      } else {
+        setShowArrivedModal(true);
+      }
     });
-  }, [hasArrived, navState, arrivedAt, destinationKey, destination, map, userLocation, heading]);
+  }, [hasArrived, navState, arrivedAt, destinationKey, destination]);
 
   // Track if we're currently navigating (used by orientation effect)
   const isNavigatingRef = useRef(false);
@@ -393,7 +385,7 @@ export default function App() {
               />
             )}
 
-            {navState === "navigating" && (
+            {navState === "navigating" && !showArrivedModal && (
               <NavigationOverlay
                 key="navigating"
                 map={map}
@@ -414,26 +406,30 @@ export default function App() {
               />
             )}
 
-            {navState === "arrived" && (
+            {navState === "exit-complete" && <ExitCompleteOverlay key="exit-complete" />}
+          </AnimatePresence>
+
+          {/* Arrived modals — floating, map stays interactive */}
+          <AnimatePresence>
+            {showArrivedModal && (
               <ArrivedOverlay
                 key="arrived"
                 destination={destination}
                 onNavigateAgain={() => {
+                  setShowArrivedModal(false);
                   setNavState("welcome");
                   setDestination(null);
                 }}
                 onExitVillage={() => {
+                  setShowArrivedModal(false);
                   setDestination({
                     type: "exit",
                     coordinates: VILLAGE_EXIT,
                     name: "Village Exit",
                   });
-                  setNavState("navigating");
                 }}
               />
             )}
-
-            {navState === "exit-complete" && <ExitCompleteOverlay key="exit-complete" />}
           </AnimatePresence>
         </MotionConfig>
       </LazyMotion>
