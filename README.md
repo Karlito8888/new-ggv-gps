@@ -184,12 +184,13 @@ VITE_SUPABASE_ANON_KEY=your_supabase_key
 VITE_OPENROUTE_API_KEY=your_openroute_key  # Optionnel
 ```
 
-### **Optimisations Build:**
+### **Commandes Build:**
 
 ```bash
-bun run build:netlify  # Build avec vérifications Netlify
-bun run lint           # Vérification ESLint
-bun run lint:fix       # Correction automatique
+bun run build         # Production build → dist/
+bun run lint          # Vérification ESLint
+bun run lint:fix      # Correction automatique
+bun run typecheck     # Vérification TypeScript
 ```
 
 ## 🤝 Contribution

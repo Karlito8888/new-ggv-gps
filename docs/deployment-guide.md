@@ -132,7 +132,7 @@ git push origin main
 # → Netlify picks up push
 # → Runs: bun run build:netlify
 # → Deploys dist/ to CDN
-# → Available at: https://myggv-gps.netlify.app/
+# → Available at: https://myggvgps.charlesbourgault.com/
 ```
 
 ### Release Deployments

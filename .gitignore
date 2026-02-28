@@ -165,10 +165,6 @@ www/
 # ========================================
 # DEPLOYMENT & CI/CD
 # ========================================
-# Netlify
-.netlify/
-netlify-functions/
-
 # Vercel
 .vercel/
 
@@ -251,6 +247,10 @@ temp-*
 
 # Serena
 .serena/
+
+# Code-graph / SCIP index
+index.scip
+.code-graph.yml
 
 # MCP config
 .mcp.json

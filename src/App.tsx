@@ -128,14 +128,22 @@ export default function App() {
     navigator.vibrate?.([100, 50, 100]);
     new Audio(arrivalBellSrc).play().catch(() => {});
 
+    const isExitDestination = destination?.type === "exit";
+
+    // Snap map to user position at max zoom for arrival view
+    if (!isExitDestination && map && map.isStyleLoaded() && userLocation) {
+      map.jumpTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        zoom: 20,
+        bearing: 0,
+        pitch: 0,
+      });
+    }
+
     startTransition(() => {
-      if (destination?.type === "exit") {
-        setNavState("exit-complete");
-      } else {
-        setNavState("arrived");
-      }
+      setNavState(isExitDestination ? "exit-complete" : "arrived");
     });
-  }, [hasArrived, navState, arrivedAt, destinationKey, destination]);
+  }, [hasArrived, navState, arrivedAt, destinationKey, destination, map, userLocation]);
 
   // Track if we're currently navigating (used by orientation effect)
   const isNavigatingRef = useRef(false);

@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://myggv-gps.netlify.app/sitemap.xml
+Sitemap: https://myggvgps.charlesbourgault.com/sitemap.xml

@@ -43,7 +43,6 @@ coverage/
 .tmp/
 
 # Tools
-.netlify/
 .vercel/
 .firebase/
 .turbo/
