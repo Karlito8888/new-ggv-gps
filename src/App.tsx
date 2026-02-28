@@ -135,15 +135,15 @@ export default function App() {
       map.jumpTo({
         center: [userLocation.longitude, userLocation.latitude],
         zoom: 20,
-        bearing: 0,
-        pitch: 0,
+        bearing: heading ?? 0,
+        pitch: 20,
       });
     }
 
     startTransition(() => {
       setNavState(isExitDestination ? "exit-complete" : "arrived");
     });
-  }, [hasArrived, navState, arrivedAt, destinationKey, destination, map, userLocation]);
+  }, [hasArrived, navState, arrivedAt, destinationKey, destination, map, userLocation, heading]);
 
   // Track if we're currently navigating (used by orientation effect)
   const isNavigatingRef = useRef(false);
@@ -183,14 +183,6 @@ export default function App() {
       el.classList.add("no-heading");
     }
   }, [heading, navState, userMarkerRef]);
-
-  // Effect 1: Reset map to north-up when leaving navigation mode
-  useEffect(() => {
-    if (!map || !isMapReady) return;
-    if (navState !== "navigating") {
-      map.easeTo({ bearing: 0, pitch: 0, duration: 300 });
-    }
-  }, [navState, map, isMapReady]);
 
   // Effect: Update destination marker on map when destination changes
   useEffect(() => {
