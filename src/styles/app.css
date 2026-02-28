@@ -482,7 +482,22 @@ textarea {
    =================================================================== */
 
 .arrived-overlay {
-  background: var(--ggv-gradient-arrived);
+  background: var(--ggv-gradient-arrived-veil);
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+  padding: var(--ggv-space-lg) var(--ggv-space-md);
+  padding-top: calc(var(--ggv-space-lg) + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(var(--ggv-space-lg) + env(safe-area-inset-bottom, 0px));
+}
+
+.arrived-top-modal .overlay-description {
+  margin-bottom: 0;
+}
+
+.arrived-bottom-modal::before {
+  display: none;
 }
 
 /* Arrived-specific overrides (different accent bar + icon gradient + animations) */

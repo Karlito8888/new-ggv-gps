@@ -75,10 +75,10 @@
     var(--ggv-color-primary),
     var(--ggv-color-secondary)
   );
-  --ggv-gradient-arrived: linear-gradient(
+  --ggv-gradient-arrived-veil: linear-gradient(
     135deg,
-    rgba(80, 170, 97, 0.8) 0%,
-    rgba(52, 211, 153, 0.75) 100%
+    rgba(80, 170, 97, 0.25) 0%,
+    rgba(52, 211, 153, 0.2) 100%
   );
   --ggv-gradient-exit-overlay: linear-gradient(
     135deg,
