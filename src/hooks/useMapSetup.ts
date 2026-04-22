@@ -133,7 +133,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
       // Protomaps style with pre-generated layers (build-time, no runtime dependency)
       const mapStyle = {
         version: 8 as const,
-        glyphs: "/map-fonts/{fontstack}/{range}.pbf",
+        glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
         sprite: new URL("/sprites/light", window.location.origin).href,
         sources: {
           protomaps: {
