@@ -73,6 +73,7 @@ export default defineConfig({
           "sprites/**/*.{json,png}",
           "icons/**/*.{png,webp}",
           "screenshots/**/*.webp",
+          "fonts/**/*.woff2",
           "manifest.json",
         ],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
