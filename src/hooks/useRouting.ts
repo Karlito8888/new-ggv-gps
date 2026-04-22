@@ -12,12 +12,7 @@ import {
   OFF_ROUTE_THRESHOLD_M,
   TRIM_MIN_MOVEMENT_M,
 } from "../lib/routing";
-import type {
-  RouteStep,
-  RouteGeometry,
-  RouteResult,
-  RouteSourceType,
-} from "../lib/routing";
+import type { RouteStep, RouteGeometry, RouteResult, RouteSourceType } from "../lib/routing";
 import type { UserLocation, Destination } from "./useMapSetup";
 
 export type { RouteStep, RouteGeometry, RouteSourceType } from "../lib/routing";
