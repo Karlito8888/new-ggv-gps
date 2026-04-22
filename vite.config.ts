@@ -14,44 +14,32 @@ export default defineConfig({
   },
   publicDir: "public",
   base: "/",
-  esbuild: {
-    drop: ["console", "debugger"], // Remove console.log and debugger in production
-  },
   build: {
     chunkSizeWarningLimit: 1100, // MapLibre chunk is inherently ~1MB
     outDir: "dist",
     sourcemap: false, // Disable for production
     target: "esnext", // Optimize for modern smartphones
     cssCodeSplit: true, // Split CSS for better caching
+    minify: "oxc", // Oxc minifier (default in Vite 8)
     modulePreload: {
       polyfill: false, // Modern browsers support modulepreload natively
     },
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        // Improved chunking strategy for lazy loading
-        manualChunks: (id) => {
-          // Core React - small, always needed
-          if (id.includes("node_modules/react-dom")) {
-            return "vendor";
-          }
-          if (id.includes("node_modules/react/")) {
-            return "vendor";
-          }
-
-          // MapLibre + PMTiles - lazy loaded together (protomaps-themes-base replaced by pre-generated JSON)
-          if (id.includes("node_modules/maplibre-gl") || id.includes("node_modules/pmtiles")) {
-            return "maps";
-          }
-
-          // Supabase - medium, lazy loaded
-          if (id.includes("node_modules/@supabase")) {
-            return "supabase";
-          }
-
-          // Framer Motion - animations
-          if (id.includes("node_modules/framer-motion")) {
-            return "animations";
-          }
+        // Drop console.log and debugger in production
+        hoistTransitiveImports: false,
+        // Chunking strategy
+        codeSplitting: {
+          groups: [
+            // Core React - small, always needed
+            { name: "vendor", test: /node_modules\/react(-dom)?\// },
+            // MapLibre + PMTiles - lazy loaded together
+            { name: "maps", test: /node_modules\/(maplibre-gl|pmtiles)\// },
+            // Supabase - medium, lazy loaded
+            { name: "supabase", test: /node_modules\/@supabase\// },
+            // Framer Motion - animations
+            { name: "animations", test: /node_modules\/framer-motion\// },
+          ],
         },
       },
     },

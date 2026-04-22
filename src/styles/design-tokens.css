@@ -5,6 +5,8 @@
    =================================================================== */
 
 :root {
+  color-scheme: light dark;
+
   /* =================================================================
      COLORS
      ================================================================= */
@@ -173,4 +175,61 @@
   --ggv-opacity-tagalog: 0.85;
   --ggv-opacity-disabled: 0.6;
   --ggv-opacity-border: 0.15;
+}
+
+/* ===================================================================
+   DARK MODE — OS preference via prefers-color-scheme
+   Only color tokens are overridden. Spacing, typography, layout
+   tokens remain unchanged.
+   =================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Surface & background */
+    --ggv-color-surface: #1a1a1a;
+    --ggv-color-surface-white: #242424;
+
+    /* Text */
+    --ggv-color-text: #e8e8e8;
+    --ggv-color-text-secondary: rgba(232, 232, 232, 0.7);
+
+    /* Semantic colors — slightly brighter for dark bg contrast */
+    --ggv-color-success: #4ade80;
+    --ggv-color-error: #f87171;
+    --ggv-color-error-bg: #2a1215;
+
+    /* Glass-morphism — darker glass */
+    --ggv-glass-bg: rgba(30, 30, 30, 0.9);
+    --ggv-glass-bg-fallback: rgba(30, 30, 30, 0.95);
+
+    /* Semi-transparent tints */
+    --ggv-color-text-tint: rgba(232, 232, 232, 0.08);
+    --ggv-color-text-tint-hover: rgba(232, 232, 232, 0.12);
+    --ggv-color-primary-tint: rgba(80, 170, 97, 0.4);
+
+    /* Gradients — adjusted for dark backgrounds */
+    --ggv-gradient-overlay: linear-gradient(
+      135deg,
+      rgba(80, 170, 97, 0.6) 0%,
+      rgba(243, 197, 73, 0.55) 100%
+    );
+    --ggv-gradient-arrived-veil: linear-gradient(
+      135deg,
+      rgba(80, 170, 97, 0.2) 0%,
+      rgba(52, 211, 153, 0.15) 100%
+    );
+    --ggv-gradient-exit-overlay: linear-gradient(
+      135deg,
+      rgba(243, 197, 73, 0.7) 0%,
+      rgba(251, 191, 36, 0.65) 100%
+    );
+
+    /* Shadows — darker for depth on dark surfaces */
+    --ggv-shadow-text: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --ggv-shadow-overlay: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --ggv-shadow-dialog: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    --ggv-shadow-control: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --ggv-shadow-strong: 0 8px 25px rgba(0, 0, 0, 0.4);
+    --ggv-shadow-pill: 0 2px 12px rgba(0, 0, 0, 0.3);
+  }
 }
