@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import type { Map as MaplibreMap, GeoJSONSource } from "maplibre-gl";
 import type { Geometry } from "geojson";
 import { getDistance, projectPointOnLine, flattenCoordinates } from "../lib/geo";
+import type { OSRMResponse, ORSResponse } from "../types/routing";
 import type { UserLocation, Destination } from "./useMapSetup";
 
 export interface RouteStep {
@@ -154,24 +155,21 @@ async function fetchOSRM(
 ): Promise<RouteResult | null> {
   const url = `https://router.project-osrm.org/route/v1/foot/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
   const res = await fetchWithTimeout(url, signal);
-  const data: any = await res.json();
+  const data: OSRMResponse = await res.json();
 
   if (data.code === "Ok" && data.routes?.[0]) {
     const route = data.routes[0];
     // Extract steps from all legs, filtering out null (depart steps)
     const steps: RouteStep[] =
       route.legs?.flatMap(
-        (leg: any) =>
+        (leg) =>
           leg.steps
-            ?.map((step: any) => {
+            ?.map((step) => {
               const parsed = parseManeuver(step.maneuver, step.distance);
-              if (!parsed) return null; // Skip depart steps
-              return {
-                ...parsed,
-                location: step.maneuver.location as [number, number],
-              };
+              if (!parsed) return null;
+              return { ...parsed, location: step.maneuver.location };
             })
-            .filter(Boolean) || []
+            .filter((s): s is NonNullable<typeof s> => s !== null) || []
       ) || [];
 
     return {
@@ -195,7 +193,7 @@ async function fetchORS(
 
   const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${ORS_API_KEY}&start=${originLng},${originLat}&end=${destLng},${destLat}`;
   const res = await fetchWithTimeout(url, signal);
-  const data: any = await res.json();
+  const data: ORSResponse = await res.json();
 
   if (data.features?.[0]) {
     const feature = data.features[0];
