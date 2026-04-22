@@ -22,7 +22,7 @@
     "node": ">=20.19.0"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.88.0",
+    "@supabase/supabase-js": "^2.104.0",
     "framer-motion": "^12.23.26",
     "maplibre-gl": "^5.19.0",
     "pmtiles": "^4.4.0",

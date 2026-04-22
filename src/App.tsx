@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, startTransition } from "react";
+import { useDeviceOrientation } from "./hooks/useDeviceOrientation";
 import { LazyMotion, domAnimation, AnimatePresence, MotionConfig } from "framer-motion";
 import { useMapSetup, updateDestinationMarker } from "./hooks/useMapSetup";
 import type { Destination } from "./hooks/useMapSetup";
@@ -36,8 +37,6 @@ export default function App() {
   const [navState, setNavState] = useState<NavState>("gps-permission");
   const [destination, setDestination] = useState<Destination | null>(null);
   const [hasOrientationPermission, setHasOrientationPermission] = useState(false);
-  const [heading, setHeading] = useState<number | null>(null);
-  const [isOffCenter, setIsOffCenter] = useState(false);
   const [showArrivedModal, setShowArrivedModal] = useState(false);
 
   // Blocks data (pre-loaded during GPS permission screen)
@@ -84,6 +83,17 @@ export default function App() {
 
   // Navigation logic (distance, arrival detection)
   const { distanceRemaining, hasArrived, arrivedAt } = useNavigation(userLocation, destination);
+
+  // Track if we're currently navigating
+  const isNavigating = navState === "navigating";
+
+  // Device orientation (compass heading + map interaction tracking)
+  const {
+    heading,
+    isOffCenter,
+    userInteractionTimeRef,
+    handleRecenter: recenterMap,
+  } = useDeviceOrientation(map, isMapReady, isNavigating);
 
   // Generate destination key for tracking
   const destinationKey = destination?.coordinates
@@ -137,12 +147,9 @@ export default function App() {
     });
   }, [hasArrived, navState, arrivedAt, destinationKey, destination]);
 
-  // Track if we're currently navigating (used by orientation effect)
-  const isNavigatingRef = useRef(false);
   const hasInitialNavViewRef = useRef(false);
   const initialNavViewTimeRef = useRef<number>(0);
   useEffect(() => {
-    isNavigatingRef.current = navState === "navigating";
     if (navState !== "navigating") {
       hasInitialNavViewRef.current = false;
     }
@@ -183,119 +190,9 @@ export default function App() {
     }
   }, [map, isMapReady, destination]);
 
-  // Track user interaction for auto-recenter
-  const userInteractionTimeRef = useRef<number | null>(null);
-  const recenterTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Effect 2: Setup orientation listeners (only recreated when map changes, not navState)
-  useEffect(() => {
-    if (!map || !isMapReady) return;
-
-    // Throttle state for map rotation
-    let lastBearing = 0;
-    let lastUpdate = 0;
-    const THROTTLE_MS = 250; // Max 4 updates/sec
-    const MIN_DELTA = 3; // Ignore changes < 3 degrees
-
-    // Track if user is interacting with the map (pan/zoom)
-    let isUserInteracting = false;
-
-    const onInteractionStart = () => {
-      isUserInteracting = true;
-      userInteractionTimeRef.current = Date.now();
-      if (isNavigatingRef.current) {
-        setIsOffCenter(true);
-      }
-      // Clear any pending recenter timeout
-      if (recenterTimeoutRef.current) {
-        clearTimeout(recenterTimeoutRef.current);
-      }
-    };
-    const onInteractionEnd = () => {
-      // Small delay before re-enabling rotation to avoid jank
-      setTimeout(() => {
-        isUserInteracting = false;
-      }, 300);
-
-      // Auto-recenter after 5 seconds if navigating
-      if (isNavigatingRef.current) {
-        recenterTimeoutRef.current = setTimeout(() => {
-          userInteractionTimeRef.current = null;
-          setIsOffCenter(false);
-        }, 5000);
-      }
-    };
-
-    map.on("dragstart", onInteractionStart);
-    map.on("dragend", onInteractionEnd);
-    map.on("zoomstart", onInteractionStart);
-    map.on("zoomend", onInteractionEnd);
-
-    // Detect platform once (iOS uses webkitCompassHeading, Android uses alpha)
-    const DOE = DeviceOrientationEvent as unknown as DeviceOrientationEventWithPermission;
-    const isIOS =
-      typeof DeviceOrientationEvent !== "undefined" && typeof DOE.requestPermission === "function";
-
-    const handler = (e: DeviceOrientationEvent) => {
-      // Only rotate map when navigating (check ref to avoid stale closure)
-      if (!isNavigatingRef.current) return;
-
-      // Skip rotation if user is panning/zooming
-      if (isUserInteracting) return;
-
-      // Calculate heading based on platform
-      let heading: number | undefined;
-      if (isIOS && e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
-        // iOS Safari: 0-360, 0=North, clockwise
-        heading = e.webkitCompassHeading;
-      } else if (!isIOS && e.alpha !== null) {
-        // Android Chrome: 0-360, counter-clockwise - need to invert
-        heading = (360 - e.alpha) % 360;
-      } else {
-        return;
-      }
-
-      // Throttle updates
-      const now = Date.now();
-      const bearingDelta = Math.abs(heading - lastBearing);
-      // Handle wraparound (359° → 1° is only 2°, not 358°)
-      const wrappedDelta = Math.min(bearingDelta, 360 - bearingDelta);
-
-      if (now - lastUpdate < THROTTLE_MS && wrappedDelta < MIN_DELTA) {
-        return;
-      }
-
-      lastBearing = heading;
-      lastUpdate = now;
-      setHeading(heading);
-
-      // Smooth bearing transition — 150ms easeTo cancels previous animation
-      map.easeTo({
-        bearing: heading,
-        pitch: 45,
-        duration: 150,
-      });
-    };
-
-    // Only add ONE listener per platform (prevents double-firing)
-    const eventName = isIOS ? "deviceorientation" : "deviceorientationabsolute";
-    window.addEventListener(eventName, handler);
-
-    return () => {
-      window.removeEventListener(eventName, handler);
-      map.off("dragstart", onInteractionStart);
-      map.off("dragend", onInteractionEnd);
-      map.off("zoomstart", onInteractionStart);
-      map.off("zoomend", onInteractionEnd);
-      if (recenterTimeoutRef.current) {
-        clearTimeout(recenterTimeoutRef.current);
-      }
-    };
-  }, [map, isMapReady]); // Note: no navState dependency - uses ref instead
-
   // Effect: Keep user ALWAYS centered during navigation
   useEffect(() => {
-    if (!map || !isMapReady || navState !== "navigating" || !userLocation) return;
+    if (!map || !isMapReady || !isNavigating || !userLocation) return;
 
     // Skip centering if user recently interacted (within 5 seconds)
     if (userInteractionTimeRef.current) {
@@ -308,11 +205,11 @@ export default function App() {
 
     // Center map on user position
     map.setCenter([userLocation.longitude, userLocation.latitude]);
-  }, [map, isMapReady, navState, userLocation]);
+  }, [map, isMapReady, isNavigating, userLocation, userInteractionTimeRef]);
 
-  // Effect 3: Set initial navigation view when entering navigation mode (one-shot)
+  // Effect: Set initial navigation view when entering navigation mode (one-shot)
   useEffect(() => {
-    if (!map || !isMapReady || navState !== "navigating" || !userLocation) return;
+    if (!map || !isMapReady || !isNavigating || !userLocation) return;
     if (hasInitialNavViewRef.current) return;
     hasInitialNavViewRef.current = true;
     initialNavViewTimeRef.current = Date.now();
@@ -324,20 +221,12 @@ export default function App() {
       zoom: 20,
       duration: 500,
     });
-  }, [navState, map, isMapReady, userLocation, heading]);
+  }, [isNavigating, map, isMapReady, userLocation, heading]);
 
-  // Re-center button handler
+  // Re-center button handler (delegates to hook)
   const handleRecenter = () => {
     if (!map || !userLocation) return;
-    userInteractionTimeRef.current = null;
-    setIsOffCenter(false);
-    map.easeTo({
-      center: [userLocation.longitude, userLocation.latitude],
-      bearing: heading ?? 0,
-      pitch: 45,
-      zoom: 20,
-      duration: 500,
-    });
+    recenterMap(map, userLocation);
   };
 
   return (
@@ -401,7 +290,6 @@ export default function App() {
                 onCancel={() => {
                   setNavState("welcome");
                   setDestination(null);
-                  setHeading(null);
                 }}
               />
             )}
