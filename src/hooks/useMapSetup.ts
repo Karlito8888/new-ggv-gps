@@ -8,7 +8,7 @@ import type {
 } from "maplibre-gl";
 import type { FeatureCollection } from "geojson";
 import { blocks } from "../data/blocks";
-import protomapsLightLayers from "../data/protomaps-light-layers.json";
+// Layers JSON loaded dynamically — stays in the maps chunk instead of bloating index
 import "../styles/maplibre-gl.css";
 
 export interface UserLocation {
@@ -129,6 +129,11 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
       // Register PMTiles protocol BEFORE map construction
       const protocol = new Protocol();
       MapLibre.addProtocol("pmtiles", protocol.tile);
+
+      // Lazy-load layers JSON — bundled into the maps chunk (same request as MapLibre)
+      const { default: protomapsLightLayers } = await import("../data/protomaps-light-layers.json");
+
+      if (isCancelled) return;
 
       // Protomaps style with pre-generated layers (build-time, no runtime dependency)
       const mapStyle = {
