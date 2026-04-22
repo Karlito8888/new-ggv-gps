@@ -17,6 +17,7 @@ export default defineConfig({
     drop: ["console", "debugger"], // Remove console.log and debugger in production
   },
   build: {
+    chunkSizeWarningLimit: 1100, // MapLibre chunk is inherently ~1MB
     outDir: "dist",
     sourcemap: false, // Disable for production
     target: "esnext", // Optimize for modern smartphones

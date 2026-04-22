@@ -45,8 +45,10 @@ export default function App() {
   const [isLoadingBlocks, setIsLoadingBlocks] = useState(true);
   const [blocksError, setBlocksError] = useState<string | null>(null);
 
-  // Shared fetch logic (async only — setState in .then callback is safe)
-  const fetchBlocks = () => {
+  // Retry button handler (event handler — fresh closure on each render is fine)
+  const retryLoadBlocks = () => {
+    setBlocksError(null);
+    setIsLoadingBlocks(true);
     supabase.rpc("get_blocks").then(({ data, error }) => {
       if (error) {
         console.error("Error fetching blocks:", error);
@@ -59,16 +61,18 @@ export default function App() {
     });
   };
 
-  // Retry button handler (event handler — sync setState is OK)
-  const retryLoadBlocks = () => {
-    setBlocksError(null);
-    setIsLoadingBlocks(true);
-    fetchBlocks();
-  };
-
-  // Pre-load blocks on mount (async fetch only, no sync setState)
+  // Pre-load blocks on mount (fetch logic inlined per React docs — no unstable ref)
   useEffect(() => {
-    fetchBlocks();
+    supabase.rpc("get_blocks").then(({ data, error }) => {
+      if (error) {
+        console.error("Error fetching blocks:", error);
+        setBlocksError("Failed to load blocks");
+        setBlocks([]);
+      } else if (data) {
+        setBlocks(data);
+      }
+      setIsLoadingBlocks(false);
+    });
   }, []);
 
   // Initialize map and GPS tracking
@@ -242,16 +246,16 @@ export default function App() {
       <LazyMotion features={domAnimation}>
         <MotionConfig reducedMotion="user">
           <AnimatePresence mode="wait">
-            {navState === "gps-permission" && (
+            {navState === "gps-permission" ? (
               <GpsPermissionOverlay
                 key="gps-permission"
                 onGrant={() => setNavState("welcome")}
                 triggerGeolocate={triggerGeolocate}
                 isMapReady={isMapReady}
               />
-            )}
+            ) : null}
 
-            {navState === "welcome" && (
+            {navState === "welcome" ? (
               <WelcomeOverlay
                 key="welcome"
                 blocks={blocks}
@@ -263,9 +267,9 @@ export default function App() {
                   setNavState(hasOrientationPermission ? "navigating" : "orientation-permission");
                 }}
               />
-            )}
+            ) : null}
 
-            {navState === "orientation-permission" && (
+            {navState === "orientation-permission" ? (
               <OrientationOverlay
                 key="orientation-permission"
                 onGrant={() => {
@@ -273,9 +277,9 @@ export default function App() {
                   setNavState("navigating");
                 }}
               />
-            )}
+            ) : null}
 
-            {navState === "navigating" && !showArrivedModal && (
+            {navState === "navigating" && !showArrivedModal ? (
               <NavigationOverlay
                 key="navigating"
                 map={map}
@@ -293,14 +297,14 @@ export default function App() {
                   setDestination(null);
                 }}
               />
-            )}
+            ) : null}
 
-            {navState === "exit-complete" && <ExitCompleteOverlay key="exit-complete" />}
+            {navState === "exit-complete" ? <ExitCompleteOverlay key="exit-complete" /> : null}
           </AnimatePresence>
 
           {/* Arrived modals — floating, map stays interactive */}
           <AnimatePresence>
-            {showArrivedModal && (
+            {showArrivedModal ? (
               <ArrivedOverlay
                 key="arrived"
                 destination={destination}
@@ -318,7 +322,7 @@ export default function App() {
                   });
                 }}
               />
-            )}
+            ) : null}
           </AnimatePresence>
         </MotionConfig>
       </LazyMotion>
