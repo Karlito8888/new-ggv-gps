@@ -5,6 +5,9 @@ export function ExitCompleteOverlay() {
   return (
     <m.div
       className="overlay exit-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="You have exited the village"
       variants={overlayVariants}
       initial="hidden"
       animate="visible"

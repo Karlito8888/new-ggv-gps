@@ -123,7 +123,10 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
 
       if (isCancelled) return;
 
-      const MapLibre: MaplibreModule = (maplibregl as any).default || maplibregl;
+      const MapLibre: MaplibreModule =
+        "default" in maplibregl
+          ? (maplibregl as unknown as { default: MaplibreModule }).default
+          : (maplibregl as unknown as MaplibreModule);
       maplibreRefForCleanup.current = MapLibre;
 
       // Register PMTiles protocol BEFORE map construction
@@ -295,7 +298,10 @@ export function updateDestinationMarker(
   const thisVersion = ++destMarkerVersion;
   mapLibsPromise.then(([maplibregl]) => {
     if (thisVersion !== destMarkerVersion) return; // Stale — newer call superseded us
-    const MapLibre = (maplibregl as any).default || maplibregl;
+    const MapLibre: MaplibreModule =
+      "default" in maplibregl
+        ? (maplibregl as unknown as { default: MaplibreModule }).default
+        : (maplibregl as unknown as MaplibreModule);
     destMarkerInstance = new MapLibre.Marker({ element: el, anchor: "bottom" });
     destMarkerInstance!.setLngLat(destination.coordinates).addTo(map);
   });

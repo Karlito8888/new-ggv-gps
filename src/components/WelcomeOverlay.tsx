@@ -4,9 +4,7 @@ import { overlayVariants, modalVariants } from "../lib/animations";
 import { supabase } from "../lib/supabase";
 import type { Destination } from "../hooks/useMapSetup";
 
-interface Block {
-  name: string;
-}
+import { type Block } from "../types/blocks";
 
 interface LotData {
   lot: string;
@@ -84,6 +82,9 @@ export function WelcomeOverlay({
   return (
     <m.div
       className="overlay welcome-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Choose Destination"
       variants={overlayVariants}
       initial="hidden"
       animate="visible"
@@ -122,6 +123,9 @@ export function WelcomeOverlay({
           </div>
         ) : (
           <div className="welcome-block-selector">
+            <label htmlFor="block-select" className="sr-only">
+              Select Block
+            </label>
             <select
               id="block-select"
               value={selectedBlock}
@@ -144,6 +148,9 @@ export function WelcomeOverlay({
         {!blocksError && (
           <>
             <div className="welcome-block-selector">
+              <label htmlFor="lot-select" className="sr-only">
+                Select Lot
+              </label>
               <select
                 id="lot-select"
                 value={selectedLot}

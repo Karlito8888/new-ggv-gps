@@ -44,6 +44,9 @@ export function OrientationOverlay({ onGrant }: OrientationOverlayProps) {
   return (
     <m.div
       className="overlay orientation-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Enable Compass"
       variants={overlayVariants}
       initial="hidden"
       animate="visible"

@@ -6,6 +6,7 @@ import type { Destination } from "./hooks/useMapSetup";
 import { useRouting } from "./hooks/useRouting";
 import { useNavigation } from "./hooks/useNavigation";
 import { supabase } from "./lib/supabase";
+import { type Block } from "./types/blocks";
 import ggvLogo from "./assets/img/ggv.png";
 import { GpsPermissionOverlay } from "./components/GpsPermissionOverlay";
 import { WelcomeOverlay } from "./components/WelcomeOverlay";
@@ -23,10 +24,6 @@ type NavState =
   | "navigating"
   | "exit-complete";
 
-interface BlockData {
-  name: string;
-}
-
 // Village exit coordinates (from CLAUDE.md)
 const VILLAGE_EXIT: [number, number] = [120.951863, 14.35098];
 
@@ -41,7 +38,7 @@ export default function App() {
   const [showArrivedModal, setShowArrivedModal] = useState(false);
 
   // Blocks data (pre-loaded during GPS permission screen)
-  const [blocks, setBlocks] = useState<BlockData[]>([]);
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const [isLoadingBlocks, setIsLoadingBlocks] = useState(true);
   const [blocksError, setBlocksError] = useState<string | null>(null);
 
@@ -240,7 +237,7 @@ export default function App() {
       <div ref={mapContainerRef} className="map-container" />
 
       {/* GGV Logo - top center */}
-      <img src={ggvLogo} alt="GGV" className="ggv-logo" />
+      <img src={ggvLogo} alt="GGV" role="img" className="ggv-logo" />
 
       {/* Conditional overlays based on navState */}
       <LazyMotion features={domAnimation}>

@@ -16,6 +16,9 @@ export function ArrivedOverlay({
   return (
     <m.div
       className="overlay arrived-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="You have arrived at your destination"
       variants={overlayVariants}
       initial="hidden"
       animate="visible"

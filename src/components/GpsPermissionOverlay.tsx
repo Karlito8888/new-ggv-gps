@@ -35,6 +35,9 @@ export function GpsPermissionOverlay({
   return (
     <m.div
       className="overlay gps-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Enable GPS Location"
       variants={overlayVariants}
       initial="hidden"
       animate="visible"
