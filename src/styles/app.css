@@ -761,6 +761,93 @@ textarea {
 }
 
 /* ===================================================================
+   UPDATE TOAST (SW update notification)
+   =================================================================== */
+
+.update-toast {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--ggv-space-lg));
+  left: var(--ggv-space-md);
+  right: var(--ggv-space-md);
+  z-index: var(--ggv-z-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ggv-space-md);
+  background: var(--ggv-glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--ggv-radius-xl);
+  box-shadow: var(--ggv-shadow-pill);
+  font-family: var(--ggv-font-primary);
+  gap: var(--ggv-space-md);
+}
+
+.update-toast-content {
+  display: flex;
+  align-items: center;
+  gap: var(--ggv-space-sm);
+  min-width: 0;
+}
+
+.update-toast-icon {
+  font-size: var(--ggv-font-size-xl);
+  flex-shrink: 0;
+}
+
+.update-toast-text {
+  font-size: var(--ggv-font-size-sm);
+  font-weight: var(--ggv-font-weight-semibold);
+  color: var(--ggv-color-text);
+  line-height: 1.4;
+}
+
+.update-toast-tagalog {
+  display: block;
+  font-style: italic;
+  color: var(--ggv-color-primary);
+  font-size: 0.85em;
+  opacity: var(--ggv-opacity-tagalog);
+}
+
+.update-toast-actions {
+  display: flex;
+  gap: var(--ggv-space-xs);
+  flex-shrink: 0;
+}
+
+.update-toast-btn {
+  padding: 0.5rem 1rem;
+  min-height: var(--ggv-touch-target-min);
+  border: none;
+  border-radius: var(--ggv-radius-md);
+  font-family: var(--ggv-font-primary);
+  font-weight: var(--ggv-font-weight-semibold);
+  font-size: var(--ggv-font-size-sm);
+  cursor: pointer;
+  transition: all var(--ggv-transition-fast);
+}
+
+.update-toast-btn-primary {
+  background: var(--ggv-gradient-primary);
+  color: var(--ggv-color-surface);
+  box-shadow: var(--ggv-shadow-button);
+}
+
+.update-toast-btn-primary:active {
+  transform: scale(0.95);
+}
+
+.update-toast-btn-dismiss {
+  background: var(--ggv-color-text-tint);
+  color: var(--ggv-color-text);
+}
+
+.update-toast-btn-dismiss:active {
+  background: var(--ggv-color-text-tint-hover);
+}
+
+/* ===================================================================
    DESKTOP ENHANCEMENTS (min-width: 641px)
    Mobile-first: base styles are mobile, these enhance for larger screens
    =================================================================== */

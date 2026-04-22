@@ -13,6 +13,7 @@ import { OrientationOverlay } from "./components/OrientationOverlay";
 import { NavigationOverlay } from "./components/NavigationOverlay";
 import { ArrivedOverlay } from "./components/ArrivedOverlay";
 import { ExitCompleteOverlay } from "./components/ExitCompleteOverlay";
+import { UpdateToast } from "./components/UpdateToast";
 import arrivalBellSrc from "./assets/audio/arrival-bell.mp3";
 
 type NavState =
@@ -321,6 +322,9 @@ export default function App() {
           </AnimatePresence>
         </MotionConfig>
       </LazyMotion>
+
+      {/* SW update notification toast */}
+      <UpdateToast />
     </div>
   );
 }

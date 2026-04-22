@@ -16,6 +16,14 @@ import { clientsClaim } from "workbox-core";
 // Immediate activation on update
 clientsClaim();
 
+// Immediate activation after skipWaiting message from vite-plugin-pwa
+// (sent when user clicks "Update" in the UpdateToast)
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 // --- Tier 1: Precache Vite build assets (JS, CSS, HTML, sprites, icons) ---
 precacheAndRoute(self.__WB_MANIFEST);
 
@@ -90,7 +98,7 @@ registerRoute(
   })
 );
 
-// --- SW Install: warm-cache PMTiles file + skipWaiting ---
+// --- SW Install: warm-cache PMTiles file ---
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
@@ -101,5 +109,7 @@ self.addEventListener("install", (event) => {
         // SW still activates; map tiles work online, offline after retry
       })
   );
-  self.skipWaiting();
+  // Do NOT call skipWaiting() here — wait for user to accept update via toast.
+  // The new SW will activate when the user clicks "Update" in the UpdateToast,
+  // which sends a 'SKIP_WAITING' message (handled by vite-plugin-pwa).
 });
