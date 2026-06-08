@@ -9,8 +9,8 @@ import { type Block } from "../types/blocks";
 interface LotData {
   lot: string;
   coordinates: {
-    type: string;
-    coordinates: [number, number];
+    lng: number;
+    lat: number;
   } | null;
 }
 
@@ -69,10 +69,10 @@ export function WelcomeOverlay({
     if (selectedBlock && selectedLot) {
       const lot = lots.find((l) => l.lot === selectedLot);
       if (lot?.coordinates) {
-        // PostGIS returns GeoJSON: {type: "Point", coordinates: [lng, lat]}
+        // Coordinates stockées en jsonb : { lng, lat }
         onSelectDestination({
           type: "lot",
-          coordinates: [lot.coordinates.coordinates[0], lot.coordinates.coordinates[1]],
+          coordinates: [lot.coordinates.lng, lot.coordinates.lat],
           name: `Block ${selectedBlock}, Lot ${selectedLot}`,
         });
       }
