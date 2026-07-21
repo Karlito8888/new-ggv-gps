@@ -38,7 +38,7 @@ RewriteRule ^ /index.html [QSA,L]
 <IfModule mod_headers.c>
   Header set X-Frame-Options "DENY"
   Header set X-Content-Type-Options "nosniff"
-  Header set X-XSS-Protection "1; mode=block"
+  Header set X-XSS-Protection "0"
   Header set Permissions-Policy "geolocation=(self), camera=(), microphone=()"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
   Header unset X-Powered-By
@@ -47,11 +47,11 @@ RewriteRule ^ /index.html [QSA,L]
 # =============================================================================
 # 5. HSTS (enable ONLY after SSL is confirmed working on production domain)
 # =============================================================================
-# Uncomment the line below once SSL/TLS is verified active on the domain.
-# WARNING: Enabling prematurely can lock users out for max-age duration.
-# <IfModule mod_headers.c>
-#   Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
-# </IfModule>
+# HSTS enabled — SSL (Let's Encrypt) confirmed active on the domain.
+# NOTE: browsers force HTTPS for max-age duration; keep the cert valid.
+<IfModule mod_headers.c>
+  Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
 
 # =============================================================================
 # 6. MIME Types

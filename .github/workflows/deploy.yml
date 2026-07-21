@@ -21,8 +21,6 @@ jobs:
 
       - run: bun run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY }}
           VITE_OPENROUTE_API_KEY: ${{ secrets.VITE_OPENROUTE_API_KEY }}
 
       - name: Deploy to Hostinger via FTP
