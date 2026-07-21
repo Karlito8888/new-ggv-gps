@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, type RefObject } from "react";
 import type {
   Map as MaplibreMap,
-  GeolocateControl,
   Marker,
   MapStyleImageMissingEvent,
   ErrorEvent as MapErrorEvent,
@@ -14,6 +13,8 @@ import "../styles/maplibre-gl.css";
 export interface UserLocation {
   latitude: number;
   longitude: number;
+  heading?: number | null;
+  speed?: number | null;
 }
 
 export interface Destination {
@@ -32,7 +33,6 @@ interface UseMapSetupReturn {
 
 interface MaplibreModule {
   Map: typeof import("maplibre-gl").Map;
-  GeolocateControl: typeof import("maplibre-gl").GeolocateControl;
   Marker: typeof import("maplibre-gl").Marker;
   addProtocol: (protocol: string, handler: unknown) => void;
   removeProtocol: (protocol: string) => void;
@@ -95,7 +95,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
   const [map, setMap] = useState<MaplibreMap | null>(null);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
-  const geolocateRef = useRef<GeolocateControl | null>(null);
+  const watchIdRef = useRef<number | null>(null);
   const maplibreRefForCleanup = useRef<MaplibreModule | null>(null);
   const userMarkerRef = useRef<Marker | null>(null);
 
@@ -180,35 +180,29 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
 
         addBlocksLayer(mapInstance!);
 
-        const geolocate = new MapLibre.GeolocateControl({
-          positionOptions: { enableHighAccuracy: true },
-          trackUserLocation: true,
-        });
-        mapInstance!.addControl(geolocate, "bottom-right");
-        geolocateRef.current = geolocate;
+        // Course-up navigation: the bearing is driven by the GPS course, not by
+        // the user rotating the map. Keep pinch-zoom + pan, disable rotation.
+        mapInstance!.dragRotate.disable();
+        mapInstance!.touchZoomRotate.disableRotation();
 
-        // Create custom user location arrow marker (hidden by default, shown during navigation)
+        // Custom user marker: a screen-fixed arrow pointing up (= travel
+        // direction, since the map rotates course-up). Hidden until navigating.
         const arrowEl = document.createElement("div");
         arrowEl.className = "user-location-arrow";
         const marker = new MapLibre.Marker({
           element: arrowEl,
-          rotationAlignment: "map",
-          pitchAlignment: "map",
+          rotationAlignment: "viewport",
+          pitchAlignment: "viewport",
         });
         marker.setLngLat(VILLAGE_CENTER).addTo(mapInstance!);
-        arrowEl.style.display = "none"; // Hidden until navigation starts
+        arrowEl.style.display = "none";
         userMarkerRef.current = marker;
 
-        // Persistent listener for all GPS updates
-        geolocate.on("geolocate", (pos: GeolocationPosition) => {
-          const { latitude, longitude } = pos.coords;
-          setUserLocation({ latitude, longitude });
-          // Update custom marker position
-          if (userMarkerRef.current) {
-            userMarkerRef.current.setLngLat([longitude, latitude]);
-          }
-        });
-
+        // Dev-only handle for debugging/e2e (tree-shaken out of prod builds).
+        if (import.meta.env.DEV) {
+          const devWindow = window as unknown as { __ggvMap?: MaplibreMap };
+          devWindow.__ggvMap = mapInstance!;
+        }
         setIsMapReady(true);
       });
 
@@ -219,6 +213,10 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
 
     return () => {
       isCancelled = true;
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
       if (mapInstance) {
         mapInstance.off("styleimagemissing", onStyleImageMissing);
         mapInstance.remove();
@@ -231,26 +229,36 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
   }, []);
 
   /**
-   * Triggers the native GeolocateControl to request GPS permission and start tracking.
-   * Uses MapLibre's once() method for clean one-time event handling.
+   * Request GPS permission (browser prompt via getCurrentPosition), then start a
+   * continuous watchPosition that streams position + course into state and moves
+   * the user marker. Resolves with the first fix.
    */
   const triggerGeolocate = async (): Promise<GeolocationPosition> => {
-    if (!geolocateRef.current) {
-      throw new Error("GeolocateControl not ready");
+    const options: PositionOptions = {
+      enableHighAccuracy: true,
+      maximumAge: 1000,
+      timeout: 6000,
+    };
+    const applyPosition = (pos: GeolocationPosition) => {
+      const { latitude, longitude, heading, speed } = pos.coords;
+      setUserLocation({ latitude, longitude, heading, speed });
+      userMarkerRef.current?.setLngLat([longitude, latitude]);
+    };
+
+    const first = await new Promise<GeolocationPosition>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, options);
+    });
+    applyPosition(first);
+
+    // Start the continuous watch once (idempotent across retries).
+    if (watchIdRef.current === null) {
+      watchIdRef.current = navigator.geolocation.watchPosition(
+        applyPosition,
+        (err) => console.error("Geolocation watch error:", err),
+        options
+      );
     }
-
-    const geolocate = geolocateRef.current;
-
-    // Setup one-time listeners BEFORE triggering (auto-cleanup via once())
-    const resultPromise = Promise.race([
-      geolocate.once("geolocate") as Promise<GeolocationPosition>,
-      (geolocate.once("error") as Promise<unknown>).then((err) => Promise.reject(err)),
-    ]);
-
-    // Trigger GPS permission dialog
-    geolocate.trigger();
-
-    return resultPromise;
+    return first;
   };
 
   return { map, userLocation, isMapReady, triggerGeolocate, userMarkerRef };

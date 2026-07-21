@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, startTransition } from "react";
-import { useDeviceOrientation } from "./hooks/useDeviceOrientation";
+import { useCourseUpCamera } from "./hooks/useCourseUpCamera";
 import { LazyMotion, domAnimation, AnimatePresence, MotionConfig } from "framer-motion";
 import { useMapSetup, updateDestinationMarker } from "./hooks/useMapSetup";
 import type { Destination } from "./hooks/useMapSetup";
@@ -10,15 +10,13 @@ import { anyApi } from "convex/server";
 import ggvLogo from "./assets/img/ggv.png";
 import { GpsPermissionOverlay } from "./components/GpsPermissionOverlay";
 import { WelcomeOverlay } from "./components/WelcomeOverlay";
-import { OrientationOverlay } from "./components/OrientationOverlay";
 import { NavigationOverlay } from "./components/NavigationOverlay";
 import { ArrivedOverlay } from "./components/ArrivedOverlay";
 import { ExitCompleteOverlay } from "./components/ExitCompleteOverlay";
 import { UpdateToast } from "./components/UpdateToast";
 import arrivalBellSrc from "./assets/audio/arrival-bell.mp3";
 
-type NavState =
-  "gps-permission" | "welcome" | "orientation-permission" | "navigating" | "exit-complete";
+type NavState = "gps-permission" | "welcome" | "navigating" | "exit-complete";
 
 // Village exit coordinates (from CLAUDE.md)
 const VILLAGE_EXIT: [number, number] = [120.951863, 14.35098];
@@ -27,10 +25,9 @@ export default function App() {
   // Map container ref for MapLibre
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Navigation state machine (6 states)
+  // Navigation state machine
   const [navState, setNavState] = useState<NavState>("gps-permission");
   const [destination, setDestination] = useState<Destination | null>(null);
-  const [hasOrientationPermission, setHasOrientationPermission] = useState(false);
   const [showArrivedModal, setShowArrivedModal] = useState(false);
 
   // Blocks list from Convex (reactive; undefined while loading, auto-retries on reconnect)
@@ -53,13 +50,8 @@ export default function App() {
   // Track if we're currently navigating
   const isNavigating = navState === "navigating";
 
-  // Device orientation (compass heading + map interaction tracking)
-  const {
-    heading,
-    isOffCenter,
-    userInteractionTimeRef,
-    handleRecenter: recenterMap,
-  } = useDeviceOrientation(map, isMapReady, isNavigating);
+  // Course-up 3D camera: single driver, bearing from GPS course (no sensor).
+  useCourseUpCamera(map, isMapReady, isNavigating, userLocation);
 
   // Generate destination key for tracking
   const destinationKey = destination?.coordinates
@@ -113,41 +105,12 @@ export default function App() {
     });
   }, [hasArrived, navState, arrivedAt, destinationKey, destination]);
 
-  const hasInitialNavViewRef = useRef(false);
-  const initialNavViewTimeRef = useRef<number>(0);
-  useEffect(() => {
-    if (navState !== "navigating") {
-      hasInitialNavViewRef.current = false;
-    }
-  }, [navState]);
-
-  // Effect: Show/hide custom user marker + toggle native dot based on navState
+  // Effect: Show/hide the custom user marker based on navState.
   useEffect(() => {
     const marker = userMarkerRef.current;
     if (!marker) return;
-    const el = marker.getElement();
-    const isNav = navState === "navigating";
-    el.style.display = isNav ? "block" : "none";
-    // Toggle CSS class on app container to hide native GeolocateControl dot
-    const container = mapContainerRef.current?.parentElement;
-    if (container) {
-      container.classList.toggle("navigating", isNav);
-    }
+    marker.getElement().style.display = navState === "navigating" ? "block" : "none";
   }, [navState, userMarkerRef]);
-
-  // Effect: Rotate custom user marker with heading
-  useEffect(() => {
-    const marker = userMarkerRef.current;
-    if (!marker || navState !== "navigating") return;
-    const el = marker.getElement();
-    if (heading !== null) {
-      marker.setRotation(heading);
-      el.classList.remove("no-heading");
-    } else {
-      marker.setRotation(0);
-      el.classList.add("no-heading");
-    }
-  }, [heading, navState, userMarkerRef]);
 
   // Effect: Update destination marker on map when destination changes
   useEffect(() => {
@@ -155,45 +118,6 @@ export default function App() {
       updateDestinationMarker(map, destination);
     }
   }, [map, isMapReady, destination]);
-
-  // Effect: Keep user ALWAYS centered during navigation
-  useEffect(() => {
-    if (!map || !isMapReady || !isNavigating || !userLocation) return;
-
-    // Skip centering if user recently interacted (within 5 seconds)
-    if (userInteractionTimeRef.current) {
-      const timeSinceInteraction = Date.now() - userInteractionTimeRef.current;
-      if (timeSinceInteraction < 5000) return;
-    }
-
-    // Skip centering during initial easeTo animation (500ms + 100ms buffer)
-    if (Date.now() - initialNavViewTimeRef.current < 600) return;
-
-    // Center map on user position
-    map.setCenter([userLocation.longitude, userLocation.latitude]);
-  }, [map, isMapReady, isNavigating, userLocation, userInteractionTimeRef]);
-
-  // Effect: Set initial navigation view when entering navigation mode (one-shot)
-  useEffect(() => {
-    if (!map || !isMapReady || !isNavigating || !userLocation) return;
-    if (hasInitialNavViewRef.current) return;
-    hasInitialNavViewRef.current = true;
-    initialNavViewTimeRef.current = Date.now();
-
-    map.easeTo({
-      center: [userLocation.longitude, userLocation.latitude],
-      ...(heading !== null && { bearing: heading }),
-      pitch: 45,
-      zoom: 20,
-      duration: 500,
-    });
-  }, [isNavigating, map, isMapReady, userLocation, heading]);
-
-  // Re-center button handler (delegates to hook)
-  const handleRecenter = () => {
-    if (!map || !userLocation) return;
-    recenterMap(map, userLocation);
-  };
 
   return (
     <div className="app-container">
@@ -223,16 +147,6 @@ export default function App() {
                 isLoadingBlocks={blocks === undefined}
                 onSelectDestination={(dest) => {
                   setDestination(dest);
-                  setNavState(hasOrientationPermission ? "navigating" : "orientation-permission");
-                }}
-              />
-            ) : null}
-
-            {navState === "orientation-permission" ? (
-              <OrientationOverlay
-                key="orientation-permission"
-                onGrant={() => {
-                  setHasOrientationPermission(true);
                   setNavState("navigating");
                 }}
               />
@@ -241,7 +155,6 @@ export default function App() {
             {navState === "navigating" && !showArrivedModal ? (
               <NavigationOverlay
                 key="navigating"
-                map={map}
                 distanceRemaining={distanceRemaining}
                 destination={destination}
                 steps={steps}
@@ -249,8 +162,6 @@ export default function App() {
                 routeGeoJSON={routeGeoJSON}
                 userLocation={userLocation}
                 isRecalculating={isRecalculating}
-                isOffCenter={isOffCenter}
-                onRecenter={handleRecenter}
                 onCancel={() => {
                   setNavState("welcome");
                   setDestination(null);

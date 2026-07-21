@@ -1,11 +1,9 @@
-import type { Map as MaplibreMap } from "maplibre-gl";
 import { m } from "framer-motion";
 import { getDistanceAlongRoute, flattenCoordinates } from "../lib/geo";
 import type { UserLocation, Destination } from "../hooks/useMapSetup";
 import type { RouteStep, RouteGeometry, RouteSourceType } from "../hooks/useRouting";
 
 interface NavigationOverlayProps {
-  map: MaplibreMap | null;
   distanceRemaining: number;
   destination: Destination | null;
   steps: RouteStep[];
@@ -13,14 +11,11 @@ interface NavigationOverlayProps {
   routeGeoJSON: RouteGeometry | null;
   userLocation: UserLocation | null;
   isRecalculating: boolean;
-  isOffCenter: boolean;
-  onRecenter: () => void;
   onCancel: () => void;
 }
 
 // React Compiler handles memoization automatically
 export function NavigationOverlay({
-  map,
   distanceRemaining,
   destination,
   steps,
@@ -28,8 +23,6 @@ export function NavigationOverlay({
   routeGeoJSON,
   userLocation,
   isRecalculating,
-  isOffCenter,
-  onRecenter,
   onCancel,
 }: NavigationOverlayProps) {
   const formatDistance = (meters: number): string =>
@@ -80,21 +73,6 @@ export function NavigationOverlay({
     // Fall back to crow-flies if target is behind or calculation fails
     return dist > 0 ? dist : distanceRemaining;
   })();
-
-  // Zoom handlers - React Compiler handles memoization automatically
-  const handleZoomIn = () => {
-    if (map) {
-      const currentZoom = map.getZoom();
-      map.easeTo({ zoom: Math.min(currentZoom + 1, 20), duration: 200 });
-    }
-  };
-
-  const handleZoomOut = () => {
-    if (map) {
-      const currentZoom = map.getZoom();
-      map.easeTo({ zoom: Math.max(currentZoom - 1, 14), duration: 200 });
-    }
-  };
 
   return (
     <>
@@ -168,36 +146,6 @@ export function NavigationOverlay({
           {formatDistance(totalDistanceRemaining)}
         </div>
       </m.nav>
-
-      {/* Map controls — separate floating element */}
-      <div className="nav-map-controls">
-        {isOffCenter && (
-          <button
-            className="map-control-btn recenter-btn"
-            onClick={onRecenter}
-            aria-label="Re-center map (I-center muli ang mapa)"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="3" />
-              <line x1="12" y1="2" x2="12" y2="6" />
-              <line x1="12" y1="18" x2="12" y2="22" />
-              <line x1="2" y1="12" x2="6" y2="12" />
-              <line x1="18" y1="12" x2="22" y2="12" />
-            </svg>
-          </button>
-        )}
-        <button className="map-control-btn" onClick={handleZoomIn} aria-label="Zoom in">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </button>
-        <button className="map-control-btn" onClick={handleZoomOut} aria-label="Zoom out">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </button>
-      </div>
     </>
   );
 }

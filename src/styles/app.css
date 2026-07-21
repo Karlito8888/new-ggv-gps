@@ -479,37 +479,6 @@ textarea {
 }
 
 /* ===================================================================
-   ORIENTATION PERMISSION OVERLAY — overrides only
-   =================================================================== */
-
-.orientation-overlay {
-  background: var(--ggv-gradient-overlay);
-}
-
-/* Compass wobble animation (orientation-specific) */
-.orientation-icon-wrapper {
-  animation: compass-spin 4s linear infinite;
-}
-
-@keyframes compass-spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(15deg);
-  }
-  50% {
-    transform: rotate(0deg);
-  }
-  75% {
-    transform: rotate(-15deg);
-  }
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
-/* ===================================================================
    ARRIVED OVERLAY — overrides only
    =================================================================== */
 
@@ -754,44 +723,6 @@ textarea {
   flex-shrink: 0;
 }
 
-/* Map Controls (zoom, pitch) */
-.nav-map-controls {
-  position: fixed;
-  right: var(--ggv-space-md);
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: var(--ggv-space-sm);
-  z-index: var(--ggv-z-map-controls);
-}
-
-.map-control-btn {
-  width: var(--ggv-space-2xl);
-  height: var(--ggv-space-2xl);
-  border-radius: var(--ggv-radius-full);
-  border: none;
-  background: var(--ggv-color-surface);
-  color: var(--ggv-color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: var(--ggv-shadow-control);
-  transition: all var(--ggv-transition-normal);
-}
-
-.map-control-btn:active {
-  transform: scale(0.95);
-  background: var(--ggv-color-primary);
-  color: var(--ggv-color-surface);
-}
-
-.map-control-btn svg {
-  width: var(--ggv-space-lg);
-  height: var(--ggv-space-lg);
-}
-
 /* ===================================================================
    UPDATE TOAST (SW update notification)
    =================================================================== */
@@ -943,17 +874,6 @@ textarea {
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
 }
 
-/* Circle fallback when heading is unavailable */
-.user-location-arrow.no-heading {
-  clip-path: circle(50%);
-}
-
-/* Hide native GeolocateControl dot during navigation */
-.navigating .maplibregl-user-location-dot,
-.navigating .maplibregl-user-location-accuracy-circle {
-  display: none !important;
-}
-
 /* Custom destination marker — pin with pulse animation */
 .dest-marker-container {
   position: relative;
@@ -1005,29 +925,6 @@ textarea {
   }
   100% {
     box-shadow: 0 0 0 0 rgba(234, 67, 53, 0);
-  }
-}
-
-/* Re-center button — accent color + fade-in */
-.map-control-btn.recenter-btn {
-  background: var(--ggv-color-primary);
-  color: var(--ggv-color-surface);
-  animation: recenter-fade-in 0.2s ease-out;
-}
-
-.map-control-btn.recenter-btn:active {
-  background: var(--ggv-color-primary);
-  transform: scale(0.95);
-}
-
-@keyframes recenter-fade-in {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
   }
 }
 
