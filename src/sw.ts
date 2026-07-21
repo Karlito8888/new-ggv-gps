@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 // MyGGV GPS — Workbox Service Worker
-// 5-tier caching strategy for offline-first PWA
+// Multi-tier caching strategy for offline-first PWA
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null }>;
@@ -8,7 +8,7 @@ declare const self: ServiceWorkerGlobalScope & {
 
 import { precacheAndRoute } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
-import { CacheFirst, StaleWhileRevalidate, NetworkFirst } from "workbox-strategies";
+import { CacheFirst, NetworkFirst } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { RangeRequestsPlugin } from "workbox-range-requests";
 import { clientsClaim } from "workbox-core";
@@ -51,19 +51,6 @@ registerRoute(
   new CacheFirst({
     cacheName: "pmtiles-cache",
     plugins: [new RangeRequestsPlugin()],
-  })
-);
-
-// --- Tier 4: StaleWhileRevalidate (1h) for Supabase RPC ---
-registerRoute(
-  ({ url }) => url.hostname === "wlrrruemchacgyypexsu.supabase.co",
-  new StaleWhileRevalidate({
-    cacheName: "supabase-data",
-    plugins: [
-      new ExpirationPlugin({
-        maxAgeSeconds: 3600,
-      }),
-    ],
   })
 );
 

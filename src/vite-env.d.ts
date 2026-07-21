@@ -1,5 +1,12 @@
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+  readonly VITE_CONVEX_URL: string;
+}
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 // vite-plugin-pwa virtual module declarations
 declare module "virtual:pwa-register/react" {
   export interface RegisterSWOptions {

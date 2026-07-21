@@ -5,8 +5,8 @@ import { useMapSetup, updateDestinationMarker } from "./hooks/useMapSetup";
 import type { Destination } from "./hooks/useMapSetup";
 import { useRouting } from "./hooks/useRouting";
 import { useNavigation } from "./hooks/useNavigation";
-import { supabase } from "./lib/supabase";
-import { type Block } from "./types/blocks";
+import { useQuery } from "convex/react";
+import { anyApi } from "convex/server";
 import ggvLogo from "./assets/img/ggv.png";
 import { GpsPermissionOverlay } from "./components/GpsPermissionOverlay";
 import { WelcomeOverlay } from "./components/WelcomeOverlay";
@@ -37,40 +37,8 @@ export default function App() {
   const [hasOrientationPermission, setHasOrientationPermission] = useState(false);
   const [showArrivedModal, setShowArrivedModal] = useState(false);
 
-  // Blocks data (pre-loaded during GPS permission screen)
-  const [blocks, setBlocks] = useState<Block[]>([]);
-  const [isLoadingBlocks, setIsLoadingBlocks] = useState(true);
-  const [blocksError, setBlocksError] = useState<string | null>(null);
-
-  // Retry button handler (event handler — fresh closure on each render is fine)
-  const retryLoadBlocks = () => {
-    setBlocksError(null);
-    setIsLoadingBlocks(true);
-    supabase.rpc("get_blocks").then(({ data, error }) => {
-      if (error) {
-        console.error("Error fetching blocks:", error);
-        setBlocksError("Failed to load blocks");
-        setBlocks([]);
-      } else if (data) {
-        setBlocks(data);
-      }
-      setIsLoadingBlocks(false);
-    });
-  };
-
-  // Pre-load blocks on mount (fetch logic inlined per React docs — no unstable ref)
-  useEffect(() => {
-    supabase.rpc("get_blocks").then(({ data, error }) => {
-      if (error) {
-        console.error("Error fetching blocks:", error);
-        setBlocksError("Failed to load blocks");
-        setBlocks([]);
-      } else if (data) {
-        setBlocks(data);
-      }
-      setIsLoadingBlocks(false);
-    });
-  }, []);
+  // Blocks list from Convex (reactive; undefined while loading, auto-retries on reconnect)
+  const blocks = useQuery(anyApi.locations.blocks) as string[] | undefined;
 
   // Initialize map and GPS tracking
   const { map, userLocation, isMapReady, triggerGeolocate, userMarkerRef } =
@@ -255,10 +223,8 @@ export default function App() {
             {navState === "welcome" ? (
               <WelcomeOverlay
                 key="welcome"
-                blocks={blocks}
-                isLoadingBlocks={isLoadingBlocks}
-                blocksError={blocksError}
-                onRetryBlocks={retryLoadBlocks}
+                blocks={blocks ?? []}
+                isLoadingBlocks={blocks === undefined}
                 onSelectDestination={(dest) => {
                   setDestination(dest);
                   setNavState(hasOrientationPermission ? "navigating" : "orientation-permission");

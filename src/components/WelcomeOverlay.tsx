@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { m } from "framer-motion";
+import { useQuery } from "convex/react";
+import { anyApi } from "convex/server";
 import { overlayVariants, modalVariants } from "../lib/animations";
-import { supabase } from "../lib/supabase";
 import type { Destination } from "../hooks/useMapSetup";
-
-import { type Block } from "../types/blocks";
 
 interface LotData {
   lot: string;
@@ -15,67 +14,49 @@ interface LotData {
 }
 
 interface WelcomeOverlayProps {
-  blocks: Block[];
+  blocks: string[];
   isLoadingBlocks: boolean;
-  blocksError: string | null;
-  onRetryBlocks: () => void;
   onSelectDestination: (destination: Destination) => void;
 }
 
 export function WelcomeOverlay({
   blocks,
   isLoadingBlocks,
-  blocksError,
-  onRetryBlocks,
   onSelectDestination,
 }: WelcomeOverlayProps) {
   const [selectedBlock, setSelectedBlock] = useState("");
   const [selectedLot, setSelectedLot] = useState("");
-  const [lots, setLots] = useState<LotData[]>([]);
-  const [isLoadingLots, setIsLoadingLots] = useState(false);
 
-  // Handle block selection change - reset lots and start loading in event handler
+  // Lots (with coords) for the selected block — reactive Convex query (skips when no block)
+  const lots = useQuery(
+    anyApi.locations.lotsWithCoordsByBlock,
+    selectedBlock ? { block: selectedBlock } : "skip"
+  ) as LotData[] | undefined;
+  const isLoadingLots = !!selectedBlock && lots === undefined;
+  const lotList = lots ?? [];
+
+  // Derived selection: honour the user's pick when still valid, else default to the first lot.
+  // (Derive during render instead of a setState-in-effect — react.dev "You Might Not Need an Effect".)
+  const effectiveLot =
+    selectedLot && lotList.some((l) => l.lot === selectedLot)
+      ? selectedLot
+      : (lotList[0]?.lot ?? "");
+
   const handleBlockChange = (value: string) => {
     setSelectedBlock(value);
-    // Reset lots immediately when block changes (OK in event handler)
-    setLots([]);
     setSelectedLot("");
-    // Set loading state in handler to avoid setState in effect
-    if (value) {
-      setIsLoadingLots(true);
-    }
   };
 
-  // Fetch lots from Supabase when block changes (async only, no sync setState)
-  useEffect(() => {
-    if (!selectedBlock) return;
-
-    // Fetch is async - setState in .then() callback is OK
-    supabase.rpc("get_lots_by_block", { block_name: selectedBlock }).then(({ data, error }) => {
-      if (error) {
-        console.error("Error fetching lots:", error);
-        setLots([]);
-      } else if (data) {
-        setLots(data);
-        if (data.length > 0) {
-          setSelectedLot(data[0].lot);
-        }
-      }
-      setIsLoadingLots(false);
-    });
-  }, [selectedBlock]);
-
   const handleNavigate = () => {
-    if (selectedBlock && selectedLot) {
-      const lot = lots.find((l) => l.lot === selectedLot);
-      if (lot?.coordinates) {
-        // Coordinates stockées en jsonb : { lng, lat }
-        onSelectDestination({
-          type: "lot",
-          coordinates: [lot.coordinates.lng, lot.coordinates.lat],
-          name: `Block ${selectedBlock}, Lot ${selectedLot}`,
-        });
-      }
+    if (!selectedBlock || !effectiveLot) return;
+    const lot = lotList.find((l) => l.lot === effectiveLot);
+    if (lot?.coordinates) {
+      // Coordinates stored as { lng, lat }
+      onSelectDestination({
+        type: "lot",
+        coordinates: [lot.coordinates.lng, lot.coordinates.lat],
+        name: `Block ${selectedBlock}, Lot ${effectiveLot}`,
+      });
     }
   };
 
@@ -110,91 +91,74 @@ export function WelcomeOverlay({
         <h1>Choose Destination</h1>
         <p className="overlay-tagalog">(Pumili ng Destinasyon)</p>
 
-        {blocksError ? (
-          <div className="welcome-error">
-            <p className="welcome-error-text">
-              {blocksError}
-              <br />
-              <span className="welcome-error-tagalog">(Hindi ma-load ang mga block)</span>
-            </p>
-            <button className="welcome-retry-btn" onClick={onRetryBlocks}>
-              Retry (Subukan muli)
-            </button>
-          </div>
-        ) : (
-          <div className="welcome-block-selector">
-            <label htmlFor="block-select" className="sr-only">
-              Select Block
-            </label>
-            <select
-              id="block-select"
-              value={selectedBlock}
-              onChange={(e) => handleBlockChange(e.target.value)}
-              className="welcome-select"
-              disabled={isLoadingBlocks}
-            >
-              <option value="" disabled>
-                {isLoadingBlocks ? "Loading... (Nag-lo-load...)" : "Select Block (Pumili ng Block)"}
+        <div className="welcome-block-selector">
+          <label htmlFor="block-select" className="sr-only">
+            Select Block
+          </label>
+          <select
+            id="block-select"
+            value={selectedBlock}
+            onChange={(e) => handleBlockChange(e.target.value)}
+            className="welcome-select"
+            disabled={isLoadingBlocks}
+          >
+            <option value="" disabled>
+              {isLoadingBlocks ? "Loading... (Nag-lo-load...)" : "Select Block (Pumili ng Block)"}
+            </option>
+            {blocks.map((block) => (
+              <option key={block} value={block}>
+                Block {block}
               </option>
-              {blocks.map((block) => (
-                <option key={block.name} value={block.name}>
-                  Block {block.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+            ))}
+          </select>
+        </div>
 
-        {!blocksError && (
-          <>
-            <div className="welcome-block-selector">
-              <label htmlFor="lot-select" className="sr-only">
-                Select Lot
-              </label>
-              <select
-                id="lot-select"
-                value={selectedLot}
-                onChange={(e) => setSelectedLot(e.target.value)}
-                className="welcome-select"
-                disabled={!selectedBlock || isLoadingLots || lots.length === 0}
-              >
-                <option value="" disabled>
-                  {isLoadingLots
-                    ? "Loading... (Nag-lo-load...)"
-                    : !selectedBlock
-                      ? "Select a block first (Pumili muna ng Block)"
-                      : lots.length === 0
-                        ? "No lots available (Walang available na Lot)"
-                        : "Select Lot (Pumili ng Lot)"}
-                </option>
-                {lots.map((l) => (
-                  <option key={l.lot} value={l.lot}>
-                    Lot {l.lot}
-                  </option>
-                ))}
-              </select>
-            </div>
+        <div className="welcome-block-selector">
+          <label htmlFor="lot-select" className="sr-only">
+            Select Lot
+          </label>
+          <select
+            id="lot-select"
+            value={effectiveLot}
+            onChange={(e) => setSelectedLot(e.target.value)}
+            className="welcome-select"
+            disabled={!selectedBlock || isLoadingLots || lotList.length === 0}
+          >
+            <option value="" disabled>
+              {isLoadingLots
+                ? "Loading... (Nag-lo-load...)"
+                : !selectedBlock
+                  ? "Select a block first (Pumili muna ng Block)"
+                  : lotList.length === 0
+                    ? "No lots available (Walang available na Lot)"
+                    : "Select Lot (Pumili ng Lot)"}
+            </option>
+            {lotList.map((l) => (
+              <option key={l.lot} value={l.lot}>
+                Lot {l.lot}
+              </option>
+            ))}
+          </select>
+        </div>
 
-            <button
-              className="overlay-btn-primary"
-              onClick={handleNavigate}
-              disabled={!selectedBlock || !selectedLot || isLoadingLots}
-            >
-              <svg
-                className="overlay-btn-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polygon points="3 11 22 2 13 21 11 13 3 11" />
-              </svg>
-              Navigate
-            </button>
-          </>
-        )}
+        <button
+          className="overlay-btn-primary"
+          onClick={handleNavigate}
+          disabled={!selectedBlock || !effectiveLot || isLoadingLots}
+        >
+          <svg
+            className="overlay-btn-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>
+          Navigate
+        </button>
       </m.div>
     </m.div>
   );
