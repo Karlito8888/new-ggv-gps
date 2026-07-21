@@ -1,5 +1,6 @@
 import { useState, useEffect, useEffectEvent, useRef } from "react";
 import type { Map as MaplibreMap } from "maplibre-gl";
+import { computeCompassHeading, angularDelta, type OrientationReading } from "../lib/compass";
 
 interface UseDeviceOrientationReturn {
   heading: number | null;
@@ -81,11 +82,6 @@ export function useDeviceOrientation(
     map.on("zoomstart", onInteractionStart);
     map.on("zoomend", onInteractionEnd);
 
-    // Detect platform once (iOS uses webkitCompassHeading, Android uses alpha)
-    const DOE = DeviceOrientationEvent as unknown as DeviceOrientationEventWithPermission;
-    const isIOS =
-      typeof DeviceOrientationEvent !== "undefined" && typeof DOE.requestPermission === "function";
-
     const handler = (e: DeviceOrientationEvent) => {
       // Only rotate map when navigating (via useEffectEvent — always fresh value)
       if (!isNavigatingEvent()) return;
@@ -93,25 +89,15 @@ export function useDeviceOrientation(
       // Skip rotation if user is panning/zooming
       if (isUserInteracting) return;
 
-      // Calculate heading based on platform
-      let heading: number | undefined;
-      if (isIOS && e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
-        // iOS Safari: 0-360, 0=North, clockwise
-        heading = e.webkitCompassHeading;
-      } else if (!isIOS && e.alpha !== null) {
-        // Android Chrome: 0-360, counter-clockwise - need to invert
-        heading = (360 - e.alpha) % 360;
-      } else {
-        return;
-      }
+      // Compass heading (0=North, clockwise); null = relative/unusable reading.
+      const heading = computeCompassHeading(e as unknown as OrientationReading);
+      if (heading === null) return;
 
-      // Throttle updates
+      // Throttle: update at most every THROTTLE_MS AND only on a real move.
+      // (|| not &&: a fast turn must not bypass the rate limit → avoids the
+      // easeTo-cancels-easeTo jank that stalls rotation on high-rate sensors.)
       const now = Date.now();
-      const bearingDelta = Math.abs(heading - lastBearing);
-      // Handle wraparound (359° → 1° is only 2°, not 358°)
-      const wrappedDelta = Math.min(bearingDelta, 360 - bearingDelta);
-
-      if (now - lastUpdate < THROTTLE_MS && wrappedDelta < MIN_DELTA) {
+      if (now - lastUpdate < THROTTLE_MS || angularDelta(heading, lastBearing) < MIN_DELTA) {
         return;
       }
 
@@ -127,8 +113,10 @@ export function useDeviceOrientation(
       });
     };
 
-    // Only add ONE listener per platform (prevents double-firing)
-    const eventName = isIOS ? "deviceorientation" : "deviceorientationabsolute";
+    // Feature-detect the absolute-orientation event (Chrome/Android/Samsung);
+    // fall back to `deviceorientation` (iOS Safari + webkitCompassHeading).
+    const eventName =
+      "ondeviceorientationabsolute" in window ? "deviceorientationabsolute" : "deviceorientation";
     window.addEventListener(eventName, handler);
 
     return () => {
