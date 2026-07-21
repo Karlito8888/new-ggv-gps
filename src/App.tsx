@@ -18,11 +18,7 @@ import { UpdateToast } from "./components/UpdateToast";
 import arrivalBellSrc from "./assets/audio/arrival-bell.mp3";
 
 type NavState =
-  | "gps-permission"
-  | "welcome"
-  | "orientation-permission"
-  | "navigating"
-  | "exit-complete";
+  "gps-permission" | "welcome" | "orientation-permission" | "navigating" | "exit-complete";
 
 // Village exit coordinates (from CLAUDE.md)
 const VILLAGE_EXIT: [number, number] = [120.951863, 14.35098];
