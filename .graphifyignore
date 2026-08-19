@@ -1,8 +1,6 @@
-# Périmètre du graphe : le code de src/, rien d'autre.
-# Sans ce fichier, un `graphify update .` avale docs/ et _bmad-output/ — mesuré le
-# 2026-08-19 : 1346 nœuds dont 731 de _bmad-output (artefacts BMAD morts) et 196 de
-# docs/, contre 117 nœuds de code réel. Le marqueur interne `.graphify_scope` ne
-# suffit pas : il fait écrire la sortie dans src/graphify-out au lieu de la racine.
+# Périmètre du graphe graphify — reprise du marqueur graphify-out/.graphify_scope.
+# Voie documentée (README « Ignoring files ») : fusionnée avec .gitignore, évaluée
+# en dernier. Sans elle, un rebuild à la racine avale docs/ et artefacts d'outils.
 *
 !src/
 !src/**
