@@ -266,3 +266,10 @@ _bmad/
 # Tool caches (codegraph index, understand-anything graph)
 .codegraph/
 .ua/
+
+# graphify (index local, régénérable)
+graphify-out/
+
+# artefacts d'outillage local (index, hooks agents) — regenerables
+.githooks/post-commit
+.githooks/post-checkout
