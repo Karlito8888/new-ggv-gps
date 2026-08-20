@@ -19,3 +19,116 @@ Use `@/openspec/AGENTS.md` to learn:
 Keep this managed block so 'openspec update' can refresh the instructions.
 
 <!-- OPENSPEC:END -->
+
+# AGENTS.md — new-ggv-gps
+
+**Le projet en une phrase :** PWA React (pas d'Expo, pas de React Native) de navigation GPS dans
+Garden Grove Village (Philippines), servie sans install/inscription via QR code à l'entrée du
+village, MapLibre GL JS natif.
+
+## Ce qui n'est PAS ici
+
+| Quoi                                                                                                                                                      | Où                                 |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Règles de travail générales — vérifier avant d'affirmer, DRY/KISS/YAGNI, périmètre, échelle de doc officielle, outils obligatoires, git, accord explicite | `~/.omp/agent/RULES.md`            |
+| Le poste, les graphes de code, les workflows                                                                                                              | `~/.omp/agent/AGENTS.md`           |
+| Faits durables du projet — versions, gate mesuré, dettes, points ouverts                                                                                  | `~/.omp/agent/bank/new-ggv-gps.md` |
+
+## Stack — web uniquement
+
+Vite `^8.1.5` · React `^19.2.7` · Convex `^1.42.3` (client seul, `convex/react`) · `maplibre-gl`
+`^5.24.0` (bibliothèque **web** de MapLibre, pas le binding React Native) · TypeScript `^5.9.3` ·
+`vite-plugin-pwa` (Workbox) pour le mode hors-ligne.
+
+## ⚠️ Backend externe : ce dépôt n'en possède pas
+
+Il n'y a **aucun dossier `convex/` ici**. `src/main.tsx` ouvre un `ConvexProvider`
+**non authentifié** vers le déploiement Convex de **`~/Bureau/myggv`** :
+
+```ts
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL);
+```
+
+Deux fonctions publiques de myggv sont appelées, en `anyApi` (pas de types générés localement,
+donc `tsc` ne peut pas attraper une signature qui change côté serveur) :
+
+- `anyApi.locations.blocks` — `src/App.tsx`, liste des blocs du village.
+- `anyApi.locations.lotsWithCoordsByBlock` — `src/components/WelcomeOverlay.tsx`, lots + coords
+  d'un bloc (`useQuery(..., selectedBlock ? { block } : "skip")`).
+
+**Si `myggv/convex/locations.ts` ajoute une garde d'authentification sur l'une de ces deux
+fonctions**, cette app casse en silence : les `useQuery` restent indéfiniment `undefined`
+(pas d'erreur visible, juste un écran de sélection de bloc vide) puisqu'il n'y a ici ni Clerk
+ni aucun `ConvexProviderWithAuth`. `myggv/AGENTS.md` documente déjà cette dépendance dans l'autre
+sens — les deux fichiers doivent rester synchronisés si l'une des deux queries change de nom ou
+de contrat.
+
+`VITE_CONVEX_URL` pointe le déploiement **production** de myggv (`.env.production`, committé —
+ce n'est pas un secret, juste une URL d'endpoint ; le build CI (`deploy.yml`) le charge donc sans
+avoir besoin de le passer en variable GitHub).
+
+## Machine à états de navigation — 4 états
+
+`src/App.tsx`, un seul `useState`, pas de router :
+
+```
+gps-permission → welcome → navigating → exit-complete
+```
+
+Pas d'état `orientation-permission` : la caméra n'utilise plus le compas de l'appareil.
+`useCourseUpCamera` (`src/hooks/useCourseUpCamera.ts`) dérive le cap de la **direction GPS**
+(`GeolocationCoordinates.heading`, lissée par `nextBearing` dans `src/lib/course.ts`), pas d'un
+capteur d'orientation — robuste sur Android/Samsung/iOS sans permission compas à demander.
+L'arrivée n'est pas un état : `showArrivedModal` flotte par-dessus `"navigating"`, la carte reste
+interactive (GPS, caméra course-up et gestes continuent).
+
+## Routing — 3 paliers en cascade (`src/lib/routing.ts` + `src/hooks/useRouting.ts`)
+
+1. **OSRM** (router.project-osrm.org) — primaire, gratuit.
+2. **OpenRouteService** — repli, nécessite `VITE_OPENROUTE_API_KEY` (optionnelle).
+3. **Ligne directe** — dernier recours (cap seul).
+
+Recalcul si l'utilisateur bouge de plus de `RECALC_THRESHOLD_M`, immédiat si la destination
+change, débounce `DEBOUNCE_MS` sur les positions GPS, retries OSRM en arrière-plan avec backoff
+`RETRY_DELAYS`. Seuil d'arrivée : `ARRIVAL_THRESHOLD_M` (15 m) dans `useNavigation.ts`.
+
+## Gate
+
+```bash
+bun run gate
+```
+
+= `tsc --noEmit && bun run lint && bun run format:check && bun run test` (vitest). Vert, ~15 s —
+mais **4 fichiers de test** (`course`, `geo`, `navigation`, `routing`, tous dans `src/lib/`) pour
+192 commits : ils couvrent la logique pure, **rien** de `App.tsx`, `useMapSetup.ts`,
+`useRouting.ts` (l'effet, pas la fonction pure) ni `useCourseUpCamera.ts`. Un test vert ne prouve
+pas que la navigation ou la requête Convex fonctionnent réellement — testé manuellement sur
+Chrome Android / Safari iOS.
+
+`.prettierignore` ignore `archon-out/` : Archon y écrit son propre `.gitignore` (`*`) que prettier
+ne lit jamais — sans cette ligne le gate rougit sur les rapports d'audit.
+
+## Déploiement
+
+`deploy.yml` (push sur `main`) : `bun run build` → FTP vers Hostinger
+(`myggvgps.charlesbourgault.com`, LiteSpeed, `public/.htaccess` gère le SPA fallback et les
+en-têtes de sécurité). `quality.yml` fait tourner le gate plus un scan Semgrep
+(`p/owasp-top-ten`, `p/security-audit`, `p/typescript`, `p/react`) sur chaque push/PR vers `main`.
+
+## Bibliothèques interdites (vérifié absentes du code)
+
+`react-map-gl`, `@turf/turf`, `react-router-dom`, `Context`/`Redux`/`Zustand` — 100 % MapLibre
+natif, état local (`useState`), pas de gestion d'état globale.
+
+## Langues
+
+- **Communication avec le dev** : français.
+- **Contenu de l'app** : anglais **+ traduction tagalog courte** (public : résidents philippins
+  de Garden Grove Village), ex. `<h1>Enable Location</h1><p>(I-enable ang Lokasyon)</p>`.
+
+## Données du village
+
+`VILLAGE_CENTER` (`useMapSetup.ts`) et `VILLAGE_EXIT` (`App.tsx`) sont des coordonnées codées en
+dur, pas lues depuis Convex. `src/data/blocks.ts` porte les polygones de blocs en statique
+(GeoJSON) — la liste des blocs et lots vient, elle, de Convex (voir plus haut) : deux sources de
+vérité pour la géométrie village, à garder synchronisées à la main.
