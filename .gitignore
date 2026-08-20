@@ -273,3 +273,7 @@ graphify-out/
 # artefacts d'outillage local (index, hooks agents) — regenerables
 .githooks/post-commit
 .githooks/post-checkout
+
+# Archon : seul config.yaml est partagé ; artifacts/, logs/ et state/ sont locaux.
+.archon/*
+!.archon/config.yaml
