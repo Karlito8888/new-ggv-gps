@@ -15,5 +15,5 @@
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts", "eslint.config.js"],
-  "exclude": ["node_modules", "dist", "public", "_bmad", "_bmad-output", "docs"]
+  "exclude": ["node_modules", "dist", "public", "_bmad"]
 }

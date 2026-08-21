@@ -49,13 +49,10 @@ coverage/
 
 # Project-specific
 _bmad/
-_bmad-output/
-docs/
 scripts/temp/
 
 # Generated / large JSON
 public/sprites/*.json
-LIGHTHOUSE-AUDIT.md
 
 # Sorties d'outillage : ces dossiers portent leur propre .gitignore (`*`), mais
 # prettier n'en lit aucun — sans ces lignes le gate rougit sur des rapports d'audit.

@@ -260,8 +260,6 @@ dev-dist/
 
 # BMAD (editorial/markdown tools)
 _bmad/
-# _bmad-output/ versioned — contains planning artifacts (PRD, architecture, epics)
-
 
 # Tool caches (codegraph index, understand-anything graph)
 .codegraph/
