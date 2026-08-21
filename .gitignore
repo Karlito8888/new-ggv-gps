@@ -258,9 +258,6 @@ index.scip
 # Dev dist
 dev-dist/
 
-# BMAD (editorial/markdown tools)
-_bmad/
-
 # Tool caches (codegraph index, understand-anything graph)
 .codegraph/
 .ua/

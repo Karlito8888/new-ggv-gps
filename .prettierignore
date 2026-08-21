@@ -47,10 +47,6 @@ coverage/
 .firebase/
 .turbo/
 
-# Project-specific
-_bmad/
-scripts/temp/
-
 # Generated / large JSON
 public/sprites/*.json
 
