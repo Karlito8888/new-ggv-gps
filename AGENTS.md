@@ -76,15 +76,16 @@ change, débounce `DEBOUNCE_MS` sur les positions GPS, retries OSRM en arrière-
 bun run gate
 ```
 
-= `tsc --noEmit && bun run lint && bun run format:check && bun run test` (vitest). Vert, ~15 s —
-mais **4 fichiers de test** (`course`, `geo`, `navigation`, `routing`, tous dans `src/lib/`) pour
-192 commits : ils couvrent la logique pure, **rien** de `App.tsx`, `useMapSetup.ts`,
-`useRouting.ts` (l'effet, pas la fonction pure) ni `useCourseUpCamera.ts`. Un test vert ne prouve
-pas que la navigation ou la requête Convex fonctionnent réellement — testé manuellement sur
-Chrome Android / Safari iOS.
+= `tsc --noEmit && bun run lint && bun run format:check && bun run test` (vitest). Vert, ~9 s —
+mais **4 fichiers de test seulement**, dans `src/__tests__/` (`course`, `geo`, `navigation`,
+`routing`) : ils couvrent les fonctions pures de `src/lib/`, **rien** de `App.tsx`,
+`useMapSetup.ts`, `useRouting.ts` (l'effet, pas la fonction pure), `useCourseUpCamera.ts` ni
+`fetchWithTimeout`. Un test vert ne prouve pas que la navigation ou la requête Convex
+fonctionnent réellement — testé manuellement sur Chrome Android / Safari iOS.
 
-`.prettierignore` ignore `archon-out/` : Archon y écrit son propre `.gitignore` (`*`) que prettier
-ne lit jamais — sans cette ligne le gate rougit sur les rapports d'audit.
+`.prettierignore` doit garder `archon-out/` et `flow-out/` : ces dossiers portent leur propre
+`.gitignore` (`*`) que prettier ne lit jamais — sans ces lignes le gate rougit sur les rapports
+d'audit.
 
 ## Déploiement
 
