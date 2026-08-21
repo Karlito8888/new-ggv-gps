@@ -5,7 +5,7 @@
 
 import type { Map as MaplibreMap, GeoJSONSource } from "maplibre-gl";
 import type { Geometry } from "geojson";
-import type { OSRMResponse, ORSResponse, OSRMManeuver } from "../types/routing";
+import type { OSRMResponse, OSRMManeuver } from "../types/routing";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -21,8 +21,8 @@ export interface RouteStep {
 }
 
 export interface RouteGeometry {
-  type: "LineString" | "MultiLineString";
-  coordinates: [number, number][] | [number, number][][];
+  type: "LineString";
+  coordinates: [number, number][];
 }
 
 export interface RouteResult {
@@ -31,14 +31,20 @@ export interface RouteResult {
   steps?: RouteStep[];
 }
 
-export type RouteSourceType = "osrm" | "ors" | "direct";
+export type RouteSourceType = "osrm" | "direct";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-/** ORS API key from environment */
-const ORS_API_KEY = import.meta.env.VITE_OPENROUTE_API_KEY as string | undefined;
+/**
+ * OSRM hosts tried in order. Both speak the same v1 API, so one parser covers both:
+ * FOSSGIS is the fallback when the demo server is down or rate-limiting.
+ */
+export const OSRM_HOSTS = [
+  "https://router.project-osrm.org/route/v1/foot",
+  "https://routing.openstreetmap.de/routed-foot/route/v1/foot",
+] as const;
 
 /** Request timeout (3 seconds to fail fast) */
 export const REQUEST_TIMEOUT_MS = 3000;
@@ -147,15 +153,16 @@ export function fetchWithTimeout(url: string, signal?: AbortSignal): Promise<Res
   return fetch(url, { signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
 }
 
-// OSRM routing (primary)
+// OSRM routing — `host` comes from OSRM_HOSTS
 export async function fetchOSRM(
+  host: string,
   originLng: number,
   originLat: number,
   destLng: number,
   destLat: number,
   signal?: AbortSignal
 ): Promise<RouteResult | null> {
-  const url = `https://router.project-osrm.org/route/v1/foot/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
+  const url = `${host}/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
   const res = await fetchWithTimeout(url, signal);
   const data: OSRMResponse = await res.json();
 
@@ -178,30 +185,6 @@ export async function fetchOSRM(
       geometry: route.geometry,
       distance: route.distance,
       steps,
-    };
-  }
-  return null;
-}
-
-// OpenRouteService routing (fallback)
-export async function fetchORS(
-  originLng: number,
-  originLat: number,
-  destLng: number,
-  destLat: number,
-  signal?: AbortSignal
-): Promise<RouteResult | null> {
-  if (!ORS_API_KEY) return null;
-
-  const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${ORS_API_KEY}&start=${originLng},${originLat}&end=${destLng},${destLat}`;
-  const res = await fetchWithTimeout(url, signal);
-  const data: ORSResponse = await res.json();
-
-  if (data.features?.[0]) {
-    const feature = data.features[0];
-    return {
-      geometry: feature.geometry,
-      distance: feature.properties.summary.distance,
     };
   }
   return null;

@@ -20,8 +20,6 @@ jobs:
       - run: bun install --frozen-lockfile
 
       - run: bun run build
-        env:
-          VITE_OPENROUTE_API_KEY: ${{ secrets.VITE_OPENROUTE_API_KEY }}
 
       - name: Deploy to Hostinger via FTP
         uses: SamKirkland/FTP-Deploy-Action@fe9c9aad1198372d80a77c8dace63cbe48b69eac # v4.3.6

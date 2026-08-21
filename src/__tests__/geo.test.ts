@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getDistance, projectPointOnLine, flattenCoordinates } from "../lib/geo";
+import { getDistance, projectPointOnLine } from "../lib/geo";
 
 // Known coordinate: Garden Grove Village center
 const GGV_CENTER: [number, number] = [120.9513, 14.3479]; // [lng, lat]
@@ -103,52 +103,5 @@ describe("projectPointOnLine", () => {
     // Point near the corner — closer to vertical segment (index 1)
     const result = projectPointOnLine(120.9605, 14.351, line);
     expect(result.segmentIndex).toBe(1);
-  });
-});
-
-describe("flattenCoordinates", () => {
-  test("flattens LineString coordinates", () => {
-    const coords: [number, number][] = [
-      [120.95, 14.35],
-      [120.96, 14.36],
-    ];
-    const result = flattenCoordinates({
-      type: "LineString",
-      coordinates: coords,
-    });
-    expect(result).toEqual(coords);
-  });
-
-  test("flattens MultiLineString coordinates", () => {
-    const multiCoords: [number, number][][] = [
-      [
-        [120.95, 14.35],
-        [120.96, 14.36],
-      ],
-      [
-        [120.97, 14.37],
-        [120.98, 14.38],
-      ],
-    ];
-    const result = flattenCoordinates({
-      type: "MultiLineString",
-      coordinates: multiCoords,
-    });
-    expect(result).toHaveLength(4);
-    expect(result[0]).toEqual([120.95, 14.35]);
-    expect(result[3]).toEqual([120.98, 14.38]);
-  });
-
-  test("handles single-segment MultiLineString", () => {
-    const result = flattenCoordinates({
-      type: "MultiLineString",
-      coordinates: [
-        [
-          [120.95, 14.35],
-          [120.96, 14.36],
-        ],
-      ],
-    });
-    expect(result).toHaveLength(2);
   });
 });

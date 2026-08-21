@@ -1,5 +1,5 @@
 import { m } from "framer-motion";
-import { getDistanceAlongRoute, flattenCoordinates } from "../lib/geo";
+import { getDistanceAlongRoute } from "../lib/geo";
 import type { UserLocation, Destination } from "../hooks/useMapSetup";
 import type { RouteStep, RouteGeometry, RouteSourceType } from "../hooks/useRouting";
 
@@ -28,10 +28,7 @@ export function NavigationOverlay({
   const formatDistance = (meters: number): string =>
     meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
 
-  // Flatten route coordinates once for reuse
-  const routeCoords: [number, number][] | null = routeGeoJSON?.coordinates
-    ? flattenCoordinates(routeGeoJSON)
-    : null;
+  const routeCoords: [number, number][] | null = routeGeoJSON?.coordinates ?? null;
 
   // Calculate current step using distance along route (not crow-flies)
   const currentStep = (() => {

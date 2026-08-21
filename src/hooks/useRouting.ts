@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import type { Map as MaplibreMap } from "maplibre-gl";
-import { getDistance, projectPointOnLine, flattenCoordinates } from "../lib/geo";
+import { getDistance, projectPointOnLine } from "../lib/geo";
 import {
   fetchOSRM,
-  fetchORS,
+  OSRM_HOSTS,
   clearMapRoute,
   updateMapRoute,
   DEBOUNCE_MS,
@@ -118,37 +118,27 @@ export function useRouting(
       abortRef.current = new AbortController();
       const signal = abortRef.current.signal;
 
-      let route: RouteResult | null = null;
-
-      // 1. Try OSRM (primary)
-      try {
-        route = await fetchOSRM(originLng!, originLat!, destLng!, destLat!, signal);
-        if (route) {
-          console.info("Route: OSRM");
-          applyRoute(route, "osrm");
-          return;
-        }
-      } catch (e) {
-        if (signal.aborted) return; // New cycle started, exit cleanly
-        console.warn("OSRM failed:", e instanceof Error ? e.message : e);
-      }
-
-      // 2. Try ORS (fallback)
-      if (!signal.aborted) {
+      // 1. Try each OSRM host in order
+      for (const host of OSRM_HOSTS) {
+        if (signal.aborted) return;
         try {
-          route = await fetchORS(originLng!, originLat!, destLng!, destLat!, signal);
+          const route = await fetchOSRM(host, originLng!, originLat!, destLng!, destLat!, signal);
           if (route) {
-            console.info("Route: ORS (fallback)");
-            applyRoute(route, "ors");
+            console.info(`Route: OSRM (${new URL(host).hostname})`);
+            applyRoute(route, "osrm");
             return;
           }
         } catch (e) {
           if (signal.aborted) return; // New cycle started, exit cleanly
-          console.warn("ORS failed:", e instanceof Error ? e.message : e);
+          console.warn(
+            `OSRM failed (${new URL(host).hostname}):`,
+            e instanceof Error ? e.message : e
+          );
         }
       }
 
-      // 3. Fallback: direct line (ALWAYS reached unless signal aborted)
+      // 2. Fallback: direct line (ALWAYS reached unless signal aborted)
+
       if (signal.aborted) return;
 
       console.info("Route: Direct line (fallback)");
@@ -192,7 +182,7 @@ export function useRouting(
   // Derive off-route status (pure computation — no state, no effect)
   const isOffRoute = (() => {
     if (!hasValidParams || !originLat || !originLng || !fullRoute) return false;
-    const flatCoords = flattenCoordinates(fullRoute);
+    const flatCoords = fullRoute.coordinates;
     if (flatCoords.length < 2) return false;
     const projection = projectPointOnLine(originLng, originLat, flatCoords);
     return projection.deviationDistance > OFF_ROUTE_THRESHOLD_M;
@@ -202,7 +192,7 @@ export function useRouting(
   useEffect(() => {
     if (!map || !originLat || !originLng || !fullRoute) return;
 
-    const flatCoords = flattenCoordinates(fullRoute);
+    const flatCoords = fullRoute.coordinates;
     if (flatCoords.length < 2) return;
 
     const projection = projectPointOnLine(originLng, originLat, flatCoords);

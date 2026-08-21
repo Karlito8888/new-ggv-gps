@@ -54,11 +54,11 @@ registerRoute(
   })
 );
 
-// --- Tier 5: NetworkFirst (3s) for routing APIs ---
+// --- Tier 5: NetworkFirst (3s) for the OSRM routing hosts ---
 registerRoute(
   ({ url }) =>
     url.hostname.includes("router.project-osrm.org") ||
-    url.hostname.includes("api.openrouteservice.org"),
+    url.hostname.includes("routing.openstreetmap.de"),
   new NetworkFirst({
     cacheName: "routing-api",
     networkTimeoutSeconds: 3,

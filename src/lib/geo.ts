@@ -139,17 +139,3 @@ export function getDistanceAlongRoute(
 
   return totalDistance;
 }
-
-/**
- * Flatten LineString or MultiLineString coordinates to a simple coordinate array.
- * Handles both OSRM (LineString) and ORS (MultiLineString) geometries.
- */
-export function flattenCoordinates(geometry: {
-  type: "LineString" | "MultiLineString";
-  coordinates: [number, number][] | [number, number][][];
-}): [number, number][] {
-  if (geometry.type === "MultiLineString") {
-    return (geometry.coordinates as [number, number][][]).flat();
-  }
-  return geometry.coordinates as [number, number][];
-}

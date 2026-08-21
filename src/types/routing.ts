@@ -1,9 +1,8 @@
 /**
- * Type definitions for routing API responses (OSRM and ORS).
- * These interfaces describe the subset of the API response that we actually use.
+ * Type definitions for the OSRM Route API response.
+ * Only the subset the app actually reads is described here.
  *
  * OSRM docs: http://project-osrm.org/docs/v5.24.0/api/#route-service
- * ORS docs: https://openrouteservice.org/dev/#/api-docs/v2/directions/{profile}/post
  */
 
 // =====================================================================
@@ -38,32 +37,3 @@ export interface OSRMManeuver {
   modifier?: string;
   location: [number, number];
 }
-
-// =====================================================================
-// OpenRouteService (ORS) Directions API response
-// =====================================================================
-
-export interface ORSResponse {
-  features: ORSFeature[];
-}
-
-export interface ORSFeature {
-  type: "Feature";
-  geometry: ORSGeometry;
-  properties: {
-    summary: {
-      distance: number;
-      duration: number;
-    };
-  };
-}
-
-export type ORSGeometry =
-  | {
-      type: "LineString";
-      coordinates: [number, number][];
-    }
-  | {
-      type: "MultiLineString";
-      coordinates: [number, number][][];
-    };

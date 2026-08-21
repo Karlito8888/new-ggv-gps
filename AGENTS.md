@@ -60,11 +60,14 @@ capteur d'orientation — robuste sur Android/Samsung/iOS sans permission compas
 L'arrivée n'est pas un état : `showArrivedModal` flotte par-dessus `"navigating"`, la carte reste
 interactive (GPS, caméra course-up et gestes continuent).
 
-## Routing — 3 paliers en cascade (`src/lib/routing.ts` + `src/hooks/useRouting.ts`)
+## Routing — 3 tentatives en cascade (`src/lib/routing.ts` + `src/hooks/useRouting.ts`)
 
-1. **OSRM** (router.project-osrm.org) — primaire, gratuit.
-2. **OpenRouteService** — repli, nécessite `VITE_OPENROUTE_API_KEY` (optionnelle).
+1. **OSRM** `router.project-osrm.org` — primaire.
+2. **OSRM** `routing.openstreetmap.de/routed-foot` (FOSSGIS) — même API v1, donc `parseManeuver`
+   et `OSRMResponse` couvrent les deux ; `OSRM_HOSTS` porte la liste, l'ordre fait la cascade.
 3. **Ligne directe** — dernier recours (cap seul).
+
+**Le routage ne consomme aucune clé d'API**, donc aucun secret CI : les deux hôtes sont publics.
 
 Recalcul si l'utilisateur bouge de plus de `RECALC_THRESHOLD_M`, immédiat si la destination
 change, débounce `DEBOUNCE_MS` sur les positions GPS. Une fois retombé sur la ligne directe, le
