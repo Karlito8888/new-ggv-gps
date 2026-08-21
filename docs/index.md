@@ -34,7 +34,7 @@
 - `src/hooks/useRouting.js` — OSRM/ORS/direct route (374 LOC)
 - `src/hooks/useNavigation.js` — Arrival detection (34 LOC, pure)
 - `src/lib/geo.js` — Haversine + route projection (174 LOC)
-- `CLAUDE.md` — Authoritative architecture reference
+- `AGENTS.md` — Authoritative architecture reference
 
 ---
 
@@ -58,8 +58,7 @@
 
 | Document | Description |
 |---|---|
-| [CLAUDE.md](../CLAUDE.md) | AI developer guide — source of truth for architecture |
-| [AGENTS.md](../AGENTS.md) | AI agent instructions |
+| [AGENTS.md](../AGENTS.md) | AI developer guide — source of truth for architecture |
 | [README.md](../README.md) | Public project readme |
 | [.env.example](../.env.example) | Environment variable template |
 | [netlify.toml](../netlify.toml) | Netlify deployment configuration |
@@ -82,7 +81,7 @@ bun run dev  # → http://localhost:5173
 ```
 
 **Required reading:**
-1. [CLAUDE.md](../CLAUDE.md) — Architecture, conventions, workflows
+1. [AGENTS.md](../AGENTS.md) — Architecture, conventions, workflows
 2. [Architecture](./architecture.md) — System design
 3. [Development Guide](./development-guide.md) — Setup + commands
 
@@ -93,7 +92,7 @@ Start with this index, then:
 - **Making UI changes:** Read [Component Inventory](./component-inventory.md)
 - **Modifying routing/GPS:** Read [Code Analysis §3 State Management](./code-analysis.md) + [API Contracts](./api-contracts.md)
 - **Deployment changes:** Read [Deployment Guide](./deployment-guide.md)
-- **Adding features:** Always check [CLAUDE.md](../CLAUDE.md) for conventions first
+- **Adding features:** Always check [AGENTS.md](../AGENTS.md) for conventions first
 
 ### Key Architecture Constraints
 - **No react-map-gl** — direct MapLibre GL JS only

@@ -105,8 +105,7 @@ new-ggv-gps/                          # Project root
 ├── eslint.config.js                  # ESLint flat config (v9)
 ├── .prettierrc.json                  # Prettier config
 ├── .env.example                      # Environment variable template
-├── CLAUDE.md                         # ★ AI dev guide (source of truth for architecture)
-├── AGENTS.md                         # AI agent instructions
+├── AGENTS.md                         # ★ AI dev guide (source of truth for architecture)
 └── README.md                         # Public project readme
 ```
 

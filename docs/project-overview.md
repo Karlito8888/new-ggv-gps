@@ -84,7 +84,7 @@ new-ggv-gps/
 ├── index.html           # HTML shell + CSP + PWA meta
 ├── vite.config.js       # Build configuration
 ├── netlify.toml         # Deployment configuration
-└── CLAUDE.md            # Authoritative architecture reference
+└── AGENTS.md            # Authoritative architecture reference
 ```
 
 ---
@@ -121,4 +121,4 @@ See [Development Guide](./development-guide.md) for full setup instructions.
 | Source Tree | [docs/source-tree-analysis.md](./source-tree-analysis.md) |
 | Dev Guide | [docs/development-guide.md](./development-guide.md) |
 | Deploy Guide | [docs/deployment-guide.md](./deployment-guide.md) |
-| AI Dev Guide | [CLAUDE.md](../CLAUDE.md) |
+| AI Dev Guide | [AGENTS.md](../AGENTS.md) |

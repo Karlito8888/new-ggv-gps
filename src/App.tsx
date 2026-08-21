@@ -18,7 +18,7 @@ import arrivalBellSrc from "./assets/audio/arrival-bell.mp3";
 
 type NavState = "gps-permission" | "welcome" | "navigating" | "exit-complete";
 
-// Village exit coordinates (from CLAUDE.md)
+// Village exit coordinates (from AGENTS.md)
 const VILLAGE_EXIT: [number, number] = [120.951863, 14.35098];
 
 export default function App() {
