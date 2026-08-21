@@ -9,10 +9,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "isolatedModules": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts", "eslint.config.js"],
   "exclude": ["node_modules", "dist", "public"]

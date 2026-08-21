@@ -46,9 +46,6 @@ export const REQUEST_TIMEOUT_MS = 3000;
 /** Debounce delay for origin changes (prevents API spam when GPS updates rapidly) */
 export const DEBOUNCE_MS = 500;
 
-/** Retry delays for OSRM when it fails (exponential backoff) */
-export const RETRY_DELAYS = [10000, 30000, 60000]; // 10s, 30s, 60s
-
 /** Route recalculation threshold */
 export const RECALC_THRESHOLD_M = 30;
 
@@ -249,7 +246,6 @@ export function updateMapRoute(map: MaplibreMap, geometry: RouteGeometry): void 
     map.addSource("route", {
       type: "geojson",
       data: geometry as Geometry,
-      lineMetrics: true,
     });
 
     // Shadow/outline layer (below route line)

@@ -2,7 +2,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
-import { fileURLToPath, URL } from "node:url";
 import { readFileSync } from "node:fs";
 
 // Read version from package.json
@@ -16,11 +15,7 @@ export default defineConfig({
   base: "/",
   build: {
     chunkSizeWarningLimit: 1100, // MapLibre chunk is inherently ~1MB
-    outDir: "dist",
-    sourcemap: false, // Disable for production
     target: "esnext", // Optimize for modern smartphones
-    cssCodeSplit: true, // Split CSS for better caching
-    minify: "oxc", // Oxc minifier (default in Vite 8)
     modulePreload: {
       polyfill: false, // Modern browsers support modulepreload natively
     },
@@ -68,11 +63,6 @@ export default defineConfig({
       },
     }),
   ],
-  resolve: {
-    alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
-    },
-  },
   preview: {
     port: 5173,
     strictPort: true,

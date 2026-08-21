@@ -16,10 +16,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview",
-    "serve": "vite preview --port 3000",
-    "release:patch": "npm version patch && git push && git push --tags",
-    "release:minor": "npm version minor && git push && git push --tags",
-    "release:major": "npm version major && git push && git push --tags"
+    "serve": "vite preview --port 3000"
   },
   "engines": {
     "node": ">=20.19.0"
