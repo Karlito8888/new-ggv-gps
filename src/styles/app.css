@@ -439,45 +439,6 @@ textarea {
   box-shadow: 0 0 0 3px rgba(80, 170, 97, 0.15);
 }
 
-/* Error state in Welcome overlay */
-.welcome-error {
-  padding: var(--ggv-space-md);
-  background: var(--ggv-color-error-bg);
-  border-radius: var(--ggv-radius-md);
-  border-left: 4px solid var(--ggv-color-error);
-  margin-bottom: var(--ggv-space-lg);
-}
-
-.welcome-error-text {
-  color: var(--ggv-color-error-darkest);
-  font-weight: var(--ggv-font-weight-semibold);
-  margin-bottom: var(--ggv-space-xs);
-}
-
-.welcome-error-tagalog {
-  display: block;
-  color: var(--ggv-color-error-dark);
-  font-style: italic;
-  font-size: var(--ggv-font-size-sm);
-}
-
-.welcome-retry-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background: var(--ggv-color-error);
-  color: var(--ggv-color-surface-white);
-  border: none;
-  border-radius: var(--ggv-radius-sm);
-  font-weight: var(--ggv-font-weight-semibold);
-  cursor: pointer;
-  margin-top: 0.75rem;
-  transition: background var(--ggv-transition-normal);
-}
-
-.welcome-retry-btn:hover {
-  background: var(--ggv-color-error-dark);
-}
-
 /* ===================================================================
    ARRIVED OVERLAY — overrides only
    =================================================================== */
