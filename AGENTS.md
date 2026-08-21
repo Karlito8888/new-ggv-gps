@@ -103,6 +103,13 @@ en-têtes de sécurité). `quality.yml` fait tourner le gate plus un scan Semgre
 `react-map-gl`, `@turf/turf`, `react-router-dom`, `Context`/`Redux`/`Zustand` — 100 % MapLibre
 natif, état local (`useState`), pas de gestion d'état globale.
 
+**Aucune bibliothèque d'animation** non plus. Les animations d'entrée sont des `@keyframes`
+CSS dans `app.css`, dont les trois courbes de ressort (`--ggv-spring-modal|slide|pill`) sont
+les anciens ressorts framer-motion portés à l'identique en `linear()`. Il n'y a **pas**
+d'animation de sortie : elle exigerait `@starting-style`, absent du Safari 16.4 que
+`target: "esnext"` inclut encore. `@media (prefers-reduced-motion: reduce)` (`app.css`) les
+neutralise toutes.
+
 ## Langues
 
 - **Communication avec le dev** : français.

@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { m } from "framer-motion";
-import { overlayVariants, modalVariants } from "../lib/animations";
 
 interface GpsPermissionOverlayProps {
   onGrant: () => void;
@@ -33,17 +31,13 @@ export function GpsPermissionOverlay({
   };
 
   return (
-    <m.div
+    <div
       className="overlay gps-overlay"
       role="dialog"
       aria-modal="true"
       aria-label="Enable GPS Location"
-      variants={overlayVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
     >
-      <m.div className="modal gps-modal" variants={modalVariants}>
+      <div className="modal gps-modal">
         {/* GPS Icon with pulse animation */}
         <div className="overlay-icon-wrapper">
           <svg
@@ -101,7 +95,7 @@ export function GpsPermissionOverlay({
         </button>
 
         <p className="gps-version">v{__APP_VERSION__}</p>
-      </m.div>
-    </m.div>
+      </div>
+    </div>
   );
 }

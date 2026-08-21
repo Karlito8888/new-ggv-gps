@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, startTransition } from "react";
 import { useCourseUpCamera } from "./hooks/useCourseUpCamera";
-import { LazyMotion, domAnimation, AnimatePresence, MotionConfig } from "framer-motion";
 import { useMapSetup, updateDestinationMarker } from "./hooks/useMapSetup";
 import type { Destination } from "./hooks/useMapSetup";
 import { useRouting } from "./hooks/useRouting";
@@ -128,74 +127,62 @@ export default function App() {
       <img src={ggvLogo} alt="GGV" role="img" className="ggv-logo" />
 
       {/* Conditional overlays based on navState */}
-      <LazyMotion features={domAnimation}>
-        <MotionConfig reducedMotion="user">
-          <AnimatePresence mode="wait">
-            {navState === "gps-permission" ? (
-              <GpsPermissionOverlay
-                key="gps-permission"
-                onGrant={() => setNavState("welcome")}
-                triggerGeolocate={triggerGeolocate}
-                isMapReady={isMapReady}
-              />
-            ) : null}
+      {navState === "gps-permission" ? (
+        <GpsPermissionOverlay
+          onGrant={() => setNavState("welcome")}
+          triggerGeolocate={triggerGeolocate}
+          isMapReady={isMapReady}
+        />
+      ) : null}
 
-            {navState === "welcome" ? (
-              <WelcomeOverlay
-                key="welcome"
-                blocks={blocks ?? []}
-                isLoadingBlocks={blocks === undefined}
-                onSelectDestination={(dest) => {
-                  setDestination(dest);
-                  setNavState("navigating");
-                }}
-              />
-            ) : null}
+      {navState === "welcome" ? (
+        <WelcomeOverlay
+          blocks={blocks ?? []}
+          isLoadingBlocks={blocks === undefined}
+          onSelectDestination={(dest) => {
+            setDestination(dest);
+            setNavState("navigating");
+          }}
+        />
+      ) : null}
 
-            {navState === "navigating" && !showArrivedModal ? (
-              <NavigationOverlay
-                key="navigating"
-                distanceRemaining={distanceRemaining}
-                destination={destination}
-                steps={steps}
-                routeSource={routeSource}
-                routeGeoJSON={routeGeoJSON}
-                userLocation={userLocation}
-                isRecalculating={isRecalculating}
-                onCancel={() => {
-                  setNavState("welcome");
-                  setDestination(null);
-                }}
-              />
-            ) : null}
+      {navState === "navigating" && !showArrivedModal ? (
+        <NavigationOverlay
+          distanceRemaining={distanceRemaining}
+          destination={destination}
+          steps={steps}
+          routeSource={routeSource}
+          routeGeoJSON={routeGeoJSON}
+          userLocation={userLocation}
+          isRecalculating={isRecalculating}
+          onCancel={() => {
+            setNavState("welcome");
+            setDestination(null);
+          }}
+        />
+      ) : null}
 
-            {navState === "exit-complete" ? <ExitCompleteOverlay key="exit-complete" /> : null}
-          </AnimatePresence>
+      {navState === "exit-complete" ? <ExitCompleteOverlay /> : null}
 
-          {/* Arrived modals — floating, map stays interactive */}
-          <AnimatePresence>
-            {showArrivedModal ? (
-              <ArrivedOverlay
-                key="arrived"
-                destination={destination}
-                onNavigateAgain={() => {
-                  setShowArrivedModal(false);
-                  setNavState("welcome");
-                  setDestination(null);
-                }}
-                onExitVillage={() => {
-                  setShowArrivedModal(false);
-                  setDestination({
-                    type: "exit",
-                    coordinates: VILLAGE_EXIT,
-                    name: "Village Exit",
-                  });
-                }}
-              />
-            ) : null}
-          </AnimatePresence>
-        </MotionConfig>
-      </LazyMotion>
+      {/* Arrived modals — floating, map stays interactive */}
+      {showArrivedModal ? (
+        <ArrivedOverlay
+          destination={destination}
+          onNavigateAgain={() => {
+            setShowArrivedModal(false);
+            setNavState("welcome");
+            setDestination(null);
+          }}
+          onExitVillage={() => {
+            setShowArrivedModal(false);
+            setDestination({
+              type: "exit",
+              coordinates: VILLAGE_EXIT,
+              name: "Village Exit",
+            });
+          }}
+        />
+      ) : null}
 
       {/* SW update notification toast */}
       <UpdateToast />

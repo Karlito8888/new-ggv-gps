@@ -30,8 +30,6 @@ export default defineConfig({
             { name: "vendor", test: /node_modules\/react(-dom)?\// },
             // MapLibre + PMTiles - lazy loaded together
             { name: "maps", test: /node_modules\/(maplibre-gl|pmtiles)\// },
-            // Framer Motion - animations
-            { name: "animations", test: /node_modules\/framer-motion\// },
           ],
         },
       },

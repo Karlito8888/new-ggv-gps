@@ -1,5 +1,3 @@
-import { m } from "framer-motion";
-import { overlayVariants, slideFromTopVariants, slideFromBottomVariants } from "../lib/animations";
 import type { Destination } from "../hooks/useMapSetup";
 
 interface ArrivedOverlayProps {
@@ -14,18 +12,14 @@ export function ArrivedOverlay({
   onExitVillage,
 }: ArrivedOverlayProps) {
   return (
-    <m.div
+    <div
       className="overlay arrived-overlay"
       role="dialog"
       aria-modal="true"
       aria-label="You have arrived at your destination"
-      variants={overlayVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
     >
       {/* Top mini-modal: success icon + title + description */}
-      <m.div className="modal arrived-modal arrived-top-modal" variants={slideFromTopVariants}>
+      <div className="modal arrived-modal arrived-top-modal">
         <div className="overlay-icon-wrapper arrived-icon-wrapper">
           <svg
             className="overlay-icon"
@@ -50,10 +44,10 @@ export function ArrivedOverlay({
             Nakarating ka na sa {destination?.name || "iyong destinasyon"}.
           </span>
         </p>
-      </m.div>
+      </div>
 
       {/* Bottom mini-modal: action buttons */}
-      <m.div className="modal arrived-bottom-modal" variants={slideFromBottomVariants}>
+      <div className="modal arrived-bottom-modal">
         <button className="overlay-btn-primary" onClick={onNavigateAgain}>
           <svg
             className="overlay-btn-icon"
@@ -85,7 +79,7 @@ export function ArrivedOverlay({
           </svg>
           Exit Village
         </button>
-      </m.div>
-    </m.div>
+      </div>
+    </div>
   );
 }

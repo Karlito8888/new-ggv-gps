@@ -1,4 +1,3 @@
-import { m } from "framer-motion";
 import { getDistanceAlongRoute } from "../lib/geo";
 import type { UserLocation, Destination } from "../hooks/useMapSetup";
 import type { RouteStep, RouteGeometry, RouteSourceType } from "../hooks/useRouting";
@@ -74,14 +73,7 @@ export function NavigationOverlay({
   return (
     <>
       {/* Top pill — turn instruction + distance + cancel */}
-      <m.nav
-        className="nav-top-pill"
-        aria-label="Navigation info"
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -80, opacity: 0 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-      >
+      <nav className="nav-top-pill" aria-label="Navigation info">
         <div className="nav-turn">
           {isRecalculating ? (
             <>
@@ -123,16 +115,12 @@ export function NavigationOverlay({
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
-      </m.nav>
+      </nav>
 
       {/* Bottom strip — destination + compass/distance */}
-      <m.nav
+      <nav
         className="nav-bottom-strip"
         aria-label={`Destination info${destination?.name ? `: navigating to ${destination.name}` : ""}`}
-        initial={{ y: 80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 80, opacity: 0 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
       >
         <div className="nav-dest-name">
           <span className="nav-dest-icon">📍</span>
@@ -142,7 +130,7 @@ export function NavigationOverlay({
         <div className="nav-compass-text" aria-live="off">
           {formatDistance(totalDistanceRemaining)}
         </div>
-      </m.nav>
+      </nav>
     </>
   );
 }

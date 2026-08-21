@@ -851,6 +851,101 @@ textarea {
 /* ===================================================================
    ANIMATIONS
    =================================================================== */
+/* Entry animations — replace the framer-motion variants. Entry only: exit
+   animations would need @starting-style, unavailable on the Safari 16.4 the
+   build still targets. */
+
+@keyframes overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pill-in-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-80px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pill-in-from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(80px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.overlay {
+  animation: overlay-fade-in 300ms ease-out;
+}
+
+.gps-modal,
+.welcome-modal,
+.exit-modal,
+.error-modal {
+  animation: modal-pop-in var(--ggv-spring-modal-duration) var(--ggv-spring-modal) both;
+}
+
+.arrived-top-modal {
+  animation: slide-in-from-top var(--ggv-spring-slide-duration) var(--ggv-spring-slide) both;
+}
+
+.arrived-bottom-modal {
+  animation: slide-in-from-bottom var(--ggv-spring-slide-duration) var(--ggv-spring-slide) both;
+}
+
+.nav-top-pill {
+  animation: pill-in-from-top var(--ggv-spring-pill-duration) var(--ggv-spring-pill) both;
+}
+
+.nav-bottom-strip,
+.update-toast {
+  animation: pill-in-from-bottom var(--ggv-spring-pill-duration) var(--ggv-spring-pill) both;
+}
 
 @keyframes spin {
   from {

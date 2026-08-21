@@ -1,19 +1,12 @@
-import { m } from "framer-motion";
-import { overlayVariants, modalVariants } from "../lib/animations";
-
 export function ExitCompleteOverlay() {
   return (
-    <m.div
+    <div
       className="overlay exit-overlay"
       role="dialog"
       aria-modal="true"
       aria-label="You have exited the village"
-      variants={overlayVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
     >
-      <m.div className="modal exit-modal" variants={modalVariants}>
+      <div className="modal exit-modal">
         {/* Wave Icon */}
         <div className="overlay-icon-wrapper exit-icon-wrapper">
           <svg
@@ -46,7 +39,7 @@ export function ExitCompleteOverlay() {
             Salamat sa paggamit ng MyGGV GPS!
           </span>
         </p>
-      </m.div>
-    </m.div>
+      </div>
+    </div>
   );
 }

@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { m } from "framer-motion";
 import { useQuery } from "convex/react";
 import { anyApi } from "convex/server";
-import { overlayVariants, modalVariants } from "../lib/animations";
 import type { Destination } from "../hooks/useMapSetup";
 
 interface LotData {
@@ -61,17 +59,13 @@ export function WelcomeOverlay({
   };
 
   return (
-    <m.div
+    <div
       className="overlay welcome-overlay"
       role="dialog"
       aria-modal="true"
       aria-label="Choose Destination"
-      variants={overlayVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
     >
-      <m.div className="modal welcome-modal" variants={modalVariants}>
+      <div className="modal welcome-modal">
         {/* Destination Icon */}
         <div className="overlay-icon-wrapper">
           <svg
@@ -159,7 +153,7 @@ export function WelcomeOverlay({
           </svg>
           Navigate
         </button>
-      </m.div>
-    </m.div>
+      </div>
+    </div>
   );
 }

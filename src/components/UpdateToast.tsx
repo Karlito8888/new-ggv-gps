@@ -1,4 +1,3 @@
-import { m, AnimatePresence } from "framer-motion";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
 /**
@@ -41,37 +40,29 @@ export function UpdateToast() {
 
   const show = offlineReady || needRefresh;
 
+  if (!show) return null;
+
   return (
-    <AnimatePresence>
-      {show && (
-        <m.div
-          className="update-toast"
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        >
-          <div className="update-toast-content">
-            <span className="update-toast-icon">{offlineReady && !needRefresh ? "✅" : "🔄"}</span>
-            <span className="update-toast-text">
-              {offlineReady && !needRefresh ? "App ready to work offline" : "New version available"}
-              <span className="update-toast-tagalog">
-                {offlineReady && !needRefresh ? "(Handa na offline)" : "(May bagong bersyon)"}
-              </span>
-            </span>
-          </div>
-          <div className="update-toast-actions">
-            {needRefresh && (
-              <button className="update-toast-btn update-toast-btn-primary" onClick={handleUpdate}>
-                Update
-              </button>
-            )}
-            <button className="update-toast-btn update-toast-btn-dismiss" onClick={handleClose}>
-              {needRefresh ? "Later" : "OK"}
-            </button>
-          </div>
-        </m.div>
-      )}
-    </AnimatePresence>
+    <div className="update-toast">
+      <div className="update-toast-content">
+        <span className="update-toast-icon">{offlineReady && !needRefresh ? "✅" : "🔄"}</span>
+        <span className="update-toast-text">
+          {offlineReady && !needRefresh ? "App ready to work offline" : "New version available"}
+          <span className="update-toast-tagalog">
+            {offlineReady && !needRefresh ? "(Handa na offline)" : "(May bagong bersyon)"}
+          </span>
+        </span>
+      </div>
+      <div className="update-toast-actions">
+        {needRefresh && (
+          <button className="update-toast-btn update-toast-btn-primary" onClick={handleUpdate}>
+            Update
+          </button>
+        )}
+        <button className="update-toast-btn update-toast-btn-dismiss" onClick={handleClose}>
+          {needRefresh ? "Later" : "OK"}
+        </button>
+      </div>
+    </div>
   );
 }

@@ -23,7 +23,6 @@
   },
   "dependencies": {
     "convex": "^1.42.3",
-    "framer-motion": "^12.42.2",
     "maplibre-gl": "^5.24.0",
     "pmtiles": "^4.4.1",
     "react": "^19.2.7",
