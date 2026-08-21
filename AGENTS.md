@@ -91,6 +91,19 @@ fonctionnent réellement — testé manuellement sur Chrome Android / Safari iOS
 `.gitignore` (`*`) que prettier ne lit jamais — sans ces lignes le gate rougit sur les rapports
 d'audit.
 
+**Vérifier dans un navigateur exige de purger le service worker d'abord.** `bun run preview`
+sert `dist/`, mais la PWA précache ses assets : un onglet qui a déjà visité l'app rejoue
+l'**ancien** bundle depuis `workbox-precache-v2-*`, sans le dire. La mesure porte alors sur la
+version précédente. Avant chaque contrôle :
+
+```js
+for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+for (const k of await caches.keys()) await caches.delete(k);
+```
+
+Puis recharger. Le symptôme quand on l'oublie : des valeurs qui appartiennent à du code
+qu'on vient de supprimer.
+
 ## Déploiement
 
 `deploy.yml` (push sur `main`) : `bun run build` → FTP vers Hostinger
