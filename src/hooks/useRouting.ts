@@ -7,7 +7,6 @@ import {
   clearMapRoute,
   updateMapRoute,
   DEBOUNCE_MS,
-  RETRY_DELAYS,
   RECALC_THRESHOLD_M,
   OFF_ROUTE_THRESHOLD_M,
   TRIM_MIN_MOVEMENT_M,
@@ -41,9 +40,6 @@ export function useRouting(
   const abortRef = useRef<AbortController | null>(null);
   const lastOriginRef = useRef<LatLng | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const retryAbortRef = useRef<AbortController | null>(null);
-  const retryCountRef = useRef(0);
   // Vibration debounce (max once per 5 seconds)
   const lastVibrationRef = useRef(0);
   // Off-route recalculation cooldown (prevent infinite loop)
@@ -92,16 +88,9 @@ export function useRouting(
       }
     }
 
-    // Update destination ref and reset retry on destination change
+    // Reset stale-result token on destination change
     if (destChanged) {
-      retryCountRef.current = 0;
       destGenerationRef.current++;
-      retryAbortRef.current?.abort();
-      retryAbortRef.current = null;
-      if (retryTimerRef.current) {
-        clearTimeout(retryTimerRef.current);
-        retryTimerRef.current = null;
-      }
     }
     lastDestRef.current = { lat: destLat!, lng: destLng! };
 
@@ -178,53 +167,6 @@ export function useRouting(
         },
         "direct"
       );
-
-      // Schedule OSRM retry in background
-      scheduleRetry();
-    };
-
-    // Retry OSRM in background with exponential backoff
-    const scheduleRetry = () => {
-      if (retryCountRef.current >= RETRY_DELAYS.length) {
-        console.info("Route: Max retries reached, staying on direct line");
-        return;
-      }
-
-      const delay = RETRY_DELAYS[retryCountRef.current];
-      console.info(`Route: Scheduling OSRM retry in ${delay / 1000}s`);
-
-      retryTimerRef.current = setTimeout(async () => {
-        retryCountRef.current++;
-
-        // Read CURRENT destination and origin from refs (not stale closure)
-        const currentDest = lastDestRef.current;
-        const currentOrigin = lastOriginRef.current;
-        if (!currentDest || !currentOrigin) return;
-
-        // Use dedicated retry abort controller
-        retryAbortRef.current = new AbortController();
-
-        try {
-          const route = await fetchOSRM(
-            currentOrigin.lng,
-            currentOrigin.lat,
-            currentDest.lng,
-            currentDest.lat,
-            retryAbortRef.current.signal
-          );
-          if (route) {
-            console.info("Route: OSRM retry successful!");
-            applyRoute(route, "osrm");
-            retryCountRef.current = 0;
-            return;
-          }
-        } catch (e) {
-          if (e instanceof Error && e.name === "AbortError") return;
-          console.warn("OSRM retry failed:", e instanceof Error ? e.message : e);
-        }
-        // Still failed, schedule next retry
-        scheduleRetry();
-      }, delay);
     };
 
     // Clear previous debounce timer
@@ -243,10 +185,6 @@ export function useRouting(
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
-      if (retryTimerRef.current) {
-        clearTimeout(retryTimerRef.current);
-      }
-      retryAbortRef.current?.abort();
       abortRef.current?.abort();
     };
   }, [hasValidParams, map, originLat, originLng, destLat, destLng]);
