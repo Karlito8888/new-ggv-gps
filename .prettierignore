@@ -57,6 +57,7 @@ scripts/temp/
 public/sprites/*.json
 LIGHTHOUSE-AUDIT.md
 
-# Sorties d'outillage : Archon y écrit son propre .gitignore (`*`), mais prettier
-# n'en lit aucun — sans cette ligne le gate rougit sur des rapports d'audit.
+# Sorties d'outillage : ces dossiers portent leur propre .gitignore (`*`), mais
+# prettier n'en lit aucun — sans ces lignes le gate rougit sur des rapports d'audit.
 archon-out/
+flow-out/

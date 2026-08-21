@@ -2,3 +2,4 @@
 *.pbf binary
 # Binary map tile archives
 *.pmtiles binary
+graphify-out/graph.json merge=graphify
