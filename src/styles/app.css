@@ -545,6 +545,48 @@ textarea {
 }
 
 /* ===================================================================
+   ERROR BOUNDARY — overrides only
+   =================================================================== */
+
+.error-overlay {
+  background: var(--ggv-gradient-brand);
+}
+
+.error-modal::before {
+  background: linear-gradient(90deg, var(--ggv-color-error), var(--ggv-color-secondary));
+}
+
+.error-icon-wrapper {
+  background: linear-gradient(135deg, var(--ggv-color-error), var(--ggv-color-secondary));
+}
+
+/* No pulsing ring on a crash screen */
+.error-icon-wrapper::after {
+  display: none;
+}
+
+.error-details {
+  text-align: left;
+  margin-bottom: var(--ggv-space-lg);
+  font-size: var(--ggv-font-size-xs);
+  color: var(--ggv-color-gray);
+}
+
+.error-details summary {
+  cursor: pointer;
+  margin-bottom: var(--ggv-space-sm);
+}
+
+.error-details pre {
+  background: var(--ggv-color-text-tint);
+  padding: 0.75rem;
+  border-radius: var(--ggv-radius-sm);
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ===================================================================
    NAVIGATION — Floating Pills (NavTopPill + NavBottomStrip)
    =================================================================== */
 

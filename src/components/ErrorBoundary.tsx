@@ -28,10 +28,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     console.error("MyGGV GPS — unhandled error:", error, errorInfo);
   }
 
-  handleRetry = () => {
-    this.setState({ hasError: false, error: null });
-  };
-
   handleReload = () => {
     window.location.reload();
   };
@@ -39,62 +35,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "1.5rem",
-            background: "linear-gradient(135deg, #50aa61, #f3c549)",
-            fontFamily: "system-ui, sans-serif",
-          }}
-        >
-          <div
-            style={{
-              background: "#f4f4f4",
-              borderRadius: "1.5rem",
-              padding: "2rem 1.5rem",
-              maxWidth: "100%",
-              width: "400px",
-              textAlign: "center",
-              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            {/* Accent bar */}
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 5,
-                background: "linear-gradient(90deg, #ef4444, #f3c549)",
-              }}
-            />
-
-            {/* Error icon */}
-            <div
-              style={{
-                width: "5rem",
-                height: "5rem",
-                margin: "0 auto 1.5rem",
-                background: "linear-gradient(135deg, #ef4444, #f3c549)",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+        <div className="overlay error-overlay">
+          <div className="modal error-modal">
+            <div className="overlay-icon-wrapper error-icon-wrapper">
               <svg
-                width="2.5rem"
-                height="2.5rem"
+                className="overlay-icon"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#f4f4f4"
+                stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -105,124 +53,29 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </svg>
             </div>
 
-            <h1
-              style={{
-                fontSize: "1.2em",
-                fontWeight: 700,
-                color: "#121212",
-                marginBottom: "0.25rem",
-              }}
-            >
-              Something went wrong
-            </h1>
-            <p
-              style={{
-                fontStyle: "italic",
-                color: "#50aa61",
-                fontSize: "0.9em",
-                marginBottom: "1rem",
-              }}
-            >
-              (May nangyaring error)
-            </p>
-            <p
-              style={{
-                color: "#121212",
-                opacity: 0.7,
-                fontSize: "0.9rem",
-                lineHeight: 1.6,
-                marginBottom: "1.5rem",
-              }}
-            >
+            <h1>Something went wrong</h1>
+            <p className="overlay-tagalog">(May nangyaring error)</p>
+            <p className="overlay-description">
               MyGGV GPS encountered an unexpected error.
               <br />
-              Please try again or reload the app.
-              <span
-                style={{
-                  display: "block",
-                  fontStyle: "italic",
-                  color: "#50aa61",
-                  fontSize: "0.85em",
-                  marginTop: "0.5rem",
-                  opacity: 0.85,
-                }}
-              >
-                May nangyaring hindi inaasahan. Subukan muli o i-reload ang app.
+              Please reload the app.
+              <span className="tagalog-inline">
+                May nangyaring hindi inaasahan. I-reload ang app.
               </span>
             </p>
 
             {this.state.error && (
-              <details
-                style={{
-                  textAlign: "left",
-                  marginBottom: "1.5rem",
-                  fontSize: "0.75rem",
-                  color: "#6b7280",
-                }}
-              >
-                <summary style={{ cursor: "pointer", marginBottom: "0.5rem" }}>
-                  Error details
-                </summary>
-                <pre
-                  style={{
-                    background: "#e5e5e5",
-                    padding: "0.75rem",
-                    borderRadius: "0.5rem",
-                    overflow: "auto",
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  {this.state.error.message}
-                </pre>
+              <details className="error-details">
+                <summary>Error details</summary>
+                <pre>{this.state.error.message}</pre>
               </details>
             )}
 
-            <button
-              onClick={this.handleRetry}
-              style={{
-                width: "100%",
-                padding: "1rem 1.5rem",
-                minHeight: "3.5rem",
-                background: "linear-gradient(135deg, #50aa61, #3d8a4d)",
-                color: "#f4f4f4",
-                fontWeight: 700,
-                fontSize: "1.125rem",
-                border: "none",
-                borderRadius: "1rem",
-                cursor: "pointer",
-                boxShadow: "0 4px 15px rgba(80,170,97,0.4)",
-                marginBottom: "0.75rem",
-              }}
-            >
-              Try Again
-            </button>
-
-            <button
-              onClick={this.handleReload}
-              style={{
-                width: "100%",
-                padding: "0.875rem 1.5rem",
-                background: "rgba(18,18,18,0.08)",
-                color: "#121212",
-                fontWeight: 600,
-                fontSize: "1rem",
-                border: "none",
-                borderRadius: "0.75rem",
-                cursor: "pointer",
-              }}
-            >
+            <button className="overlay-btn-primary" onClick={this.handleReload}>
               Reload App
             </button>
 
-            <p
-              style={{
-                marginTop: "1.5rem",
-                fontSize: "0.75rem",
-                color: "#121212",
-                opacity: 0.4,
-              }}
-            >
+            <p className="gps-version">
               v{typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "?.?.?"}
             </p>
           </div>
