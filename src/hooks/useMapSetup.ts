@@ -8,7 +8,7 @@ import type {
 import type { FeatureCollection } from "geojson";
 import { blocks } from "../data/blocks";
 // Layers JSON loaded dynamically — stays in the maps chunk instead of bloating index
-import "../styles/maplibre-gl.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 export interface UserLocation {
   latitude: number;
