@@ -67,8 +67,9 @@ interactive (GPS, caméra course-up et gestes continuent).
 3. **Ligne directe** — dernier recours (cap seul).
 
 Recalcul si l'utilisateur bouge de plus de `RECALC_THRESHOLD_M`, immédiat si la destination
-change, débounce `DEBOUNCE_MS` sur les positions GPS, retries OSRM en arrière-plan avec backoff
-`RETRY_DELAYS`. Seuil d'arrivée : `ARRIVAL_THRESHOLD_M` (15 m) dans `useNavigation.ts`.
+change, débounce `DEBOUNCE_MS` sur les positions GPS. Une fois retombé sur la ligne directe, le
+tracé ne remonte d'un palier qu'au prochain recalcul (pas de retry en arrière-plan). Seuil
+d'arrivée : `ARRIVAL_THRESHOLD_M` (15 m) dans `useNavigation.ts`.
 
 ## Gate
 
@@ -108,6 +109,7 @@ natif, état local (`useState`), pas de gestion d'état globale.
 ## Données du village
 
 `VILLAGE_CENTER` (`useMapSetup.ts`) et `VILLAGE_EXIT` (`App.tsx`) sont des coordonnées codées en
-dur, pas lues depuis Convex. `src/data/blocks.ts` porte les polygones de blocs en statique
-(GeoJSON) — la liste des blocs et lots vient, elle, de Convex (voir plus haut) : deux sources de
+dur, pas lues depuis Convex. `src/data/blocks.ts` porte 62 points-étiquettes (`blockLabels`,
+un centroïde par bloc) qui alimentent la seule couche `block-labels` — aucun contour n'est
+dessiné. La liste des blocs et lots vient, elle, de Convex (voir plus haut) : deux sources de
 vérité pour la géométrie village, à garder synchronisées à la main.

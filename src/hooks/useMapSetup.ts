@@ -6,7 +6,7 @@ import type {
   ErrorEvent as MapErrorEvent,
 } from "maplibre-gl";
 import type { FeatureCollection } from "geojson";
-import { blocks } from "../data/blocks";
+import { blockLabels } from "../data/blocks";
 // Layers JSON loaded dynamically — stays in the maps chunk instead of bloating index
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -44,23 +44,12 @@ const mapLibsPromise = Promise.all([import("maplibre-gl"), import("pmtiles")]);
 
 const VILLAGE_CENTER: [number, number] = [120.95134859887523, 14.347872973134175];
 
-// Calculate centroid of polygon
-function getCentroid(coords: [number, number][]): [number, number] {
-  let x = 0,
-    y = 0;
-  for (const [lng, lat] of coords) {
-    x += lng;
-    y += lat;
-  }
-  return [x / coords.length, y / coords.length];
-}
-
 const labelsGeoJSON: FeatureCollection = {
   type: "FeatureCollection",
-  features: blocks.map((block) => ({
+  features: blockLabels.map((block) => ({
     type: "Feature" as const,
     properties: { name: block.name },
-    geometry: { type: "Point" as const, coordinates: getCentroid(block.coords) },
+    geometry: { type: "Point" as const, coordinates: block.center },
   })),
 };
 
