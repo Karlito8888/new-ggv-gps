@@ -5,7 +5,7 @@
 
 import type { Map as MaplibreMap, GeoJSONSource } from "maplibre-gl";
 import type { Geometry } from "geojson";
-import type { OSRMResponse, ORSResponse } from "../types/routing";
+import type { OSRMResponse, ORSResponse, OSRMManeuver } from "../types/routing";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -77,12 +77,6 @@ const TURN_ICONS: Record<string, string> = {
 // Maneuver parsing
 // ---------------------------------------------------------------------------
 
-interface OSRMManeuver {
-  type: string;
-  modifier?: string;
-  location: [number, number];
-}
-
 /**
  * Parse OSRM maneuver to navigation instruction.
  * Returns null for steps that should be filtered out (depart).
@@ -151,21 +145,9 @@ export function parseManeuver(maneuver: OSRMManeuver, distance: number): RouteSt
 // ---------------------------------------------------------------------------
 
 /** Fetch with timeout helper */
-export async function fetchWithTimeout(url: string, signal?: AbortSignal): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-  // Combine external signal with timeout signal
-  const combinedSignal = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
-
-  try {
-    const res = await fetch(url, { signal: combinedSignal });
-    clearTimeout(timeoutId);
-    return res;
-  } catch (e) {
-    clearTimeout(timeoutId);
-    throw e;
-  }
+export function fetchWithTimeout(url: string, signal?: AbortSignal): Promise<Response> {
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  return fetch(url, { signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
 }
 
 // OSRM routing (primary)

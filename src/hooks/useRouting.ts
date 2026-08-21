@@ -24,7 +24,6 @@ interface LatLng {
 
 interface UseRoutingReturn {
   routeGeoJSON: RouteGeometry | null;
-  distance: number;
   steps: RouteStep[];
   routeSource: RouteSourceType | null;
   isRecalculating: boolean;
@@ -36,7 +35,6 @@ export function useRouting(
   destination: Destination | null
 ): UseRoutingReturn {
   const [routeGeoJSON, setRouteGeoJSON] = useState<RouteGeometry | null>(null);
-  const [distance, setDistance] = useState(0);
   const [steps, setSteps] = useState<RouteStep[]>([]);
   const [routeSource, setRouteSource] = useState<RouteSourceType | null>(null);
   const [fullRoute, setFullRoute] = useState<RouteGeometry | null>(null);
@@ -118,7 +116,6 @@ export function useRouting(
       }
       setFullRoute(result.geometry);
       setRouteGeoJSON(result.geometry);
-      setDistance(result.distance);
       setSteps(result.steps || []);
       setRouteSource(source);
       lastTrimPointRef.current = null;
@@ -319,7 +316,6 @@ export function useRouting(
   // Derive return values - return null/empty when params invalid (no sync setState needed)
   return {
     routeGeoJSON: hasValidParams ? routeGeoJSON : null,
-    distance: hasValidParams ? distance : 0,
     steps: hasValidParams ? steps : [],
     routeSource: hasValidParams ? routeSource : null,
     isRecalculating: hasValidParams ? isOffRoute : false,
