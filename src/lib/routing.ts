@@ -238,7 +238,8 @@ export function clearMapRoute(map: MaplibreMap): void {
   if (map.getSource("route")) map.removeSource("route");
 }
 
-export function updateMapRoute(map: MaplibreMap, geometry: RouteGeometry): void {
+/** Actually draws the route. Throws if the style is not ready — callers go through updateMapRoute. */
+function drawRoute(map: MaplibreMap, geometry: RouteGeometry): void {
   if (map.getSource("route")) {
     (map.getSource("route") as GeoJSONSource).setData(geometry as Geometry);
   } else {
@@ -287,6 +288,36 @@ export function updateMapRoute(map: MaplibreMap, geometry: RouteGeometry): void 
         "icon-allow-overlap": true,
         "icon-rotation-alignment": "map",
       },
+    });
+  }
+}
+
+/**
+ * Draw or update the route line, and survive a style that is not ready yet.
+ *
+ * `addSource` and `addLayer` go through MapLibre's `_checkLoaded()`, which throws
+ * "Style is not done loading." — and `isStyleLoaded()` genuinely flickers back to false while
+ * tiles are in flight, measured on this app: two consecutive draws of the same route reported
+ * `true` then `false`. Both call sites sit inside a promise or an effect, so the throw used to
+ * vanish: the top pill, the distance and the turn instructions all appeared, and the blue line
+ * did not. Observed on a real phone.
+ *
+ * So the failure is logged rather than swallowed, and retried once the map settles: `idle` fires
+ * after the last rendered frame with no camera transition pending and every requested tile
+ * loaded, so the style is ready by then. A newer route arriving in between draws itself through
+ * its own call, and the next GPS fix re-trims from `fullRoute`, so a stale retry corrects itself.
+ */
+export function updateMapRoute(map: MaplibreMap, geometry: RouteGeometry): void {
+  try {
+    drawRoute(map, geometry);
+  } catch (error) {
+    console.error("Route draw failed, retrying when the map is idle:", error);
+    map.once("idle", () => {
+      try {
+        drawRoute(map, geometry);
+      } catch (retryError) {
+        console.error("Route draw retry failed, the route line will be missing:", retryError);
+      }
     });
   }
 }
