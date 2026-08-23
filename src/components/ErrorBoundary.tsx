@@ -72,7 +72,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             )}
 
             <button className="overlay-btn-primary" onClick={this.handleReload}>
-              Reload App
+              Reload App (I-reload ang App)
             </button>
 
             <p className="gps-version">

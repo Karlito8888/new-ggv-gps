@@ -25,7 +25,7 @@ export function GpsPermissionOverlay({
       onGrant();
     } catch (err) {
       console.error("GPS permission error:", err);
-      setError("Please, try again");
+      setError("Please, try again (Subukan muli)");
       setIsRequesting(false);
     }
   };
@@ -88,10 +88,10 @@ export function GpsPermissionOverlay({
             </svg>
           )}
           {!isMapReady
-            ? "Please wait, map is loading..."
+            ? "Please wait, map is loading... (Naglo-load ang mapa...)"
             : isRequesting
-              ? "Requesting..."
-              : "Enable GPS"}
+              ? "Requesting... (Humihiling...)"
+              : "Enable GPS (I-enable ang GPS)"}
         </button>
 
         <p className="gps-version">v{__APP_VERSION__}</p>

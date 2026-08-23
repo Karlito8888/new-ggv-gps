@@ -437,6 +437,17 @@ textarea {
   box-shadow: 0 0 0 3px rgba(80, 170, 97, 0.15);
 }
 
+/* The whole focus indicator above is a box-shadow, and CSS Color Adjust 1 § 3.1 forces
+   box-shadow to `none` in forced-colors mode — leaving no indicator at all, since `outline`
+   was removed. Restore a real outline there; its colour is forced to the system palette,
+   so none is specified. */
+@media (forced-colors: active) {
+  .welcome-select:focus {
+    outline: 2px solid;
+    outline-offset: 2px;
+  }
+}
+
 /* ===================================================================
    ARRIVED OVERLAY — overrides only
    =================================================================== */
@@ -671,7 +682,11 @@ textarea {
   min-height: var(--ggv-touch-target-min);
   border-radius: var(--ggv-radius-full);
   border: none;
-  background: var(--ggv-color-error);
+  /* Neutral, NOT --ggv-color-error: cancelling navigation is not a failure, and spending the
+     error colour here would leave the app nothing louder for a real one. The icon colour lives
+     on `.nav-cancel-btn svg` below, which is the rule that actually wins (the svg strokes with
+     currentColor). */
+  background: var(--ggv-color-gray);
   padding: 0;
   cursor: pointer;
   display: flex;
@@ -688,7 +703,9 @@ textarea {
 .nav-cancel-btn svg {
   width: var(--ggv-space-md);
   height: var(--ggv-space-md);
-  color: var(--ggv-color-surface);
+  /* Literal, NOT --ggv-color-surface: that token flips to #1a1a1a in dark mode, which would put
+     a near-black cross on grey (3.60:1). Fixed white gives 4.83:1 in both modes. */
+  color: #ffffff;
 }
 
 /* Destination (bottom strip — left) */

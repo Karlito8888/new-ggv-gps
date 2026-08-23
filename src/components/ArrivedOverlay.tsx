@@ -60,7 +60,7 @@ export function ArrivedOverlay({
           >
             <polygon points="3 11 22 2 13 21 11 13 3 11" />
           </svg>
-          Navigate Somewhere Else
+          Navigate Somewhere Else (Sa ibang lugar)
         </button>
 
         <button className="overlay-btn-secondary" onClick={onExitVillage}>
@@ -77,7 +77,7 @@ export function ArrivedOverlay({
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
-          Exit Village
+          Exit Village (Lumabas sa Village)
         </button>
       </div>
     </div>

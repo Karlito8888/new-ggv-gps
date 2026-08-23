@@ -56,11 +56,11 @@ export function UpdateToast() {
       <div className="update-toast-actions">
         {needRefresh && (
           <button className="update-toast-btn update-toast-btn-primary" onClick={handleUpdate}>
-            Update
+            Update (I-update)
           </button>
         )}
         <button className="update-toast-btn update-toast-btn-dismiss" onClick={handleClose}>
-          {needRefresh ? "Later" : "OK"}
+          {needRefresh ? "Later (Mamaya)" : "OK (Sige)"}
         </button>
       </div>
     </div>
