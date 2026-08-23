@@ -265,10 +265,9 @@ textarea {
 /* Shared overlay tagalog subtitle */
 .overlay-tagalog {
   font-size: var(--ggv-font-size-base);
-  color: var(--ggv-color-primary);
+  color: var(--ggv-color-primary-text);
   font-style: italic;
   margin-bottom: var(--ggv-space-md);
-  opacity: 0.9;
 }
 
 /* Shared overlay description text */
@@ -286,7 +285,7 @@ textarea {
   padding: var(--ggv-space-md) var(--ggv-space-lg);
   min-height: var(--ggv-touch-target-cta);
   background: var(--ggv-gradient-primary);
-  color: var(--ggv-color-surface);
+  color: var(--ggv-color-on-cta);
   font-family: var(--ggv-font-primary);
   font-weight: var(--ggv-font-weight-bold);
   font-size: var(--ggv-font-size-lg);
@@ -382,10 +381,9 @@ textarea {
 .tagalog-inline {
   display: block;
   font-style: italic;
-  color: var(--ggv-color-primary);
+  color: var(--ggv-color-primary-text);
   font-size: 0.9em;
   margin-top: var(--ggv-space-sm);
-  opacity: var(--ggv-opacity-tagalog);
   text-shadow: var(--ggv-shadow-text);
 }
 
@@ -647,7 +645,7 @@ textarea {
 
 .nav-turn-icon {
   font-size: var(--ggv-font-size-xl);
-  color: var(--ggv-color-primary);
+  color: var(--ggv-color-primary-text);
   flex-shrink: 0;
 }
 
@@ -662,7 +660,7 @@ textarea {
 .nav-turn-dist {
   font-size: var(--ggv-font-size-base);
   font-weight: var(--ggv-font-weight-bold);
-  color: var(--ggv-color-primary);
+  color: var(--ggv-color-primary-text);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -719,7 +717,7 @@ textarea {
 .nav-compass-text {
   font-size: var(--ggv-font-size-sm);
   font-weight: var(--ggv-font-weight-semibold);
-  color: var(--ggv-color-primary);
+  color: var(--ggv-color-primary-text);
   min-width: 4rem;
   text-align: right;
   white-space: nowrap;
@@ -771,9 +769,8 @@ textarea {
 .update-toast-tagalog {
   display: block;
   font-style: italic;
-  color: var(--ggv-color-primary);
+  color: var(--ggv-color-primary-text);
   font-size: 0.85em;
-  opacity: var(--ggv-opacity-tagalog);
 }
 
 .update-toast-actions {
@@ -796,7 +793,7 @@ textarea {
 
 .update-toast-btn-primary {
   background: var(--ggv-gradient-primary);
-  color: var(--ggv-color-surface);
+  color: var(--ggv-color-on-cta);
   box-shadow: var(--ggv-shadow-button);
 }
 

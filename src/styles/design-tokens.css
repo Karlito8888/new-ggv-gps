@@ -11,9 +11,18 @@
      COLORS
      ================================================================= */
 
-  /* Brand colors */
+  /* Brand colors.
+     `primary` is a DECORATIVE FILL ONLY — borders, icon gradients, the brand ramp. It is not
+     legible as text on either surface (2.05:1 on the light glass pill), so text uses
+     `primary-text` and the CTA gradient carries its own stops. Every value here was solved
+     against WCAG 2.2 SC 1.4.3 (4.5:1 — the 18px bold CTA is below the 18.66px large-text
+     threshold, so the 3:1 exemption does not apply) for the worst background it actually
+     lands on, glass composited over a dark map (#d9d9d9) or a light one (#343434) included. */
   --ggv-color-primary: #50aa61;
-  --ggv-color-primary-dark: #3d8a4d;
+  --ggv-color-primary-text: #326b3d;
+  --ggv-color-cta: #3b7d47;
+  --ggv-color-cta-dark: #295c34;
+  --ggv-color-on-cta: #ffffff;
   --ggv-color-secondary: #f3c549;
   --ggv-color-secondary-dark: #d97706;
 
@@ -47,8 +56,8 @@
 
   --ggv-gradient-primary: linear-gradient(
     135deg,
-    var(--ggv-color-primary) 0%,
-    var(--ggv-color-primary-dark) 100%
+    var(--ggv-color-cta) 0%,
+    var(--ggv-color-cta-dark) 100%
   );
   --ggv-gradient-brand: linear-gradient(
     135deg,
@@ -166,7 +175,6 @@
      ================================================================= */
 
   --ggv-opacity-overlay-text: 0.7;
-  --ggv-opacity-tagalog: 0.85;
   --ggv-opacity-disabled: 0.6;
   --ggv-opacity-border: 0.15;
 }
@@ -179,6 +187,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    /* Brand text — brightened, since it now sits on a dark surface. The CTA tokens are NOT
+       overridden: `on-cta` must stay light in both modes, and `surface` flipping to #1a1a1a
+       is exactly what used to put dark text on the dark-green gradient (2.22:1). */
+    --ggv-color-primary-text: #52ae63;
+
     /* Surface & background */
     --ggv-color-surface: #1a1a1a;
 

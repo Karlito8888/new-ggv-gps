@@ -27,19 +27,6 @@ self.addEventListener("message", (event) => {
 // --- Tier 1: Precache Vite build assets (JS, CSS, HTML, sprites, icons) ---
 precacheAndRoute(self.__WB_MANIFEST);
 
-// --- Tier 2: CacheFirst (24h) for map fonts ---
-registerRoute(
-  ({ url }) => url.origin === self.location.origin && url.pathname.match(/^\/map-fonts\/.*\.pbf$/),
-  new CacheFirst({
-    cacheName: "map-assets",
-    plugins: [
-      new ExpirationPlugin({
-        maxAgeSeconds: 86400,
-      }),
-    ],
-  })
-);
-
 // --- Tier 3: CacheFirst + RangeRequestsPlugin for PMTiles ---
 // Full file is warm-cached during SW install (see below).
 // Runtime route slices range requests from the cached full response.

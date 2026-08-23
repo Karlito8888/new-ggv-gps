@@ -127,10 +127,13 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
 
       if (isCancelled) return;
 
-      // Protomaps style with pre-generated layers (build-time, no runtime dependency)
+      // Protomaps style with pre-generated layers (build-time, no runtime dependency).
+      // No `glyphs` URL on purpose: the style spec then resolves `text-font` against the local
+      // environment, so MapLibre rasterises the block labels itself (TinySDF) instead of
+      // fetching PBFs from demotiles.maplibre.org. Labels render offline; the trade is that
+      // their typeface is the device font rather than Noto Sans.
       const mapStyle = {
         version: 8 as const,
-        glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
         sprite: new URL("/sprites/light", window.location.origin).href,
         sources: {
           protomaps: {
