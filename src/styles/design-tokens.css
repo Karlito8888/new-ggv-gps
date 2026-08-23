@@ -146,98 +146,20 @@
   --ggv-transition-fast: 0.15s ease;
   --ggv-transition-normal: 0.2s ease;
 
-  /* Spring curves, ported 1:1 from the framer-motion variants they replaced.
-     Generated with motion-dom's spring().toString() — damping 25, the stiffness
-     each variant used. Duration is part of the port: the curve is sampled for it. */
+  /* Spring curves, ported 1:1 from the framer-motion variants they replaced (damping 25).
+     Duration is part of the port — each curve was sampled for it, so durations are unchanged.
+
+     Was 86 lines of linear() samples. linear() needs Safari/iOS 17.2, and iPhone X / 8 / 8 Plus
+     are capped at iOS 16.7 for good: there the whole declaration resolves to `unset`, i.e. the
+     initial `ease`, and no cascade fallback can catch it. Each curve below is a least-squares
+     fit of the control points to the samples it replaces. Deviation over the full curve —
+     modal RMS 0.76% / worst 2.37%, slide 0.58% / 1.62%, pill 1.49% / 5.22% (4.2px of 80px). */
   --ggv-spring-modal-duration: 1350ms;
-  --ggv-spring-modal: linear(
-    0,
-    0.0368,
-    0.1167,
-    0.2114,
-    0.3068,
-    0.3963,
-    0.4773,
-    0.549,
-    0.6117,
-    0.6661,
-    0.7132,
-    0.7537,
-    0.7886,
-    0.8186,
-    0.8444,
-    0.8665,
-    0.8855,
-    0.9018,
-    0.9157,
-    0.9277,
-    0.938,
-    0.9468,
-    0.9544,
-    0.9609,
-    0.9664,
-    0.9712,
-    0.9753,
-    0.9788,
-    0.9818,
-    0.9844,
-    0.9866,
-    0.9885,
-    0.9902,
-    0.9916,
-    0.9928,
-    0.9938,
-    0.9947,
-    0.9954,
-    0.9961,
-    0.9966,
-    0.9971,
-    0.9975,
-    0.9979,
-    1,
-    1
-  );
+  --ggv-spring-modal: cubic-bezier(0.21, 0.53, 0.07, 1.06);
   --ggv-spring-slide-duration: 500ms;
-  --ggv-spring-slide: linear(
-    0,
-    0.0753,
-    0.2332,
-    0.4077,
-    0.5666,
-    0.6971,
-    0.7973,
-    0.8702,
-    0.9209,
-    0.9546,
-    0.9761,
-    0.9892,
-    0.9966,
-    1.0004,
-    1.0021,
-    1,
-    1
-  );
+  --ggv-spring-slide: cubic-bezier(0.26, 0.3, 0.18, 1.11);
   --ggv-spring-pill-duration: 550ms;
-  --ggv-spring-pill: linear(
-    0,
-    0.119,
-    0.3569,
-    0.5977,
-    0.7894,
-    0.919,
-    0.9937,
-    1.0283,
-    1.0377,
-    1.034,
-    1.0253,
-    1.016,
-    1.0086,
-    1.0034,
-    1.0004,
-    0.999,
-    1,
-    1
-  );
+  --ggv-spring-pill: cubic-bezier(0.38, 1.06, 0.08, 1.08);
 
   /* =================================================================
      OPACITY
