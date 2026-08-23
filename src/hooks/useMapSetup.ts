@@ -168,11 +168,14 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
       // Fix: Create transparent placeholder for missing sprite images
       mapInstance.on("styleimagemissing", onStyleImageMissing);
 
-      // Suppress non-critical style errors (null values in tile data)
+      // No message filtering here. This used to swallow every error whose text contained
+      // "Expected value to be of type" — the style-spec assertion failure — on the assumption
+      // that null values in the tile data made it unavoidable. Measured against the village's
+      // own PMTiles (5 positions × zooms 1→19, mask removed): the error never fires. The
+      // `addresses` source layer is empty, and the three layers holding a bare `["get", …]` in a
+      // string-typed property (`address_label`, `places_country`, `places_region`) render zero
+      // features. Nothing to suppress, so a real assertion failure is now visible instead.
       mapInstance.on("error", (e: MapErrorEvent) => {
-        if (e.error?.message?.includes("Expected value to be of type")) {
-          return; // Ignore style expression errors from tile data
-        }
         console.error("Map error:", e.error);
       });
 
