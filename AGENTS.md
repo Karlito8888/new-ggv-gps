@@ -138,6 +138,28 @@ for (const k of await caches.keys()) await caches.delete(k);
 Puis recharger. Le symptôme quand on l'oublie : des valeurs qui appartiennent à du code
 qu'on vient de supprimer.
 
+⚠️ **`page.on('console')` ne capte RIEN dans cet outil navigateur** — mesuré 2026-08-23 avec un
+`console.log` garanti : 0 message. Un « zéro erreur » obtenu par ce moyen ne prouve **rien**. Le seul
+instrument vérifié est de patcher `console` **dans la page** avant le code applicatif, puis de lire
+le tableau :
+
+```js
+await page.evaluateOnNewDocument(() => {
+  window.__logs = [];
+  for (const k of ["log", "info", "warn", "error"]) {
+    const orig = console[k].bind(console);
+    console[k] = (...a) => {
+      window.__logs.push(k + ": " + a.join(" "));
+      orig(...a);
+    };
+  }
+});
+// puis : await tab.evaluate(() => window.__logs)
+```
+
+Les événements **CDP** (`cdp.on('Network.webSocketCreated')`, etc.), eux, fonctionnent. Toujours
+auto-tester l'instrument avant d'en tirer une conclusion négative.
+
 **Tester hors ligne demande le service worker, pas un blocage d'URL.** `Network.setBlockedURLs`
 n'intercepte **pas** l'upgrade WebSocket : bloquer `*convex.cloud*` laisse passer un
 `handshake 101` et les 42 blocs arrivent quand même. Le seul dispositif correct est
