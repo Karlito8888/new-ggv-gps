@@ -822,16 +822,6 @@ textarea {
   transition: all var(--ggv-transition-fast);
 }
 
-.update-toast-btn-primary {
-  background: var(--ggv-gradient-primary);
-  color: var(--ggv-color-on-cta);
-  box-shadow: var(--ggv-shadow-button);
-}
-
-.update-toast-btn-primary:active {
-  transform: scale(0.95);
-}
-
 .update-toast-btn-dismiss {
   background: var(--ggv-color-text-tint);
   color: var(--ggv-color-text);

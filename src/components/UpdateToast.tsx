@@ -1,66 +1,43 @@
 import { useRegisterSW } from "virtual:pwa-register/react";
 
 /**
- * Toast notification that appears when a new version of the app is available.
- * Uses vite-plugin-pwa's virtual:pwa-register/react hook.
+ * One-time confirmation that the app is usable without a network.
  *
- * - User clicks "Update" → new SW activates → page reloads with latest version
- * - User clicks "Dismiss" → toast closes, user keeps current version until next visit
+ * There is deliberately no "a new version is available" branch any more: the service worker is
+ * registered with `registerType: "autoUpdate"` and calls `skipWaiting()`, so a new build takes
+ * over on its own and `needRefresh` never fires. Asking a visitor at the village gate to tap
+ * "Update" before walking was how an installed PWA ended up serving a stale bundle.
+ *
+ * No periodic `registration.update()` either. The browser checks for a new worker on every
+ * launch, which is the moment that matters for a session lasting a few minutes — and an update
+ * found mid-walk would reload the page and throw away the active route.
  */
 export function UpdateToast() {
   const {
-    needRefresh: [needRefresh, setNeedRefresh],
     offlineReady: [offlineReady, setOfflineReady],
-    updateServiceWorker,
   } = useRegisterSW({
-    onRegisteredSW(_swUrl, registration) {
-      // Periodically check for updates every hour
-      if (registration) {
-        setInterval(
-          () => {
-            registration.update();
-          },
-          60 * 60 * 1000
-        );
-      }
-    },
     onRegisterError(error) {
       console.error("SW registration error:", error);
     },
   });
 
-  const handleClose = () => {
-    setOfflineReady(false);
-    setNeedRefresh(false);
-  };
-
-  const handleUpdate = () => {
-    updateServiceWorker(true);
-  };
-
-  const show = offlineReady || needRefresh;
-
-  if (!show) return null;
+  if (!offlineReady) return null;
 
   return (
     <div className="update-toast">
       <div className="update-toast-content">
-        <span className="update-toast-icon">{offlineReady && !needRefresh ? "✅" : "🔄"}</span>
+        <span className="update-toast-icon">✅</span>
         <span className="update-toast-text">
-          {offlineReady && !needRefresh ? "App ready to work offline" : "New version available"}
-          <span className="update-toast-tagalog">
-            {offlineReady && !needRefresh ? "(Handa na offline)" : "(May bagong bersyon)"}
-          </span>
+          App ready to work offline
+          <span className="update-toast-tagalog">(Handa na offline)</span>
         </span>
       </div>
       <div className="update-toast-actions">
-        {needRefresh && (
-          <button className="update-toast-btn update-toast-btn-primary" onClick={handleUpdate}>
-            Update (I-update)
-          </button>
-        )}
-        <button className="update-toast-btn update-toast-btn-dismiss" onClick={handleClose}>
-          {needRefresh ? "Later (Mamaya)" : "OK (Sige)"}
+        <button
+          className="update-toast-btn update-toast-btn-dismiss"
+          onClick={() => setOfflineReady(false)}
+        >
+          OK (Sige)
         </button>
       </div>
     </div>

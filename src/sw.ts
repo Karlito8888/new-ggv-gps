@@ -13,16 +13,16 @@ import { ExpirationPlugin } from "workbox-expiration";
 import { RangeRequestsPlugin } from "workbox-range-requests";
 import { clientsClaim } from "workbox-core";
 
-// Immediate activation on update
+// Take over as soon as a new version is available, and claim the open pages.
+//
+// `skipWaiting` is NOT optional here: with `strategies: "injectManifest"` we own this file, and
+// vite-plugin-pwa only forces `workbox.skipWaiting` on the *generateSW* path — its own
+// injectManifest guide spells out that an autoUpdate service worker must call it itself.
+// Without it the new worker sits in "waiting" forever, the app keeps serving the previous
+// precached bundle, and a fix that is live on the web never reaches the installed PWA.
+// Measured: two relaunches still served the old bundle and the old version number.
+self.skipWaiting();
 clientsClaim();
-
-// Immediate activation after skipWaiting message from vite-plugin-pwa
-// (sent when user clicks "Update" in the UpdateToast)
-self.addEventListener("message", (event) => {
-  if (event.data?.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
-});
 
 // --- Tier 1: Precache Vite build assets (JS, CSS, HTML, sprites, icons) ---
 precacheAndRoute(self.__WB_MANIFEST);
@@ -83,7 +83,6 @@ self.addEventListener("install", (event) => {
         // SW still activates; map tiles work online, offline after retry
       })
   );
-  // Do NOT call skipWaiting() here — wait for user to accept update via toast.
-  // The new SW will activate when the user clicks "Update" in the UpdateToast,
-  // which sends a 'SKIP_WAITING' message (handled by vite-plugin-pwa).
+  // No `skipWaiting()` needed here — it runs at the top of this file, so a new worker activates
+  // as soon as it installs rather than waiting for a user gesture.
 });

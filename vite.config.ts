@@ -45,7 +45,11 @@ export default defineConfig({
       strategies: "injectManifest",
       srcDir: "src",
       filename: "sw.ts",
-      registerType: "prompt",
+      // autoUpdate, not "prompt": the app is entered by scanning a QR code at the village gate,
+      // so nobody is going to tap an "Update" button before walking. With "prompt" the installed
+      // PWA kept serving the previous precached bundle until someone did — measured, two
+      // relaunches on a stale build. See the skipWaiting note in src/sw.ts.
+      registerType: "autoUpdate",
       injectRegister: false,
       manifest: false,
       injectManifest: {
