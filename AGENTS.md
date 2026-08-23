@@ -138,6 +138,12 @@ for (const k of await caches.keys()) await caches.delete(k);
 Puis recharger. Le symptôme quand on l'oublie : des valeurs qui appartiennent à du code
 qu'on vient de supprimer.
 
+⚠️ **Vérifier sur le web ne dit RIEN de la PWA installée.** Le service worker sert le bundle
+précaché : une correction en ligne peut être invisible dans l'app installée. Le seul protocole
+correct est d'installer le SW depuis le build **précédent**, de publier le nouveau, puis de relancer.
+Depuis `registerType: "autoUpdate"` + `self.skipWaiting()` (mesuré) : **1 relance** suffit, et la
+montée depuis l'ancien worker demande **2 relances** sans aucun geste utilisateur.
+
 ⚠️ **`page.on('console')` ne capte RIEN dans cet outil navigateur** — mesuré 2026-08-23 avec un
 `console.log` garanti : 0 message. Un « zéro erreur » obtenu par ce moyen ne prouve **rien**. Le seul
 instrument vérifié est de patcher `console` **dans la page** avant le code applicatif, puis de lire
