@@ -181,11 +181,17 @@ rôles sont donc séparés, et il faut les garder séparés :
 | `--ggv-color-cta` / `-cta-dark` | les deux arrêts du dégradé de CTA                                                |
 | `--ggv-color-on-cta`            | texte du CTA — **fixe dans les deux modes**                                      |
 
-⚠️ **Trois pièges vérifiés.** (1) `color: var(--ggv-color-primary)` ne doit réapparaître nulle
+⚠️ **Cinq pièges vérifiés.** (1) `color: var(--ggv-color-primary)` ne doit réapparaître nulle
 part — c'était la cause de la panne. (2) `--ggv-color-on-cta` ne doit **pas** suivre
 `--ggv-color-surface`, qui bascule à `#1a1a1a` en mode sombre : c'est ce qui mettait du texte
 sombre à 2,22:1 sur un dégradé vert foncé. (3) Une `opacity` sur du texte de marque le refait
-échouer — c'est pour ça que les trois règles tagalog n'en ont plus.
+échouer — c'est pour ça que les trois règles tagalog n'en ont plus. (4) **Ne jamais mettre
+`.tagalog-inline` dans un bouton** : cette classe force `--ggv-color-primary-text`, soit du vert
+sur le dégradé vert du CTA — mesuré **1,24:1** en clair, **1,80:1** en sombre. Dans un bouton, la
+glose tagalog est du texte inline qui **hérite** la couleur du bouton. (5) Chercher la règle qui
+**gagne** avant de mesurer : l'icône de `.nav-cancel-btn` prend sa couleur de
+`.nav-cancel-btn svg` (le `<svg>` trace en `currentColor`), pas du bouton — un `color` posé sur le
+bouton y est mort.
 
 Toute nouvelle couleur de texte se calcule contre le **pire fond réel**, pilule de verre
 composée sur une carte sombre (`#d9d9d9`) ou claire (`#343434`) comprise, pas contre
@@ -214,6 +220,10 @@ la CSP pour une autre raison.
   `{en, tl}` de 8 entrées clée sur le `modifier` OSRM — vocabulaire clos et garanti par l'API
   (le `type`, lui, est ouvert : « new identifiers might be introduced without API change »).
   Toute nouvelle chaîne affichée se met là, pas en dur dans le composant.
+- **Libellés de boutons** : la glose va **inline entre parenthèses dans le libellé même**
+  (`Navigate (Mag-navigate)`), jamais dans un `<span className="tagalog-inline">` — voir le piège
+  (4) de la section _Couleurs_. Couvert partout : Welcome, Arrived (2 boutons), UpdateToast
+  (3 états), ErrorBoundary, et les 3 états du bouton GPS.
 
 ## Données du village
 
