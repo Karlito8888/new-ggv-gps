@@ -21,8 +21,10 @@ The app runs entirely in the browser. Works on Android Chrome and iOS Safari.
 - **Automatic route recalculation** when you deviate from the planned route
 - **Course-up map** — the map follows your GPS heading, no compass permission required
 - **Arrival detection** — notification when you're within 15 m of your destination
-- **Offline-capable** — service worker caches map tiles, fonts, and app assets
-- **Bilingual UI** — English with Tagalog translations
+- **Offline-capable** — a service worker caches the map tiles, the app assets and the UI font; map labels are rendered on-device, so no font is fetched from the network at all
+- **No third-party runtime dependency** — the only hosts the app talks to are its Convex backend and the two public OSRM routers
+- **Bilingual UI** — English with Tagalog translations, turn-by-turn instructions included
+- **WCAG 2.2 AA contrast** — every text surface verified in both light and dark mode
 
 ## Quick Start
 

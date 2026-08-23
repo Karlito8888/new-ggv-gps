@@ -18,14 +18,33 @@ Vite `^8.1.5` · React `^19.2.7` · Convex `^1.42.3` (client seul, `convex/react
 `^5.24.0` (bibliothèque **web** de MapLibre, pas le binding React Native) · TypeScript `^5.9.3` ·
 `vite-plugin-pwa` (Workbox) pour le mode hors-ligne.
 
+`src/vite-env.d.ts` ne fait que **référencer** les types livrés par les paquets — `vite/client`
+(qui déclare déjà `*.png` et `*.mp3`) et `vite-plugin-pwa/react` (qui déclare
+`virtual:pwa-register/react`). ⚠️ Ne pas y redéclarer ces modules « pour le mode strict » :
+cohabiter avec la déclaration du paquet la duplique. Si un import d'asset ne typecheck pas, la
+cause est ailleurs.
+
 ## ⚠️ Backend externe : ce dépôt n'en possède pas
 
 Il n'y a **aucun dossier `convex/` ici**. `src/main.tsx` ouvre un `ConvexProvider`
-**non authentifié** vers le déploiement Convex de **`~/Bureau/myggv`** :
+**non authentifié** vers le déploiement Convex de **`~/Bureau/myggv`**. La construction du client
+est **gardée** : `new ConvexReactClient(undefined)` lève au niveau module, donc **avant** le
+premier `render()` — l'`ErrorBoundary` n'est alors jamais monté et l'utilisateur voit un écran
+blanc. C'est la pire panne possible pour une app qu'on entre en scannant un QR code, d'où le
+`try` :
 
 ```ts
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL);
+let convex: ConvexReactClient;
+try {
+  convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL);
+} catch (error) {
+  root.render(/* markup statique bilingue « Configuration error » */);
+  throw error;
+}
 ```
+
+Une URL malformée mais plausible n'a, elle, pas besoin de garde : elle lève plus tard depuis le
+`get sync()` paresseux, pendant le render, là où l'`ErrorBoundary` l'attrape.
 
 Deux fonctions publiques de myggv sont appelées, en `anyApi` (pas de types générés localement,
 donc `tsc` ne peut pas attraper une signature qui change côté serveur) :
@@ -39,7 +58,7 @@ fonctions**, cette app casse — mais **bruyamment**, pas en silence : `requireI
 `ConvexError`, et `useQuery` **relance l'erreur depuis son call site** (`convex@1.42.3`,
 `dist/esm/react/client.js:464-465` : `if (result instanceof Error) throw result;` — c'est aussi
 ce que documente `docs.convex.dev/functions/error-handling.md`). L'`ErrorBoundary` de
-`src/main.tsx:10` l'attrape donc et affiche « Something went wrong ». Convex ne réessaie jamais
+`src/main.tsx` l'attrape donc et affiche « Something went wrong ». Convex ne réessaie jamais
 une query en erreur : l'écran reste là jusqu'au rechargement.
 
 La panne réellement **silencieuse** est ailleurs : un changement de _forme_ de la réponse. Comme
@@ -147,11 +166,54 @@ pour de bon — c'est ce qui condamnait `linear()` (Safari/iOS 17.2).
 
 `@media (prefers-reduced-motion: reduce)` (`app.css`) les neutralise toutes.
 
+## Couleurs — trois rôles, à ne pas confondre
+
+Le vert de marque servait à la fois de **remplissage** et de **texte**, sur des fonds qui passent
+du quasi-blanc (`rgba(255,255,255,0.85)`, pilule de verre en clair) au quasi-noir
+(`rgba(30,30,30,0.9)`, la même en sombre). Aucune luminosité ne satisfait les deux : à 4,5:1 près,
+`--ggv-color-primary` tombait à **2,05:1** sur la pilule claire et **4,31:1** sur la sombre. Les
+rôles sont donc séparés, et il faut les garder séparés :
+
+| Token                           | Rôle                                                                             |
+| ------------------------------- | -------------------------------------------------------------------------------- |
+| `--ggv-color-primary`           | **remplissage décoratif SEULEMENT** — bordures, dégradés d'icône, ramp de marque |
+| `--ggv-color-primary-text`      | tout texte ou icône de couleur marque ; a une valeur par mode                    |
+| `--ggv-color-cta` / `-cta-dark` | les deux arrêts du dégradé de CTA                                                |
+| `--ggv-color-on-cta`            | texte du CTA — **fixe dans les deux modes**                                      |
+
+⚠️ **Trois pièges vérifiés.** (1) `color: var(--ggv-color-primary)` ne doit réapparaître nulle
+part — c'était la cause de la panne. (2) `--ggv-color-on-cta` ne doit **pas** suivre
+`--ggv-color-surface`, qui bascule à `#1a1a1a` en mode sombre : c'est ce qui mettait du texte
+sombre à 2,22:1 sur un dégradé vert foncé. (3) Une `opacity` sur du texte de marque le refait
+échouer — c'est pour ça que les trois règles tagalog n'en ont plus.
+
+Toute nouvelle couleur de texte se calcule contre le **pire fond réel**, pilule de verre
+composée sur une carte sombre (`#d9d9d9`) ou claire (`#343434`) comprise, pas contre
+`--ggv-color-surface` seul. Valeurs et marges mesurées : commentaire en tête de
+`design-tokens.css`.
+
+## Hôtes externes — il n'en reste que deux
+
+Convex (`*.convex.cloud`) et les deux routeurs OSRM publics. Tout le reste est auto-hébergé :
+tuiles PMTiles, sprite, police d'interface, et **les étiquettes de carte n'ont plus de source
+distante** — le style ne déclare aucun `glyphs`, donc MapLibre les rastérise sur l'appareil
+(TinySDF) au lieu d'aller chercher des PBF sur `demotiles.maplibre.org`. Conséquence assumée :
+la police des étiquettes est celle du système, pas Noto Sans.
+
+La CSP d'`index.html` est la liste de référence : y ajouter un hôte se justifie dans la même
+revue que le code qui l'appelle. ⚠️ `server.arcgisonline.com` y figure encore **sans aucun
+consommateur** dans le code (vérifié) — dette antérieure, à supprimer quand quelqu'un touchera
+la CSP pour une autre raison.
+
 ## Langues
 
 - **Communication avec le dev** : français.
 - **Contenu de l'app** : anglais **+ traduction tagalog courte** (public : résidents philippins
   de Garden Grove Village), ex. `<h1>Enable Location</h1><p>(I-enable ang Lokasyon)</p>`.
+- Les **instructions de navigation** passent par `TURN_LABELS` (`src/lib/routing.ts`), une table
+  `{en, tl}` de 8 entrées clée sur le `modifier` OSRM — vocabulaire clos et garanti par l'API
+  (le `type`, lui, est ouvert : « new identifiers might be introduced without API change »).
+  Toute nouvelle chaîne affichée se met là, pas en dur dans le composant.
 
 ## Données du village
 
@@ -160,3 +222,6 @@ dur, pas lues depuis Convex. `src/data/blocks.ts` porte 62 points-étiquettes (`
 un centroïde par bloc) qui alimentent la seule couche `block-labels` — aucun contour n'est
 dessiné. La liste des blocs et lots vient, elle, de Convex (voir plus haut) : deux sources de
 vérité pour la géométrie village, à garder synchronisées à la main.
+
+Ces étiquettes sont rendues par TinySDF avec la police du système (voir § _Hôtes externes_) :
+leur rendu diffère donc légèrement d'un appareil à l'autre, et c'est voulu.
