@@ -39,8 +39,21 @@ interface MaplibreModule {
 }
 
 // Eagerly start downloading map libraries at module parse time
-// (overlaps with React render cycle instead of waiting for useEffect)
-const mapLibsPromise = Promise.all([import("maplibre-gl"), import("pmtiles")]);
+// (overlaps with React render cycle instead of waiting for useEffect).
+//
+// maplibre-gl 5.24 ships CJS only — no `module` and no `exports` field in its package.json — so
+// the namespace shape depends on the bundler's interop: sometimes the module itself, sometimes
+// wrapped in `default`. Normalised once here so no call site has to know or repeat the cast.
+const mapLibsPromise = Promise.all([import("maplibre-gl"), import("pmtiles")]).then(
+  ([maplibregl, pmtiles]) => {
+    // `in` narrows, so this read is checked rather than asserted.
+    const resolved = "default" in maplibregl ? maplibregl.default : maplibregl;
+    // Single named assertion: the namespace type cannot express "CJS module or its default",
+    // and both branches carry the same runtime surface.
+    const MapLibre = resolved as MaplibreModule;
+    return [MapLibre, pmtiles] as const;
+  }
+);
 
 const VILLAGE_CENTER: [number, number] = [120.95134859887523, 14.347872973134175];
 
@@ -107,15 +120,11 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
     };
 
     const initMap = async () => {
-      // Await pre-started map library downloads (initiated at module level)
-      const [maplibregl, { Protocol }] = await mapLibsPromise;
+      // Await pre-started map library downloads (initiated at module level, already interop-resolved)
+      const [MapLibre, { Protocol }] = await mapLibsPromise;
 
       if (isCancelled) return;
 
-      const MapLibre: MaplibreModule =
-        "default" in maplibregl
-          ? (maplibregl as unknown as { default: MaplibreModule }).default
-          : (maplibregl as unknown as MaplibreModule);
       maplibreRefForCleanup.current = MapLibre;
 
       // Register PMTiles protocol BEFORE map construction
@@ -296,12 +305,8 @@ export function updateDestinationMarker(
   // Guard against race condition: if updateDestinationMarker is called again
   // before this .then() resolves, the version check prevents stale markers
   const thisVersion = ++destMarkerVersion;
-  mapLibsPromise.then(([maplibregl]) => {
+  mapLibsPromise.then(([MapLibre]) => {
     if (thisVersion !== destMarkerVersion) return; // Stale — newer call superseded us
-    const MapLibre: MaplibreModule =
-      "default" in maplibregl
-        ? (maplibregl as unknown as { default: MaplibreModule }).default
-        : (maplibregl as unknown as MaplibreModule);
     destMarkerInstance = new MapLibre.Marker({ element: el, anchor: "bottom" });
     destMarkerInstance!.setLngLat(destination.coordinates).addTo(map);
   });

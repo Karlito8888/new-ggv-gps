@@ -33,7 +33,8 @@ export function useRouting(
   origin: UserLocation | null,
   destination: Destination | null
 ): UseRoutingReturn {
-  const [routeGeoJSON, setRouteGeoJSON] = useState<RouteGeometry | null>(null);
+  // No separate `routeGeoJSON` state: it was set from the same `result.geometry` as `fullRoute`,
+  // in the same call. The returned field is fed from `fullRoute` instead.
   const [steps, setSteps] = useState<RouteStep[]>([]);
   const [routeSource, setRouteSource] = useState<RouteSourceType | null>(null);
   const [fullRoute, setFullRoute] = useState<RouteGeometry | null>(null);
@@ -104,7 +105,6 @@ export function useRouting(
         return;
       }
       setFullRoute(result.geometry);
-      setRouteGeoJSON(result.geometry);
       setSteps(result.steps || []);
       setRouteSource(source);
       lastTrimPointRef.current = null;
@@ -243,7 +243,7 @@ export function useRouting(
 
   // Derive return values - return null/empty when params invalid (no sync setState needed)
   return {
-    routeGeoJSON: hasValidParams ? routeGeoJSON : null,
+    routeGeoJSON: hasValidParams ? fullRoute : null,
     steps: hasValidParams ? steps : [],
     routeSource: hasValidParams ? routeSource : null,
     isRecalculating: hasValidParams ? isOffRoute : false,

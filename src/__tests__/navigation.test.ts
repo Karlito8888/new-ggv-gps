@@ -13,14 +13,12 @@ describe("useNavigation", () => {
     });
     expect(result.distanceRemaining).toBe(0);
     expect(result.hasArrived).toBe(false);
-    expect(result.arrivedAt).toBeNull();
   });
 
   test("returns defaults when destination is null", () => {
     const result = useNavigation({ latitude: 14.3479, longitude: 120.9513 }, null);
     expect(result.distanceRemaining).toBe(0);
     expect(result.hasArrived).toBe(false);
-    expect(result.arrivedAt).toBeNull();
   });
 
   test("returns defaults when both are null", () => {
@@ -28,7 +26,6 @@ describe("useNavigation", () => {
     expect(result).toEqual({
       distanceRemaining: 0,
       hasArrived: false,
-      arrivedAt: null,
     });
   });
 
@@ -49,7 +46,6 @@ describe("useNavigation", () => {
       { name: "Dest", coordinates: [120.9513, 14.3479] }
     );
     expect(result.hasArrived).toBe(true);
-    expect(result.arrivedAt).toBe("120.9513,14.3479");
   });
 
   test("detects arrival when within threshold (~10m)", () => {
@@ -70,22 +66,5 @@ describe("useNavigation", () => {
       { name: "Dest", coordinates: [120.9513, 14.3479] }
     );
     expect(result.hasArrived).toBe(false);
-    expect(result.arrivedAt).toBeNull();
-  });
-
-  test("arrivedAt contains destination coordinates as string", () => {
-    const result = useNavigation(
-      { latitude: 14.3479, longitude: 120.9513 },
-      { name: "Dest", coordinates: [120.95, 14.35] }
-    );
-    // Not arrived (too far), so arrivedAt should be null
-    expect(result.arrivedAt).toBeNull();
-
-    // Now arrive at destination
-    const arrived = useNavigation(
-      { latitude: 14.35, longitude: 120.95 },
-      { name: "Dest", coordinates: [120.95, 14.35] }
-    );
-    expect(arrived.arrivedAt).toBe("120.95,14.35");
   });
 });

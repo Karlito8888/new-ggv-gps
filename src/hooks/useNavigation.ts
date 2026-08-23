@@ -4,7 +4,6 @@ import type { UserLocation, Destination } from "./useMapSetup";
 interface UseNavigationReturn {
   distanceRemaining: number;
   hasArrived: boolean;
-  arrivedAt: string | null;
 }
 
 const ARRIVAL_THRESHOLD_M = 15;
@@ -15,6 +14,10 @@ const ARRIVAL_THRESHOLD_M = 15;
  * Returns navigation data calculated directly from inputs.
  * hasArrived is a simple distance check, NOT a stateful flag.
  * React Compiler handles memoization automatically.
+ *
+ * Deliberately does NOT return a destination key: it would be byte-identical to the one `App`
+ * already derives from the same `destination` in the same render, so comparing the two could
+ * never fail. The caller compares against its own key.
  */
 export function useNavigation(
   userLocation: UserLocation | null,
@@ -29,7 +32,6 @@ export function useNavigation(
     return {
       distanceRemaining: 0,
       hasArrived: false,
-      arrivedAt: null,
     };
   }
 
@@ -39,6 +41,5 @@ export function useNavigation(
   return {
     distanceRemaining: dist,
     hasArrived: isArrived,
-    arrivedAt: isArrived ? `${destLng},${destLat}` : null,
   };
 }

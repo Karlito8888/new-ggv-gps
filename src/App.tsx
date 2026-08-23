@@ -44,7 +44,7 @@ export default function App() {
   );
 
   // Navigation logic (distance, arrival detection)
-  const { distanceRemaining, hasArrived, arrivedAt } = useNavigation(userLocation, destination);
+  const { distanceRemaining, hasArrived } = useNavigation(userLocation, destination);
 
   // Track if we're currently navigating
   const isNavigating = navState === "navigating";
@@ -59,37 +59,28 @@ export default function App() {
 
   // Track which destination we've already shown the arrival modal for
   const arrivedDestinationRef = useRef<string | null>(null);
-  const lastDestinationKeyRef = useRef<string | null>(null);
 
-  // Reset arrival tracking when destination changes
+  // Reset arrival tracking when the destination changes. The dependency array IS the comparison —
+  // a ref mirroring `destinationKey` plus an `if` would only re-check what React already checked.
   useEffect(() => {
-    if (destinationKey !== lastDestinationKeyRef.current) {
-      lastDestinationKeyRef.current = destinationKey;
-      // Clear arrived ref so new destination can trigger arrival
-      arrivedDestinationRef.current = null;
-    }
+    arrivedDestinationRef.current = null;
   }, [destinationKey]);
 
   // Handle arrival - only trigger once per destination
   // Uses startTransition to avoid cascading renders (React Compiler compliant)
   useEffect(() => {
-    // Must be navigating with valid arrival data
-    if (!hasArrived || navState !== "navigating" || !arrivedAt) {
-      return;
-    }
-
-    // Must match current destination (not stale data)
-    if (arrivedAt !== destinationKey) {
+    // Must be navigating, and actually arrived at the destination currently selected
+    if (!hasArrived || navState !== "navigating" || !destinationKey) {
       return;
     }
 
     // Already shown arrival for this destination? Skip.
-    if (arrivedDestinationRef.current === arrivedAt) {
+    if (arrivedDestinationRef.current === destinationKey) {
       return;
     }
 
     // Mark this destination as arrived and show appropriate modal
-    arrivedDestinationRef.current = arrivedAt;
+    arrivedDestinationRef.current = destinationKey;
 
     // Arrival feedback: haptic (Android only, iOS silently ignores) + bell sound
     navigator.vibrate?.([100, 50, 100]);
@@ -102,7 +93,7 @@ export default function App() {
         setShowArrivedModal(true);
       }
     });
-  }, [hasArrived, navState, arrivedAt, destinationKey, destination]);
+  }, [hasArrived, navState, destinationKey, destination]);
 
   // Effect: Show/hide the custom user marker based on navState.
   useEffect(() => {
