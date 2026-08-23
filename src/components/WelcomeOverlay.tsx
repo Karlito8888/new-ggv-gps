@@ -31,7 +31,13 @@ export function WelcomeOverlay({
     selectedBlock ? { block: selectedBlock } : "skip"
   ) as LotData[] | undefined;
   const isLoadingLots = !!selectedBlock && lots === undefined;
-  const lotList = lots ?? [];
+  // `anyApi` is untyped, so `tsc` cannot see a shape change in the myggv backend. A malformed
+  // lot would silently become a `[undefined, undefined]` destination — MapLibre and the OSRM
+  // URL both take it without complaining. Dropping it here reuses the existing "No lots
+  // available" path instead, so the failure is visible and never reaches navigation.
+  const lotList = (lots ?? []).filter(
+    (l) => typeof l?.coordinates?.lng === "number" && typeof l?.coordinates?.lat === "number"
+  );
 
   // Derived selection: honour the user's pick when still valid, else default to the first lot.
   // (Derive during render instead of a setState-in-effect — react.dev "You Might Not Need an Effect".)

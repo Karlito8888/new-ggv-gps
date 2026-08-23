@@ -35,11 +35,24 @@ donc `tsc` ne peut pas attraper une signature qui change côté serveur) :
   d'un bloc (`useQuery(..., selectedBlock ? { block } : "skip")`).
 
 **Si `myggv/convex/locations.ts` ajoute une garde d'authentification sur l'une de ces deux
-fonctions**, cette app casse en silence : les `useQuery` restent indéfiniment `undefined`
-(pas d'erreur visible, juste un écran de sélection de bloc vide) puisqu'il n'y a ici ni Clerk
-ni aucun `ConvexProviderWithAuth`. `myggv/AGENTS.md` documente déjà cette dépendance dans l'autre
-sens — les deux fichiers doivent rester synchronisés si l'une des deux queries change de nom ou
-de contrat.
+fonctions**, cette app casse — mais **bruyamment**, pas en silence : `requireIdentity` lève un
+`ConvexError`, et `useQuery` **relance l'erreur depuis son call site** (`convex@1.42.3`,
+`dist/esm/react/client.js:464-465` : `if (result instanceof Error) throw result;` — c'est aussi
+ce que documente `docs.convex.dev/functions/error-handling.md`). L'`ErrorBoundary` de
+`src/main.tsx:10` l'attrape donc et affiche « Something went wrong ». Convex ne réessaie jamais
+une query en erreur : l'écran reste là jusqu'au rechargement.
+
+La panne réellement **silencieuse** est ailleurs : un changement de _forme_ de la réponse. Comme
+`anyApi` n'est pas typé, `tsc` ne le voit pas, et des coordonnées malformées deviendraient une
+destination `[undefined, undefined]` que MapLibre comme l'URL OSRM avalent sans broncher. D'où le
+filtre de `lotList` (`src/components/WelcomeOverlay.tsx:38-40`), qui renvoie ce cas vers le
+chemin « No lots available » existant.
+
+`myggv/AGENTS.md` documente déjà cette dépendance dans l'autre sens — les deux fichiers doivent
+rester synchronisés si l'une des deux queries change de nom ou de contrat. ⚠️ Côté myggv, seul
+`blocks` porte le commentaire « volontairement publique, ne pas ajouter `requireIdentity` » ;
+`lotsWithCoordsByBlock` est tout aussi vital pour cette app et tout aussi non gardé, mais sans
+avertissement — alors que son voisin `lotsByBlock` **est** gardé.
 
 `VITE_CONVEX_URL` pointe le déploiement **production** de myggv (`.env.production`, committé —
 ce n'est pas un secret, juste une URL d'endpoint ; le build CI (`deploy.yml`) le charge donc sans
