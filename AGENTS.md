@@ -171,6 +171,19 @@ automatique** ne peut sortir de ce dispositif.
 
 ## Déploiement
 
+⚠️ **Un push vert ne garantit PAS que la prod a bougé.** Le déploiement FTP échoue par
+intermittence — `Error: Timeout (control socket)`, vu les 2026-08-22 et 2026-08-23 — surtout après
+plusieurs déploiements rapprochés. `Code Quality` passe, `Deploy` non, et la prod reste
+**silencieusement** une version en retard. Remède qui marche : `gh run rerun <id> --failed`.
+Toujours **vérifier le bundle servi**, jamais le déduire :
+
+```bash
+LIVE=$(curl -s "https://myggvgps.charlesbourgault.com/?cb=$RANDOM" \
+       | grep -oE 'assets/index-[A-Za-z0-9_-]+\.js')
+curl -s "https://myggvgps.charlesbourgault.com/$LIVE" -o /tmp/prod.js
+cmp /tmp/prod.js "dist/${LIVE}"
+```
+
 `deploy.yml` (push sur `main`) : `bun run build` → FTP vers Hostinger
 (`myggvgps.charlesbourgault.com`, LiteSpeed, `public/.htaccess` gère le SPA fallback et les
 en-têtes de sécurité). `quality.yml` fait tourner le gate plus un scan Semgrep
