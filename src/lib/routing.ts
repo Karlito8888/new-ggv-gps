@@ -76,6 +76,22 @@ const TURN_ICONS: Record<string, string> = {
   "sharp right": "↱",
 };
 
+/**
+ * Instruction text per OSRM `modifier`. The vocabulary is closed and documented —
+ * the same 8 keys as TURN_ICONS (OSRM v5.24 API, StepManeuver.modifier).
+ * `tl` is the short Tagalog gloss shown under the English line.
+ */
+export const TURN_LABELS: Record<string, { en: string; tl: string }> = {
+  uturn: { en: "Make a U-turn", tl: "Bumalik" },
+  "sharp left": { en: "Sharp left", tl: "Matalim na kaliwa" },
+  left: { en: "Turn left", tl: "Kumaliwa" },
+  "slight left": { en: "Slight left", tl: "Bahagyang kaliwa" },
+  straight: { en: "Continue straight", tl: "Diretso" },
+  "slight right": { en: "Slight right", tl: "Bahagyang kanan" },
+  right: { en: "Turn right", tl: "Kumanan" },
+  "sharp right": { en: "Sharp right", tl: "Matalim na kanan" },
+};
+
 // ---------------------------------------------------------------------------
 // Maneuver parsing
 // ---------------------------------------------------------------------------

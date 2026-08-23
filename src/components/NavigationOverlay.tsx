@@ -1,4 +1,5 @@
 import { getDistanceAlongRoute } from "../lib/geo";
+import { TURN_LABELS } from "../lib/routing";
 import type { UserLocation, Destination } from "../hooks/useMapSetup";
 import type { RouteStep, RouteGeometry, RouteSourceType } from "../hooks/useRouting";
 
@@ -70,6 +71,8 @@ export function NavigationOverlay({
     return dist > 0 ? dist : distanceRemaining;
   })();
 
+  const label = TURN_LABELS[currentStep?.modifier ?? ""] ?? TURN_LABELS.straight;
+
   return (
     <>
       {/* Top pill — turn instruction + distance + cancel */}
@@ -87,14 +90,14 @@ export function NavigationOverlay({
             <>
               <span className="nav-turn-icon">{currentStep.icon}</span>
               <span className="nav-turn-text" aria-live="polite">
-                {currentStep.modifier
-                  ? `${currentStep.type === "turn" ? "Turn" : ""} ${currentStep.modifier}`.trim()
-                  : "Continue"}
+                {label.en}
+                <span className="tagalog-inline">({label.tl})</span>
               </span>
             </>
           ) : routeSource === "direct" ? (
             <span className="nav-turn-text" aria-live="polite">
               Head toward destination
+              <span className="tagalog-inline">(Tumungo sa destinasyon)</span>
             </span>
           ) : (
             <span className="nav-turn-icon">↑</span>
