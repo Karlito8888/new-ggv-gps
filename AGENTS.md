@@ -48,11 +48,13 @@ destination `[undefined, undefined]` que MapLibre comme l'URL OSRM avalent sans 
 filtre de `lotList` (`src/components/WelcomeOverlay.tsx:38-40`), qui renvoie ce cas vers le
 chemin « No lots available » existant.
 
-`myggv/AGENTS.md` documente déjà cette dépendance dans l'autre sens — les deux fichiers doivent
-rester synchronisés si l'une des deux queries change de nom ou de contrat. ⚠️ Côté myggv, seul
-`blocks` porte le commentaire « volontairement publique, ne pas ajouter `requireIdentity` » ;
-`lotsWithCoordsByBlock` est tout aussi vital pour cette app et tout aussi non gardé, mais sans
-avertissement — alors que son voisin `lotsByBlock` **est** gardé.
+Côté myggv, l'ouverture de ces deux queries est **garantie par un test**, pas seulement par un
+commentaire : `convex/authz.test.ts` les liste dans `OPEN` et les appelle sans identité
+(`devrait rester publique`), et une vérification d'exhaustivité y interdit qu'une query exportée
+échappe au classement. Ajouter `requireIdentity` sur l'une des deux fait donc **rougir la CI de
+myggv** avant d'atteindre la production. Le contrat est aussi écrit dans le tableau de gardes en
+tête de `convex/locations.ts` et dans les deux `AGENTS.md` de ce dépôt. Rien à ajouter là-bas :
+ce qu'il faut, c'est garder les noms synchronisés si l'une des deux queries change de contrat.
 
 `VITE_CONVEX_URL` pointe le déploiement **production** de myggv (`.env.production`, committé —
 ce n'est pas un secret, juste une URL d'endpoint ; le build CI (`deploy.yml`) le charge donc sans
