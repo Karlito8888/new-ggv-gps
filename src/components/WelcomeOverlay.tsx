@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "convex/react";
+import { useConvexConnectionState, useQuery } from "convex/react";
 import { anyApi } from "convex/server";
 import type { Destination } from "../hooks/useMapSetup";
 
@@ -24,6 +24,15 @@ export function WelcomeOverlay({
 }: WelcomeOverlayProps) {
   const [selectedBlock, setSelectedBlock] = useState("");
   const [selectedLot, setSelectedLot] = useState("");
+
+  // Without this, a first visit on a dead network sat on "Loading..." forever with no message and
+  // no way out: the Convex queries travel over a WebSocket, so Workbox cannot cache them.
+  // `connectionRetries` only increments AFTER a failed attempt, which is what keeps this from
+  // flashing during the normal opening handshake. There IS a reload button on purpose: the client
+  // does retry, but automatic recovery could not be demonstrated here (network restored, backend
+  // answering 200, socket still failing after 90 s), so the UI does not promise it.
+  const connection = useConvexConnectionState();
+  const isOffline = connection.connectionRetries > 0 && !connection.isWebSocketConnected;
 
   // Lots (with coords) for the selected block — reactive Convex query (skips when no block)
   const lots = useQuery(
@@ -103,7 +112,11 @@ export function WelcomeOverlay({
             disabled={isLoadingBlocks}
           >
             <option value="" disabled>
-              {isLoadingBlocks ? "Loading... (Nag-lo-load...)" : "Select Block (Pumili ng Block)"}
+              {isOffline
+                ? "No connection (Walang koneksyon)"
+                : isLoadingBlocks
+                  ? "Loading... (Nag-lo-load...)"
+                  : "Select Block (Pumili ng Block)"}
             </option>
             {blocks.map((block) => (
               <option key={block} value={block}>
@@ -112,6 +125,24 @@ export function WelcomeOverlay({
             ))}
           </select>
         </div>
+
+        {isOffline && (
+          <div className="welcome-offline" role="status">
+            <p>
+              No connection to the village map data. Check your signal, then reload.
+              <span className="tagalog-inline">
+                Walang koneksyon sa datos ng village. Tingnan ang signal, pagkatapos i-reload.
+              </span>
+            </p>
+            <button
+              type="button"
+              className="overlay-btn-secondary"
+              onClick={() => window.location.reload()}
+            >
+              Reload (I-reload)
+            </button>
+          </div>
+        )}
 
         <div className="welcome-block-selector">
           <label htmlFor="lot-select" className="sr-only">

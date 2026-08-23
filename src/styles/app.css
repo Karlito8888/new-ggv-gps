@@ -402,6 +402,20 @@ textarea {
   background: var(--ggv-gradient-overlay);
 }
 
+/* Offline notice on the destination picker. Uses --ggv-color-text, not the brand green:
+   brand text is only legible via --ggv-color-primary-text, and this sits on the modal
+   surface where plain body text already clears AA. */
+.welcome-offline {
+  margin: calc(-1 * var(--ggv-space-sm)) 0 var(--ggv-space-lg);
+  text-align: left;
+  font-size: var(--ggv-font-size-sm);
+  color: var(--ggv-color-text);
+}
+
+.welcome-offline p {
+  margin: 0 0 var(--ggv-space-sm);
+}
+
 .welcome-block-selector {
   margin-bottom: var(--ggv-space-lg);
   text-align: left;
