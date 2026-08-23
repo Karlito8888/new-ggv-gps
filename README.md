@@ -25,6 +25,7 @@ The app runs entirely in the browser. Works on Android Chrome and iOS Safari.
 - **No third-party runtime dependency** — the only hosts the app talks to are its Convex backend and the two public OSRM routers
 - **Bilingual UI** — English with Tagalog translations, turn-by-turn instructions included
 - **WCAG 2.2 AA contrast** — every text surface verified in both light and dark mode
+- **Self-updating** — a new deployment is picked up on the next launch, with nothing to tap
 
 ## Quick Start
 

@@ -195,6 +195,27 @@ cmp /tmp/prod.js "dist/${LIVE}"
 en-têtes de sécurité). `quality.yml` fait tourner le gate plus un scan Semgrep
 (`p/owasp-top-ten`, `p/security-audit`, `p/typescript`, `p/react`) sur chaque push/PR vers `main`.
 
+## Mise à jour de la PWA — `autoUpdate`, et le `skipWaiting` obligatoire
+
+`vite.config.ts` déclare `registerType: "autoUpdate"`, et `src/sw.ts` appelle `self.skipWaiting()`
+**au niveau module**, avant `clientsClaim()`. Les deux sont nécessaires, et c'est le piège :
+`vite-plugin-pwa` ne force `workbox.skipWaiting` que sur le chemin **`generateSW`**. Ce projet est
+en `strategies: "injectManifest"` — il possède son propre `sw.ts` — donc changer `registerType`
+seul laisse le nouveau worker en attente **indéfiniment**, et la PWA installée continue de servir
+le bundle précaché précédent. Le guide `guide/inject-manifest.md` de l'outil le dit explicitement.
+
+Mesuré le 2026-08-23, avant/après : en `"prompt"`, **deux relances** servaient encore l'ancien
+bundle et l'ancien numéro de version, avec un toast demandant un tap. Depuis : **une relance**
+suffit, et la montée depuis l'ancien worker prend **deux relances sans aucun geste** (la première
+échange le worker en silence, la seconde sert la nouvelle app).
+
+⚠️ **Rien ne doit rétablir un `registration.update()` périodique.** Le navigateur vérifie à chaque
+lancement, ce qui est le bon moment pour une marche de quelques minutes — alors qu'une mise à jour
+trouvée **en pleine navigation** rechargerait la page et jetterait l'itinéraire actif.
+
+`UpdateToast` ne porte donc plus qu'un seul état, `offlineReady` : `needRefresh` ne peut plus se
+déclencher. Ne pas y remettre de bouton « Update ».
+
 ## Bibliothèques interdites (vérifié absentes du code)
 
 `react-map-gl`, `@turf/turf`, `react-router-dom`, `Context`/`Redux`/`Zustand` — 100 % MapLibre
@@ -273,7 +294,7 @@ la CSP pour une autre raison.
 - **Libellés de boutons** : la glose va **inline entre parenthèses dans le libellé même**
   (`Navigate (Mag-navigate)`), jamais dans un `<span className="tagalog-inline">` — voir le piège
   (4) de la section _Couleurs_. Couvert partout : Welcome, Arrived (2 boutons), UpdateToast
-  (3 états), ErrorBoundary, et les 3 états du bouton GPS.
+  (bouton unique `OK (Sige)`), ErrorBoundary, l'écran hors ligne, et les 3 états du bouton GPS.
 
 ## Données du village
 
