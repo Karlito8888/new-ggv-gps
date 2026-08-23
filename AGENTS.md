@@ -138,6 +138,15 @@ for (const k of await caches.keys()) await caches.delete(k);
 Puis recharger. Le symptôme quand on l'oublie : des valeurs qui appartiennent à du code
 qu'on vient de supprimer.
 
+**Tester hors ligne demande le service worker, pas un blocage d'URL.** `Network.setBlockedURLs`
+n'intercepte **pas** l'upgrade WebSocket : bloquer `*convex.cloud*` laisse passer un
+`handshake 101` et les 42 blocs arrivent quand même. Le seul dispositif correct est
+`Network.emulateNetworkConditions { offline: true }`, **après** un chargement en ligne qui installe
+le SW — sinon la coquille elle-même ne charge pas et aucun code applicatif ne tourne.
+⚠️ Cette émulation est **collante** : la repasser à `offline: false` laisse l'onglet en
+`ERR_INTERNET_DISCONNECTED`. Un onglet neuf par scénario, et **aucune conclusion sur la reconnexion
+automatique** ne peut sortir de ce dispositif.
+
 ## Déploiement
 
 `deploy.yml` (push sur `main`) : `bun run build` → FTP vers Hostinger
