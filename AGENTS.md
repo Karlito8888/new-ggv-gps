@@ -103,10 +103,40 @@ interactive (GPS, caméra course-up et gestes continuent).
 
 **Le routage ne consomme aucune clé d'API**, donc aucun secret CI : les deux hôtes sont publics.
 
-Recalcul si l'utilisateur bouge de plus de `RECALC_THRESHOLD_M`, immédiat si la destination
-change, débounce `DEBOUNCE_MS` sur les positions GPS. Une fois retombé sur la ligne directe, le
-tracé ne remonte d'un palier qu'au prochain recalcul (pas de retry en arrière-plan). Seuil
-d'arrivée : `ARRIVAL_THRESHOLD_M` (15 m) dans `useNavigation.ts`.
+Recalcul si l'utilisateur bouge de plus de `RECALC_THRESHOLD_M` (30 m), immédiat si la
+destination change. Une fois retombé sur la ligne directe, le tracé ne remonte d'un palier qu'au
+prochain recalcul (pas de retry en arrière-plan). Seuil d'arrivée : `ARRIVAL_THRESHOLD_M` (15 m)
+dans `useNavigation.ts`.
+
+⚠️ **Aucun débounce, et surtout aucun `abort()` dans le cleanup de l'effet de `useRouting`.**
+L'effet a `originLat`/`originLng` en dépendances, donc il se relance à **chaque** fix GPS, et
+React exécute le cleanup précédent avant chaque relance — ce cleanup annulait donc la requête
+OSRM que l'utilisateur attend, une fois par seconde, après quoi la garde des 30 m refusait d'en
+lancer une nouvelle. Dès que l'aller-retour OSRM dépassait la cadence GPS, l'itinéraire
+n'arrivait **jamais** : pas de trait, pas d'instruction, et même pas le repli ligne droite
+(`signal.aborted` sort avant). Mesuré sur Galaxy A16, +1,5 s de latence : **zéro** log de route
+en 20 s de navigation. Les réponses périmées sont déjà écartées par jeton de génération dans
+`applyRoute` : le seul rôle de l'abort est de céder la place à un fetch plus récent, à l'arrêt de
+la navigation, et au démontage. Le débounce de 500 ms est parti avec — réarmé par chaque fix, il
+affame au-delà de 2 Hz, et le seuil de 30 m plafonne déjà la cadence des requêtes.
+
+**Les couches de la carte sont créées une fois pour toutes dans le handler `load`**
+(`addRouteLayers`, `addArrivalZoneLayer`), avec des données vides ; ensuite tout passe par
+`setData`. C'est structurel, pas cosmétique : `addSource`/`addLayer` passent par `_checkLoaded()`
+et lèvent « Style is not done loading. », `setData` **n'a aucune vérification d'état**. Deux
+pièges vérifiés dans les sources installées de `maplibre-gl` 5.24 :
+
+- `_checkLoaded()` teste `Style._loaded`, qui ne repasse **jamais** à faux — contrairement à
+  `map.isStyleLoaded()`, qui lui inclut les tuiles. Un `addSource` ne peut donc échouer
+  qu'**avant** le parse du style, ce que la garde `isMapReady` exclut déjà : diagnostiquer une
+  ligne manquante par ce throw était une erreur.
+- réessayer sur `map.once('idle')` **ne peut pas fonctionner en navigation** : `idle` exige
+  « no camera transitions in progress » (JSDoc des typings), et `useCourseUpCamera` lance un
+  `easeTo` de 1 s à chaque fix GPS.
+
+Corollaire : ne jamais remettre un `if (!map.isStyleLoaded()) return;` devant un dessin. Il
+transforme un échec bruyant en absence définitive et muette — c'est ce qui pouvait faire sauter
+le pin de destination en même temps que son cercle d'arrivée.
 
 ## Gate
 
@@ -174,6 +204,35 @@ le SW — sinon la coquille elle-même ne charge pas et aucun code applicatif ne
 ⚠️ Cette émulation est **collante** : la repasser à `offline: false` laisse l'onglet en
 `ERR_INTERNET_DISCONNECTED`. Un onglet neuf par scénario, et **aucune conclusion sur la reconnexion
 automatique** ne peut sortir de ce dispositif.
+
+## Mesurer sur le téléphone — le seul instrument qui trouve les bugs de navigation
+
+Le bug du tracé manquant est **invisible depuis un navigateur de bureau** : il faut un flux GPS.
+Le poste pilote le téléphone via `adb` + CDP, et l'outil navigateur s'y attache par `cdp_url` :
+
+```bash
+adb forward tcp:9222 localabstract:chrome_devtools_remote   # onglets Chrome ET PWA installée
+curl -s http://localhost:9222/json/list | jq -r '.[]|[.type,.id,.url]|@tsv'
+adb reverse tcp:4173 tcp:4173                               # servir un build local au téléphone
+adb shell monkey -p org.chromium.webapk.aef3138b3cf6909f6_v2 -c android.intent.category.LAUNCHER 1
+```
+
+La PWA installée est un WebAPK (`org.chromium.webapk.aef3138b3cf6909f6_v2`) : elle apparaît dans
+la même liste de cibles, `display-mode: standalone` le confirme depuis la page.
+
+Trois choses à injecter, sinon la mesure ne reproduit rien :
+
+1. **un pilote GPS à 1 Hz** — remplacer `navigator.geolocation.watchPosition` dans
+   `evaluateOnNewDocument`. `Emulation.setGeolocationOverride` ne suffit pas : il ne pousse pas de
+   flux, et le `watchPosition` de l'app finit en `Timeout expired` — ce qui **masque** la panne ;
+2. **de la latence réseau** — `Network.emulateNetworkConditions { latency: 1500 }`. Sur le WiFi du
+   poste, OSRM répond en ~250 ms et le bug ne sort pas ; c'est la latence mobile qui le révèle ;
+3. **le hook `console`** (voir plus bas), seul moyen de lire les logs applicatifs.
+
+⚠️ **Les scripts `evaluateOnNewDocument` s'accumulent sur une cible et survivent au `reload`.**
+Un pilote GPS injecté pour un test précédent continue de répondre à la place du vrai GPS —
+observé ici, avec des « fixes réels » qui étaient synthétiques. Pour repasser en GPS réel :
+fermer la cible (`/json/close/<id>`), relancer l'app, se rattacher.
 
 ## Déploiement
 
