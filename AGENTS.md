@@ -144,12 +144,27 @@ le pin de destination en même temps que son cercle d'arrivée.
 bun run gate
 ```
 
-= `tsc --noEmit && bun run lint && bun run format:check && bun run test` (vitest). Vert, ~9 s —
-mais **4 fichiers de test seulement**, dans `src/__tests__/` (`course`, `geo`, `navigation`,
-`routing`) : ils couvrent les fonctions pures de `src/lib/`, **rien** de `App.tsx`,
-`useMapSetup.ts`, `useRouting.ts` (l'effet, pas la fonction pure), `useCourseUpCamera.ts` ni
-`fetchWithTimeout`. Un test vert ne prouve pas que la navigation ou la requête Convex
-fonctionnent réellement — testé manuellement sur Chrome Android / Safari iOS.
+= `tsc --noEmit && bun run lint && bun run format:check && bun run test` (vitest). Vert, ~11 s,
+**5 fichiers / 48 tests** dans `src/__tests__/`. Quatre couvrent les fonctions pures
+(`course`, `geo`, `navigation`, `routing`) ; le cinquième, `useRouting.test.ts`, couvre
+**l'effet** — c'est le seul test du dépôt qui monte un composant React.
+
+Il tourne en **jsdom déclaré par fichier** (docblock `@vitest-environment jsdom`, documenté par
+vitest) : la config globale reste en `node`, donc les quatre suites pures ne paient pas le
+démarrage du DOM. `@testing-library/react` + `jsdom` sont là pour ce seul fichier, et c'est
+assumé : la course à l'`abort` est partie en production **trois fois** sans qu'un test puisse la
+voir.
+
+⚠️ **Aucun timer dans ce test, ni réel ni simulé.** Le faux `fetch` renvoie son propre
+`Promise.withResolvers`, donc « le réseau n'a pas encore répondu » est un **état** que le test
+tient, pas un délai qu'il attend. Un test écrit avec des `setTimeout` mesurerait la charge de la
+machine. Et il a été validé en **réintroduisant la panne** : `pending[0].aborted` et l'assertion
+`setData` rougissent, puis reverdissent après revert. Un test qui n'a jamais échoué ne prouve
+rien.
+
+Restent sans test : `App.tsx`, `useMapSetup.ts` et `useCourseUpCamera.ts`. Un gate vert ne
+prouve donc toujours pas que la navigation ou la requête Convex fonctionnent — contrôle réel sur
+appareil, § suivant.
 
 `.prettierignore` doit garder `archon-out/` et `flow-out/` : ces dossiers portent leur propre
 `.gitignore` (`*`) que prettier ne lit jamais — sans ces lignes le gate rougit sur les rapports
@@ -337,9 +352,11 @@ distante** — le style ne déclare aucun `glyphs`, donc MapLibre les rastérise
 la police des étiquettes est celle du système, pas Noto Sans.
 
 La CSP d'`index.html` est la liste de référence : y ajouter un hôte se justifie dans la même
-revue que le code qui l'appelle. ⚠️ `server.arcgisonline.com` y figure encore **sans aucun
-consommateur** dans le code (vérifié) — dette antérieure, à supprimer quand quelqu'un touchera
-la CSP pour une autre raison.
+revue que le code qui l'appelle, et en retirer un se vérifie **sur l'appareil**, pas au grep —
+brancher un écouteur `securitypolicyviolation` sur `document` et faire une navigation complète.
+`server.arcgisonline.com` en est sorti ainsi : zéro consommateur dans `src/`, `public/`, le JSON
+de style et `vite.config.ts`, puis zéro violation mesurée sur A16 avec tuiles, sprite,
+étiquettes, Convex et OSRM.
 
 ## Langues
 
