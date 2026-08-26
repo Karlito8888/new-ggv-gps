@@ -81,7 +81,10 @@ export function useCourseUpCamera(
     });
   });
 
+  // `isNavigating` is a dependency on purpose: without it the 3D nav view only engaged on the
+  // *next* GPS fix, so tapping Navigate left the map at the village-wide north-up view for a
+  // whole GPS interval — and for good, if the watch went quiet.
   useEffect(() => {
     if (userLocation) follow(userLocation);
-  }, [userLocation]);
+  }, [userLocation, isNavigating]);
 }

@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, type RefObject } from "react";
 import type {
   Map as MaplibreMap,
+  GeoJSONSource,
   Marker,
   MapStyleImageMissingEvent,
   ErrorEvent as MapErrorEvent,
 } from "maplibre-gl";
 import type { FeatureCollection } from "geojson";
 import { blockLabels } from "../data/blocks";
+import { addRouteLayers } from "../lib/routing";
 // Layers JSON loaded dynamically — stays in the maps chunk instead of bloating index
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -183,6 +185,11 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
         if (isCancelled) return;
 
         addBlocksLayer(mapInstance!);
+        // Route + arrival-zone layers exist from here on, holding empty data. Everything after
+        // this point is `setData`, which — unlike addSource/addLayer — has no style-readiness
+        // check to fail. See lib/routing.ts § addRouteLayers.
+        addRouteLayers(mapInstance!);
+        addArrivalZoneLayer(mapInstance!);
 
         // Course-up navigation: the bearing is driven by the GPS course, not by
         // the user rotating the map. Keep pinch-zoom + pan, disable rotation.
@@ -275,61 +282,18 @@ let destMarkerVersion = 0; // Guards against race conditions in async marker cre
 const ARRIVAL_ZONE_SOURCE = "arrival-zone";
 const ARRIVAL_ZONE_LAYER = "arrival-zone-circle";
 
+const EMPTY_ZONE: FeatureCollection = { type: "FeatureCollection", features: [] };
+
 /**
- * Updates or creates a custom destination marker (CSS pin + pulse) and arrival zone circle.
+ * Create the arrival-zone source and circle layer once, from the map's `load` handler —
+ * same reason as the route layers: `setData` cannot fail on a style that is still settling,
+ * `addSource`/`addLayer` can, and the old `isStyleLoaded()` early return here skipped the
+ * destination pin along with the circle, with nothing left to retry.
  */
-export function updateDestinationMarker(
-  map: MaplibreMap | null,
-  destination: Destination | null
-): void {
-  if (!map || !map.isStyleLoaded()) return;
+function addArrivalZoneLayer(map: MaplibreMap): void {
+  if (map.getSource(ARRIVAL_ZONE_SOURCE)) return;
 
-  // Remove existing marker
-  if (destMarkerInstance) {
-    destMarkerInstance.remove();
-    destMarkerInstance = null;
-  }
-
-  // Remove arrival zone layer/source
-  if (map.getLayer(ARRIVAL_ZONE_LAYER)) {
-    map.removeLayer(ARRIVAL_ZONE_LAYER);
-  }
-  if (map.getSource(ARRIVAL_ZONE_SOURCE)) {
-    map.removeSource(ARRIVAL_ZONE_SOURCE);
-  }
-
-  if (!destination) return;
-
-  // Create HTML marker with pin + pulse
-  const el = document.createElement("div");
-  el.className = "dest-marker-container";
-  el.innerHTML = '<div class="dest-marker-pulse"></div><div class="dest-marker-pin"></div>';
-
-  // Guard against race condition: if updateDestinationMarker is called again
-  // before this .then() resolves, the version check prevents stale markers
-  const thisVersion = ++destMarkerVersion;
-  mapLibsPromise.then(([MapLibre]) => {
-    if (thisVersion !== destMarkerVersion) return; // Stale — newer call superseded us
-    destMarkerInstance = new MapLibre.Marker({ element: el, anchor: "bottom" });
-    destMarkerInstance!.setLngLat(destination.coordinates).addTo(map);
-  });
-
-  // Add arrival zone circle layer (15m radius)
-  const geojson: FeatureCollection = {
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        properties: {},
-        geometry: {
-          type: "Point",
-          coordinates: destination.coordinates,
-        },
-      },
-    ],
-  };
-
-  map.addSource(ARRIVAL_ZONE_SOURCE, { type: "geojson", data: geojson });
+  map.addSource(ARRIVAL_ZONE_SOURCE, { type: "geojson", data: EMPTY_ZONE });
   map.addLayer({
     id: ARRIVAL_ZONE_LAYER,
     type: "circle",
@@ -355,5 +319,54 @@ export function updateDestinationMarker(
       "circle-stroke-width": 1,
       "circle-pitch-alignment": "map",
     },
+  });
+}
+
+/**
+ * Move the destination marker (CSS pin + pulse) and its arrival-zone circle, or clear both
+ * when the destination is null.
+ */
+export function updateDestinationMarker(
+  map: MaplibreMap | null,
+  destination: Destination | null
+): void {
+  if (!map) return;
+
+  // Remove existing marker
+  if (destMarkerInstance) {
+    destMarkerInstance.remove();
+    destMarkerInstance = null;
+  }
+
+  const zone = map.getSource(ARRIVAL_ZONE_SOURCE) as GeoJSONSource | undefined;
+  zone?.setData(
+    destination
+      ? {
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              properties: {},
+              geometry: { type: "Point", coordinates: destination.coordinates },
+            },
+          ],
+        }
+      : EMPTY_ZONE
+  );
+
+  if (!destination) return;
+
+  // Create HTML marker with pin + pulse
+  const el = document.createElement("div");
+  el.className = "dest-marker-container";
+  el.innerHTML = '<div class="dest-marker-pulse"></div><div class="dest-marker-pin"></div>';
+
+  // Guard against race condition: if updateDestinationMarker is called again
+  // before this .then() resolves, the version check prevents stale markers
+  const thisVersion = ++destMarkerVersion;
+  mapLibsPromise.then(([MapLibre]) => {
+    if (thisVersion !== destMarkerVersion) return; // Stale — newer call superseded us
+    destMarkerInstance = new MapLibre.Marker({ element: el, anchor: "bottom" });
+    destMarkerInstance!.setLngLat(destination.coordinates).addTo(map);
   });
 }

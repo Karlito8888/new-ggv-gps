@@ -4,7 +4,7 @@
  */
 
 import type { Map as MaplibreMap, GeoJSONSource } from "maplibre-gl";
-import type { Geometry } from "geojson";
+import type { FeatureCollection } from "geojson";
 import type { OSRMResponse, OSRMManeuver } from "../types/routing";
 
 // ---------------------------------------------------------------------------
@@ -49,10 +49,11 @@ export const OSRM_HOSTS = [
 /** Request timeout (3 seconds to fail fast) */
 export const REQUEST_TIMEOUT_MS = 3000;
 
-/** Debounce delay for origin changes (prevents API spam when GPS updates rapidly) */
-export const DEBOUNCE_MS = 500;
-
-/** Route recalculation threshold */
+/**
+ * Route recalculation threshold. It is also the API rate limit: a walker covers 30 m in
+ * ~25 s, so no debounce is needed on top — and a debounce re-armed by every GPS fix would
+ * starve above 2 Hz, which is the failure this constant replaces.
+ */
 export const RECALC_THRESHOLD_M = 30;
 
 /** Off-route detection threshold */
@@ -210,6 +211,11 @@ export async function fetchOSRM(
 // Map route display helpers
 // ---------------------------------------------------------------------------
 
+const ROUTE_SOURCE = "route";
+
+/** Nothing to draw. The source always holds valid GeoJSON, so no layer is ever added twice. */
+const EMPTY_ROUTE: FeatureCollection = { type: "FeatureCollection", features: [] };
+
 /**
  * Create a canvas-drawn chevron arrow for route direction indicators.
  * White right-pointing triangle — MapLibre auto-rotates it along the line.
@@ -231,93 +237,71 @@ function createRouteArrowImage(): ImageData {
   return ctx.getImageData(0, 0, size, size);
 }
 
-export function clearMapRoute(map: MaplibreMap): void {
-  for (const layerId of ["route-arrows", "route-line", "route-outline"]) {
-    if (map.getLayer(layerId)) map.removeLayer(layerId);
-  }
-  if (map.getSource("route")) map.removeSource("route");
-}
-
-/** Actually draws the route. Throws if the style is not ready — callers go through updateMapRoute. */
-function drawRoute(map: MaplibreMap, geometry: RouteGeometry): void {
-  if (map.getSource("route")) {
-    (map.getSource("route") as GeoJSONSource).setData(geometry as Geometry);
-  } else {
-    map.addSource("route", {
-      type: "geojson",
-      data: geometry as Geometry,
-    });
-
-    // Shadow/outline layer (below route line)
-    map.addLayer({
-      id: "route-outline",
-      type: "line",
-      source: "route",
-      layout: { "line-cap": "round", "line-join": "round" },
-      paint: {
-        "line-color": "#1a56c4",
-        "line-width": 8,
-        "line-opacity": 0.5,
-      },
-    });
-
-    // Main route line
-    map.addLayer({
-      id: "route-line",
-      type: "line",
-      source: "route",
-      layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": "#4285F4", "line-width": 5 },
-    });
-
-    // Register arrow image (once)
-    if (!map.hasImage("route-arrow")) {
-      map.addImage("route-arrow", createRouteArrowImage(), { sdf: false });
-    }
-
-    // Directional chevrons (above route line)
-    map.addLayer({
-      id: "route-arrows",
-      type: "symbol",
-      source: "route",
-      layout: {
-        "symbol-placement": "line",
-        "symbol-spacing": 100,
-        "icon-image": "route-arrow",
-        "icon-size": 0.6,
-        "icon-allow-overlap": true,
-        "icon-rotation-alignment": "map",
-      },
-    });
-  }
-}
-
 /**
- * Draw or update the route line, and survive a style that is not ready yet.
+ * Create the route source and its three layers once, from the map's `load` handler.
  *
- * `addSource` and `addLayer` go through MapLibre's `_checkLoaded()`, which throws
- * "Style is not done loading." — and `isStyleLoaded()` genuinely flickers back to false while
- * tiles are in flight, measured on this app: two consecutive draws of the same route reported
- * `true` then `false`. Both call sites sit inside a promise or an effect, so the throw used to
- * vanish: the top pill, the distance and the turn instructions all appeared, and the blue line
- * did not. Observed on a real phone.
+ * They live for the whole session holding an empty FeatureCollection, so showing a route is
+ * only ever `setData` — which has no style-readiness check at all. `addSource`/`addLayer` do:
+ * both call MapLibre's `_checkLoaded()`, which throws "Style is not done loading.". Creating
+ * the layers on demand, from inside a promise or an effect, put that throw on the path that
+ * draws the line, and the state was already set — so the pill, the distance and the turn
+ * instructions appeared without a blue line.
  *
- * So the failure is logged rather than swallowed, and retried once the map settles: `idle` fires
- * after the last rendered frame with no camera transition pending and every requested tile
- * loaded, so the style is ready by then. A newer route arriving in between draws itself through
- * its own call, and the next GPS fix re-trims from `fullRoute`, so a stale retry corrects itself.
+ * Retrying such a failure on the map's `idle` event cannot work while navigating: `idle`
+ * requires "no camera transitions in progress" (maplibre-gl 5.24 typings), and the course-up
+ * camera issues a 1 s `easeTo` on every GPS fix. Removing the failure beats retrying it.
  */
-export function updateMapRoute(map: MaplibreMap, geometry: RouteGeometry): void {
-  try {
-    drawRoute(map, geometry);
-  } catch (error) {
-    console.error("Route draw failed, retrying when the map is idle:", error);
-    map.once("idle", () => {
-      try {
-        drawRoute(map, geometry);
-      } catch (retryError) {
-        console.error("Route draw retry failed, the route line will be missing:", retryError);
-      }
-    });
+export function addRouteLayers(map: MaplibreMap): void {
+  if (map.getSource(ROUTE_SOURCE)) return;
+
+  map.addSource(ROUTE_SOURCE, { type: "geojson", data: EMPTY_ROUTE });
+
+  // Shadow/outline layer (below route line)
+  map.addLayer({
+    id: "route-outline",
+    type: "line",
+    source: ROUTE_SOURCE,
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: {
+      "line-color": "#1a56c4",
+      "line-width": 8,
+      "line-opacity": 0.5,
+    },
+  });
+
+  // Main route line
+  map.addLayer({
+    id: "route-line",
+    type: "line",
+    source: ROUTE_SOURCE,
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: { "line-color": "#4285F4", "line-width": 5 },
+  });
+
+  // Before the layer that references it: a missing icon fires `styleimagemissing`, whose
+  // handler installs a 1×1 transparent placeholder that would then win forever.
+  if (!map.hasImage("route-arrow")) {
+    map.addImage("route-arrow", createRouteArrowImage(), { sdf: false });
   }
+
+  // Directional chevrons (above route line)
+  map.addLayer({
+    id: "route-arrows",
+    type: "symbol",
+    source: ROUTE_SOURCE,
+    layout: {
+      "symbol-placement": "line",
+      "symbol-spacing": 100,
+      "icon-image": "route-arrow",
+      "icon-size": 0.6,
+      "icon-allow-overlap": true,
+      "icon-rotation-alignment": "map",
+    },
+  });
+}
+
+/** Show a route, or erase it with `null`. No-op before the style has loaded its layers. */
+export function setRouteData(map: MaplibreMap, geometry: RouteGeometry | null): void {
+  const source = map.getSource(ROUTE_SOURCE) as GeoJSONSource | undefined;
+  source?.setData(geometry ?? EMPTY_ROUTE);
 }

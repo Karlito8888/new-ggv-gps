@@ -1,5 +1,6 @@
-import { describe, expect, test } from "vitest";
-import { parseManeuver } from "../lib/routing";
+import { describe, expect, test, vi } from "vitest";
+import { parseManeuver, setRouteData } from "../lib/routing";
+import type { Map as MaplibreMap } from "maplibre-gl";
 
 function maneuver(type: string, modifier?: string, location: [number, number] = [0, 0]) {
   return { type, modifier, location };
@@ -112,5 +113,29 @@ describe("parseManeuver", () => {
     const result = parseManeuver(maneuver("turn", "left"), 42.5);
     expect(result).not.toBeNull();
     expect(result!.distance).toBe(42.5);
+  });
+});
+
+describe("setRouteData", () => {
+  const line = { type: "LineString" as const, coordinates: [[0, 0] as [number, number]] };
+
+  function fakeMap(source: unknown) {
+    return { getSource: () => source } as unknown as MaplibreMap;
+  }
+
+  test("hands the geometry straight to the existing source", () => {
+    const setData = vi.fn();
+    setRouteData(fakeMap({ setData }), line);
+    expect(setData).toHaveBeenCalledWith(line);
+  });
+
+  test("clears with an empty FeatureCollection, never by removing the layers", () => {
+    const setData = vi.fn();
+    setRouteData(fakeMap({ setData }), null);
+    expect(setData).toHaveBeenCalledWith({ type: "FeatureCollection", features: [] });
+  });
+
+  test("is a no-op before the style created the source", () => {
+    expect(() => setRouteData(fakeMap(undefined), line)).not.toThrow();
   });
 });

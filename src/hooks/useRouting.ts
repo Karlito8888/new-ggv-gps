@@ -4,9 +4,7 @@ import { getDistance, projectPointOnLine } from "../lib/geo";
 import {
   fetchOSRM,
   OSRM_HOSTS,
-  clearMapRoute,
-  updateMapRoute,
-  DEBOUNCE_MS,
+  setRouteData,
   RECALC_THRESHOLD_M,
   OFF_ROUTE_THRESHOLD_M,
   TRIM_MIN_MOVEMENT_M,
@@ -40,7 +38,6 @@ export function useRouting(
   const [fullRoute, setFullRoute] = useState<RouteGeometry | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const lastOriginRef = useRef<LatLng | null>(null);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Vibration debounce (max once per 5 seconds)
   const lastVibrationRef = useRef(0);
   // Off-route recalculation cooldown (prevent infinite loop)
@@ -61,11 +58,17 @@ export function useRouting(
   // Track if params are valid (used for derived return value)
   const hasValidParams = !!(map && originLat && originLng && destLat && destLng);
 
-  // Clear route layers when navigation ends (external system cleanup — no setState)
+  // Routing stopped (navigation cancelled, or params gone): erase the line and make sure no
+  // in-flight answer can draw over the cleared map.
   useEffect(() => {
     if (hasValidParams || !map) return;
-    clearMapRoute(map);
+    destGenerationRef.current++;
+    abortRef.current?.abort();
+    setRouteData(map, null);
   }, [hasValidParams, map]);
+
+  // Unmount is the only other reason to drop a request in flight.
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   useEffect(() => {
     if (!hasValidParams) return; // Early return, no sync setState
@@ -108,7 +111,7 @@ export function useRouting(
       setSteps(result.steps || []);
       setRouteSource(source);
       lastTrimPointRef.current = null;
-      updateMapRoute(map!, result.geometry);
+      setRouteData(map!, result.geometry);
     };
 
     const fetchRoute = async () => {
@@ -159,24 +162,17 @@ export function useRouting(
       );
     };
 
-    // Clear previous debounce timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    // Debounce route calculation (except for destination changes which are immediate)
-    if (destChanged) {
-      fetchRoute();
-    } else {
-      debounceTimerRef.current = setTimeout(fetchRoute, DEBOUNCE_MS);
-    }
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      abortRef.current?.abort();
-    };
+    // No debounce, and no abort on cleanup. This effect re-runs on every GPS fix (origin is a
+    // dependency), and React runs the previous cleanup before each re-run — so aborting there
+    // cancelled the request the user is waiting for, roughly once a second, while the guard
+    // above then declined to start a new one. Whenever the OSRM round-trip outlasted the GPS
+    // cadence the route never arrived at all: no line, no turn instructions, no fallback.
+    // Measured on a Galaxy A16 with +1.5 s latency: zero route logs over 20 s of navigation.
+    //
+    // A stale answer is already handled without cancelling anything: `applyRoute` drops it by
+    // generation token. The remaining aborts are the ones that mean it: a newer fetch
+    // superseding this one (below), navigation stopping, and unmount.
+    fetchRoute();
   }, [hasValidParams, map, originLat, originLng, destLat, destLng]);
 
   // Derive off-route status (pure computation — no state, no effect)
@@ -238,7 +234,7 @@ export function useRouting(
       coordinates: trimmedCoords,
     };
     // Update map route display (external system — allowed in effect)
-    updateMapRoute(map, trimmedGeometry);
+    setRouteData(map, trimmedGeometry);
   }, [map, originLat, originLng, fullRoute]);
 
   // Derive return values - return null/empty when params invalid (no sync setState needed)
