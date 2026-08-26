@@ -9,21 +9,9 @@ import type {
 import type { FeatureCollection } from "geojson";
 import { blockLabels } from "../data/blocks";
 import { addRouteLayers } from "../lib/routing";
+import type { UserLocation, Destination } from "../types/map";
 // Layers JSON loaded dynamically — stays in the maps chunk instead of bloating index
 import "maplibre-gl/dist/maplibre-gl.css";
-
-export interface UserLocation {
-  latitude: number;
-  longitude: number;
-  heading?: number | null;
-  speed?: number | null;
-}
-
-export interface Destination {
-  name: string;
-  coordinates: [number, number];
-  type?: string;
-}
 
 interface UseMapSetupReturn {
   map: MaplibreMap | null;

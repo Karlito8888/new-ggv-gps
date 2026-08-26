@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useConvexConnectionState, useQuery } from "convex/react";
 import { anyApi } from "convex/server";
-import type { Destination } from "../hooks/useMapSetup";
+import type { Destination } from "../types/map";
+import { isCoord } from "../lib/geo";
 
 interface LotData {
   lot: string;
@@ -45,7 +46,7 @@ export function WelcomeOverlay({
   // URL both take it without complaining. Dropping it here reuses the existing "No lots
   // available" path instead, so the failure is visible and never reaches navigation.
   const lotList = (lots ?? []).filter(
-    (l) => typeof l?.coordinates?.lng === "number" && typeof l?.coordinates?.lat === "number"
+    (l) => isCoord(l?.coordinates?.lng) && isCoord(l?.coordinates?.lat)
   );
 
   // Derived selection: honour the user's pick when still valid, else default to the first lot.

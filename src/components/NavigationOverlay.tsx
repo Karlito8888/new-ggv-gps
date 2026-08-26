@@ -1,6 +1,6 @@
 import { getDistanceAlongRoute } from "../lib/geo";
 import { TURN_LABELS } from "../lib/routing";
-import type { UserLocation, Destination } from "../hooks/useMapSetup";
+import type { UserLocation, Destination } from "../types/map";
 import type { RouteStep, RouteGeometry, RouteSourceType } from "../hooks/useRouting";
 
 interface NavigationOverlayProps {

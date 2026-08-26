@@ -1,5 +1,5 @@
-import { getDistance } from "../lib/geo";
-import type { UserLocation, Destination } from "./useMapSetup";
+import { getDistance, isCoord } from "../lib/geo";
+import type { UserLocation, Destination } from "../types/map";
 
 interface UseNavigationReturn {
   distanceRemaining: number;
@@ -28,7 +28,8 @@ export function useNavigation(
   const destLat = destination?.coordinates?.[1];
   const destLng = destination?.coordinates?.[0];
 
-  if (!userLat || !userLng || !destLat || !destLng) {
+  // `isCoord`, not falsiness: `!lat` also rejected a legitimate 0 — the equator and Greenwich.
+  if (!isCoord(userLat) || !isCoord(userLng) || !isCoord(destLat) || !isCoord(destLng)) {
     return {
       distanceRemaining: 0,
       hasArrived: false,

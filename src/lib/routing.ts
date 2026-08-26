@@ -46,8 +46,8 @@ export const OSRM_HOSTS = [
   "https://routing.openstreetmap.de/routed-foot/route/v1/foot",
 ] as const;
 
-/** Request timeout (3 seconds to fail fast) */
-export const REQUEST_TIMEOUT_MS = 3000;
+/** Request timeout (3 seconds to fail fast). Internal: only `fetchWithTimeout` reads it. */
+const REQUEST_TIMEOUT_MS = 3000;
 
 /**
  * Route recalculation threshold. It is also the API rate limit: a walker covers 30 m in
@@ -164,8 +164,8 @@ export function parseManeuver(maneuver: OSRMManeuver, distance: number): RouteSt
 // Fetch helpers
 // ---------------------------------------------------------------------------
 
-/** Fetch with timeout helper */
-export function fetchWithTimeout(url: string, signal?: AbortSignal): Promise<Response> {
+/** Fetch with timeout helper. Internal: `fetchOSRM` is the module's only caller. */
+function fetchWithTimeout(url: string, signal?: AbortSignal): Promise<Response> {
   const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
   return fetch(url, { signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
 }

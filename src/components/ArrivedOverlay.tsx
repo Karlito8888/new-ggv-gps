@@ -1,4 +1,4 @@
-import type { Destination } from "../hooks/useMapSetup";
+import type { Destination } from "../types/map";
 
 interface ArrivedOverlayProps {
   destination: Destination | null;

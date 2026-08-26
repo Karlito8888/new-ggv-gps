@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from "react";
 import type { Map as MaplibreMap } from "maplibre-gl";
 import { nextBearing } from "../lib/course";
-import type { UserLocation } from "./useMapSetup";
+import type { UserLocation } from "../types/map";
 
 const NAV_PITCH = 50; // 3D chase-cam tilt (MapLibre maxPitch is 60)
 const NAV_ZOOM = 17;

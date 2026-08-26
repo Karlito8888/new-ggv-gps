@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, startTransition } from "react";
 import { useCourseUpCamera } from "./hooks/useCourseUpCamera";
 import { useMapSetup, updateDestinationMarker } from "./hooks/useMapSetup";
-import type { Destination } from "./hooks/useMapSetup";
+import type { Destination } from "./types/map";
 import { useRouting } from "./hooks/useRouting";
 import { useNavigation } from "./hooks/useNavigation";
 import { useQuery } from "convex/react";

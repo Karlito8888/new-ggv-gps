@@ -4,6 +4,17 @@
  */
 
 /**
+ * A usable coordinate: present, numeric and finite.
+ *
+ * Falsiness is the wrong test — `!lat` also rejects a legitimate `0`, i.e. the equator and the
+ * Greenwich meridian — and `typeof v === "number"` accepts `NaN`, which sails through every
+ * distance computation and reaches MapLibre as a silent no-op. One predicate for both call sites.
+ */
+export function isCoord(value: unknown): value is number {
+  return Number.isFinite(value);
+}
+
+/**
  * Calculate distance between two coordinates using Haversine formula
  */
 export function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
