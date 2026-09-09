@@ -54,3 +54,5 @@ public/sprites/*.json
 # prettier n'en lit aucun — sans ces lignes le gate rougit sur des rapports d'audit.
 archon-out/
 flow-out/
+revue-out/
+frise-out/

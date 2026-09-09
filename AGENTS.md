@@ -228,21 +228,38 @@ Le poste pilote le téléphone via `adb` + CDP, et l'outil navigateur s'y attach
 ```bash
 adb forward tcp:9222 localabstract:chrome_devtools_remote   # onglets Chrome ET PWA installée
 curl -s http://localhost:9222/json/list | jq -r '.[]|[.type,.id,.url]|@tsv'
-adb reverse tcp:4173 tcp:4173                               # servir un build local au téléphone
+adb reverse tcp:5173 tcp:5173                               # servir un build local au téléphone
 adb shell monkey -p org.chromium.webapk.aef3138b3cf6909f6_v2 -c android.intent.category.LAUNCHER 1
 ```
 
 La PWA installée est un WebAPK (`org.chromium.webapk.aef3138b3cf6909f6_v2`) : elle apparaît dans
 la même liste de cibles, `display-mode: standalone` le confirme depuis la page.
 
-Trois choses à injecter, sinon la mesure ne reproduit rien :
+Quatre choses à injecter, sinon la mesure ne reproduit rien :
 
 1. **un pilote GPS à 1 Hz** — remplacer `navigator.geolocation.watchPosition` dans
    `evaluateOnNewDocument`. `Emulation.setGeolocationOverride` ne suffit pas : il ne pousse pas de
    flux, et le `watchPosition` de l'app finit en `Timeout expired` — ce qui **masque** la panne ;
 2. **de la latence réseau** — `Network.emulateNetworkConditions { latency: 1500 }`. Sur le WiFi du
    poste, OSRM répond en ~250 ms et le bug ne sort pas ; c'est la latence mobile qui le révèle ;
-3. **le hook `console`** (voir plus bas), seul moyen de lire les logs applicatifs.
+3. **le hook `console`** (voir plus bas), seul moyen de lire les logs applicatifs ;
+4. **la trace** — ouvrir l'app avec `?trace=1` (ou tourner en DEV) pour que `src/lib/trace.ts`
+   enregistre. Sans ça `window.__trace` n'existe pas et la frise n'a rien à lire.
+
+La cadence des fixes, les aborts tombés en vol et le délai du premier tracé se lisent sur la
+frise plutôt qu'à l'œil dans les logs — c'est une classe de bug temporelle. Après le run,
+l'onglet **encore ouvert** :
+
+```js
+await Bun.write("/tmp/trace.json", JSON.stringify(await tab.evaluate(() => window.__trace)));
+```
+
+```bash
+bun scripts/frise.ts --in=/tmp/trace.json   # → frise-out/frise.html
+```
+
+Un run de bureau sans pilote GPS injecté produit une frise que la page elle-même refuse de
+laisser lire comme une preuve : sous cinq fixes, elle affiche un bandeau rouge.
 
 ⚠️ **Les scripts `evaluateOnNewDocument` s'accumulent sur une cible et survivent au `reload`.**
 Un pilote GPS injecté pour un test précédent continue de répondre à la place du vrai GPS —

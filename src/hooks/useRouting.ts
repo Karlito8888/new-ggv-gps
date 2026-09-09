@@ -9,6 +9,7 @@ import {
   OFF_ROUTE_THRESHOLD_M,
   TRIM_MIN_MOVEMENT_M,
 } from "../lib/routing";
+import { trace } from "../lib/trace";
 import type { RouteStep, RouteGeometry, RouteResult, RouteSourceType } from "../lib/routing";
 import type { UserLocation, Destination } from "../types/map";
 
@@ -105,6 +106,7 @@ export function useRouting(
       // Reject stale results from previous destination
       if (generation !== destGenerationRef.current) {
         console.info("Route: Discarding stale result (destination changed)");
+        trace("route:stale");
         return;
       }
       setFullRoute(result.geometry);
@@ -117,9 +119,13 @@ export function useRouting(
     const fetchRoute = async () => {
       // Save current origin for next comparison
       lastOriginRef.current = { lat: originLat!, lng: originLng! };
+      // Un abort qui tombe entre un `route:fetch-start` et son issue est la régression que la
+      // frise existe pour montrer : il faut donc le dater, pas seulement le faire.
+      if (abortRef.current) trace("route:abort");
       abortRef.current?.abort();
       abortRef.current = new AbortController();
       const signal = abortRef.current.signal;
+      trace("route:fetch-start", { generation });
 
       // 1. Try each OSRM host in order
       for (const host of OSRM_HOSTS) {
@@ -128,6 +134,7 @@ export function useRouting(
           const route = await fetchOSRM(host, originLng!, originLat!, destLng!, destLat!, signal);
           if (route) {
             console.info(`Route: OSRM (${new URL(host).hostname})`);
+            trace("route:osrm", { host: new URL(host).hostname });
             applyRoute(route, "osrm");
             return;
           }
@@ -137,6 +144,7 @@ export function useRouting(
             `OSRM failed (${new URL(host).hostname}):`,
             e instanceof Error ? e.message : e
           );
+          trace("route:osrm-fail", { host: new URL(host).hostname });
         }
       }
 
@@ -146,6 +154,7 @@ export function useRouting(
 
       console.info("Route: Direct line (fallback)");
       const directDist = getDistance(originLat!, originLng!, destLat!, destLng!);
+      trace("route:direct", { metres: directDist });
       applyRoute(
         {
           geometry: {

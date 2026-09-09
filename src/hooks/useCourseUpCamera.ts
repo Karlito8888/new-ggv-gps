@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from "react";
 import type { Map as MaplibreMap } from "maplibre-gl";
 import { nextBearing } from "../lib/course";
+import { trace } from "../lib/trace";
 import type { UserLocation } from "../types/map";
 
 const NAV_PITCH = 50; // 3D chase-cam tilt (MapLibre maxPitch is 60)
@@ -66,12 +67,14 @@ export function useCourseUpCamera(
     // fixes that follow can't interrupt (and freeze) a pitch/zoom animation.
     if (!initializedRef.current) {
       initializedRef.current = true;
+      trace("cam:jump");
       map.jumpTo({ center, bearing: bearingRef.current, pitch: NAV_PITCH, zoom: NAV_ZOOM });
       return;
     }
 
     // Subsequent fixes: ease center + bearing only. Omitting pitch/zoom keeps
     // whatever the user set via pinch-zoom / two-finger tilt.
+    trace("cam:ease", { bearing: bearingRef.current });
     map.easeTo({
       center,
       bearing: bearingRef.current,

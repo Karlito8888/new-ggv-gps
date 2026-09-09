@@ -9,6 +9,7 @@ import type {
 import type { FeatureCollection } from "geojson";
 import { blockLabels } from "../data/blocks";
 import { addRouteLayers } from "../lib/routing";
+import { trace } from "../lib/trace";
 import type { UserLocation, Destination } from "../types/map";
 // Layers JSON loaded dynamically — stays in the maps chunk instead of bloating index
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -240,6 +241,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
     };
     const applyPosition = (pos: GeolocationPosition) => {
       const { latitude, longitude, heading, speed } = pos.coords;
+      trace("gps:fix", { lat: latitude, lng: longitude, heading, speed });
       setUserLocation({ latitude, longitude, heading, speed });
       userMarkerRef.current?.setLngLat([longitude, latitude]);
     };
@@ -253,7 +255,10 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
     if (watchIdRef.current === null) {
       watchIdRef.current = navigator.geolocation.watchPosition(
         applyPosition,
-        (err) => console.error("Geolocation watch error:", err),
+        (err) => {
+          trace("gps:error", { code: err.code });
+          console.error("Geolocation watch error:", err);
+        },
         options
       );
     }
