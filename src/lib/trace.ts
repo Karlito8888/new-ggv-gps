@@ -25,6 +25,13 @@ export interface TraceEvent {
   payload?: Record<string, unknown>;
 }
 
+declare global {
+  /** Lu par la capture CDP : `tab.evaluate(() => window.__trace)`. */
+  interface Window {
+    __trace?: TraceEvent[];
+  }
+}
+
 /** Au-delà, les plus vieux événements tombent : une session de navigation en produit ~10/s. */
 const MAX = 2000;
 
