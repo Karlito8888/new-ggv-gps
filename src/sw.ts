@@ -12,6 +12,7 @@ import { CacheFirst, NetworkFirst } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { RangeRequestsPlugin } from "workbox-range-requests";
 import { clientsClaim } from "workbox-core";
+import { TILESET_PATH } from "./lib/tileset";
 
 // Take over as soon as a new version is available, and claim the open pages.
 //
@@ -77,7 +78,7 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open("pmtiles-cache")
-      .then((cache) => cache.add("/tiles/ggv.pmtiles"))
+      .then((cache) => cache.add(TILESET_PATH))
       .catch(() => {
         // PMTiles warm-cache failed (slow network, timeout) —
         // SW still activates; map tiles work online, offline after retry
@@ -85,4 +86,19 @@ self.addEventListener("install", (event) => {
   );
   // No `skipWaiting()` needed here — it runs at the top of this file, so a new worker activates
   // as soon as it installs rather than waiting for a user gesture.
+});
+
+// --- SW Activate: drop superseded tilesets ---
+// Not at install: the previous worker still serves open pages from this shared cache until this
+// one activates, and those pages reload right after (vite-plugin-pwa `autoUpdate` reloads on
+// `activated`). Kept when the new file is missing, so an offline install keeps a working map.
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.open("pmtiles-cache").then(async (cache) => {
+      if (!(await cache.match(TILESET_PATH))) return;
+      for (const request of await cache.keys()) {
+        if (new URL(request.url).pathname !== TILESET_PATH) await cache.delete(request);
+      }
+    })
+  );
 });

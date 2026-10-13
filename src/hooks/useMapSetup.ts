@@ -10,6 +10,7 @@ import type { FeatureCollection } from "geojson";
 import { blockLabels } from "../data/blocks";
 import { addRouteLayers } from "../lib/routing";
 import { trace } from "../lib/trace";
+import { TILESET_PATH } from "../lib/tileset";
 import type { UserLocation, Destination } from "../types/map";
 // Layers JSON loaded dynamically — stays in the maps chunk instead of bloating index
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -138,7 +139,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
         sources: {
           protomaps: {
             type: "vector" as const,
-            url: "pmtiles:///tiles/ggv.pmtiles",
+            url: `pmtiles://${TILESET_PATH}`,
             attribution: "© OpenStreetMap contributors",
           },
         },
