@@ -3,6 +3,13 @@ name: Deploy to Hostinger
 on:
   push:
     branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/shared/**"
+      - "package.json"
+      - "bun.lock"
+      - "bunfig.toml"
+      - ".github/workflows/deploy.yml"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -27,5 +34,5 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./dist/
+          local-dir: ./apps/web/dist/
           server-dir: ./domains/charlesbourgault.com/public_html/myggvgps/
