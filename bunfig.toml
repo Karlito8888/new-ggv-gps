@@ -2,3 +2,6 @@
 # bun.lock has configVersion 1, so workspaces would default to the isolated linker.
 # Expo (Metro, expo-doctor) needs a flat node_modules: measured 21/21 hoisted vs 20/21 isolated.
 linker = "hoisted"
+# Wait 7 days before resolving a newly published version (supply-chain hygiene, enforced by the
+# Semgrep gate). One-off override for a fresh release: `bun add <pkg> --minimum-release-age=0`.
+minimumReleaseAge = 604800
