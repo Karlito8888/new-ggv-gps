@@ -1,0 +1,26 @@
+{
+  "name": "@ggv/shared",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./basemap-layers": "./src/map/protomaps-light-layers.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "convex": "^1.42.3",
+    "react": "19.2.3"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.2",
+    "@types/geojson": "^7946.0.16",
+    "@types/react": "^19.2.17",
+    "jsdom": "^30.0.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

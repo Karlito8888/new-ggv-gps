@@ -6,17 +6,13 @@ import tseslint from "typescript-eslint";
 
 export default [
   {
-    ignores: ["dist", "dev-dist", "build", "node_modules", ".netlify"],
+    ignores: ["**/dist", "**/dev-dist", "build", "**/node_modules", ".netlify", "apps/mobile/**"],
   },
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
-      globals: {
-        ...globals.browser,
-        __APP_VERSION__: "readonly",
-      },
       parser: tseslint.parser,
       parserOptions: {
         ecmaFeatures: { jsx: true },
@@ -64,6 +60,22 @@ export default [
       "space-before-function-paren": "off",
       "keyword-spacing": "off",
       "space-before-blocks": "off",
+    },
+  },
+  {
+    files: ["apps/web/**/*.{js,jsx,ts,tsx}"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        __APP_VERSION__: "readonly",
+      },
+    },
+  },
+  {
+    // Shared code runs on React Native too: no browser globals.
+    files: ["packages/shared/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-globals": ["error", "window", "document", "navigator", "location"],
     },
   },
 ];

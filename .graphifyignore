@@ -2,5 +2,7 @@
 # Voie documentée (README « Ignoring files ») : fusionnée avec .gitignore, évaluée
 # en dernier. Sans elle, un rebuild à la racine avale docs/ et artefacts d'outils.
 *
-!src/
-!src/**
+!apps/
+!apps/**
+!packages/
+!packages/**
