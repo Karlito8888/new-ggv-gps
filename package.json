@@ -11,8 +11,8 @@
   },
   "scripts": {
     "gate": "bun run typecheck && bun run lint && bun run format:check && bun run test",
-    "typecheck": "bun run --filter @ggv/shared typecheck && bun run --filter @ggv/web typecheck",
-    "lint": "eslint .",
+    "typecheck": "bun run --filter @ggv/shared typecheck && bun run --filter @ggv/web typecheck && bun run --filter @ggv/mobile typecheck",
+    "lint": "eslint . && bun run --filter @ggv/mobile lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "bun run --filter @ggv/shared test && bun run --filter @ggv/web test",

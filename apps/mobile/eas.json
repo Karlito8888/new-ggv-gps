@@ -1,0 +1,30 @@
+{
+  "cli": { "version": ">= 24.0.0", "appVersionSource": "remote" },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": { "APP_VARIANT": "development" },
+      "android": { "buildType": "apk" }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": { "APP_VARIANT": "preview" },
+      "android": { "buildType": "apk" }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": { "APP_VARIANT": "production" }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6822344962",
+        "ascApiKeyPath": "../../../myggv/credentials/AuthKey_LSW3CXCRMR.p8",
+        "ascApiKeyId": "LSW3CXCRMR",
+        "ascApiKeyIssuerId": "3c042446-f364-4dc0-83b3-2682bb6c2180"
+      }
+    }
+  }
+}
