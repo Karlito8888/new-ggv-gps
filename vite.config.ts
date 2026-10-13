@@ -28,8 +28,9 @@ export default defineConfig({
           groups: [
             // Core React - small, always needed
             { name: "vendor", test: /node_modules\/react(-dom)?\// },
-            // MapLibre + PMTiles - lazy loaded together
-            { name: "maps", test: /node_modules\/(maplibre-gl|pmtiles)\// },
+            // MapLibre + PMTiles JS - lazy loaded together. JS only: the CSS imported
+            // statically by useMapSetup must stay out, or the entry imports this chunk eagerly.
+            { name: "maps", test: /node_modules\/(maplibre-gl|pmtiles)\/.*\.js$/ },
           ],
         },
       },
