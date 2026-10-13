@@ -1,16 +1,27 @@
 import { useEffect, useEffectEvent, useRef } from "react";
-import type { Map as MaplibreMap } from "maplibre-gl";
-import { nextBearing } from "../lib/course";
-import { trace } from "../lib/trace";
-import type { UserLocation } from "../types/map";
+import { nextBearing } from "./course";
+import { trace } from "./trace";
+import type { UserLocation } from "./types";
 
-const NAV_PITCH = 50; // 3D chase-cam tilt (MapLibre maxPitch is 60)
-const NAV_ZOOM = 17;
-const FOLLOW_MS = 1000; // ~ GPS cadence (1 Hz): each easeTo ends as the next fix arrives
-const RESUME_MS = 5000; // auto-resume following after a user pan
+export const NAV_PITCH = 50; // 3D chase-cam tilt (MapLibre maxPitch is 60)
+export const NAV_ZOOM = 17;
+export const FOLLOW_MS = 1000; // ~ GPS cadence (1 Hz): each easeTo ends as the next fix arrives
+export const RESUME_MS = 5000; // auto-resume following after a user pan
 
 /**
- * Single camera driver for course-up 3D navigation — 100% MapLibre, no sensor.
+ * The camera of whichever renderer is in use. `easeTo` must be linear and uninterruptible by
+ * reduced-motion settings (web: `easing: t => t, essential: true`; mobile: `easing: "linear"`).
+ * `onUserPan` fires only on user gestures, never on programmatic moves, and returns its
+ * unsubscribe function.
+ */
+export interface CameraDriver {
+  jumpTo(o: { center: [number, number]; bearing: number; pitch: number; zoom: number }): void;
+  easeTo(o: { center: [number, number]; bearing: number; duration: number }): void;
+  onUserPan(cb: () => void): () => void;
+}
+
+/**
+ * Single camera driver for course-up 3D navigation — GPS course only, no sensor.
  *
  * On every GPS fix it eases the map to the user position with a bearing derived
  * from the GPS course (see lib/course). The user can pan to look around; the
@@ -21,8 +32,7 @@ const RESUME_MS = 5000; // auto-resume following after a user pan
  * setCenter/easeTo drivers with one coordinated animation.
  */
 export function useCourseUpCamera(
-  map: MaplibreMap | null,
-  isMapReady: boolean,
+  driver: CameraDriver | null,
   isNavigating: boolean,
   userLocation: UserLocation | null
 ): void {
@@ -40,26 +50,25 @@ export function useCourseUpCamera(
   }, [isNavigating]);
 
   // Suspend following on user pan, resume after a delay.
-  // dragstart fires only on user gestures, never on programmatic easeTo.
   useEffect(() => {
-    if (!map || !isMapReady) return;
-    const onDragStart = () => {
+    if (!driver) return;
+    const onUserPan = () => {
       followingRef.current = false;
       clearTimeout(resumeTimerRef.current ?? undefined);
       resumeTimerRef.current = setTimeout(() => {
         followingRef.current = true;
       }, RESUME_MS);
     };
-    map.on("dragstart", onDragStart);
+    const unsubscribe = driver.onUserPan(onUserPan);
     return () => {
-      map.off("dragstart", onDragStart);
+      unsubscribe();
       clearTimeout(resumeTimerRef.current ?? undefined);
     };
-  }, [map, isMapReady]);
+  }, [driver]);
 
-  // Follow the user on each GPS fix (latest map/nav state via effect event).
+  // Follow the user on each GPS fix (latest driver/nav state via effect event).
   const follow = useEffectEvent((loc: UserLocation) => {
-    if (!map || !isMapReady || !isNavigating || !followingRef.current) return;
+    if (!driver || !isNavigating || !followingRef.current) return;
     bearingRef.current = nextBearing(bearingRef.current, loc.heading ?? null, loc.speed ?? null);
     const center: [number, number] = [loc.longitude, loc.latitude];
 
@@ -68,20 +77,14 @@ export function useCourseUpCamera(
     if (!initializedRef.current) {
       initializedRef.current = true;
       trace("cam:jump");
-      map.jumpTo({ center, bearing: bearingRef.current, pitch: NAV_PITCH, zoom: NAV_ZOOM });
+      driver.jumpTo({ center, bearing: bearingRef.current, pitch: NAV_PITCH, zoom: NAV_ZOOM });
       return;
     }
 
     // Subsequent fixes: ease center + bearing only. Omitting pitch/zoom keeps
     // whatever the user set via pinch-zoom / two-finger tilt.
     trace("cam:ease", { bearing: bearingRef.current });
-    map.easeTo({
-      center,
-      bearing: bearingRef.current,
-      duration: FOLLOW_MS,
-      easing: (t) => t, // linear -> continuous motion, no easeTo pile-up
-      essential: true, // stay smooth under prefers-reduced-motion
-    });
+    driver.easeTo({ center, bearing: bearingRef.current, duration: FOLLOW_MS });
   });
 
   // `isNavigating` is a dependency on purpose: without it the 3D nav view only engaged on the

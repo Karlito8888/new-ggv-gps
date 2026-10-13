@@ -1,8 +1,19 @@
 import { createRoot } from "react-dom/client";
+import { startTrace, type TraceEvent } from "@ggv/shared";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import "./styles/app.css";
+
+declare global {
+  /** Read by the CDP capture: `tab.evaluate(() => window.__trace)`. */
+  interface Window {
+    __trace?: TraceEvent[];
+  }
+}
+
+// Trace recording is off in production unless asked for with `?trace=1`.
+if (import.meta.env.DEV || location.search.includes("trace=1")) window.__trace = startTrace();
 
 const root = createRoot(document.getElementById("root")!);
 

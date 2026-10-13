@@ -1,7 +1,9 @@
 /**
  * Block label anchor points — one centroid per village block.
- * Consumed only by useMapSetup to place the "block-labels" symbol layer.
+ * Consumed by both renderers to place the "block-labels" symbol layer.
  */
+import type { FeatureCollection } from "geojson";
+
 export interface BlockLabel {
   name: string;
   center: [number, number];
@@ -71,3 +73,14 @@ export const blockLabels: BlockLabel[] = [
   { name: "47", center: [120.95365789690818, 14.347511894815266] },
   { name: "50", center: [120.95338132848515, 14.346353636367846] },
 ];
+
+export function blockLabelsGeoJSON(): FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: blockLabels.map((block) => ({
+      type: "Feature" as const,
+      properties: { name: block.name },
+      geometry: { type: "Point" as const, coordinates: block.center },
+    })),
+  };
+}

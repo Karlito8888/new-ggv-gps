@@ -1,11 +1,9 @@
 /**
- * Pure routing utilities — fetch, parse, map display helpers.
- * No React hooks or state. Extracted from useRouting for separation of concerns.
+ * Pure routing utilities — fetch and parse. No React, no map renderer, no DOM.
+ * The map-drawing half lives with each renderer (web: routeLayers.ts).
  */
 
-import type { Map as MaplibreMap, GeoJSONSource } from "maplibre-gl";
-import type { FeatureCollection } from "geojson";
-import type { OSRMResponse, OSRMManeuver } from "../types/routing";
+import type { OSRMResponse, OSRMManeuver } from "./osrm-types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -66,7 +64,7 @@ export const TRIM_MIN_MOVEMENT_M = 3;
 // Turn icon mapping
 // ---------------------------------------------------------------------------
 
-const TURN_ICONS: Record<string, string> = {
+export const TURN_ICONS: Record<string, string> = {
   uturn: "↩",
   "sharp left": "↰",
   left: "←",
@@ -164,10 +162,25 @@ export function parseManeuver(maneuver: OSRMManeuver, distance: number): RouteSt
 // Fetch helpers
 // ---------------------------------------------------------------------------
 
-/** Fetch with timeout helper. Internal: `fetchOSRM` is the module's only caller. */
-function fetchWithTimeout(url: string, signal?: AbortSignal): Promise<Response> {
-  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
-  return fetch(url, { signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
+/**
+ * Fetch + parse JSON with a timeout. Internal: `fetchOSRM` is the module's only caller.
+ * Built on a plain AbortController rather than `AbortSignal.timeout`/`AbortSignal.any`, whose
+ * support in React Native's Hermes runtime is unverified.
+ */
+async function fetchJsonWithTimeout<T>(url: string, signal?: AbortSignal): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  if (signal) {
+    if (signal.aborted) controller.abort();
+    else signal.addEventListener("abort", () => controller.abort(), { once: true });
+  }
+  try {
+    // The timer covers the body read too, as `AbortSignal.timeout` did.
+    const res = await fetch(url, { signal: controller.signal });
+    return (await res.json()) as T;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // OSRM routing — `host` comes from OSRM_HOSTS
@@ -180,8 +193,7 @@ export async function fetchOSRM(
   signal?: AbortSignal
 ): Promise<RouteResult | null> {
   const url = `${host}/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
-  const res = await fetchWithTimeout(url, signal);
-  const data: OSRMResponse = await res.json();
+  const data = await fetchJsonWithTimeout<OSRMResponse>(url, signal);
 
   if (data.code === "Ok" && data.routes?.[0]) {
     const route = data.routes[0];
@@ -205,103 +217,4 @@ export async function fetchOSRM(
     };
   }
   return null;
-}
-
-// ---------------------------------------------------------------------------
-// Map route display helpers
-// ---------------------------------------------------------------------------
-
-const ROUTE_SOURCE = "route";
-
-/** Nothing to draw. The source always holds valid GeoJSON, so no layer is ever added twice. */
-const EMPTY_ROUTE: FeatureCollection = { type: "FeatureCollection", features: [] };
-
-/**
- * Create a canvas-drawn chevron arrow for route direction indicators.
- * White right-pointing triangle — MapLibre auto-rotates it along the line.
- */
-function createRouteArrowImage(): ImageData {
-  const size = 12;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  // Right-pointing chevron
-  ctx.moveTo(2, 1);
-  ctx.lineTo(10, 6);
-  ctx.lineTo(2, 11);
-  ctx.closePath();
-  ctx.fill();
-  return ctx.getImageData(0, 0, size, size);
-}
-
-/**
- * Create the route source and its three layers once, from the map's `load` handler.
- *
- * They live for the whole session holding an empty FeatureCollection, so showing a route is
- * only ever `setData` — which has no style-readiness check at all. `addSource`/`addLayer` do:
- * both call MapLibre's `_checkLoaded()`, which throws "Style is not done loading.". Creating
- * the layers on demand, from inside a promise or an effect, put that throw on the path that
- * draws the line, and the state was already set — so the pill, the distance and the turn
- * instructions appeared without a blue line.
- *
- * Retrying such a failure on the map's `idle` event cannot work while navigating: `idle`
- * requires "no camera transitions in progress" (maplibre-gl 5.24 typings), and the course-up
- * camera issues a 1 s `easeTo` on every GPS fix. Removing the failure beats retrying it.
- */
-export function addRouteLayers(map: MaplibreMap): void {
-  if (map.getSource(ROUTE_SOURCE)) return;
-
-  map.addSource(ROUTE_SOURCE, { type: "geojson", data: EMPTY_ROUTE });
-
-  // Shadow/outline layer (below route line)
-  map.addLayer({
-    id: "route-outline",
-    type: "line",
-    source: ROUTE_SOURCE,
-    layout: { "line-cap": "round", "line-join": "round" },
-    paint: {
-      "line-color": "#1a56c4",
-      "line-width": 8,
-      "line-opacity": 0.5,
-    },
-  });
-
-  // Main route line
-  map.addLayer({
-    id: "route-line",
-    type: "line",
-    source: ROUTE_SOURCE,
-    layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": "#4285F4", "line-width": 5 },
-  });
-
-  // Before the layer that references it: a missing icon fires `styleimagemissing`, whose
-  // handler installs a 1×1 transparent placeholder that would then win forever.
-  if (!map.hasImage("route-arrow")) {
-    map.addImage("route-arrow", createRouteArrowImage(), { sdf: false });
-  }
-
-  // Directional chevrons (above route line)
-  map.addLayer({
-    id: "route-arrows",
-    type: "symbol",
-    source: ROUTE_SOURCE,
-    layout: {
-      "symbol-placement": "line",
-      "symbol-spacing": 100,
-      "icon-image": "route-arrow",
-      "icon-size": 0.6,
-      "icon-allow-overlap": true,
-      "icon-rotation-alignment": "map",
-    },
-  });
-}
-
-/** Show a route, or erase it with `null`. No-op before the style has loaded its layers. */
-export function setRouteData(map: MaplibreMap, geometry: RouteGeometry | null): void {
-  const source = map.getSource(ROUTE_SOURCE) as GeoJSONSource | undefined;
-  source?.setData(geometry ?? EMPTY_ROUTE);
 }

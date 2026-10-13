@@ -1,16 +1,4 @@
-import { useState } from "react";
-import { useConvexConnectionState, useQuery } from "convex/react";
-import { anyApi } from "convex/server";
-import type { Destination } from "../types/map";
-import { isCoord } from "../lib/geo";
-
-interface LotData {
-  lot: string;
-  coordinates: {
-    lng: number;
-    lat: number;
-  } | null;
-}
+import { COPY, inline, useDestinationChoice, type Destination } from "@ggv/shared";
 
 interface WelcomeOverlayProps {
   blocks: string[];
@@ -23,63 +11,23 @@ export function WelcomeOverlay({
   isLoadingBlocks,
   onSelectDestination,
 }: WelcomeOverlayProps) {
-  const [selectedBlock, setSelectedBlock] = useState("");
-  const [selectedLot, setSelectedLot] = useState("");
-
-  // Without this, a first visit on a dead network sat on "Loading..." forever with no message and
-  // no way out: the Convex queries travel over a WebSocket, so Workbox cannot cache them.
-  // `connectionRetries` only increments AFTER a failed attempt, which is what keeps this from
-  // flashing during the normal opening handshake. There IS a reload button on purpose: the client
-  // does retry, but automatic recovery could not be demonstrated here (network restored, backend
-  // answering 200, socket still failing after 90 s), so the UI does not promise it.
-  const connection = useConvexConnectionState();
-  const isOffline = connection.connectionRetries > 0 && !connection.isWebSocketConnected;
-
-  // Lots (with coords) for the selected block — reactive Convex query (skips when no block)
-  const lots = useQuery(
-    anyApi.locations.lotsWithCoordsByBlock,
-    selectedBlock ? { block: selectedBlock } : "skip"
-  ) as LotData[] | undefined;
-  const isLoadingLots = !!selectedBlock && lots === undefined;
-  // `anyApi` is untyped, so `tsc` cannot see a shape change in the myggv backend. A malformed
-  // lot would silently become a `[undefined, undefined]` destination — MapLibre and the OSRM
-  // URL both take it without complaining. Dropping it here reuses the existing "No lots
-  // available" path instead, so the failure is visible and never reaches navigation.
-  const lotList = (lots ?? []).filter(
-    (l) => isCoord(l?.coordinates?.lng) && isCoord(l?.coordinates?.lat)
-  );
-
-  // Derived selection: honour the user's pick when still valid, else default to the first lot.
-  // (Derive during render instead of a setState-in-effect — react.dev "You Might Not Need an Effect".)
-  const effectiveLot =
-    selectedLot && lotList.some((l) => l.lot === selectedLot)
-      ? selectedLot
-      : (lotList[0]?.lot ?? "");
-
-  const handleBlockChange = (value: string) => {
-    setSelectedBlock(value);
-    setSelectedLot("");
-  };
-
-  const handleNavigate = () => {
-    if (!selectedBlock || !effectiveLot) return;
-    const lot = lotList.find((l) => l.lot === effectiveLot);
-    if (lot?.coordinates) {
-      // Coordinates stored as { lng, lat }
-      onSelectDestination({
-        type: "lot",
-        coordinates: [lot.coordinates.lng, lot.coordinates.lat],
-        name: `Block ${selectedBlock}, Lot ${effectiveLot}`,
-      });
-    }
-  };
+  const {
+    selectedBlock,
+    setBlock,
+    effectiveLot,
+    setLot,
+    lotList,
+    isLoadingLots,
+    isOffline,
+    navigate,
+  } = useDestinationChoice(onSelectDestination);
 
   return (
     <div
       className="overlay welcome-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="Choose Destination"
+      aria-label={COPY.welcome.aria.en}
     >
       <div className="modal welcome-modal">
         {/* Destination Icon */}
@@ -98,30 +46,30 @@ export function WelcomeOverlay({
           </svg>
         </div>
 
-        <h1>Choose Destination</h1>
-        <p className="overlay-tagalog">(Pumili ng Destinasyon)</p>
+        <h1>{COPY.welcome.title.en}</h1>
+        <p className="overlay-tagalog">({COPY.welcome.title.tl})</p>
 
         <div className="welcome-block-selector">
           <label htmlFor="block-select" className="sr-only">
-            Select Block
+            {COPY.welcome.selectBlockLabel.en}
           </label>
           <select
             id="block-select"
             value={selectedBlock}
-            onChange={(e) => handleBlockChange(e.target.value)}
+            onChange={(e) => setBlock(e.target.value)}
             className="welcome-select"
             disabled={isLoadingBlocks}
           >
             <option value="" disabled>
               {isOffline
-                ? "No connection (Walang koneksyon)"
+                ? inline(COPY.welcome.noConnection)
                 : isLoadingBlocks
-                  ? "Loading... (Nag-lo-load...)"
-                  : "Select Block (Pumili ng Block)"}
+                  ? inline(COPY.welcome.loading)
+                  : inline(COPY.welcome.selectBlock)}
             </option>
             {blocks.map((block) => (
               <option key={block} value={block}>
-                Block {block}
+                {COPY.welcome.block(block)}
               </option>
             ))}
           </select>
@@ -130,44 +78,42 @@ export function WelcomeOverlay({
         {isOffline && (
           <div className="welcome-offline" role="status">
             <p>
-              No connection to the village map data. Check your signal, then reload.
-              <span className="tagalog-inline">
-                Walang koneksyon sa datos ng village. Tingnan ang signal, pagkatapos i-reload.
-              </span>
+              {COPY.welcome.offlineMessage.en}
+              <span className="tagalog-inline">{COPY.welcome.offlineMessage.tl}</span>
             </p>
             <button
               type="button"
               className="overlay-btn-secondary"
               onClick={() => window.location.reload()}
             >
-              Reload (I-reload)
+              {inline(COPY.welcome.reload)}
             </button>
           </div>
         )}
 
         <div className="welcome-block-selector">
           <label htmlFor="lot-select" className="sr-only">
-            Select Lot
+            {COPY.welcome.selectLotLabel.en}
           </label>
           <select
             id="lot-select"
             value={effectiveLot}
-            onChange={(e) => setSelectedLot(e.target.value)}
+            onChange={(e) => setLot(e.target.value)}
             className="welcome-select"
             disabled={!selectedBlock || isLoadingLots || lotList.length === 0}
           >
             <option value="" disabled>
               {isLoadingLots
-                ? "Loading... (Nag-lo-load...)"
+                ? inline(COPY.welcome.loading)
                 : !selectedBlock
-                  ? "Select a block first (Pumili muna ng Block)"
+                  ? inline(COPY.welcome.selectBlockFirst)
                   : lotList.length === 0
-                    ? "No lots available (Walang available na Lot)"
-                    : "Select Lot (Pumili ng Lot)"}
+                    ? inline(COPY.welcome.noLots)
+                    : inline(COPY.welcome.selectLot)}
             </option>
             {lotList.map((l) => (
               <option key={l.lot} value={l.lot}>
-                Lot {l.lot}
+                {COPY.welcome.lot(l.lot)}
               </option>
             ))}
           </select>
@@ -175,7 +121,7 @@ export function WelcomeOverlay({
 
         <button
           className="overlay-btn-primary"
-          onClick={handleNavigate}
+          onClick={navigate}
           disabled={!selectedBlock || !effectiveLot || isLoadingLots}
         >
           <svg
@@ -189,7 +135,7 @@ export function WelcomeOverlay({
           >
             <polygon points="3 11 22 2 13 21 11 13 3 11" />
           </svg>
-          Navigate (Mag-navigate)
+          {inline(COPY.welcome.navigate)}
         </button>
       </div>
     </div>

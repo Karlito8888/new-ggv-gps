@@ -11,11 +11,11 @@
   },
   "scripts": {
     "gate": "bun run typecheck && bun run lint && bun run format:check && bun run test",
-    "typecheck": "bun run --filter @ggv/web typecheck",
+    "typecheck": "bun run --filter @ggv/shared typecheck && bun run --filter @ggv/web typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "bun run --filter @ggv/web test",
+    "test": "bun run --filter @ggv/shared test && bun run --filter @ggv/web test",
     "dev": "bun run --filter @ggv/web dev",
     "build": "bun run --filter @ggv/web build"
   },

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { useNavigation } from "../hooks/useNavigation";
+import { useNavigation } from "../useNavigation";
 
 /**
  * useNavigation is a pure computation hook (no effects, no state).

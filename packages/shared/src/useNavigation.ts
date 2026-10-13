@@ -1,5 +1,5 @@
-import { getDistance, isCoord } from "../lib/geo";
-import type { UserLocation, Destination } from "../types/map";
+import { getDistance, isCoord } from "./geo";
+import type { UserLocation, Destination } from "./types";
 
 interface UseNavigationReturn {
   distanceRemaining: number;

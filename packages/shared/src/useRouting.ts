@@ -1,19 +1,15 @@
-import { useState, useEffect, useRef } from "react";
-import type { Map as MaplibreMap } from "maplibre-gl";
-import { getDistance, projectPointOnLine } from "../lib/geo";
+import { useState, useEffect, useEffectEvent, useRef } from "react";
+import { getDistance, projectPointOnLine } from "./geo";
 import {
   fetchOSRM,
   OSRM_HOSTS,
-  setRouteData,
   RECALC_THRESHOLD_M,
   OFF_ROUTE_THRESHOLD_M,
   TRIM_MIN_MOVEMENT_M,
-} from "../lib/routing";
-import { trace } from "../lib/trace";
-import type { RouteStep, RouteGeometry, RouteResult, RouteSourceType } from "../lib/routing";
-import type { UserLocation, Destination } from "../types/map";
-
-export type { RouteStep, RouteGeometry, RouteSourceType } from "../lib/routing";
+} from "./routing";
+import { trace } from "./trace";
+import type { RouteStep, RouteGeometry, RouteResult, RouteSourceType } from "./routing";
+import type { UserLocation, Destination } from "./types";
 
 interface LatLng {
   lat: number;
@@ -27,11 +23,22 @@ interface UseRoutingReturn {
   isRecalculating: boolean;
 }
 
+/**
+ * `enabled` gates the hook (web: the map exists; mobile: the map is ready). The renderer is
+ * reached only through two callbacks: `onRouteDisplay` draws (or erases, with `null`) the line,
+ * `onOffRoute` gives the user feedback (vibration), debounced here to once per 5 s.
+ */
 export function useRouting(
-  map: MaplibreMap | null,
+  enabled: boolean,
   origin: UserLocation | null,
-  destination: Destination | null
+  destination: Destination | null,
+  onRouteDisplay: (geometry: RouteGeometry | null) => void,
+  onOffRoute: () => void
 ): UseRoutingReturn {
+  // Effect events: the latest callbacks without making their identity re-run the effects below.
+  const displayRoute = useEffectEvent(onRouteDisplay);
+  const notifyOffRoute = useEffectEvent(onOffRoute);
+
   // No separate `routeGeoJSON` state: it was set from the same `result.geometry` as `fullRoute`,
   // in the same call. The returned field is fed from `fullRoute` instead.
   const [steps, setSteps] = useState<RouteStep[]>([]);
@@ -57,16 +64,16 @@ export function useRouting(
   const lastDestRef = useRef<LatLng | null>(null);
 
   // Track if params are valid (used for derived return value)
-  const hasValidParams = !!(map && originLat && originLng && destLat && destLng);
+  const hasValidParams = !!(enabled && originLat && originLng && destLat && destLng);
 
   // Routing stopped (navigation cancelled, or params gone): erase the line and make sure no
   // in-flight answer can draw over the cleared map.
   useEffect(() => {
-    if (hasValidParams || !map) return;
+    if (hasValidParams || !enabled) return;
     destGenerationRef.current++;
     abortRef.current?.abort();
-    setRouteData(map, null);
-  }, [hasValidParams, map]);
+    displayRoute(null);
+  }, [hasValidParams, enabled]);
 
   // Unmount is the only other reason to drop a request in flight.
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -113,7 +120,7 @@ export function useRouting(
       setSteps(result.steps || []);
       setRouteSource(source);
       lastTrimPointRef.current = null;
-      setRouteData(map!, result.geometry);
+      displayRoute(result.geometry);
     };
 
     const fetchRoute = async () => {
@@ -182,7 +189,7 @@ export function useRouting(
     // generation token. The remaining aborts are the ones that mean it: a newer fetch
     // superseding this one (below), navigation stopping, and unmount.
     fetchRoute();
-  }, [hasValidParams, map, originLat, originLng, destLat, destLng]);
+  }, [hasValidParams, originLat, originLng, destLat, destLng]);
 
   // Derive off-route status (pure computation — no state, no effect)
   const isOffRoute = (() => {
@@ -195,7 +202,7 @@ export function useRouting(
 
   // Route trimming + off-route side effects (map update, vibration, force recalc)
   useEffect(() => {
-    if (!map || !originLat || !originLng || !fullRoute) return;
+    if (!enabled || !originLat || !originLng || !fullRoute) return;
 
     const flatCoords = fullRoute.coordinates;
     if (flatCoords.length < 2) return;
@@ -206,7 +213,7 @@ export function useRouting(
     if (projection.deviationDistance > OFF_ROUTE_THRESHOLD_M) {
       const now = Date.now();
       if (now - lastVibrationRef.current > 5000) {
-        navigator.vibrate?.(200);
+        notifyOffRoute();
         lastVibrationRef.current = now;
       }
       // Only force recalc if cooldown has elapsed (prevents infinite loop
@@ -242,9 +249,9 @@ export function useRouting(
       type: "LineString",
       coordinates: trimmedCoords,
     };
-    // Update map route display (external system — allowed in effect)
-    setRouteData(map, trimmedGeometry);
-  }, [map, originLat, originLng, fullRoute]);
+    // Update the route display (external system — allowed in effect)
+    displayRoute(trimmedGeometry);
+  }, [enabled, originLat, originLng, fullRoute]);
 
   // Derive return values - return null/empty when params invalid (no sync setState needed)
   return {

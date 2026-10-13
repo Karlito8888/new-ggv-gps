@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { COPY, inline } from "@ggv/shared";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -53,26 +54,24 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </svg>
             </div>
 
-            <h1>Something went wrong</h1>
-            <p className="overlay-tagalog">(May nangyaring error)</p>
+            <h1>{COPY.error.title.en}</h1>
+            <p className="overlay-tagalog">({COPY.error.title.tl})</p>
             <p className="overlay-description">
-              MyGGV GPS encountered an unexpected error.
+              {COPY.error.unexpected.en}
               <br />
-              Please reload the app.
-              <span className="tagalog-inline">
-                May nangyaring hindi inaasahan. I-reload ang app.
-              </span>
+              {COPY.error.reloadPrompt.en}
+              <span className="tagalog-inline">{COPY.error.reloadPrompt.tl}</span>
             </p>
 
             {this.state.error && (
               <details className="error-details">
-                <summary>Error details</summary>
+                <summary>{COPY.error.details.en}</summary>
                 <pre>{this.state.error.message}</pre>
               </details>
             )}
 
             <button className="overlay-btn-primary" onClick={this.handleReload}>
-              Reload App (I-reload ang App)
+              {inline(COPY.error.reload)}
             </button>
 
             <p className="gps-version">

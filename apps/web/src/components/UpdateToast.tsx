@@ -1,4 +1,5 @@
 import { useRegisterSW } from "virtual:pwa-register/react";
+import { COPY, inline } from "@ggv/shared";
 
 /**
  * One-time confirmation that the app is usable without a network.
@@ -28,8 +29,8 @@ export function UpdateToast() {
       <div className="update-toast-content">
         <span className="update-toast-icon">✅</span>
         <span className="update-toast-text">
-          App ready to work offline
-          <span className="update-toast-tagalog">(Handa na offline)</span>
+          {COPY.update.ready.en}
+          <span className="update-toast-tagalog">({COPY.update.ready.tl})</span>
         </span>
       </div>
       <div className="update-toast-actions">
@@ -37,7 +38,7 @@ export function UpdateToast() {
           className="update-toast-btn update-toast-btn-dismiss"
           onClick={() => setOfflineReady(false)}
         >
-          OK (Sige)
+          {inline(COPY.update.ok)}
         </button>
       </div>
     </div>

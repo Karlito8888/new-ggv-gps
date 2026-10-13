@@ -6,8 +6,9 @@
  * fixes GPS n'arrivent. Un log en prose ne la montre pas — il faut voir les intervalles. Cette
  * trace enregistre l'instant de chaque événement, et la frise les met en voies parallèles.
  *
- * **Inerte en production.** N'enregistre que si `import.meta.env.DEV` ou `?trace=1` : dans le
- * bundle servi aux utilisateurs, `trace()` sort à la première ligne.
+ * **Inerte par défaut.** `trace()` sort à la première ligne tant que `startTrace()` n'a pas été
+ * appelé. Le web l'appelle en DEV ou avec `?trace=1` (`apps/web/src/main.tsx`), et expose le
+ * tableau sur `window.__trace`.
  *
  * Capture, l'onglet encore ouvert (protocole complet dans `AGENTS.md` § « Mesurer sur le
  * téléphone ») :
@@ -25,28 +26,20 @@ export interface TraceEvent {
   payload?: Record<string, unknown>;
 }
 
-declare global {
-  /** Lu par la capture CDP : `tab.evaluate(() => window.__trace)`. */
-  interface Window {
-    __trace?: TraceEvent[];
-  }
-}
-
 /** Au-delà, les plus vieux événements tombent : une session de navigation en produit ~10/s. */
 const MAX = 2000;
 
-const events: TraceEvent[] = [];
+let events: TraceEvent[] | null = null;
 
-const actif =
-  import.meta.env.DEV || (typeof location !== "undefined" && location.search.includes("trace=1"));
-
-if (actif && typeof window !== "undefined") {
-  window.__trace = events;
+/** Active l'enregistrement et renvoie le tableau vivant (idempotent). */
+export function startTrace(): TraceEvent[] {
+  events ??= [];
+  return events;
 }
 
-/** Enregistre un événement. Sans effet hors DEV et hors `?trace=1`. */
+/** Enregistre un événement. Sans effet tant que `startTrace()` n'a pas été appelé. */
 export function trace(kind: string, payload?: Record<string, unknown>): void {
-  if (!actif) return;
+  if (!events) return;
   if (events.length >= MAX) events.shift();
   events.push({ t: performance.now(), wall: Date.now(), kind, payload });
 }

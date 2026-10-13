@@ -13,15 +13,14 @@
  * No timers here, real or fake: the fake `fetch` hands back its own resolver, so "the network has
  * not answered yet" is a state this test holds rather than a delay it waits for. The fixes are
  * then pushed synchronously. `pending[0].aborted` is the assertion that names the defect; the
- * `setData` one is the user-visible consequence. Both fail on the pre-2026-08-26 code.
+ * `onRouteDisplay` one is the user-visible consequence. Both fail on the pre-2026-08-26 code.
  *
  * jsdom is declared per file so the four pure-function suites keep running in node.
  */
 import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from "vitest";
 import { renderHook, cleanup, act } from "@testing-library/react";
-import type { Map as MaplibreMap } from "maplibre-gl";
-import { useRouting } from "../hooks/useRouting";
-import type { UserLocation, Destination } from "../types/map";
+import { useRouting } from "../useRouting";
+import type { UserLocation, Destination } from "../types";
 
 const ORIGIN: UserLocation = { latitude: 14.3478, longitude: 120.9513 };
 const DEST: Destination = { name: "Block 1, Lot 3", coordinates: [120.9525, 14.3495] };
@@ -61,8 +60,8 @@ interface PendingRequest {
 }
 
 let pending: PendingRequest[];
-let setData: Mock;
-let map: MaplibreMap;
+let onRouteDisplay: Mock;
+const onOffRoute = () => {};
 
 /** Six GPS fixes of ~1.7 m each: jitter, far below the 30 m recalculation threshold. */
 function pushFixes(rerender: (props: { origin: UserLocation }) => void): void {
@@ -77,8 +76,7 @@ function pushFixes(rerender: (props: { origin: UserLocation }) => void): void {
 
 beforeEach(() => {
   pending = [];
-  setData = vi.fn();
-  map = { getSource: () => ({ setData }) } as unknown as MaplibreMap;
+  onRouteDisplay = vi.fn();
 
   vi.spyOn(globalThis, "fetch").mockImplementation((_url, init) => {
     const { promise, resolve, reject } = Promise.withResolvers<Response>();
@@ -105,7 +103,8 @@ afterEach(() => {
 describe("useRouting under a live GPS stream", () => {
   test("a fix arriving mid-request does not cancel it", () => {
     const { rerender } = renderHook(
-      ({ origin }: { origin: UserLocation }) => useRouting(map, origin, DEST),
+      ({ origin }: { origin: UserLocation }) =>
+        useRouting(true, origin, DEST, onRouteDisplay, onOffRoute),
       { initialProps: { origin: ORIGIN } }
     );
     expect(pending).toHaveLength(1);
@@ -117,7 +116,8 @@ describe("useRouting under a live GPS stream", () => {
 
   test("the route is drawn once the answer arrives, fixes notwithstanding", async () => {
     const { rerender } = renderHook(
-      ({ origin }: { origin: UserLocation }) => useRouting(map, origin, DEST),
+      ({ origin }: { origin: UserLocation }) =>
+        useRouting(true, origin, DEST, onRouteDisplay, onOffRoute),
       { initialProps: { origin: ORIGIN } }
     );
     pushFixes(rerender);
@@ -126,15 +126,16 @@ describe("useRouting under a live GPS stream", () => {
       pending[0].deliver();
     });
 
-    expect(setData).toHaveBeenCalled();
-    const drawn = setData.mock.calls.at(-1)![0];
+    expect(onRouteDisplay).toHaveBeenCalled();
+    const drawn = onRouteDisplay.mock.calls.at(-1)![0];
     expect(drawn.type).toBe("LineString");
     expect(drawn.coordinates.at(-1)).toEqual([120.9525, 14.3495]);
   });
 
   test("jitter below the threshold issues exactly one request", () => {
     const { rerender } = renderHook(
-      ({ origin }: { origin: UserLocation }) => useRouting(map, origin, DEST),
+      ({ origin }: { origin: UserLocation }) =>
+        useRouting(true, origin, DEST, onRouteDisplay, onOffRoute),
       { initialProps: { origin: ORIGIN } }
     );
     pushFixes(rerender);
@@ -144,19 +145,20 @@ describe("useRouting under a live GPS stream", () => {
 
   test("stopping navigation erases the line and drops the request", async () => {
     const { rerender } = renderHook(
-      ({ dest }: { dest: Destination | null }) => useRouting(map, ORIGIN, dest),
+      ({ dest }: { dest: Destination | null }) =>
+        useRouting(true, ORIGIN, dest, onRouteDisplay, onOffRoute),
       { initialProps: { dest: DEST as Destination | null } }
     );
     await act(async () => {
       pending[0].deliver();
     });
-    setData.mockClear();
+    onRouteDisplay.mockClear();
 
     act(() => {
       rerender({ dest: null });
     });
 
-    expect(setData).toHaveBeenCalledWith({ type: "FeatureCollection", features: [] });
+    expect(onRouteDisplay).toHaveBeenCalledWith(null);
     expect(pending[0].aborted).toBe(true);
   });
 });

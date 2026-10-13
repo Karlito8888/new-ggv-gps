@@ -4,14 +4,25 @@ import type {
   GeoJSONSource,
   Marker,
   MapStyleImageMissingEvent,
+  SymbolLayerSpecification,
+  CircleLayerSpecification,
   ErrorEvent as MapErrorEvent,
 } from "maplibre-gl";
 import type { FeatureCollection } from "geojson";
-import { blockLabels } from "../data/blocks";
-import { addRouteLayers } from "../lib/routing";
-import { trace } from "../lib/trace";
+import {
+  ARRIVAL_ZONE_PAINT,
+  BLOCK_LABEL_LAYOUT,
+  BLOCK_LABEL_PAINT,
+  MAP_INITIAL_ZOOM,
+  VILLAGE_BOUNDS,
+  VILLAGE_CENTER,
+  blockLabelsGeoJSON,
+  trace,
+  type Destination,
+  type UserLocation,
+} from "@ggv/shared";
+import { addRouteLayers } from "../lib/routeLayers";
 import { TILESET_PATH } from "../lib/tileset";
-import type { UserLocation, Destination } from "../types/map";
 // Layers JSON loaded dynamically — stays in the maps chunk instead of bloating index
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -47,37 +58,18 @@ const mapLibsPromise = Promise.all([import("maplibre-gl"), import("pmtiles")]).t
   }
 );
 
-const VILLAGE_CENTER: [number, number] = [120.95134859887523, 14.347872973134175];
-
-const labelsGeoJSON: FeatureCollection = {
-  type: "FeatureCollection",
-  features: blockLabels.map((block) => ({
-    type: "Feature" as const,
-    properties: { name: block.name },
-    geometry: { type: "Point" as const, coordinates: block.center },
-  })),
-};
-
 function addBlocksLayer(map: MaplibreMap): void {
   if (map.getSource("block-labels")) return;
 
   // Block labels only
-  map.addSource("block-labels", { type: "geojson", data: labelsGeoJSON });
+  map.addSource("block-labels", { type: "geojson", data: blockLabelsGeoJSON() });
   map.addLayer({
     id: "block-labels",
     type: "symbol",
     source: "block-labels",
-    layout: {
-      "text-field": ["get", "name"],
-      "text-size": 14,
-      "text-anchor": "center",
-      "text-font": ["Noto Sans Regular"],
-    },
-    paint: {
-      "text-color": "#333",
-      "text-halo-color": "#fff",
-      "text-halo-width": 1,
-    },
+    // The shared specs are readonly literals; maplibre-gl's expression types want mutable tuples.
+    layout: BLOCK_LABEL_LAYOUT as unknown as SymbolLayerSpecification["layout"],
+    paint: { ...BLOCK_LABEL_PAINT },
   });
 }
 
@@ -124,7 +116,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
       MapLibre.addProtocol("pmtiles", protocol.tile);
 
       // Lazy-load layers JSON — bundled into the maps chunk (same request as MapLibre)
-      const { default: protomapsLightLayers } = await import("../data/protomaps-light-layers.json");
+      const { default: protomapsLightLayers } = await import("@ggv/shared/basemap-layers");
 
       if (isCancelled) return;
 
@@ -150,10 +142,10 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
         container: containerRef.current!,
         style: mapStyle,
         center: VILLAGE_CENTER,
-        zoom: 15,
+        zoom: MAP_INITIAL_ZOOM,
         maxBounds: [
-          [120.942, 14.34],
-          [120.962, 14.358],
+          [VILLAGE_BOUNDS.west, VILLAGE_BOUNDS.south],
+          [VILLAGE_BOUNDS.east, VILLAGE_BOUNDS.north],
         ], // Village bounds + margin (limits tile loading)
       });
 
@@ -292,27 +284,7 @@ function addArrivalZoneLayer(map: MaplibreMap): void {
     id: ARRIVAL_ZONE_LAYER,
     type: "circle",
     source: ARRIVAL_ZONE_SOURCE,
-    paint: {
-      // 15m radius — convert meters to pixels using zoom-dependent expression
-      // At latitude ~14.35°, 1px at zoom 20 ≈ 0.15m, so 15m ≈ 100px at z20
-      "circle-radius": [
-        "interpolate",
-        ["exponential", 2],
-        ["zoom"],
-        15,
-        6,
-        17,
-        25,
-        19,
-        63,
-        20,
-        100,
-      ],
-      "circle-color": "rgba(66, 133, 244, 0.15)",
-      "circle-stroke-color": "#4285F4",
-      "circle-stroke-width": 1,
-      "circle-pitch-alignment": "map",
-    },
+    paint: ARRIVAL_ZONE_PAINT as unknown as CircleLayerSpecification["paint"],
   });
 }
 

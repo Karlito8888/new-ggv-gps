@@ -1,7 +1,15 @@
-import { getDistanceAlongRoute } from "../lib/geo";
-import { TURN_LABELS } from "../lib/routing";
-import type { UserLocation, Destination } from "../types/map";
-import type { RouteStep, RouteGeometry, RouteSourceType } from "../hooks/useRouting";
+import {
+  COPY,
+  currentTurn,
+  formatDistance,
+  remainingAlongRoute,
+  turnLabel,
+  type Destination,
+  type RouteGeometry,
+  type RouteSourceType,
+  type RouteStep,
+  type UserLocation,
+} from "@ggv/shared";
 
 interface NavigationOverlayProps {
   distanceRemaining: number;
@@ -25,65 +33,28 @@ export function NavigationOverlay({
   isRecalculating,
   onCancel,
 }: NavigationOverlayProps) {
-  const formatDistance = (meters: number): string =>
-    meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
-
   const routeCoords: [number, number][] | null = routeGeoJSON?.coordinates ?? null;
 
-  // Calculate current step using distance along route (not crow-flies)
-  const currentStep = (() => {
-    if (!steps?.length || !userLocation || !routeCoords) return null;
-
-    // Find the next significant step that's ahead of the user on the route
-    for (const step of steps) {
-      if (!step.location || !step.isSignificant) continue;
-      if (step.type === "arrive") continue; // Skip arrival step
-
-      const distAlongRoute = getDistanceAlongRoute(
-        userLocation.longitude,
-        userLocation.latitude,
-        step.location[0],
-        step.location[1],
-        routeCoords
-      );
-
-      // Distance < 0 means step is behind us, skip it
-      if (distAlongRoute < 0) continue;
-
-      // Found the next upcoming significant step
-      return { ...step, distanceToStep: Math.round(distAlongRoute) };
-    }
-
-    return null; // No significant steps ahead = continue straight
-  })();
-
-  // Compute total along-route distance to destination
-  const totalDistanceRemaining = (() => {
-    if (!userLocation || !destination || !routeCoords) return distanceRemaining;
-    const dist = getDistanceAlongRoute(
-      userLocation.longitude,
-      userLocation.latitude,
-      destination.coordinates[0],
-      destination.coordinates[1],
-      routeCoords
-    );
-    // Fall back to crow-flies if target is behind or calculation fails
-    return dist > 0 ? dist : distanceRemaining;
-  })();
-
-  const label = TURN_LABELS[currentStep?.modifier ?? ""] ?? TURN_LABELS.straight;
+  const currentStep = currentTurn(steps, userLocation, routeCoords);
+  const totalDistanceRemaining = remainingAlongRoute(
+    userLocation,
+    destination,
+    routeCoords,
+    distanceRemaining
+  );
+  const label = turnLabel(currentStep);
 
   return (
     <>
       {/* Top pill — turn instruction + distance + cancel */}
-      <nav className="nav-top-pill" aria-label="Navigation info">
+      <nav className="nav-top-pill" aria-label={COPY.nav.infoAria.en}>
         <div className="nav-turn">
           {isRecalculating ? (
             <>
               <span className="nav-turn-icon nav-recalc-spin">↻</span>
               <span className="nav-turn-text" aria-live="polite">
-                Recalculating...
-                <span className="tagalog-inline">(Kinakalkula muli...)</span>
+                {COPY.nav.recalculating.en}
+                <span className="tagalog-inline">({COPY.nav.recalculating.tl})</span>
               </span>
             </>
           ) : currentStep ? (
@@ -96,8 +67,8 @@ export function NavigationOverlay({
             </>
           ) : routeSource === "direct" ? (
             <span className="nav-turn-text" aria-live="polite">
-              Head toward destination
-              <span className="tagalog-inline">(Tumungo sa destinasyon)</span>
+              {COPY.nav.headToward.en}
+              <span className="tagalog-inline">({COPY.nav.headToward.tl})</span>
             </span>
           ) : (
             <span className="nav-turn-icon">↑</span>
@@ -112,7 +83,7 @@ export function NavigationOverlay({
               : formatDistance(distanceRemaining)}
         </div>
 
-        <button className="nav-cancel-btn" onClick={onCancel} aria-label="Cancel navigation">
+        <button className="nav-cancel-btn" onClick={onCancel} aria-label={COPY.nav.cancelAria.en}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -121,13 +92,10 @@ export function NavigationOverlay({
       </nav>
 
       {/* Bottom strip — destination + compass/distance */}
-      <nav
-        className="nav-bottom-strip"
-        aria-label={`Destination info${destination?.name ? `: navigating to ${destination.name}` : ""}`}
-      >
+      <nav className="nav-bottom-strip" aria-label={COPY.nav.destinationAria(destination?.name)}>
         <div className="nav-dest-name">
           <span className="nav-dest-icon">📍</span>
-          <span className="nav-dest-text">{destination?.name || "Navigating..."}</span>
+          <span className="nav-dest-text">{destination?.name || COPY.nav.navigating.en}</span>
         </div>
 
         <div className="nav-compass-text" aria-live="off">

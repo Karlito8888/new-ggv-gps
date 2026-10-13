@@ -1,4 +1,4 @@
-import type { Destination } from "../types/map";
+import { COPY, inline, type Destination } from "@ggv/shared";
 
 interface ArrivedOverlayProps {
   destination: Destination | null;
@@ -16,7 +16,7 @@ export function ArrivedOverlay({
       className="overlay arrived-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="You have arrived at your destination"
+      aria-label={COPY.arrived.aria.en}
     >
       {/* Top mini-modal: success icon + title + description */}
       <div className="modal arrived-modal arrived-top-modal">
@@ -35,13 +35,14 @@ export function ArrivedOverlay({
           </svg>
         </div>
 
-        <h1>You've Arrived!</h1>
-        <p className="overlay-tagalog">(Nakarating ka na!)</p>
+        <h1>{COPY.arrived.title.en}</h1>
+        <p className="overlay-tagalog">({COPY.arrived.title.tl})</p>
 
         <p className="overlay-description">
-          You have reached <strong>{destination?.name || "your destination"}</strong>.
+          {COPY.arrived.reached.en}{" "}
+          <strong>{destination?.name || COPY.arrived.yourDestination.en}</strong>.
           <span className="tagalog-inline">
-            Nakarating ka na sa {destination?.name || "iyong destinasyon"}.
+            {COPY.arrived.reached.tl} {destination?.name || COPY.arrived.yourDestination.tl}.
           </span>
         </p>
       </div>
@@ -60,7 +61,7 @@ export function ArrivedOverlay({
           >
             <polygon points="3 11 22 2 13 21 11 13 3 11" />
           </svg>
-          Navigate Somewhere Else (Sa ibang lugar)
+          {inline(COPY.arrived.again)}
         </button>
 
         <button className="overlay-btn-secondary" onClick={onExitVillage}>
@@ -77,7 +78,7 @@ export function ArrivedOverlay({
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
-          Exit Village (Lumabas sa Village)
+          {inline(COPY.arrived.exit)}
         </button>
       </div>
     </div>

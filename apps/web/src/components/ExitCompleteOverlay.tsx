@@ -1,10 +1,12 @@
+import { COPY } from "@ggv/shared";
+
 export function ExitCompleteOverlay() {
   return (
     <div
       className="overlay exit-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="You have exited the village"
+      aria-label={COPY.exit.aria.en}
     >
       <div className="modal exit-modal">
         {/* Wave Icon */}
@@ -26,17 +28,17 @@ export function ExitCompleteOverlay() {
           </svg>
         </div>
 
-        <h1>Safe Travels!</h1>
-        <p className="overlay-tagalog exit-tagalog">(Ingat sa byahe!)</p>
+        <h1>{COPY.exit.title.en}</h1>
+        <p className="overlay-tagalog exit-tagalog">({COPY.exit.title.tl})</p>
 
         <p className="overlay-description">
-          You have exited Garden Grove Village.
+          {COPY.exit.exited.en}
           <br />
-          Thank you for using MyGGV GPS!
+          {COPY.exit.thanks.en}
           <span className="tagalog-inline">
-            Lumabas ka na sa Garden Grove Village.
+            {COPY.exit.exited.tl}
             <br />
-            Salamat sa paggamit ng MyGGV GPS!
+            {COPY.exit.thanks.tl}
           </span>
         </p>
       </div>

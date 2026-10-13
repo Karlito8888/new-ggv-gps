@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { nextBearing } from "../lib/course";
+import { nextBearing } from "../course";
 
 describe("nextBearing", () => {
   test("keeps previous bearing when heading is null (stationary)", () => {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { COPY, inline } from "@ggv/shared";
 
 interface GpsPermissionOverlayProps {
   onGrant: () => void;
@@ -25,7 +26,7 @@ export function GpsPermissionOverlay({
       onGrant();
     } catch (err) {
       console.error("GPS permission error:", err);
-      setError("Please, try again (Subukan muli)");
+      setError(inline(COPY.gps.retry));
       setIsRequesting(false);
     }
   };
@@ -35,7 +36,7 @@ export function GpsPermissionOverlay({
       className="overlay gps-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="Enable GPS Location"
+      aria-label={COPY.gps.aria.en}
     >
       <div className="modal gps-modal">
         {/* GPS Icon with pulse animation */}
@@ -54,14 +55,12 @@ export function GpsPermissionOverlay({
           </svg>
         </div>
 
-        <h1>Enable Location</h1>
-        <p className="overlay-tagalog gps-tagalog">(I-enable ang Lokasyon)</p>
+        <h1>{COPY.gps.title.en}</h1>
+        <p className="overlay-tagalog gps-tagalog">({COPY.gps.title.tl})</p>
 
         <p className="overlay-description">
-          MyGGV GPS needs your location to guide you through the village.
-          <span className="tagalog-inline">
-            Kailangan ng MyGGV GPS ang iyong lokasyon para gabayan ka sa village.
-          </span>
+          {COPY.gps.description.en}
+          <span className="tagalog-inline">{COPY.gps.description.tl}</span>
         </p>
 
         {error && <div className="error-message">{error}</div>}
@@ -88,10 +87,10 @@ export function GpsPermissionOverlay({
             </svg>
           )}
           {!isMapReady
-            ? "Please wait, map is loading... (Naglo-load ang mapa...)"
+            ? inline(COPY.gps.wait)
             : isRequesting
-              ? "Requesting... (Humihiling...)"
-              : "Enable GPS (I-enable ang GPS)"}
+              ? inline(COPY.gps.requesting)
+              : inline(COPY.gps.enable)}
         </button>
 
         <p className="gps-version">v{__APP_VERSION__}</p>
