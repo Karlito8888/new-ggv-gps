@@ -81,6 +81,7 @@ const config: ExpoConfig = {
     "@maplibre/maplibre-react-native",
   ],
   experiments: { reactCompiler: true },
+  extra: { eas: { projectId: "9e1644f0-44ba-4e4d-bb14-792ab39cb3b5" } },
 };
 
 export default config;

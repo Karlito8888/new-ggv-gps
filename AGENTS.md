@@ -1,8 +1,59 @@
 # AGENTS.md — new-ggv-gps
 
-**Le projet en une phrase :** PWA React (pas d'Expo, pas de React Native) de navigation GPS dans
-Garden Grove Village (Philippines), servie sans install/inscription via QR code à l'entrée du
-village, MapLibre GL JS natif.
+**Le projet en une phrase :** navigation GPS dans Garden Grove Village (Philippines), en deux
+clients : une PWA React (`apps/web`, MapLibre GL JS natif, servie sans install via QR code à
+l'entrée du village) et une app native Expo / React Native (`apps/mobile`, carte 100 % hors ligne).
+
+## Monorepo layout (Bun workspaces, hoisted linker)
+
+| Path              | What                                                                                    |
+| ----------------- | --------------------------------------------------------------------------------------- |
+| `apps/web`        | The PWA. Everything below that says `src/…` without a prefix lives in `apps/web/src/`.  |
+| `apps/mobile`     | Expo SDK 57 app, `com.myggv.gps` (+ `.dev`, `.preview` variants via `APP_VARIANT`).     |
+| `packages/shared` | `@ggv/shared`: platform-neutral navigation core, runs on web and React Native (Hermes). |
+| repo root         | `scripts/`, CI, `eslint.config.js`, `.prettierrc.json`, `bunfig.toml`, this file.       |
+
+`@ggv/shared` holds what both renderers share: `useNavigationFlow` (the 4-state machine),
+`useRouting` (OSRM cascade; the abort/generation contract below and its test live here),
+`useCourseUpCamera` (behind a `CameraDriver` interface), `useDestinationChoice`, `turnGuidance`,
+`COPY` (all user-visible strings), `map/layers.ts` (paint/layout of the app's own layers) and the
+basemap layers JSON (`@ggv/shared/basemap-layers`). Moved files, old to new: `lib/geo.ts`,
+`lib/course.ts`, `lib/trace.ts`, `hooks/useNavigation.ts`, `hooks/useRouting.ts`,
+`hooks/useCourseUpCamera.ts`, `types/*`, `data/blocks.ts` → `packages/shared/src/`;
+`lib/routing.ts` is split: pure half in shared `routing.ts`, map drawing in
+`apps/web/src/lib/routeLayers.ts`. Shared code must not touch `window`/`document`/`navigator`/
+`location` (ESLint enforces it) and must not read `import.meta.env`.
+
+Root scripts fan out: `bun run gate` = typecheck + lint + prettier + tests of shared, web and
+mobile. `apps/web` deploys by FTP on pushes to `main` that touch `apps/web`, `packages/shared`,
+`package.json`, `bun.lock` or `bunfig.toml`. `bunfig.toml` pins `minimumReleaseAge` (Semgrep
+gate): a fresh release needs `--minimum-release-age=0` on that one install.
+
+## Mobile app (`apps/mobile`)
+
+- **Map assets ship in the app** and are copied once to `Paths.document/map-<version>/` by
+  `src/map/mapAssets.ts` (MapLibre Native reads `file://`, not bundle assets; `asset://` is broken
+  for `.pmtiles` on Android, maplibre-native#4360). Tileset, sprite JSONs: relative requires into
+  `apps/web/public`. Sprite PNGs and glyph PBFs are copies under `apps/mobile/assets/map/`
+  (Metro reads `light@2x.png` as a density variant of `light.png`). Bump `MAP_ASSETS_VERSION` when
+  they change; rename the tileset `require` together with `TILESET_FILE`.
+- **Village snapshot** (`assets/data/village-snapshot.json`): blocks and lots with coordinates,
+  so Welcome works offline. Regenerate with `bun run snapshot:lots` (reads the same two public
+  Convex queries as web). OSRM stays online; offline falls back to the direct line.
+- **Metro in this monorepo** serves bundles under `/apps/mobile/…`: fetch the launch URL from
+  the manifest (`curl -H "expo-platform: android" localhost:<port>/ | jq .launchAsset.url`), not
+  `/index.bundle`. Use a dedicated port (`expo start --dev-client --port 8082`): other projects on
+  this machine hold 8081, and a dev client pointed at the wrong Metro loads the wrong app.
+- **Testing on the Android emulator** (`ggv-phone`, created with `avdmanager`): start it with
+  `-gpu host`. With `swiftshader_indirect` MapLibre Native draws no symbol layer at all (no
+  labels, no route arrows). Scripted GPS: `adb -s emulator-5554 emu geo fix <lng> <lat>` once per
+  second. Airplane mode: `adb shell cmd connectivity airplane-mode enable`. The first location
+  request shows Google's "Location Accuracy" dialog. A debug dev-client build holds a screen
+  wake lock by itself, and `stay_on_while_plugged_in` defaults to on: judge keep-awake on a
+  release build with `settings put global stay_on_while_plugged_in 0`.
+- `expo-location` is requested in foreground only (no background keys).
+- Sentry project `myggv-gps` (org `charles-bourgault`, region `de`); events are sent from
+  release builds only.
 
 ## Ce qui n'est PAS ici
 
@@ -12,7 +63,7 @@ village, MapLibre GL JS natif.
 | Le poste, les graphes de code, les workflows                                                                                                              | `~/.omp/agent/AGENTS.md`           |
 | Faits durables du projet — versions, gate mesuré, dettes, points ouverts                                                                                  | `~/.omp/agent/bank/new-ggv-gps.md` |
 
-## Stack — web uniquement
+## Stack — web (`apps/web`)
 
 Vite `^8.1.5` · React `^19.2.7` · Convex `^1.42.3` (client seul, `convex/react`) · `maplibre-gl`
 `^5.24.0` (bibliothèque **web** de MapLibre, pas le binding React Native) · TypeScript `^5.9.3` ·
@@ -50,7 +101,7 @@ Deux fonctions publiques de myggv sont appelées, en `anyApi` (pas de types gén
 donc `tsc` ne peut pas attraper une signature qui change côté serveur) :
 
 - `anyApi.locations.blocks` — `src/App.tsx`, liste des blocs du village.
-- `anyApi.locations.lotsWithCoordsByBlock` — `src/components/WelcomeOverlay.tsx`, lots + coords
+- `anyApi.locations.lotsWithCoordsByBlock` — `packages/shared/src/useDestinationChoice.ts`, lots + coords
   d'un bloc (`useQuery(..., selectedBlock ? { block } : "skip")`).
 
 **Si `myggv/convex/locations.ts` ajoute une garde d'authentification sur l'une de ces deux
@@ -64,7 +115,7 @@ une query en erreur : l'écran reste là jusqu'au rechargement.
 La panne réellement **silencieuse** est ailleurs : un changement de _forme_ de la réponse. Comme
 `anyApi` n'est pas typé, `tsc` ne le voit pas, et des coordonnées malformées deviendraient une
 destination `[undefined, undefined]` que MapLibre comme l'URL OSRM avalent sans broncher. D'où le
-filtre de `lotList` (`src/components/WelcomeOverlay.tsx:38-40`), qui renvoie ce cas vers le
+filtre de `lotList` (`packages/shared/src/useDestinationChoice.ts`), qui renvoie ce cas vers le
 chemin « No lots available » existant.
 
 Côté myggv, l'ouverture de ces deux queries est **garantie par un test**, pas seulement par un
@@ -75,26 +126,26 @@ myggv** avant d'atteindre la production. Le contrat est aussi écrit dans le tab
 tête de `convex/locations.ts` et dans les deux `AGENTS.md` de ce dépôt. Rien à ajouter là-bas :
 ce qu'il faut, c'est garder les noms synchronisés si l'une des deux queries change de contrat.
 
-`VITE_CONVEX_URL` pointe le déploiement **production** de myggv (`.env.production`, committé —
+`VITE_CONVEX_URL` pointe le déploiement **production** de myggv (`apps/web/.env.production`, committé —
 ce n'est pas un secret, juste une URL d'endpoint ; le build CI (`deploy.yml`) le charge donc sans
 avoir besoin de le passer en variable GitHub).
 
 ## Machine à états de navigation — 4 états
 
-`src/App.tsx`, un seul `useState`, pas de router :
+`packages/shared/src/useNavigationFlow.ts`, un seul `useState`, pas de router :
 
 ```
 gps-permission → welcome → navigating → exit-complete
 ```
 
 Pas d'état `orientation-permission` : la caméra n'utilise plus le compas de l'appareil.
-`useCourseUpCamera` (`src/hooks/useCourseUpCamera.ts`) dérive le cap de la **direction GPS**
-(`GeolocationCoordinates.heading`, lissée par `nextBearing` dans `src/lib/course.ts`), pas d'un
+`useCourseUpCamera` (`packages/shared/src/useCourseUpCamera.ts`) dérive le cap de la **direction GPS**
+(`GeolocationCoordinates.heading`, lissée par `nextBearing` dans `packages/shared/src/course.ts`), pas d'un
 capteur d'orientation — robuste sur Android/Samsung/iOS sans permission compas à demander.
 L'arrivée n'est pas un état : `showArrivedModal` flotte par-dessus `"navigating"`, la carte reste
 interactive (GPS, caméra course-up et gestes continuent).
 
-## Routing — 3 tentatives en cascade (`src/lib/routing.ts` + `src/hooks/useRouting.ts`)
+## Routing — 3 tentatives en cascade (`packages/shared/src/routing.ts` + `useRouting.ts`)
 
 1. **OSRM** `router.project-osrm.org` — primaire.
 2. **OSRM** `routing.openstreetmap.de/routed-foot` (FOSSGIS) — même API v1, donc `parseManeuver`
@@ -144,8 +195,9 @@ le pin de destination en même temps que son cercle d'arrivée.
 bun run gate
 ```
 
-= `tsc --noEmit && bun run lint && bun run format:check && bun run test` (vitest). Vert, ~11 s,
-**5 fichiers / 48 tests** dans `src/__tests__/`. Quatre couvrent les fonctions pures
+= typecheck + lint + `format:check` + tests (vitest), sur shared, web et mobile. Vert, ~20 s,
+**48 tests** : 45 dans `packages/shared/src/__tests__/` (5 fichiers) et 3 dans
+`apps/web/src/__tests__/routeLayers.test.ts`. Quatre fichiers shared couvrent les fonctions pures
 (`course`, `geo`, `navigation`, `routing`) ; le cinquième, `useRouting.test.ts`, couvre
 **l'effet** — c'est le seul test du dépôt qui monte un composant React.
 
@@ -243,8 +295,8 @@ Quatre choses à injecter, sinon la mesure ne reproduit rien :
 2. **de la latence réseau** — `Network.emulateNetworkConditions { latency: 1500 }`. Sur le WiFi du
    poste, OSRM répond en ~250 ms et le bug ne sort pas ; c'est la latence mobile qui le révèle ;
 3. **le hook `console`** (voir plus bas), seul moyen de lire les logs applicatifs ;
-4. **la trace** — ouvrir l'app avec `?trace=1` (ou tourner en DEV) pour que `src/lib/trace.ts`
-   enregistre. Sans ça `window.__trace` n'existe pas et la frise n'a rien à lire.
+4. **la trace** — ouvrir l'app avec `?trace=1` (ou tourner en DEV) pour que `startTrace()`
+   (`packages/shared/src/trace.ts`, appelé par `apps/web/src/main.tsx`) enregistre. Sans ça `window.__trace` n'existe pas et la frise n'a rien à lire.
 
 La cadence des fixes, les aborts tombés en vol et le délai du premier tracé se lisent sur la
 frise plutôt qu'à l'œil dans les logs — c'est une classe de bug temporelle. Après le run,
@@ -278,7 +330,7 @@ Toujours **vérifier le bundle servi**, jamais le déduire :
 LIVE=$(curl -s "https://myggvgps.charlesbourgault.com/?cb=$RANDOM" \
        | grep -oE 'assets/index-[A-Za-z0-9_-]+\.js')
 curl -s "https://myggvgps.charlesbourgault.com/$LIVE" -o /tmp/prod.js
-cmp /tmp/prod.js "dist/${LIVE}"
+cmp /tmp/prod.js "apps/web/dist/${LIVE}"
 ```
 
 `deploy.yml` (push sur `main`) : `bun run build` → FTP vers Hostinger
@@ -380,10 +432,11 @@ de style et `vite.config.ts`, puis zéro violation mesurée sur A16 avec tuiles,
 - **Communication avec le dev** : français.
 - **Contenu de l'app** : anglais **+ traduction tagalog courte** (public : résidents philippins
   de Garden Grove Village), ex. `<h1>Enable Location</h1><p>(I-enable ang Lokasyon)</p>`.
-- Les **instructions de navigation** passent par `TURN_LABELS` (`src/lib/routing.ts`), une table
+- Les **instructions de navigation** passent par `TURN_LABELS` (`packages/shared/src/routing.ts`), une table
   `{en, tl}` de 8 entrées clée sur le `modifier` OSRM — vocabulaire clos et garanti par l'API
   (le `type`, lui, est ouvert : « new identifiers might be introduced without API change »).
-  Toute nouvelle chaîne affichée se met là, pas en dur dans le composant.
+  Toute autre chaîne affichée se met dans `COPY` (`packages/shared/src/copy.ts`), pas en dur dans
+  le composant.
 - **Libellés de boutons** : la glose va **inline entre parenthèses dans le libellé même**
   (`Navigate (Mag-navigate)`), jamais dans un `<span className="tagalog-inline">` — voir le piège
   (4) de la section _Couleurs_. Couvert partout : Welcome, Arrived (2 boutons), UpdateToast
@@ -391,8 +444,8 @@ de style et `vite.config.ts`, puis zéro violation mesurée sur A16 avec tuiles,
 
 ## Données du village
 
-`VILLAGE_CENTER` (`useMapSetup.ts`) et `VILLAGE_EXIT` (`App.tsx`) sont des coordonnées codées en
-dur, pas lues depuis Convex. `src/data/blocks.ts` porte 62 points-étiquettes (`blockLabels`,
+`VILLAGE_CENTER`, `VILLAGE_EXIT` et `VILLAGE_BOUNDS` (`packages/shared/src/village.ts`) sont des coordonnées codées en
+dur, pas lues depuis Convex. `packages/shared/src/blocks.ts` porte 62 points-étiquettes (`blockLabels`,
 un centroïde par bloc) qui alimentent la seule couche `block-labels` — aucun contour n'est
 dessiné. La liste des blocs et lots vient, elle, de Convex (voir plus haut) : deux sources de
 vérité pour la géométrie village, à garder synchronisées à la main.
