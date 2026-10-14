@@ -1,6 +1,6 @@
 import { StyleSheet, View } from "react-native";
-import { Host, Picker } from "@expo/ui";
 import { COPY, inline, useDestinationChoice, type Destination } from "@ggv/shared";
+import { Select } from "../select/Select";
 import { theme } from "../theme";
 import { Button, Modal, Title } from "../ui";
 import { villageSnapshot } from "../villageSnapshot";
@@ -17,8 +17,8 @@ export function Welcome({
   const { selectedBlock, setBlock, effectiveLot, setLot, lotList, isLoadingLots, navigate } =
     useDestinationChoice(onSelectDestination, villageSnapshot.lotsByBlock);
 
-  // Same two selects as the web WelcomeOverlay: the empty item is the placeholder, and its label
-  // carries the state (loading, no lots) the way the web `<option value="">` does.
+  // Same two selects as the web WelcomeOverlay: placeholder text and disabled conditions match
+  // its `<option value="">` and `disabled` attributes line for line.
   const lotPlaceholder = isLoadingLots
     ? COPY.welcome.loading
     : !selectedBlock
@@ -32,27 +32,25 @@ export function Welcome({
       <Modal style={styles.modal}>
         <Title en={COPY.welcome.title.en} tl={COPY.welcome.title.tl} />
 
-        <Host {...host}>
-          <Picker selectedValue={selectedBlock} onValueChange={setBlock}>
-            <Picker.Item label={inline(COPY.welcome.selectBlock)} value="" />
-            {blocks.map((block) => (
-              <Picker.Item key={block} label={COPY.welcome.block(block)} value={block} />
-            ))}
-          </Picker>
-        </Host>
+        <View style={styles.selector}>
+          <Select
+            value={selectedBlock}
+            placeholder={inline(COPY.welcome.selectBlock)}
+            options={blocks.map((block) => ({ label: COPY.welcome.block(block), value: block }))}
+            onChange={setBlock}
+            enabled
+          />
+        </View>
 
-        <Host {...host}>
-          <Picker
-            selectedValue={effectiveLot}
-            onValueChange={setLot}
+        <View style={styles.selector}>
+          <Select
+            value={effectiveLot}
+            placeholder={inline(lotPlaceholder)}
+            options={lotList.map((l) => ({ label: COPY.welcome.lot(l.lot), value: l.lot }))}
+            onChange={setLot}
             enabled={!!selectedBlock && !isLoadingLots && lotList.length > 0}
-          >
-            <Picker.Item label={inline(lotPlaceholder)} value="" />
-            {lotList.map((l) => (
-              <Picker.Item key={l.lot} label={COPY.welcome.lot(l.lot)} value={l.lot} />
-            ))}
-          </Picker>
-        </Host>
+          />
+        </View>
 
         <Button
           label={inline(COPY.welcome.navigate)}
@@ -72,14 +70,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   modal: { alignSelf: "stretch" },
-  picker: { width: "100%" },
+  // `.welcome-block-selector { margin-bottom: var(--ggv-space-lg) }`
+  selector: { alignSelf: "stretch", marginBottom: 24 },
 });
-
-// The app is light-only (`userInterfaceStyle`), but a Compose host follows the device scheme
-// unless told otherwise; the seed colour derives the Material palette from the CTA green.
-const host = {
-  matchContents: { vertical: true },
-  colorScheme: "light",
-  seedColor: theme.cta,
-  style: styles.picker,
-} as const;

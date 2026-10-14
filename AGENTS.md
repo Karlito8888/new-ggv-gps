@@ -40,14 +40,15 @@ gate): a fresh release that cannot wait goes in `minimumReleaseAgeExcludes`, for
 - **Village snapshot** (`assets/data/village-snapshot.json`): blocks and lots with coordinates,
   so Welcome works offline. Regenerate with `bun run snapshot:lots` (reads the same two public
   Convex queries as web). OSRM stays online; offline falls back to the direct line.
-- **Block and lot selectors are the universal `Picker` of `@expo/ui`** (Material 3 dropdown on
-  Android, SwiftUI menu on iOS), mirroring the two `<select>` of the web `WelcomeOverlay`: an
-  empty `Picker.Item` is the placeholder and its label carries the loading / no-lots state. It
-  stays selectable (`Picker.Item` has no `disabled`): picking it resets the block, or falls back
-  to the first lot through `effectiveLot`. Each `Host` forces `colorScheme="light"` (a Compose
-  host follows the device scheme otherwise, the app is light-only) and seeds the Material palette
-  from `theme.cta`. The inner Compose text field sizes itself on its label (measured 935 px with
-  the long placeholder, 901 px with "Block 3"). Chosen by Charles 2026-10-14 over a chip grid.
+- **Block and lot selectors** (`src/select/`) are the web `<select>` of `WelcomeOverlay`: the
+  closed field is React Native, token for token `.welcome-select` (`SelectField.tsx`), and the
+  menu it opens is native through `@expo/ui`, a Compose `DropdownMenu` on Android
+  (`Select.android.tsx`) and a SwiftUI `Menu` on iOS (`Select.ios.tsx`), both taking the field as
+  trigger via `RNHostView`. `Select.d.ts` gives `tsc` the platform-resolved module. Placeholder
+  and `enabled` conditions copy the web line for line; the placeholder is never an option. Two
+  traps: `RNHostView` sizes its child on content, so the wrappers measure an outer `View` and
+  pass `width` down; a Compose `Host` follows the device colour scheme unless `colorScheme="light"`
+  (the app is light-only). Chosen by Charles 2026-10-14 over a chip grid. iOS not yet seen.
 - **Metro in this monorepo** serves bundles under `/apps/mobile/…`: fetch the launch URL from
   the manifest (`curl -H "expo-platform: android" localhost:<port>/ | jq .launchAsset.url`), not
   `/index.bundle`. Use a dedicated port (`expo start --dev-client --port 8082`): other projects on
