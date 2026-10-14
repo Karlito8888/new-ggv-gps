@@ -19,13 +19,10 @@ export type SelectProps = {
 export function SelectField({
   label,
   enabled,
-  width,
   onPress,
 }: {
   label: string;
   enabled: boolean;
-  /** Host width, measured by the platform wrapper: inside `RNHostView` there is no parent to fill. */
-  width: number | undefined;
   onPress?: () => void;
 }) {
   return (
@@ -33,7 +30,7 @@ export function SelectField({
       onPress={onPress}
       disabled={!enabled}
       accessibilityRole="combobox"
-      style={[styles.field, { width }, !enabled && styles.disabled]}
+      style={[styles.field, !enabled && styles.disabled]}
     >
       <Text style={styles.label} numberOfLines={1}>
         {label}

@@ -41,14 +41,19 @@ gate): a fresh release that cannot wait goes in `minimumReleaseAgeExcludes`, for
   so Welcome works offline. Regenerate with `bun run snapshot:lots` (reads the same two public
   Convex queries as web). OSRM stays online; offline falls back to the direct line.
 - **Block and lot selectors** (`src/select/`) are the web `<select>` of `WelcomeOverlay`: the
-  closed field is React Native, token for token `.welcome-select` (`SelectField.tsx`), and the
-  menu it opens is native through `@expo/ui`, a Compose `DropdownMenu` on Android
+  closed field is React Native with the `.welcome-select` values (`SelectField.tsx`), and the
+  menu it opens is native through `@expo/ui` (≥ 57.0.23), a Compose `DropdownMenu` on Android
   (`Select.android.tsx`) and a SwiftUI `Menu` on iOS (`Select.ios.tsx`), both taking the field as
-  trigger via `RNHostView`. `Select.d.ts` gives `tsc` the platform-resolved module. Placeholder
-  and `enabled` conditions copy the web line for line; the placeholder is never an option. Two
-  traps: `RNHostView` sizes its child on content, so the wrappers measure an outer `View` and
-  pass `width` down; a Compose `Host` follows the device colour scheme unless `colorScheme="light"`
-  (the app is light-only). Chosen by Charles 2026-10-14 over a chip grid. iOS not yet seen.
+  trigger via `RNHostView matchContents={{ vertical: true }}` (width from the host, height from
+  the field). `Select.d.ts` gives `tsc` the platform-resolved module. Placeholder and `enabled`
+  conditions copy the web line for line; the placeholder is never an option. Android menu facts,
+  from the shipped `DropdownMenu.kt`: the `modifiers` prop lands on the trigger `Box`, not the
+  menu; Material sizes the menu on its content's intrinsic width (a `fillMaxWidth` there is
+  zero), so the items `Column` gets a fixed `width` measured on the outer `View`; Material drops
+  the menu below the field only if it fits above the navigation bar, else centres it on the
+  field, which is why `MENU_HEIGHT` is 200 dp. `@expo/ui` 57.0.22 crashes on any numeric
+  `width()` modifier (`FieldCastException`, expo/expo#51322), hence the `bunfig.toml` exclusion.
+  A Compose `Host` follows the device colour scheme unless `colorScheme="light"`. iOS not yet seen.
 - **Metro in this monorepo** serves bundles under `/apps/mobile/…`: fetch the launch URL from
   the manifest (`curl -H "expo-platform: android" localhost:<port>/ | jq .launchAsset.url`), not
   `/index.bundle`. Use a dedicated port (`expo start --dev-client --port 8082`): other projects on

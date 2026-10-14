@@ -9,5 +9,7 @@ linker = "hoisted"
 minimumReleaseAge = 604800
 # expo-location 57.0.21, expo-dev-client 57.0.20 and its dependency expo-dev-launcher 57.0.21 were
 # all published 2026-10-12: already in bun.lock but younger than 7 days, so any re-resolve refuses
-# them without this line. Drop the line and this comment after 2026-10-19.
-minimumReleaseAgeExcludes = ["expo-location", "expo-dev-client"]
+# them without this line. @expo/ui 57.0.23 (same day) cannot wait: 57.0.22 crashes on any numeric
+# `width()` modifier (FieldCastException, fixed by expo/expo#51322). Drop the line and this
+# comment after 2026-10-19.
+minimumReleaseAgeExcludes = ["expo-location", "expo-dev-client", "@expo/ui"]

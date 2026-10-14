@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@expo-google-fonts/madimi-one": "0.4.0",
-    "@expo/ui": "~57.0.22",
+    "@expo/ui": "~57.0.23",
     "@ggv/shared": "workspace:*",
     "@maplibre/maplibre-react-native": "11.5.0",
     "@sentry/react-native": "~7.11.0",
