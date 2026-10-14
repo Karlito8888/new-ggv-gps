@@ -1,7 +1,7 @@
 import { getDistance, isCoord } from "./geo";
 import type { UserLocation, Destination } from "./types";
 
-interface UseNavigationReturn {
+interface ArrivalProgress {
   distanceRemaining: number;
   hasArrived: boolean;
 }
@@ -9,20 +9,17 @@ interface UseNavigationReturn {
 const ARRIVAL_THRESHOLD_M = 15;
 
 /**
- * useNavigation - Pure computation hook (no effects, no state)
- *
- * Returns navigation data calculated directly from inputs.
- * hasArrived is a simple distance check, NOT a stateful flag.
- * React Compiler handles memoization automatically.
+ * Pure function, no React: distance to the destination and whether the user is inside the
+ * arrival radius. `hasArrived` is a plain distance check, not a stateful flag.
  *
  * Deliberately does NOT return a destination key: it would be byte-identical to the one `App`
  * already derives from the same `destination` in the same render, so comparing the two could
  * never fail. The caller compares against its own key.
  */
-export function useNavigation(
+export function arrivalProgress(
   userLocation: UserLocation | null,
   destination: Destination | null
-): UseNavigationReturn {
+): ArrivalProgress {
   const userLat = userLocation?.latitude;
   const userLng = userLocation?.longitude;
   const destLat = destination?.coordinates?.[1];

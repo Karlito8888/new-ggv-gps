@@ -24,11 +24,35 @@ export default function App() {
   const { map, userLocation, isMapReady, triggerGeolocate, stopGeolocate, userMarkerRef } =
     useMapSetup(mapContainerRef);
 
+  // iOS Safari lets an <audio> element play outside a gesture only once it has played inside one:
+  // the Navigate tap unlocks this element, arrival replays it.
+  const bellRef = useRef<HTMLAudioElement | null>(null);
+  const unlockBell = () => {
+    if (bellRef.current) return;
+    const bell = new Audio(arrivalBellSrc);
+    bell.muted = true;
+    bell
+      .play()
+      .then(
+        () => bell.pause(),
+        () => {}
+      )
+      .finally(() => {
+        bell.muted = false;
+        bell.currentTime = 0;
+      });
+    bellRef.current = bell;
+  };
+
   // Navigation state machine + arrival detection. Arrival feedback: haptic (Android only, iOS
   // silently ignores) + bell sound.
   const flow = useNavigationFlow(userLocation, () => {
     navigator.vibrate?.([100, 50, 100]);
-    new Audio(arrivalBellSrc).play().catch(() => {});
+    const bell = bellRef.current;
+    if (bell) {
+      bell.currentTime = 0;
+      bell.play().catch((e) => console.warn("Arrival bell blocked:", e));
+    }
   });
   const { navState, destination, showArrivedModal } = flow;
 
@@ -105,7 +129,10 @@ export default function App() {
         <WelcomeOverlay
           blocks={blocks ?? []}
           isLoadingBlocks={blocks === undefined}
-          onSelectDestination={flow.selectDestination}
+          onSelectDestination={(d) => {
+            unlockBell();
+            flow.selectDestination(d);
+          }}
         />
       ) : null}
 

@@ -40,6 +40,8 @@ jobs:
       - run: bun run build
 
       - name: Deploy to Hostinger via FTP
+        id: ftp
+        continue-on-error: true
         uses: SamKirkland/FTP-Deploy-Action@fe9c9aad1198372d80a77c8dace63cbe48b69eac # v4.3.6
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -47,3 +49,27 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./apps/web/dist/
           server-dir: ./domains/charlesbourgault.com/public_html/myggvgps/
+
+      # Hostinger's control socket times out intermittently; the action keeps its sync state on
+      # the server, so a retry uploads only what the first attempt missed.
+      - name: Retry FTP deploy once
+        if: steps.ftp.outcome == 'failure'
+        uses: SamKirkland/FTP-Deploy-Action@fe9c9aad1198372d80a77c8dace63cbe48b69eac # v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./apps/web/dist/
+          server-dir: ./domains/charlesbourgault.com/public_html/myggvgps/
+
+      # A green upload is not proof: production must serve the bundle this run built.
+      - name: Verify the served bundle
+        run: |
+          built=$(grep -oE 'assets/index-[A-Za-z0-9_-]+\.js' apps/web/dist/index.html | head -1)
+          for i in 1 2 3 4 5 6; do
+            live=$(curl -s "https://myggvgps.charlesbourgault.com/?cb=$RANDOM$i" | grep -oE 'assets/index-[A-Za-z0-9_-]+\.js' | head -1)
+            if [ "$live" = "$built" ]; then echo "Production serves $live"; exit 0; fi
+            sleep 10
+          done
+          echo "::error::Production serves ${live:-nothing}, this build is $built"
+          exit 1

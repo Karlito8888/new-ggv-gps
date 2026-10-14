@@ -5,9 +5,6 @@
 package.json
 bun.lock
 
-# Editor settings
-.vscode/
-
 # Generated / large JSON
 apps/web/public/sprites/*.json
 apps/mobile/assets/data/

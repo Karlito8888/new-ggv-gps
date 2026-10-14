@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useEffectEvent, startTransition } from "react";
-import { useNavigation } from "./useNavigation";
+import { arrivalProgress } from "./arrival";
 import { COPY } from "./copy";
 import { VILLAGE_EXIT } from "./village";
 import type { Destination, UserLocation } from "./types";
@@ -20,7 +20,7 @@ export function useNavigationFlow(userLocation: UserLocation | null, onArrive: (
   const [showArrivedModal, setShowArrivedModal] = useState(false);
 
   // Navigation logic (distance, arrival detection)
-  const { distanceRemaining, hasArrived } = useNavigation(userLocation, destination);
+  const { distanceRemaining, hasArrived } = arrivalProgress(userLocation, destination);
 
   const arrive = useEffectEvent(onArrive);
 

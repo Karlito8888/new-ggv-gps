@@ -194,8 +194,7 @@ export function useRouting(
               [destLng!, destLat!],
             ],
           },
-          distance: directDist,
-          steps: [{ type: "straight", icon: "↑", distance: directDist }],
+          steps: [{ type: "straight", icon: "↑" }],
         },
         "direct"
       );

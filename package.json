@@ -10,12 +10,13 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "gate": "bun run typecheck && bun run lint && bun run format:check && bun run test",
+    "gate": "bun run typecheck && bun run lint && bun run format:check && bun run test && bun run check:sprites",
     "typecheck": "bun run --filter @ggv/shared typecheck && bun run --filter @ggv/web typecheck && bun run --filter @ggv/mobile typecheck",
     "lint": "eslint . && bun run --filter @ggv/mobile lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "bun run --filter @ggv/shared test && bun run --filter @ggv/web test",
+    "check:sprites": "cmp apps/web/public/sprites/light.png apps/mobile/assets/map/sprites/light-1x.png && cmp apps/web/public/sprites/light@2x.png apps/mobile/assets/map/sprites/light-2x.png",
     "dev": "bun run --filter @ggv/web dev",
     "build": "bun run --filter @ggv/web build",
     "preview": "bun run --filter @ggv/web preview",

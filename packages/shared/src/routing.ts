@@ -13,7 +13,6 @@ export interface RouteStep {
   type: string;
   icon: string;
   modifier?: string | null;
-  distance: number;
   isSignificant?: boolean;
   location?: [number, number];
 }
@@ -25,7 +24,6 @@ export interface RouteGeometry {
 
 export interface RouteResult {
   geometry: RouteGeometry;
-  distance: number;
   steps?: RouteStep[];
 }
 
@@ -99,7 +97,7 @@ export const TURN_LABELS: Record<string, { en: string; tl: string }> = {
  * Parse OSRM maneuver to navigation instruction.
  * Returns null for steps that should be filtered out (depart).
  */
-export function parseManeuver(maneuver: OSRMManeuver, distance: number): RouteStep | null {
+export function parseManeuver(maneuver: OSRMManeuver): RouteStep | null {
   const { type, modifier } = maneuver;
 
   // Filter out "depart" - it's the start point, not a real instruction
@@ -113,7 +111,6 @@ export function parseManeuver(maneuver: OSRMManeuver, distance: number): RouteSt
       type: "arrive",
       icon: "📍",
       modifier: null,
-      distance: 0,
       isSignificant: true,
     };
   }
@@ -124,7 +121,6 @@ export function parseManeuver(maneuver: OSRMManeuver, distance: number): RouteSt
       type: "roundabout",
       icon: "⟳",
       modifier,
-      distance,
       isSignificant: true,
     };
   }
@@ -143,7 +139,6 @@ export function parseManeuver(maneuver: OSRMManeuver, distance: number): RouteSt
       type: modifier || "straight",
       icon,
       modifier,
-      distance,
       isSignificant,
     };
   }
@@ -153,7 +148,6 @@ export function parseManeuver(maneuver: OSRMManeuver, distance: number): RouteSt
     type: "straight",
     icon: "↑",
     modifier: null,
-    distance,
     isSignificant: false,
   };
 }
@@ -205,7 +199,7 @@ export async function fetchOSRM(
         (leg) =>
           leg.steps
             ?.map((step) => {
-              const parsed = parseManeuver(step.maneuver, step.distance);
+              const parsed = parseManeuver(step.maneuver);
               if (!parsed) return null;
               return { ...parsed, location: step.maneuver.location };
             })
@@ -214,7 +208,6 @@ export async function fetchOSRM(
 
     return {
       geometry: route.geometry,
-      distance: route.distance,
       steps,
     };
   }

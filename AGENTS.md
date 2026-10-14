@@ -18,7 +18,7 @@ l'entrée du village) et une app native Expo / React Native (`apps/mobile`, cart
 `useCourseUpCamera` (behind a `CameraDriver` interface), `useDestinationChoice`, `turnGuidance`,
 `COPY` (all user-visible strings), `map/layers.ts` (paint/layout of the app's own layers) and the
 basemap layers JSON (`@ggv/shared/basemap-layers`). Moved files, old to new: `lib/geo.ts`,
-`lib/course.ts`, `lib/trace.ts`, `hooks/useNavigation.ts`, `hooks/useRouting.ts`,
+`lib/course.ts`, `lib/trace.ts`, `hooks/useNavigation.ts` (now `arrival.ts`), `hooks/useRouting.ts`,
 `hooks/useCourseUpCamera.ts`, `types/*`, `data/blocks.ts` → `packages/shared/src/`;
 `lib/routing.ts` is split: pure half in shared `routing.ts`, map drawing in
 `apps/web/src/lib/routeLayers.ts`. Shared code must not touch `window`/`document`/`navigator`/
@@ -157,7 +157,7 @@ interactive (GPS, caméra course-up et gestes continuent).
 Recalcul si l'utilisateur bouge de plus de `RECALC_THRESHOLD_M` (30 m), immédiat si la
 destination change. Une fois retombé sur la ligne directe, le tracé ne remonte d'un palier qu'au
 prochain recalcul (pas de retry en arrière-plan). Seuil d'arrivée : `ARRIVAL_THRESHOLD_M` (15 m)
-dans `useNavigation.ts`.
+dans `arrival.ts`.
 
 ⚠️ **Aucun débounce, et surtout aucun `abort()` dans le cleanup de l'effet de `useRouting`.**
 L'effet a `originLat`/`originLng` en dépendances, donc il se relance à **chaque** fix GPS, et

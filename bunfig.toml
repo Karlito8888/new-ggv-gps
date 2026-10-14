@@ -7,7 +7,7 @@ linker = "hoisted"
 # below, for that package only: `--minimum-release-age=0` would lift the check for every
 # package resolved in that install.
 minimumReleaseAge = 604800
-# expo-location 57.0.21 and expo-dev-client 57.0.20 are already in bun.lock but younger than 7
-# days (published 2026-10-12 and 2026-09-24): any re-resolve refuses them without this line.
-# Drop it once both are older than a week.
+# expo-location 57.0.21, expo-dev-client 57.0.20 and its dependency expo-dev-launcher 57.0.21 were
+# all published 2026-10-12: already in bun.lock but younger than 7 days, so any re-resolve refuses
+# them without this line. Drop the line and this comment after 2026-10-19.
 minimumReleaseAgeExcludes = ["expo-location", "expo-dev-client"]

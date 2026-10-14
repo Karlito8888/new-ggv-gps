@@ -1,13 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { useNavigation } from "../useNavigation";
+import { arrivalProgress } from "../arrival";
 
-/**
- * useNavigation is a pure computation hook (no effects, no state).
- * It can be called directly without renderHook since it's a pure function.
- */
-describe("useNavigation", () => {
+describe("arrivalProgress", () => {
   test("returns defaults when userLocation is null", () => {
-    const result = useNavigation(null, {
+    const result = arrivalProgress(null, {
       name: "Test",
       coordinates: [120.9513, 14.3479],
     });
@@ -16,13 +12,13 @@ describe("useNavigation", () => {
   });
 
   test("returns defaults when destination is null", () => {
-    const result = useNavigation({ latitude: 14.3479, longitude: 120.9513 }, null);
+    const result = arrivalProgress({ latitude: 14.3479, longitude: 120.9513 }, null);
     expect(result.distanceRemaining).toBe(0);
     expect(result.hasArrived).toBe(false);
   });
 
   test("returns defaults when both are null", () => {
-    const result = useNavigation(null, null);
+    const result = arrivalProgress(null, null);
     expect(result).toEqual({
       distanceRemaining: 0,
       hasArrived: false,
@@ -31,7 +27,7 @@ describe("useNavigation", () => {
 
   test("calculates distance to destination", () => {
     // User ~100m north of destination
-    const result = useNavigation(
+    const result = arrivalProgress(
       { latitude: 14.3489, longitude: 120.9513 },
       { name: "Dest", coordinates: [120.9513, 14.3479] }
     );
@@ -41,7 +37,7 @@ describe("useNavigation", () => {
 
   test("detects arrival when within 15m threshold", () => {
     // Destination at exact user location
-    const result = useNavigation(
+    const result = arrivalProgress(
       { latitude: 14.3479, longitude: 120.9513 },
       { name: "Dest", coordinates: [120.9513, 14.3479] }
     );
@@ -50,7 +46,7 @@ describe("useNavigation", () => {
 
   test("detects arrival when within threshold (~10m)", () => {
     // ~10m north of destination (0.0001° ≈ 11m)
-    const result = useNavigation(
+    const result = arrivalProgress(
       { latitude: 14.348, longitude: 120.9513 },
       { name: "Dest", coordinates: [120.9513, 14.3479] }
     );
@@ -61,7 +57,7 @@ describe("useNavigation", () => {
 
   test("does not arrive when beyond 15m threshold", () => {
     // ~22m north of destination (0.0002° ≈ 22m)
-    const result = useNavigation(
+    const result = arrivalProgress(
       { latitude: 14.3481, longitude: 120.9513 },
       { name: "Dest", coordinates: [120.9513, 14.3479] }
     );
