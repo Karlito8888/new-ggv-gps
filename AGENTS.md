@@ -196,7 +196,7 @@ bun run gate
 ```
 
 = typecheck (shared, web, mobile) + lint + `format:check` + tests vitest (shared, web ; mobile n'a
-pas de tests). Vert, ~17 s, **51 tests** : 48 dans `packages/shared/src/__tests__/` (5 fichiers) et 3 dans
+pas de tests). Vert, ~20 s, **52 tests** : 49 dans `packages/shared/src/__tests__/` (5 fichiers) et 3 dans
 `apps/web/src/__tests__/routeLayers.test.ts`. Quatre fichiers shared couvrent les fonctions pures
 (`course`, `geo`, `navigation`, `routing`) ; le cinquième, `useRouting.test.ts`, couvre
 **l'effet** — c'est le seul test du dépôt qui monte un composant React.
@@ -445,10 +445,11 @@ de style et `vite.config.ts`, puis zéro violation mesurée sur A16 avec tuiles,
 ## Données du village
 
 `VILLAGE_CENTER`, `VILLAGE_EXIT` et `VILLAGE_BOUNDS` (`packages/shared/src/village.ts`) sont des coordonnées codées en
-dur, pas lues depuis Convex. `packages/shared/src/blocks.ts` porte 62 points-étiquettes (`blockLabels`,
-un centroïde par bloc) qui alimentent la seule couche `block-labels` — aucun contour n'est
-dessiné. La liste des blocs et lots vient, elle, de Convex (voir plus haut) : deux sources de
-vérité pour la géométrie village, à garder synchronisées à la main.
+dur, pas lues depuis Convex. `packages/shared/src/blocks.ts` porte 49 points-étiquettes (`blockLabels`,
+un centroïde par bloc nommé) qui alimentent la seule couche `block-labels` — aucun contour n'est
+dessiné. Les 41 blocs de Convex ont tous leur étiquette ; les 8 autres (`9 10 13 17 35 37 43 47`)
+sont des zones numérotées sans lot. La liste des blocs et lots vient, elle, de Convex (voir plus
+haut) : deux sources de vérité pour la géométrie village, à garder synchronisées à la main.
 
 Ces étiquettes sont rendues par TinySDF avec la police du système (voir § _Hôtes externes_) :
 leur rendu diffère donc légèrement d'un appareil à l'autre, et c'est voulu.

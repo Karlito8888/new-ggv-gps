@@ -204,4 +204,36 @@ describe("useRouting under a live GPS stream", () => {
     // Same destination, no movement: without a reset the 30 m guard refused this request.
     expect(pending).toHaveLength(2);
   });
+
+  test("off-route does not force a recalculation while a request is in flight", async () => {
+    // ~43 m east of the origin, ~35 m off the first segment: beyond the 25 m threshold.
+    const off = (east: number): UserLocation => ({
+      latitude: ORIGIN.latitude,
+      longitude: ORIGIN.longitude + east,
+    });
+    const now = vi.spyOn(Date, "now").mockReturnValue(100_000);
+    const { rerender } = renderHook(
+      ({ origin }: { origin: UserLocation }) =>
+        useRouting(true, origin, DEST, onRouteDisplay, onOffRoute),
+      { initialProps: { origin: ORIGIN } }
+    );
+    await act(async () => {
+      pending[0].deliver();
+    });
+
+    // Moving 43 m issues the normal recalculation; its answer is still pending.
+    act(() => {
+      rerender({ origin: off(0.0004) });
+    });
+    expect(pending).toHaveLength(2);
+
+    // 4 s later (past the old 3 s cooldown), still off route and still waiting.
+    now.mockReturnValue(104_000);
+    act(() => {
+      rerender({ origin: off(0.00042) });
+    });
+
+    expect(pending).toHaveLength(2);
+    expect(pending[1].aborted).toBe(false);
+  });
 });

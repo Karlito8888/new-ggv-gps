@@ -232,16 +232,17 @@ export function useRouting(
 
     const projection = projectPointOnLine(originLng, originLat, flatCoords);
 
-    // Off-route: vibrate + force recalculation (with 3s cooldown to prevent loop)
+    // Off-route: vibrate + force recalculation, with a cooldown so the same answer does not
+    // loop, and never while a request is in flight. Forcing one every 3 s aborted the OSRM
+    // cascade (two hosts, 3 s timeout each) before the second host or the direct-line fallback
+    // could answer: "Recalculating..." for as long as the first host stayed slow.
     if (projection.deviationDistance > OFF_ROUTE_THRESHOLD_M) {
       const now = Date.now();
       if (now - lastVibrationRef.current > 5000) {
         notifyOffRoute();
         lastVibrationRef.current = now;
       }
-      // Only force recalc if cooldown has elapsed (prevents infinite loop
-      // when API returns same route and user is still off-route)
-      if (now - lastOffRouteRecalcRef.current > 3000) {
+      if (abortRef.current === null && now - lastOffRouteRecalcRef.current > 3000) {
         lastOffRouteRecalcRef.current = now;
         lastOriginRef.current = null;
       }

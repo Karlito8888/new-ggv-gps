@@ -1,63 +1,19 @@
-# Dependencies
-node_modules/
+# Prettier reads .gitignore itself (its --ignore-path defaults to both files): only what git
+# tracks but prettier must not touch belongs here.
+
+# Lockfile and manifests (bun writes them)
 package.json
 bun.lock
 
-# Build outputs
-dist/
-dist-ssr/
-build/
-dev-dist/
-.next/
-.nuxt/
-.output/
-
-# Environment
-.env
-.env.local
-.env*.local
-
-# IDE & Editor
+# Editor settings
 .vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-# OS
-.DS_Store
-.DS_Store?
-Thumbs.db
-ehthumbs.db
-
-# Logs
-logs/
-*.log
-debug.log
-error.log
-
-# Development
-coverage/
-.nyc_output/
-.cache/
-.temp/
-.tmp/
-
-# Tools
-.vercel/
-.firebase/
-.turbo/
 
 # Generated / large JSON
 apps/web/public/sprites/*.json
-
-# Native projects and bundled map data
-apps/mobile/android/
-apps/mobile/ios/
-apps/mobile/.expo/
 apps/mobile/assets/data/
 
-# Sorties d'outillage : ces dossiers portent leur propre .gitignore (`*`), mais
-# prettier n'en lit aucun — sans ces lignes le gate rougit sur des rapports d'audit.
+# Tool outputs: each folder carries its own `.gitignore` (`*`), which prettier never reads.
+# Without these lines the gate reddens on audit reports and generated HTML.
 archon-out/
 flow-out/
 revue-out/

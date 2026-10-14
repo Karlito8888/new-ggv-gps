@@ -30,9 +30,12 @@ jobs:
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: latest
+          bun-version: 1.4.2
 
       - run: bun install --frozen-lockfile
+
+      # A red gate never reaches production: quality.yml runs in parallel, not before.
+      - run: bun run gate
 
       - run: bun run build
 

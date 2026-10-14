@@ -80,7 +80,7 @@ function Root({ assets }: { assets: MapAssetUrls }) {
   const cameraRef = useRef<CameraRef>(null);
   const panListeners = useRef(new Set<() => void>());
 
-  const { userLocation, start } = useDeviceLocation();
+  const { userLocation, start, stop: stopLocation } = useDeviceLocation();
   const bell = useAudioPlayer(BELL);
 
   const flow = useNavigationFlow(userLocation, () => {
@@ -90,6 +90,10 @@ function Root({ assets }: { assets: MapAssetUrls }) {
   });
   const { navState, destination, showArrivedModal } = flow;
   const navigating = navState === "navigating";
+  // Terminal screen: the GPS watch would only drain the battery under "Safe Travels".
+  useEffect(() => {
+    if (navState === "exit-complete") stopLocation();
+  }, [navState, stopLocation]);
 
   const { steps, routeSource, routeGeoJSON, isRecalculating } = useRouting(
     mapReady,

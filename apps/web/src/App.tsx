@@ -21,7 +21,7 @@ export default function App() {
   const blocks = useQuery(anyApi.locations.blocks) as string[] | undefined;
 
   // Initialize map and GPS tracking
-  const { map, userLocation, isMapReady, triggerGeolocate, userMarkerRef } =
+  const { map, userLocation, isMapReady, triggerGeolocate, stopGeolocate, userMarkerRef } =
     useMapSetup(mapContainerRef);
 
   // Navigation state machine + arrival detection. Arrival feedback: haptic (Android only, iOS
@@ -78,6 +78,11 @@ export default function App() {
       updateDestinationMarker(map, destination);
     }
   }, [map, isMapReady, destination]);
+
+  // Terminal screen: the high-accuracy watch would only drain the battery under "Safe Travels".
+  useEffect(() => {
+    if (navState === "exit-complete") stopGeolocate();
+  }, [navState, stopGeolocate]);
 
   return (
     <div className="app-container">

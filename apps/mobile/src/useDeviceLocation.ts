@@ -14,12 +14,13 @@ export function useDeviceLocation() {
   const subscription = useRef<Location.LocationSubscription | null>(null);
   const watching = useRef(false);
 
-  useEffect(
-    () => () => {
-      subscription.current?.remove();
-    },
-    []
-  );
+  /** Ends the watch. Idempotent; `start` can open a new one afterwards. */
+  const stop = () => {
+    subscription.current?.remove();
+    subscription.current = null;
+    watching.current = false;
+  };
+  useEffect(() => stop, []);
 
   const start = async (): Promise<LocationStatus> => {
     const permission = await Location.requestForegroundPermissionsAsync();
@@ -55,5 +56,5 @@ export function useDeviceLocation() {
     return "granted";
   };
 
-  return { userLocation, start };
+  return { userLocation, start, stop };
 }

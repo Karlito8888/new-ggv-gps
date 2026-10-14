@@ -212,12 +212,10 @@ textarea {
   color: var(--ggv-color-text);
 }
 
-.modal p {
-  color: var(--ggv-color-text);
-  opacity: var(--ggv-opacity-overlay-text);
-  margin-bottom: var(--ggv-space-lg);
-  line-height: 1.6;
-}
+/* No `.modal p` rule: its (0,1,1) specificity beat every single-class paragraph rule below, so
+   `.overlay-tagalog` never got its brand colour, and its `opacity` faded the `.tagalog-inline`
+   spans inside `.overlay-description` to ~3:1. Secondary text is dimmed by colour, never by
+   opacity, so a brand-coloured child keeps its own contrast. */
 
 /* Shared overlay icon wrapper */
 .overlay-icon-wrapper {
@@ -270,10 +268,9 @@ textarea {
   margin-bottom: var(--ggv-space-md);
 }
 
-/* Shared overlay description text */
+/* Shared overlay description text, dimmed by colour so inline Tagalog keeps its own. */
 .overlay-description {
-  color: var(--ggv-color-text);
-  opacity: var(--ggv-opacity-overlay-text);
+  color: color-mix(in srgb, var(--ggv-color-text) 70%, transparent);
   margin-bottom: var(--ggv-space-xl);
   line-height: 1.6;
   font-size: 1.0625rem;
@@ -367,8 +364,8 @@ textarea {
 .gps-version {
   margin-top: var(--ggv-space-lg);
   font-size: var(--ggv-font-size-xs);
-  color: var(--ggv-color-text);
-  opacity: 0.4;
+  /* 65 %, measured on the build: 5.6:1 on the surface, 5.2:1 on the glass over a dark map. */
+  color: color-mix(in srgb, var(--ggv-color-text) 65%, transparent);
 }
 
 /* Disabled GPS button style */
@@ -414,6 +411,7 @@ textarea {
 
 .welcome-offline p {
   margin: 0 0 var(--ggv-space-sm);
+  line-height: 1.6;
 }
 
 .welcome-block-selector {
@@ -561,10 +559,6 @@ textarea {
 
 .exit-icon-wrapper::after {
   border-color: var(--ggv-color-secondary);
-}
-
-.exit-tagalog {
-  color: var(--ggv-color-secondary-dark);
 }
 
 /* ===================================================================

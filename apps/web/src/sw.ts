@@ -42,22 +42,8 @@ registerRoute(
   })
 );
 
-// --- Tier 5: NetworkFirst (3s) for the OSRM routing hosts ---
-registerRoute(
-  ({ url }) =>
-    url.hostname.includes("router.project-osrm.org") ||
-    url.hostname.includes("routing.openstreetmap.de"),
-  new NetworkFirst({
-    cacheName: "routing-api",
-    networkTimeoutSeconds: 3,
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 20,
-        maxAgeSeconds: 3600,
-      }),
-    ],
-  })
-);
+// No route for the OSRM hosts: the request URL carries the exact GPS origin, so a cached
+// answer could never be reused, and caching it would only write positions to Cache Storage.
 
 // --- Navigation requests: NetworkFirst for HTML documents ---
 registerRoute(
@@ -76,17 +62,15 @@ registerRoute(
 // --- SW Install: warm-cache PMTiles file ---
 // The file name is versioned, so an entry already present is the right one: every SW update
 // used to re-download the whole tileset here and hold activation until it finished.
+// A failed download fails the install on purpose: the browser then retries the whole install
+// on the next launch, which is the only retry there is. Swallowing it left the worker active
+// with no tileset, and the runtime route cannot repair that (the browser sends range
+// requests, Workbox never caches a 206), so the map stayed online-only until the next version.
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open("pmtiles-cache")
-      .then(async (cache) => {
-        if (!(await cache.match(TILESET_PATH))) await cache.add(TILESET_PATH);
-      })
-      .catch(() => {
-        // PMTiles warm-cache failed (slow network, timeout): the SW still activates and the
-        // map works online. Nothing retries until the next SW version installs.
-      })
+    caches.open("pmtiles-cache").then(async (cache) => {
+      if (!(await cache.match(TILESET_PATH))) await cache.add(TILESET_PATH);
+    })
   );
   // No `skipWaiting()` needed here — it runs at the top of this file, so a new worker activates
   // as soon as it installs rather than waiting for a user gesture.

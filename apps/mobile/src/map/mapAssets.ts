@@ -14,7 +14,8 @@ import { TILESET_FILE } from "@ggv/shared";
  */
 
 /** Bump to re-copy every asset on the next launch (the old `map-*` directory is deleted). */
-const MAP_ASSETS_VERSION = 1;
+// 2: the copy became atomic (staging + rename); a 1 left by an interrupted copy may be truncated.
+const MAP_ASSETS_VERSION = 2;
 
 type Entry = { path: string; asset: number } | { path: string; json: object };
 
@@ -65,23 +66,30 @@ export async function ensureMapAssets(): Promise<MapAssetUrls> {
   const rootName = `map-${MAP_ASSETS_VERSION}`;
   const root = new Directory(Paths.document, rootName);
 
-  // A bumped version leaves the previous copy behind: reclaim its space.
+  // A bumped version, or a staging directory left by an interrupted copy, is reclaimed here.
   for (const entry of Paths.document.list()) {
     if (entry instanceof Directory && entry.name.startsWith("map-") && entry.name !== rootName) {
       entry.delete();
     }
   }
 
-  for (const entry of ENTRIES) {
-    const target = new File(root, entry.path);
-    if (target.exists) continue;
-    target.parentDirectory.create({ intermediates: true, idempotent: true });
-    if ("json" in entry) {
-      target.write(JSON.stringify(entry.json));
-    } else {
-      const [asset] = await Asset.loadAsync(entry.asset);
-      new File(asset.localUri!).copy(target);
+  // Build in a staging directory and rename it last: `map-<v>` exists only once complete, so a
+  // copy interrupted by a kill or a full disk is redone on the next launch instead of leaving a
+  // truncated tileset that would pass an `exists` test forever.
+  if (!root.exists) {
+    const staging = new Directory(Paths.document, `${rootName}.tmp`);
+    for (const entry of ENTRIES) {
+      const target = new File(staging, entry.path);
+      target.parentDirectory.create({ intermediates: true, idempotent: true });
+      if ("json" in entry) {
+        target.write(JSON.stringify(entry.json));
+      } else {
+        const [asset] = await Asset.loadAsync(entry.asset);
+        if (!asset.localUri) throw new Error(`map asset ${entry.path} has no local file`);
+        new File(asset.localUri).copy(target);
+      }
     }
+    staging.rename(rootName);
   }
 
   return {

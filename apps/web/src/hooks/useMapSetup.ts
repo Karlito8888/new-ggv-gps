@@ -30,6 +30,7 @@ interface UseMapSetupReturn {
   userLocation: UserLocation | null;
   isMapReady: boolean;
   triggerGeolocate: () => Promise<GeolocationPosition>;
+  stopGeolocate: () => void;
   userMarkerRef: React.RefObject<Marker | null>;
 }
 
@@ -81,6 +82,14 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
   const [isMapReady, setIsMapReady] = useState(false);
   const watchIdRef = useRef<number | null>(null);
   const userMarkerRef = useRef<Marker | null>(null);
+
+  /** Ends the GPS watch. Called on unmount and on the terminal screen, where it only drains. */
+  const stopGeolocate = () => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+  };
 
   // Initialize map with lazy-loaded MapLibre
   useEffect(() => {
@@ -204,10 +213,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
 
     return () => {
       isCancelled = true;
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
+      stopGeolocate();
       if (mapInstance) {
         mapInstance.off("styleimagemissing", onStyleImageMissing);
         mapInstance.remove();
@@ -254,7 +260,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
     return first;
   };
 
-  return { map, userLocation, isMapReady, triggerGeolocate, userMarkerRef };
+  return { map, userLocation, isMapReady, triggerGeolocate, stopGeolocate, userMarkerRef };
 }
 
 // Module-level ref for the destination HTML Marker (singleton, managed outside React)

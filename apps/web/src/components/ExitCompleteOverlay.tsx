@@ -29,7 +29,7 @@ export function ExitCompleteOverlay() {
         </div>
 
         <h1>{COPY.exit.title.en}</h1>
-        <p className="overlay-tagalog exit-tagalog">({COPY.exit.title.tl})</p>
+        <p className="overlay-tagalog">({COPY.exit.title.tl})</p>
 
         <p className="overlay-description">
           {COPY.exit.exited.en}
