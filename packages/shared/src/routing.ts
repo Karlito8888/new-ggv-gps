@@ -195,8 +195,10 @@ export async function fetchOSRM(
   const url = `${host}/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
   const data = await fetchJsonWithTimeout<OSRMResponse>(url, signal);
 
-  if (data.code === "Ok" && data.routes?.[0]) {
-    const route = data.routes[0];
+  // A route needs at least two points to be drawn or projected onto; a public router that
+  // answers "Ok" without them must fall through to the next host, not reach the map.
+  const route = data.code === "Ok" ? data.routes?.[0] : undefined;
+  if (route && route.geometry?.coordinates?.length >= 2) {
     // Extract steps from all legs, filtering out null (depart steps)
     const steps: RouteStep[] =
       route.legs?.flatMap(

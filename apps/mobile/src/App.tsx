@@ -19,6 +19,7 @@ import { anyApi } from "convex/server";
 import type { FeatureCollection } from "geojson";
 import {
   ARRIVAL_ZONE_PAINT,
+  BLOCK_LABEL_LAYOUT,
   BLOCK_LABEL_PAINT,
   MAP_INITIAL_ZOOM,
   ROUTE_ARROW_LAYOUT,
@@ -147,12 +148,8 @@ function Root({ assets }: { assets: MapAssetUrls }) {
           <Layer
             id="block-labels"
             type="symbol"
-            layout={{
-              "text-field": ["get", "name"],
-              "text-size": 14,
-              "text-anchor": "center",
-              "text-font": ["noto-sans-regular"],
-            }}
+            // Same layout as web; only the font name differs (the on-disk glyph alias).
+            layout={{ ...BLOCK_LABEL_LAYOUT, "text-font": ["noto-sans-regular"] }}
             paint={{ ...BLOCK_LABEL_PAINT }}
           />
         </GeoJSONSource>
@@ -306,13 +303,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 16,
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
-    borderBottomColor: "#4285F4",
+    borderBottomColor: ROUTE_LINE_PAINT["line-color"],
   },
   destDot: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#ef4444",
+    backgroundColor: theme.error,
     borderWidth: 3,
     borderColor: "#fff",
   },

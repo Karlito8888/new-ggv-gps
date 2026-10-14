@@ -3,5 +3,7 @@
 # Expo (Metro, expo-doctor) needs a flat node_modules: measured 21/21 hoisted vs 20/21 isolated.
 linker = "hoisted"
 # Wait 7 days before resolving a newly published version (supply-chain hygiene, enforced by the
-# Semgrep gate). One-off override for a fresh release: `bun add <pkg> --minimum-release-age=0`.
+# Semgrep gate). A fresh release that cannot wait goes in `minimumReleaseAgeExcludes = ["<pkg>"]`
+# below, for that package only: `--minimum-release-age=0` would lift the check for every
+# package resolved in that install.
 minimumReleaseAge = 604800

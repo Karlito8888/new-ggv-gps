@@ -17,7 +17,9 @@
     "format:check": "prettier --check .",
     "test": "bun run --filter @ggv/shared test && bun run --filter @ggv/web test",
     "dev": "bun run --filter @ggv/web dev",
-    "build": "bun run --filter @ggv/web build"
+    "build": "bun run --filter @ggv/web build",
+    "preview": "bun run --filter @ggv/web preview",
+    "snapshot:lots": "bun run --filter @ggv/mobile snapshot:lots"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

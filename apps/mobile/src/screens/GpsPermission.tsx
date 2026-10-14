@@ -44,7 +44,15 @@ export function GpsPermission({
         <Button
           label={label}
           disabled={!isMapReady || status === "requesting"}
-          onPress={blocked ? () => Linking.openSettings() : enable}
+          // Back from Settings, the next tap must ask again: "blocked" is not a terminal state.
+          onPress={
+            blocked
+              ? () => {
+                  setStatus("idle");
+                  Linking.openSettings();
+                }
+              : enable
+          }
         />
         <Text style={styles.version}>v{Constants.expoConfig?.version}</Text>
       </Modal>

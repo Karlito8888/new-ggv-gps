@@ -1,9 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { getDistance, projectPointOnLine } from "../geo";
 
-// Known coordinate: Garden Grove Village center
-const GGV_CENTER: [number, number] = [120.9513, 14.3479]; // [lng, lat]
-
 describe("getDistance", () => {
   test("returns 0 for identical coordinates", () => {
     expect(getDistance(14.3479, 120.9513, 14.3479, 120.9513)).toBe(0);

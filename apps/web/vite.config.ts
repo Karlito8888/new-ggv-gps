@@ -11,8 +11,6 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
-  publicDir: "public",
-  base: "/",
   build: {
     chunkSizeWarningLimit: 1100, // MapLibre chunk is inherently ~1MB
     target: "esnext", // Optimize for modern smartphones
@@ -21,7 +19,6 @@ export default defineConfig({
     },
     rolldownOptions: {
       output: {
-        // Drop console.log and debugger in production
         hoistTransitiveImports: false,
         // Chunking strategy
         codeSplitting: {

@@ -74,14 +74,18 @@ registerRoute(
 );
 
 // --- SW Install: warm-cache PMTiles file ---
+// The file name is versioned, so an entry already present is the right one: every SW update
+// used to re-download the whole tileset here and hold activation until it finished.
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open("pmtiles-cache")
-      .then((cache) => cache.add(TILESET_PATH))
+      .then(async (cache) => {
+        if (!(await cache.match(TILESET_PATH))) await cache.add(TILESET_PATH);
+      })
       .catch(() => {
-        // PMTiles warm-cache failed (slow network, timeout) —
-        // SW still activates; map tiles work online, offline after retry
+        // PMTiles warm-cache failed (slow network, timeout): the SW still activates and the
+        // map works online. Nothing retries until the next SW version installs.
       })
   );
   // No `skipWaiting()` needed here — it runs at the top of this file, so a new worker activates

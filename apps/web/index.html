@@ -60,7 +60,8 @@
 
     <!-- Preloading critical resources -->
     <!-- protomaps sprites now self-hosted in /sprites/ -->
-    <link rel="preconnect" href="https://academic-panda-488.eu-west-1.convex.cloud" />
+    <!-- Same deployment as the ConvexReactClient: Vite substitutes %VITE_CONVEX_URL% at build. -->
+    <link rel="preconnect" href="%VITE_CONVEX_URL%" />
     <link rel="dns-prefetch" href="https://routing.openstreetmap.de" />
     <!-- Preload self-hosted font -->
     <link
@@ -79,9 +80,8 @@
       content="default-src 'self'; script-src 'self' blob:; worker-src 'self' blob:; connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://routing.openstreetmap.de https://router.project-osrm.org; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self';"
     />
 
-    <!-- Additional Security Headers -->
-    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <!-- X-Content-Type-Options and Referrer-Policy are real headers in public/.htaccess: as
+         <meta http-equiv> they are inert (not in the HTML spec's allowed pragma list). -->
     <link rel="canonical" href="https://charlesbourgault.com/myggvgps/" />
   </head>
 

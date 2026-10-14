@@ -34,10 +34,8 @@ export function Welcome({
   onSelectDestination: (d: Destination) => void;
 }) {
   // The snapshot always answers, so there is no offline message here.
-  const { selectedBlock, setBlock, effectiveLot, setLot, lotList, navigate } = useDestinationChoice(
-    onSelectDestination,
-    villageSnapshot.lotsByBlock
-  );
+  const { selectedBlock, setBlock, effectiveLot, setLot, lotList, isLoadingLots, navigate } =
+    useDestinationChoice(onSelectDestination, villageSnapshot.lotsByBlock);
 
   return (
     <View style={styles.overlay}>
@@ -58,7 +56,9 @@ export function Welcome({
         {selectedBlock ? (
           <>
             <Body en={COPY.welcome.selectLot.en} tl={COPY.welcome.selectLot.tl} />
-            {lotList.length === 0 ? (
+            {isLoadingLots ? (
+              <Body en={COPY.welcome.loading.en} tl={COPY.welcome.loading.tl} />
+            ) : lotList.length === 0 ? (
               <Body en={COPY.welcome.noLots.en} tl={COPY.welcome.noLots.tl} />
             ) : (
               <FlatList

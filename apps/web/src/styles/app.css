@@ -159,7 +159,7 @@ textarea {
   pointer-events: none;
 }
 
-/* GeolocateControl - native MapLibre style, bottom right */
+/* MapLibre attribution control, bottom right */
 .maplibregl-ctrl-bottom-right {
   bottom: var(--ggv-space-xl);
   right: 0.75rem;

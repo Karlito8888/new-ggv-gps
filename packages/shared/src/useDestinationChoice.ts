@@ -13,6 +13,13 @@ export interface LotData {
   } | null;
 }
 
+/** A lot the app can navigate to: both coordinates present and finite. */
+export function hasCoords(lot: LotData | null | undefined): lot is LotData & {
+  coordinates: { lng: number; lat: number };
+} {
+  return isCoord(lot?.coordinates?.lng) && isCoord(lot?.coordinates?.lat);
+}
+
 /**
  * Block/lot selection logic of the Welcome screen, without any markup.
  *
@@ -46,9 +53,7 @@ export function useDestinationChoice(
   // lot would silently become a `[undefined, undefined]` destination — MapLibre and the OSRM
   // URL both take it without complaining. Dropping it here reuses the existing "No lots
   // available" path instead, so the failure is visible and never reaches navigation.
-  const lotList = (lots ?? fallbackLots ?? []).filter(
-    (l) => isCoord(l?.coordinates?.lng) && isCoord(l?.coordinates?.lat)
-  );
+  const lotList = (lots ?? fallbackLots ?? []).filter(hasCoords);
 
   // Derived selection: honour the user's pick when still valid, else default to the first lot.
   // (Derive during render instead of a setState-in-effect — react.dev "You Might Not Need an Effect".)
@@ -65,8 +70,7 @@ export function useDestinationChoice(
   const navigate = () => {
     if (!selectedBlock || !effectiveLot) return;
     const lot = lotList.find((l) => l.lot === effectiveLot);
-    if (lot?.coordinates) {
-      // Coordinates stored as { lng, lat }
+    if (lot) {
       onSelectDestination({
         type: "lot",
         coordinates: [lot.coordinates.lng, lot.coordinates.lat],

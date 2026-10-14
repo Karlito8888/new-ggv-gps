@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useEffectEvent, startTransition } from "react";
 import { useNavigation } from "./useNavigation";
+import { COPY } from "./copy";
 import { VILLAGE_EXIT } from "./village";
 import type { Destination, UserLocation } from "./types";
 
@@ -57,7 +58,9 @@ export function useNavigationFlow(userLocation: UserLocation | null, onArrive: (
 
     startTransition(() => {
       if (destination?.type === "exit") {
+        // Terminal state: no destination left, so routing stops and the line is erased.
         setNavState("exit-complete");
+        setDestination(null);
       } else {
         setShowArrivedModal(true);
       }
@@ -69,7 +72,6 @@ export function useNavigationFlow(userLocation: UserLocation | null, onArrive: (
     destination,
     showArrivedModal,
     distanceRemaining,
-    hasArrived,
     grantGps: () => setNavState("welcome"),
     selectDestination: (dest: Destination) => {
       setDestination(dest);
@@ -86,7 +88,7 @@ export function useNavigationFlow(userLocation: UserLocation | null, onArrive: (
     },
     exitVillage: () => {
       setShowArrivedModal(false);
-      setDestination({ type: "exit", coordinates: VILLAGE_EXIT, name: "Village Exit" });
+      setDestination({ type: "exit", coordinates: VILLAGE_EXIT, name: COPY.exit.name.en });
     },
   };
 }

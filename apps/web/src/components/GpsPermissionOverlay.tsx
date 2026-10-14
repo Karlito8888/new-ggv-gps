@@ -20,7 +20,7 @@ export function GpsPermissionOverlay({
     setError(null);
 
     try {
-      // Trigger the native GeolocateControl (requests permission + starts tracking)
+      // Browser permission prompt, then the continuous GPS watch (first fix resolves)
       await triggerGeolocate();
       // Permission granted, proceed to welcome screen
       onGrant();

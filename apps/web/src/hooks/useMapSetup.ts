@@ -4,7 +4,6 @@ import type {
   GeoJSONSource,
   Marker,
   MapStyleImageMissingEvent,
-  SymbolLayerSpecification,
   CircleLayerSpecification,
   ErrorEvent as MapErrorEvent,
 } from "maplibre-gl";
@@ -67,14 +66,13 @@ function addBlocksLayer(map: MaplibreMap): void {
     id: "block-labels",
     type: "symbol",
     source: "block-labels",
-    // The shared specs are readonly literals; maplibre-gl's expression types want mutable tuples.
-    layout: BLOCK_LABEL_LAYOUT as unknown as SymbolLayerSpecification["layout"],
+    layout: BLOCK_LABEL_LAYOUT,
     paint: { ...BLOCK_LABEL_PAINT },
   });
 }
 
 /**
- * Hook to initialize MapLibre map with GPS tracking via GeolocateControl.
+ * Hook to initialize MapLibre map with GPS tracking via `navigator.geolocation`.
  * Uses dynamic import for MapLibre to enable code-splitting and lazy loading.
  */
 export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): UseMapSetupReturn {
@@ -82,7 +80,6 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const watchIdRef = useRef<number | null>(null);
-  const maplibreRefForCleanup = useRef<MaplibreModule | null>(null);
   const userMarkerRef = useRef<Marker | null>(null);
 
   // Initialize map with lazy-loaded MapLibre
@@ -90,6 +87,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
     if (!containerRef.current) return;
 
     let mapInstance: MaplibreMap | null = null;
+    let loadedLibs: MaplibreModule | null = null;
     let isCancelled = false;
 
     // Named handler for proper cleanup
@@ -109,7 +107,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
 
       if (isCancelled) return;
 
-      maplibreRefForCleanup.current = MapLibre;
+      loadedLibs = MapLibre;
 
       // Register PMTiles protocol BEFORE map construction
       const protocol = new Protocol();
@@ -169,7 +167,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
         addBlocksLayer(mapInstance!);
         // Route + arrival-zone layers exist from here on, holding empty data. Everything after
         // this point is `setData`, which — unlike addSource/addLayer — has no style-readiness
-        // check to fail. See lib/routing.ts § addRouteLayers.
+        // check to fail. See lib/routeLayers.ts § addRouteLayers.
         addRouteLayers(mapInstance!);
         addArrivalZoneLayer(mapInstance!);
 
@@ -214,9 +212,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
         mapInstance.off("styleimagemissing", onStyleImageMissing);
         mapInstance.remove();
       }
-      if (maplibreRefForCleanup.current) {
-        maplibreRefForCleanup.current.removeProtocol("pmtiles");
-      }
+      loadedLibs?.removeProtocol("pmtiles");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -298,6 +294,10 @@ export function updateDestinationMarker(
 ): void {
   if (!map) return;
 
+  // Every call supersedes any pending marker creation, a clear included: the version bump
+  // sits before the early return so a stale `.then` cannot add a pin nothing will remove.
+  const thisVersion = ++destMarkerVersion;
+
   // Remove existing marker
   if (destMarkerInstance) {
     destMarkerInstance.remove();
@@ -327,9 +327,6 @@ export function updateDestinationMarker(
   el.className = "dest-marker-container";
   el.innerHTML = '<div class="dest-marker-pulse"></div><div class="dest-marker-pin"></div>';
 
-  // Guard against race condition: if updateDestinationMarker is called again
-  // before this .then() resolves, the version check prevents stale markers
-  const thisVersion = ++destMarkerVersion;
   mapLibsPromise.then(([MapLibre]) => {
     if (thisVersion !== destMarkerVersion) return; // Stale — newer call superseded us
     destMarkerInstance = new MapLibre.Marker({ element: el, anchor: "bottom" });

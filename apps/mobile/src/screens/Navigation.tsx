@@ -88,7 +88,7 @@ export function Navigation({
           {isRecalculating
             ? "..."
             : turn
-              ? `${turn.distanceToStep}m`
+              ? formatDistance(turn.distanceToStep)
               : formatDistance(distanceRemaining)}
         </Text>
         <Pressable

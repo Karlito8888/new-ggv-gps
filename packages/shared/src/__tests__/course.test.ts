@@ -32,4 +32,9 @@ describe("nextBearing", () => {
     expect(nextBearing(120, 300, 1, { minSpeed: 2 })).toBe(120); // 1 < 2 -> keep
     expect(nextBearing(120, 300, 3, { minSpeed: 2, smoothing: 1 })).toBeCloseTo(300);
   });
+
+  test("ignores NaN (web, stationary) and -1 (Expo, unavailable) headings even when moving", () => {
+    expect(nextBearing(120, NaN, 2)).toBe(120);
+    expect(nextBearing(120, -1, 2)).toBe(120);
+  });
 });

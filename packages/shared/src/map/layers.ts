@@ -32,12 +32,14 @@ export const ARRIVAL_ZONE_PAINT = {
   "circle-pitch-alignment": "map",
 } as const;
 
+// Not `as const`: maplibre's layout types want mutable expression tuples, and both renderers
+// spread this object straight into a symbol layer.
 export const BLOCK_LABEL_LAYOUT = {
-  "text-field": ["get", "name"],
+  "text-field": ["get", "name"] as ["get", string],
   "text-size": 14,
-  "text-anchor": "center",
+  "text-anchor": "center" as const,
   "text-font": ["Noto Sans Regular"],
-} as const;
+};
 export const BLOCK_LABEL_PAINT = {
   "text-color": "#333",
   "text-halo-color": "#fff",

@@ -23,7 +23,8 @@ export interface BearingOptions {
 
 /**
  * Next map bearing from a GPS fix. Returns `prevBearing` unchanged when the fix
- * carries no usable course (heading null / speed null / below `minSpeed`).
+ * carries no usable course: heading `null`, `NaN` (web, stationary) or negative (Expo's
+ * "unavailable" is `-1`), speed `null` or below `minSpeed`.
  * `heading === 0` (due north) is a valid course and updates the bearing.
  */
 export function nextBearing(
@@ -32,7 +33,10 @@ export function nextBearing(
   speed: number | null,
   { minSpeed = 0.5, smoothing = 0.2 }: BearingOptions = {}
 ): number {
-  if (heading === null || speed === null || speed < minSpeed) return prevBearing;
+  // `!(heading >= 0)` is the one test that rejects null, NaN and negatives together.
+  if (heading === null || !(heading >= 0) || speed === null || speed < minSpeed) {
+    return prevBearing;
+  }
   // Shortest signed arc prevBearing -> heading, in (-180, 180].
   const arc = ((heading - prevBearing + 540) % 360) - 180;
   return (prevBearing + arc * smoothing + 360) % 360;

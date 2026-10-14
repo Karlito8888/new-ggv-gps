@@ -22,7 +22,8 @@
  * échoue `prettier --check`, donc sans cette ligne le gate rougirait au repos.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import type { TraceEvent } from "../packages/shared/src/trace";
 
 const DOSSIER_SORTIE = "frise-out";
 
@@ -40,15 +41,8 @@ const VOIES = [
   "route:direct",
 ] as const;
 
-interface TraceEvent {
-  t: number;
-  wall: number;
-  kind: string;
-  payload?: Record<string, unknown>;
-}
-
 /**
- * Valide la capture à la main : le format vient de `src/lib/trace.ts`, c'est-à-dire de ce
+ * Valide la capture à la main : le format vient de `packages/shared/src/trace.ts`, c'est-à-dire de ce
  * dépôt, et quinze lignes de contrôle valent mieux qu'une dépendance de plus dans une PWA.
  * Un fichier absent, vide ou d'une autre forme s'arrête ici plutôt que de produire une frise
  * vide qu'on lirait comme « rien ne s'est passé ».
@@ -84,6 +78,7 @@ function main(): void {
 
   const evenements = lireTrace(entree);
 
+  mkdirSync(dirname(sortie), { recursive: true });
   mkdirSync(DOSSIER_SORTIE, { recursive: true });
   const ignore = join(DOSSIER_SORTIE, ".gitignore");
   if (!existsSync(ignore)) writeFileSync(ignore, "*\n", "utf8");

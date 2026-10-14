@@ -7,6 +7,7 @@ interface ErrorBoundaryProps {
 
 interface ErrorBoundaryState {
   hasError: boolean;
+  // May be null even when `hasError`: a thrown `null` still gets the fallback.
   error: Error | null;
 }
 
@@ -21,7 +22,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error | null): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
@@ -74,9 +75,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               {inline(COPY.error.reload)}
             </button>
 
-            <p className="gps-version">
-              v{typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "?.?.?"}
-            </p>
+            <p className="gps-version">v{__APP_VERSION__}</p>
           </div>
         </div>
       );

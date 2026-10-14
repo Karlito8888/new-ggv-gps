@@ -143,16 +143,13 @@ describe("useRouting under a live GPS stream", () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
-  test("stopping navigation erases the line and drops the request", async () => {
+  test("stopping navigation mid-request erases the line and drops the request", () => {
     const { rerender } = renderHook(
       ({ dest }: { dest: Destination | null }) =>
         useRouting(true, ORIGIN, dest, onRouteDisplay, onOffRoute),
       { initialProps: { dest: DEST as Destination | null } }
     );
-    await act(async () => {
-      pending[0].deliver();
-    });
-    onRouteDisplay.mockClear();
+    expect(pending[0].aborted).toBe(false);
 
     act(() => {
       rerender({ dest: null });
@@ -160,5 +157,51 @@ describe("useRouting under a live GPS stream", () => {
 
     expect(onRouteDisplay).toHaveBeenCalledWith(null);
     expect(pending[0].aborted).toBe(true);
+  });
+
+  test("after a cancel, the previous destination's route is not shown for the next one", async () => {
+    const DEST_B: Destination = { name: "Block 9, Lot 1", coordinates: [120.95, 14.346] };
+    const { result, rerender } = renderHook(
+      ({ dest }: { dest: Destination | null }) =>
+        useRouting(true, ORIGIN, dest, onRouteDisplay, onOffRoute),
+      { initialProps: { dest: DEST as Destination | null } }
+    );
+    await act(async () => {
+      pending[0].deliver();
+    });
+    expect(result.current.routeGeoJSON).not.toBeNull();
+
+    act(() => {
+      rerender({ dest: null });
+    });
+    onRouteDisplay.mockClear();
+    act(() => {
+      rerender({ dest: DEST_B });
+    });
+
+    // B's answer has not arrived: nothing of A may leak into B's first render.
+    expect(result.current.routeGeoJSON).toBeNull();
+    expect(result.current.steps).toEqual([]);
+    expect(result.current.routeSource).toBeNull();
+    expect(onRouteDisplay).not.toHaveBeenCalled();
+  });
+
+  test("cancelling mid-request then reselecting the same destination requests again", () => {
+    const { rerender } = renderHook(
+      ({ dest }: { dest: Destination | null }) =>
+        useRouting(true, ORIGIN, dest, onRouteDisplay, onOffRoute),
+      { initialProps: { dest: DEST as Destination | null } }
+    );
+    expect(pending).toHaveLength(1);
+
+    act(() => {
+      rerender({ dest: null });
+    });
+    act(() => {
+      rerender({ dest: DEST });
+    });
+
+    // Same destination, no movement: without a reset the 30 m guard refused this request.
+    expect(pending).toHaveLength(2);
   });
 });

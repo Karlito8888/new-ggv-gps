@@ -69,11 +69,6 @@
     rgba(80, 170, 97, 0.75) 0%,
     rgba(243, 197, 73, 0.7) 100%
   );
-  --ggv-gradient-exit: linear-gradient(
-    135deg,
-    var(--ggv-color-secondary) 0%,
-    var(--ggv-color-secondary-dark) 100%
-  );
   --ggv-gradient-accent-bar: linear-gradient(
     90deg,
     var(--ggv-color-primary),

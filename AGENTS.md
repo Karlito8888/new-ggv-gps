@@ -27,7 +27,7 @@ basemap layers JSON (`@ggv/shared/basemap-layers`). Moved files, old to new: `li
 Root scripts fan out: `bun run gate` = typecheck + lint + prettier + tests of shared, web and
 mobile. `apps/web` deploys by FTP on pushes to `main` that touch `apps/web`, `packages/shared`,
 `package.json`, `bun.lock` or `bunfig.toml`. `bunfig.toml` pins `minimumReleaseAge` (Semgrep
-gate): a fresh release needs `--minimum-release-age=0` on that one install.
+gate): a fresh release that cannot wait goes in `minimumReleaseAgeExcludes`, for that package only.
 
 ## Mobile app (`apps/mobile`)
 
@@ -195,8 +195,8 @@ le pin de destination en même temps que son cercle d'arrivée.
 bun run gate
 ```
 
-= typecheck + lint + `format:check` + tests (vitest), sur shared, web et mobile. Vert, ~20 s,
-**48 tests** : 45 dans `packages/shared/src/__tests__/` (5 fichiers) et 3 dans
+= typecheck (shared, web, mobile) + lint + `format:check` + tests vitest (shared, web ; mobile n'a
+pas de tests). Vert, ~17 s, **51 tests** : 48 dans `packages/shared/src/__tests__/` (5 fichiers) et 3 dans
 `apps/web/src/__tests__/routeLayers.test.ts`. Quatre fichiers shared couvrent les fonctions pures
 (`course`, `geo`, `navigation`, `routing`) ; le cinquième, `useRouting.test.ts`, couvre
 **l'effet** — c'est le seul test du dépôt qui monte un composant React.

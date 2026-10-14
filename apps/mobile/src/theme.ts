@@ -1,13 +1,11 @@
 /**
  * Token values copied from apps/web/src/styles/design-tokens.css (the colour-role rules of
- * AGENTS.md § Couleurs apply unchanged): brand-coloured text uses `primaryText`, never `primary`,
- * which is a decorative fill only.
+ * AGENTS.md § Couleurs apply unchanged): brand-coloured text uses `primaryText`, never the
+ * decorative `--ggv-color-primary` fill, which mobile has no use for.
  */
 export const theme = {
-  primary: "#50aa61",
   primaryText: "#326b3d",
   cta: "#3b7d47",
-  ctaDark: "#295c34",
   onCta: "#ffffff",
   surface: "#f4f4f4",
   text: "#121212",

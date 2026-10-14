@@ -85,7 +85,7 @@ export default function App() {
       <div ref={mapContainerRef} className="map-container" />
 
       {/* GGV Logo - top center */}
-      <img src={ggvLogo} alt="GGV" role="img" className="ggv-logo" />
+      <img src={ggvLogo} alt="GGV" className="ggv-logo" />
 
       {/* Conditional overlays based on navState */}
       {navState === "gps-permission" ? (

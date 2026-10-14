@@ -24,7 +24,7 @@ export interface CameraDriver {
  * Single camera driver for course-up 3D navigation — GPS course only, no sensor.
  *
  * On every GPS fix it eases the map to the user position with a bearing derived
- * from the GPS course (see lib/course). The user can pan to look around; the
+ * from the GPS course (see course.ts). The user can pan to look around; the
  * camera resumes following automatically after RESUME_MS. Pitch/zoom are set
  * once per session so the user's pinch-zoom sticks afterward.
  *

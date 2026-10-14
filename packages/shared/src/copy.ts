@@ -24,7 +24,7 @@ export const COPY = {
       en: "MyGGV GPS needs your location to guide you through the village.",
       tl: "Kailangan ng MyGGV GPS ang iyong lokasyon para gabayan ka sa village.",
     },
-    retry: { en: "Please, try again", tl: "Subukan muli" },
+    retry: { en: "Please try again", tl: "Subukan muli" },
     wait: { en: "Please wait, map is loading...", tl: "Naglo-load ang mapa..." },
     requesting: { en: "Requesting...", tl: "Humihiling..." },
     enable: { en: "Enable GPS", tl: "I-enable ang GPS" },
@@ -69,6 +69,8 @@ export const COPY = {
   },
   exit: {
     aria: { en: "You have exited the village" },
+    /** Shown as the destination while navigating to the gate; names carry no gloss. */
+    name: { en: "Village Exit" },
     title: { en: "Safe Travels!", tl: "Ingat sa byahe!" },
     exited: {
       en: "You have exited Garden Grove Village.",

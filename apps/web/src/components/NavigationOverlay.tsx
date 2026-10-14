@@ -79,7 +79,7 @@ export function NavigationOverlay({
           {isRecalculating
             ? "..."
             : currentStep
-              ? `${currentStep.distanceToStep}m`
+              ? formatDistance(currentStep.distanceToStep)
               : formatDistance(distanceRemaining)}
         </div>
 

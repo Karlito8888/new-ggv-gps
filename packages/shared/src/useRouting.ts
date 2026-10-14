@@ -1,5 +1,5 @@
 import { useState, useEffect, useEffectEvent, useRef } from "react";
-import { getDistance, projectPointOnLine } from "./geo";
+import { getDistance, isCoord, projectPointOnLine } from "./geo";
 import {
   fetchOSRM,
   OSRM_HOSTS,
@@ -14,6 +14,14 @@ import type { UserLocation, Destination } from "./types";
 interface LatLng {
   lat: number;
   lng: number;
+}
+
+/** The last answer applied, with the destination it was computed for. */
+interface AppliedRoute {
+  destKey: string;
+  geometry: RouteGeometry;
+  steps: RouteStep[];
+  source: RouteSourceType;
 }
 
 interface UseRoutingReturn {
@@ -39,11 +47,10 @@ export function useRouting(
   const displayRoute = useEffectEvent(onRouteDisplay);
   const notifyOffRoute = useEffectEvent(onOffRoute);
 
-  // No separate `routeGeoJSON` state: it was set from the same `result.geometry` as `fullRoute`,
-  // in the same call. The returned field is fed from `fullRoute` instead.
-  const [steps, setSteps] = useState<RouteStep[]>([]);
-  const [routeSource, setRouteSource] = useState<RouteSourceType | null>(null);
-  const [fullRoute, setFullRoute] = useState<RouteGeometry | null>(null);
+  // One state for the whole answer: geometry, steps and source arrive in the same call. It is
+  // keyed on the destination it was computed for, so a cancel followed by a new choice can
+  // never show the previous route: the key no longer matches and the render derives `null`.
+  const [applied, setApplied] = useState<AppliedRoute | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const lastOriginRef = useRef<LatLng | null>(null);
   // Vibration debounce (max once per 5 seconds)
@@ -63,15 +70,24 @@ export function useRouting(
   // Track destination to detect changes (recalculate immediately on new destination)
   const lastDestRef = useRef<LatLng | null>(null);
 
-  // Track if params are valid (used for derived return value)
-  const hasValidParams = !!(enabled && originLat && originLng && destLat && destLng);
+  const hasValidParams =
+    enabled && isCoord(originLat) && isCoord(originLng) && isCoord(destLat) && isCoord(destLng);
+  const destKey = hasValidParams ? `${destLat},${destLng}` : null;
+  const route = applied && applied.destKey === destKey ? applied : null;
+  const fullRoute = route?.geometry ?? null;
 
-  // Routing stopped (navigation cancelled, or params gone): erase the line and make sure no
-  // in-flight answer can draw over the cleared map.
+  // Routing stopped (navigation cancelled, or params gone): erase the line, make sure no
+  // in-flight answer can draw over the cleared map, and forget the previous origin. Without
+  // that, reselecting the same lot after a mid-request cancel never fetched again: the 30 m
+  // guard still held the old origin.
   useEffect(() => {
     if (hasValidParams || !enabled) return;
     destGenerationRef.current++;
     abortRef.current?.abort();
+    abortRef.current = null;
+    lastDestRef.current = null;
+    lastOriginRef.current = null;
+    lastTrimPointRef.current = null;
     displayRoute(null);
   }, [hasValidParams, enabled]);
 
@@ -109,6 +125,15 @@ export function useRouting(
     // Capture generation token to detect stale results
     const generation = destGenerationRef.current;
 
+    // An abort landing between a `route:fetch-start` and its outcome is the regression the
+    // frise exists to show, so it is dated, not just done. The handle is released once the
+    // request has answered: an abort is only traced when something was in flight.
+    if (abortRef.current) trace("route:abort");
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const signal = controller.signal;
+
     const applyRoute = (result: RouteResult, source: RouteSourceType) => {
       // Reject stale results from previous destination
       if (generation !== destGenerationRef.current) {
@@ -116,9 +141,13 @@ export function useRouting(
         trace("route:stale");
         return;
       }
-      setFullRoute(result.geometry);
-      setSteps(result.steps || []);
-      setRouteSource(source);
+      if (abortRef.current === controller) abortRef.current = null;
+      setApplied({
+        destKey: `${destLat},${destLng}`,
+        geometry: result.geometry,
+        steps: result.steps ?? [],
+        source,
+      });
       lastTrimPointRef.current = null;
       displayRoute(result.geometry);
     };
@@ -126,12 +155,6 @@ export function useRouting(
     const fetchRoute = async () => {
       // Save current origin for next comparison
       lastOriginRef.current = { lat: originLat!, lng: originLng! };
-      // Un abort qui tombe entre un `route:fetch-start` et son issue est la régression que la
-      // frise existe pour montrer : il faut donc le dater, pas seulement le faire.
-      if (abortRef.current) trace("route:abort");
-      abortRef.current?.abort();
-      abortRef.current = new AbortController();
-      const signal = abortRef.current.signal;
       trace("route:fetch-start", { generation });
 
       // 1. Try each OSRM host in order
@@ -193,7 +216,7 @@ export function useRouting(
 
   // Derive off-route status (pure computation — no state, no effect)
   const isOffRoute = (() => {
-    if (!hasValidParams || !originLat || !originLng || !fullRoute) return false;
+    if (!fullRoute || !isCoord(originLat) || !isCoord(originLng)) return false;
     const flatCoords = fullRoute.coordinates;
     if (flatCoords.length < 2) return false;
     const projection = projectPointOnLine(originLng, originLat, flatCoords);
@@ -202,7 +225,7 @@ export function useRouting(
 
   // Route trimming + off-route side effects (map update, vibration, force recalc)
   useEffect(() => {
-    if (!enabled || !originLat || !originLng || !fullRoute) return;
+    if (!fullRoute || !isCoord(originLat) || !isCoord(originLng)) return;
 
     const flatCoords = fullRoute.coordinates;
     if (flatCoords.length < 2) return;
@@ -228,12 +251,9 @@ export function useRouting(
 
     // Jitter suppression: skip map update if user hasn't moved enough along route
     const projected = projection.projectedPoint;
-    if (lastTrimPointRef.current) {
-      const dx = projected[0] - lastTrimPointRef.current[0];
-      const dy = projected[1] - lastTrimPointRef.current[1];
-      // Rough meter conversion at ~14.35°N: 1° lng ≈ 107550m, 1° lat ≈ 110540m
-      const distM = Math.sqrt((dx * 107550) ** 2 + (dy * 110540) ** 2);
-      if (distM < TRIM_MIN_MOVEMENT_M) return;
+    const last = lastTrimPointRef.current;
+    if (last && getDistance(last[1], last[0], projected[1], projected[0]) < TRIM_MIN_MOVEMENT_M) {
+      return;
     }
 
     // Build trimmed coordinates: from projected point to destination
@@ -251,13 +271,12 @@ export function useRouting(
     };
     // Update the route display (external system — allowed in effect)
     displayRoute(trimmedGeometry);
-  }, [enabled, originLat, originLng, fullRoute]);
+  }, [originLat, originLng, fullRoute]);
 
-  // Derive return values - return null/empty when params invalid (no sync setState needed)
   return {
-    routeGeoJSON: hasValidParams ? fullRoute : null,
-    steps: hasValidParams ? steps : [],
-    routeSource: hasValidParams ? routeSource : null,
-    isRecalculating: hasValidParams ? isOffRoute : false,
+    routeGeoJSON: fullRoute,
+    steps: route?.steps ?? [],
+    routeSource: route?.source ?? null,
+    isRecalculating: isOffRoute,
   };
 }
