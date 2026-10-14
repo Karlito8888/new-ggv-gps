@@ -609,7 +609,10 @@ textarea {
 
 .nav-top-pill {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + var(--ggv-space-pill-inset));
+  /* Below the logo (.ggv-logo: top md, height 2xl), with a small margin. */
+  top: calc(
+    env(safe-area-inset-top, 0px) + var(--ggv-space-md) + var(--ggv-space-2xl) + var(--ggv-space-sm)
+  );
   left: var(--ggv-space-md);
   right: var(--ggv-space-md);
   z-index: var(--ggv-z-nav);

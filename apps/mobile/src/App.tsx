@@ -285,7 +285,13 @@ export default Sentry.wrap(App);
 const styles = StyleSheet.create({
   root: { flex: 1 },
   errorScreen: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: theme.overlay },
-  logo: { position: "absolute", top: 48, alignSelf: "center", height: 48, width: 145 },
+  logo: {
+    position: "absolute",
+    top: theme.logoTop,
+    alignSelf: "center",
+    height: theme.logoHeight,
+    width: 145,
+  },
   userDot: {
     width: 28,
     height: 28,

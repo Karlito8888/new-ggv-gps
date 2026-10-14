@@ -57,7 +57,7 @@ export function Navigation({
 
   return (
     <>
-      <View style={[styles.top, { top: insets.top + 8 }]} accessibilityLabel={COPY.nav.infoAria.en}>
+      <View style={styles.top} accessibilityLabel={COPY.nav.infoAria.en}>
         <View style={styles.turn}>
           {isRecalculating ? (
             <>
@@ -126,7 +126,8 @@ const pill = {
 };
 
 const styles = StyleSheet.create({
-  top: { ...pill, justifyContent: "space-between" },
+  // Below the logo, with a small margin.
+  top: { ...pill, top: theme.logoTop + theme.logoHeight + 8, justifyContent: "space-between" },
   turn: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 },
   icon: { fontSize: 30, color: theme.primaryText },
   turnText: { flexShrink: 1, fontFamily: theme.font, fontSize: 16, color: theme.text },

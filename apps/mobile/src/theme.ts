@@ -16,4 +16,7 @@ export const theme = {
   radiusModal: 16,
   radiusPill: 999,
   font: "Madimi One",
+  /** The logo sits at the top centre of every screen; overlays stack below it. */
+  logoTop: 48,
+  logoHeight: 48,
 } as const;
