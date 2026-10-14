@@ -1,29 +1,9 @@
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Host, Picker } from "@expo/ui";
 import { COPY, inline, useDestinationChoice, type Destination } from "@ggv/shared";
 import { theme } from "../theme";
-import { Body, Button, Modal, Title } from "../ui";
+import { Button, Modal, Title } from "../ui";
 import { villageSnapshot } from "../villageSnapshot";
-
-function Chip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      style={[styles.chip, selected && styles.chipSelected]}
-    >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
-    </Pressable>
-  );
-}
 
 /** `blocks` is the live Convex list, or the bundled snapshot while it has not answered. */
 export function Welcome({
@@ -37,46 +17,42 @@ export function Welcome({
   const { selectedBlock, setBlock, effectiveLot, setLot, lotList, isLoadingLots, navigate } =
     useDestinationChoice(onSelectDestination, villageSnapshot.lotsByBlock);
 
+  // Same two selects as the web WelcomeOverlay: the empty item is the placeholder, and its label
+  // carries the state (loading, no lots) the way the web `<option value="">` does.
+  const lotPlaceholder = isLoadingLots
+    ? COPY.welcome.loading
+    : !selectedBlock
+      ? COPY.welcome.selectBlockFirst
+      : lotList.length === 0
+        ? COPY.welcome.noLots
+        : COPY.welcome.selectLot;
+
   return (
     <View style={styles.overlay}>
       <Modal style={styles.modal}>
         <Title en={COPY.welcome.title.en} tl={COPY.welcome.title.tl} />
 
-        <Body en={COPY.welcome.selectBlock.en} tl={COPY.welcome.selectBlock.tl} />
-        <FlatList
-          style={styles.grid}
-          data={blocks}
-          numColumns={5}
-          keyExtractor={(b) => b}
-          renderItem={({ item }) => (
-            <Chip label={item} selected={item === selectedBlock} onPress={() => setBlock(item)} />
-          )}
-        />
+        <Host {...host}>
+          <Picker selectedValue={selectedBlock} onValueChange={setBlock}>
+            <Picker.Item label={inline(COPY.welcome.selectBlock)} value="" />
+            {blocks.map((block) => (
+              <Picker.Item key={block} label={COPY.welcome.block(block)} value={block} />
+            ))}
+          </Picker>
+        </Host>
 
-        {selectedBlock ? (
-          <>
-            <Body en={COPY.welcome.selectLot.en} tl={COPY.welcome.selectLot.tl} />
-            {isLoadingLots ? (
-              <Body en={COPY.welcome.loading.en} tl={COPY.welcome.loading.tl} />
-            ) : lotList.length === 0 ? (
-              <Body en={COPY.welcome.noLots.en} tl={COPY.welcome.noLots.tl} />
-            ) : (
-              <FlatList
-                style={styles.grid}
-                data={lotList}
-                numColumns={5}
-                keyExtractor={(l) => l.lot}
-                renderItem={({ item }) => (
-                  <Chip
-                    label={item.lot}
-                    selected={item.lot === effectiveLot}
-                    onPress={() => setLot(item.lot)}
-                  />
-                )}
-              />
-            )}
-          </>
-        ) : null}
+        <Host {...host}>
+          <Picker
+            selectedValue={effectiveLot}
+            onValueChange={setLot}
+            enabled={!!selectedBlock && !isLoadingLots && lotList.length > 0}
+          >
+            <Picker.Item label={inline(lotPlaceholder)} value="" />
+            {lotList.map((l) => (
+              <Picker.Item key={l.lot} label={COPY.welcome.lot(l.lot)} value={l.lot} />
+            ))}
+          </Picker>
+        </Host>
 
         <Button
           label={inline(COPY.welcome.navigate)}
@@ -95,21 +71,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 16,
   },
-  modal: { alignSelf: "stretch", maxHeight: "90%" },
-  grid: { alignSelf: "stretch", flexGrow: 0, maxHeight: 180 },
-  chip: {
-    flex: 1,
-    margin: 3,
-    minHeight: 44,
-    maxWidth: "20%",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.cta,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  chipSelected: { backgroundColor: theme.cta },
-  chipText: { fontFamily: theme.font, fontSize: 15, color: theme.primaryText },
-  chipTextSelected: { color: theme.onCta },
+  modal: { alignSelf: "stretch" },
+  picker: { width: "100%" },
 });
+
+// The app is light-only (`userInterfaceStyle`), but a Compose host follows the device scheme
+// unless told otherwise; the seed colour derives the Material palette from the CTA green.
+const host = {
+  matchContents: { vertical: true },
+  colorScheme: "light",
+  seedColor: theme.cta,
+  style: styles.picker,
+} as const;
