@@ -90,8 +90,8 @@ them after any re-run.
 
 ## Stack — web (`apps/web`)
 
-Vite+ `1.1.0` (Vite `8.3.3`, Vitest `5.0.3`) · React `^19.2.7` · Convex `^1.42.3` (client seul, `convex/react`) · `maplibre-gl`
-`^5.24.0` (bibliothèque **web** de MapLibre, pas le binding React Native) · TypeScript `^5.9.3` ·
+Vite+ `1.1.0` (Vite `8.3.3`, Vitest `5.0.3`) · React `19.2.3` (exact pin) · Convex `^1.42.3` (client seul, `convex/react`) · `maplibre-gl`
+`^5.24.0` (bibliothèque **web** de MapLibre, pas le binding React Native) · TypeScript `~6.0.3` ·
 `vite-plugin-pwa` (Workbox) pour le mode hors-ligne.
 
 `src/vite-env.d.ts` ne fait que **référencer** les types livrés par les paquets — `vite/client`
@@ -221,9 +221,9 @@ bun run gate
 ```
 
 = typecheck (shared, web, mobile) + lint + `format:check` + tests vitest (shared, web ; mobile n'a
-pas de tests). Vert, ~20 s, **52 tests** : 49 dans `packages/shared/src/__tests__/` (5 fichiers) et 3 dans
+pas de tests). Vert, ~20 s, **51 tests** : 48 dans `packages/shared/src/__tests__/` (5 fichiers) et 3 dans
 `apps/web/src/__tests__/routeLayers.test.ts`. Quatre fichiers shared couvrent les fonctions pures
-(`course`, `geo`, `navigation`, `routing`) ; le cinquième, `useRouting.test.ts`, couvre
+(`arrival`, `course`, `geo`, `routing`) ; le cinquième, `useRouting.test.ts`, couvre
 **l'effet** — c'est le seul test du dépôt qui monte un composant React.
 
 Il tourne en **jsdom déclaré par fichier** (docblock `@vitest-environment jsdom`, documenté par
