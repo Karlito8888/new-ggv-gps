@@ -22,7 +22,6 @@ interface NavigationOverlayProps {
   onCancel: () => void;
 }
 
-// React Compiler handles memoization automatically
 export function NavigationOverlay({
   distanceRemaining,
   destination,

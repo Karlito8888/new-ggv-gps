@@ -34,11 +34,7 @@ export default defineConfig({
     },
   },
   plugins: [
-    react({
-      babel: {
-        plugins: ["babel-plugin-react-compiler"],
-      },
-    }),
+    react(),
     VitePWA({
       strategies: "injectManifest",
       srcDir: "src",
