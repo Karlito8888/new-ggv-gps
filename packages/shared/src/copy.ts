@@ -38,7 +38,6 @@ export const COPY = {
     noConnection: { en: "No connection", tl: "Walang koneksyon" },
     loading: { en: "Loading...", tl: "Nag-lo-load..." },
     selectBlock: { en: "Select Block", tl: "Pumili ng Block" },
-    selectBlockFirst: { en: "Select a block first", tl: "Pumili muna ng Block" },
     noLots: { en: "No lots available", tl: "Walang available na Lot" },
     selectLot: { en: "Select Lot", tl: "Pumili ng Lot" },
     offlineMessage: {

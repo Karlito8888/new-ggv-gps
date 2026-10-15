@@ -17,15 +17,13 @@ export function Welcome({
   const { selectedBlock, setBlock, effectiveLot, setLot, lotList, isLoadingLots, navigate } =
     useDestinationChoice(onSelectDestination, villageSnapshot.lotsByBlock);
 
-  // Same two selects as the web WelcomeOverlay: placeholder text and disabled conditions match
-  // its `<option value="">` and `disabled` attributes line for line.
+  // Same two selects as the web WelcomeOverlay: the lot select only exists once a block is
+  // chosen, and its placeholder text and disabled conditions match the web line for line.
   const lotPlaceholder = isLoadingLots
     ? COPY.welcome.loading
-    : !selectedBlock
-      ? COPY.welcome.selectBlockFirst
-      : lotList.length === 0
-        ? COPY.welcome.noLots
-        : COPY.welcome.selectLot;
+    : lotList.length === 0
+      ? COPY.welcome.noLots
+      : COPY.welcome.selectLot;
 
   return (
     <View style={styles.overlay}>
@@ -42,15 +40,17 @@ export function Welcome({
           />
         </View>
 
-        <View style={styles.selector}>
-          <Select
-            value={effectiveLot}
-            placeholder={inline(lotPlaceholder)}
-            options={lotList.map((l) => ({ label: COPY.welcome.lot(l.lot), value: l.lot }))}
-            onChange={setLot}
-            enabled={!!selectedBlock && !isLoadingLots && lotList.length > 0}
-          />
-        </View>
+        {selectedBlock ? (
+          <View style={styles.selector}>
+            <Select
+              value={effectiveLot}
+              placeholder={inline(lotPlaceholder)}
+              options={lotList.map((l) => ({ label: COPY.welcome.lot(l.lot), value: l.lot }))}
+              onChange={setLot}
+              enabled={!isLoadingLots && lotList.length > 0}
+            />
+          </View>
+        ) : null}
 
         <Button
           label={inline(COPY.welcome.navigate)}

@@ -91,33 +91,33 @@ export function WelcomeOverlay({
           </div>
         )}
 
-        <div className="welcome-block-selector">
-          <label htmlFor="lot-select" className="sr-only">
-            {COPY.welcome.selectLotLabel.en}
-          </label>
-          <select
-            id="lot-select"
-            value={effectiveLot}
-            onChange={(e) => setLot(e.target.value)}
-            className="welcome-select"
-            disabled={!selectedBlock || isLoadingLots || lotList.length === 0}
-          >
-            <option value="" disabled>
-              {isLoadingLots
-                ? inline(COPY.welcome.loading)
-                : !selectedBlock
-                  ? inline(COPY.welcome.selectBlockFirst)
+        {selectedBlock && (
+          <div className="welcome-block-selector">
+            <label htmlFor="lot-select" className="sr-only">
+              {COPY.welcome.selectLotLabel.en}
+            </label>
+            <select
+              id="lot-select"
+              value={effectiveLot}
+              onChange={(e) => setLot(e.target.value)}
+              className="welcome-select"
+              disabled={isLoadingLots || lotList.length === 0}
+            >
+              <option value="" disabled>
+                {isLoadingLots
+                  ? inline(COPY.welcome.loading)
                   : lotList.length === 0
                     ? inline(COPY.welcome.noLots)
                     : inline(COPY.welcome.selectLot)}
-            </option>
-            {lotList.map((l) => (
-              <option key={l.lot} value={l.lot}>
-                {COPY.welcome.lot(l.lot)}
               </option>
-            ))}
-          </select>
-        </div>
+              {lotList.map((l) => (
+                <option key={l.lot} value={l.lot}>
+                  {COPY.welcome.lot(l.lot)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <button
           className="overlay-btn-primary"
