@@ -84,8 +84,10 @@ them after any re-run.
   wake lock by itself, and `stay_on_while_plugged_in` defaults to on: judge keep-awake on a
   release build with `settings put global stay_on_while_plugged_in 0`.
 - `expo-location` is requested in foreground only (no background keys): the plugin's default
-  "Always" and motion purpose strings are set to `false`, so the only iOS location key is
-  `NSLocationWhenInUseUsageDescription`. Approximate location (iOS "Precise: Off", Android
+  "Always" purpose strings are set to `false`, so the only iOS location key is
+  `NSLocationWhenInUseUsageDescription`. `NSMotionUsageDescription` must stay set: App Store
+  Connect rejected build 5 without it (ITMS-90683), because the library references the motion
+  API even though the app never calls it. Approximate location (iOS "Precise: Off", Android
   "Approximate") is refused with a Settings button: `useDeviceLocation` returns `"approximate"`.
   `android.blockedPermissions` removes the prebuild template's `SYSTEM_ALERT_WINDOW` and storage
   permissions. Test the approximate path on a device with

@@ -32,8 +32,10 @@ const madimi = "@expo-google-fonts/madimi-one/400Regular/MadimiOne_400Regular.tt
  *   the one with a dev client, gets the generated `exp+<slug>` scheme.
  * - `expo-font` embeds Madimi One at build time (Android XML font family `Madimi One`; iOS reads
  *   the family name from the file).
- * - Location is foreground only: no background keys, and the "Always" and motion purpose strings
- *   the `expo-location` plugin adds by default are removed (`false`), since nothing requests them.
+ * - Location is foreground only: no background keys, and the "Always" purpose strings the
+ *   `expo-location` plugin adds by default are removed (`false`), since nothing requests them.
+ *   The motion string must stay: the library's native code references the motion API, and App
+ *   Store Connect rejects an upload without `NSMotionUsageDescription` (ITMS-90683, iOS build 5).
  * - `blockedPermissions` drops what the prebuild template declares and this app never uses.
  * - `platforms` is pinned to the native targets: unset, `web` is added whenever `react-dom` is
  *   installed, and the hoisted `node_modules` holds the copy `apps/web` depends on.
@@ -76,7 +78,8 @@ const config: ExpoConfig = {
           "MyGGV GPS uses your location to guide you to your destination inside Garden Grove Village.",
         locationAlwaysAndWhenInUsePermission: false,
         locationAlwaysPermission: false,
-        motionUsagePermission: false,
+        motionUsagePermission:
+          "MyGGV GPS does not use motion data and never asks for it. The location library it relies on requires this text.",
       },
     ],
     [
