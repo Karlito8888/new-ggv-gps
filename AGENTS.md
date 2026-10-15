@@ -70,12 +70,12 @@ them after any re-run.
   the manifest (`curl -H "expo-platform: android" localhost:<port>/ | jq .launchAsset.url`), not
   `/index.bundle`. Use a dedicated port (`expo start --dev-client --port 8082`): other projects on
   this machine hold 8081, and a dev client pointed at the wrong Metro loads the wrong app.
-- **A local `./gradlew assembleRelease` can ship a stale JS bundle**: the bundle task does not
-  watch `packages/shared`, so a change there alone leaves it "up to date" (measured: an APK built
-  after a `routing.ts` edit still carried the old code). Force it with
+- **A local `./gradlew assembleRelease` can ship a stale JS bundle**: after an edit in
+  `packages/shared/src/routing.ts`, the APK still carried the bundle generated before the edit
+  (`index.android.bundle` older than the edit, new string absent); why Gradle judged it up to date
+  was not established. After any `packages/shared` change, run
   `./gradlew :app:createBundleReleaseJsAndAssets --rerun` before `assembleRelease`, then check a
-  known string with `unzip -p <apk> assets/index.android.bundle | strings | grep`. EAS builds
-  start clean and are not affected.
+  known string with `unzip -p <apk> assets/index.android.bundle | strings | grep`.
 - **Testing on the Android emulator** (`ggv-phone`, created with `avdmanager`): start it with
   `-gpu host`. With `swiftshader_indirect` MapLibre Native draws no symbol layer at all (no
   labels, no route arrows). Scripted GPS: `adb -s emulator-5554 emu geo fix <lng> <lat>` once per
@@ -192,11 +192,12 @@ interactive (GPS, caméra course-up et gestes continuent).
 
 **Le routage ne consomme aucune clé d'API**, donc aucun secret CI : les deux hôtes sont publics.
 
-**Délai par hôte : `REQUEST_TIMEOUT_MS` (8 s).** Mesuré sur l'A16 au village : une réponse OSRM
-prend 2 à 3 s (≈ 300 ms d'aller-retour vers la machine en Allemagne), et une connexion sur
-quatre peut ne jamais répondre. L'ancien délai de 3 s envoyait donc la plupart des trajets sur la
-ligne directe. Les deux hôtes résolvent vers **la même machine** (`5.148.170.168`) : le second
-rattrape une connexion bloquée, pas une panne du serveur.
+**Délai par hôte : `REQUEST_TIMEOUT_MS` (8 s).** Mesuré sur l'A16 au village, 7 requêtes : 5
+réponses entre 2,0 et 2,9 s, 2 connexions jamais répondues (coupées au délai, l'autre hôte a
+pris le relais). Avec 3 s, les 2 navigations observées avant le changement ont fini en ligne
+directe ; avec 8 s, 4 navigations sur 4 ont eu un itinéraire OSRM. Coût : un hôte bloqué fait
+attendre 8 s avant le suivant. Les deux hôtes résolvent vers **la même machine**
+(`5.148.170.168`) : le second rattrape une connexion bloquée, pas une panne du serveur.
 
 Recalcul si l'utilisateur bouge de plus de `RECALC_THRESHOLD_M` (30 m), immédiat si la
 destination change. Une fois retombé sur la ligne directe, le tracé ne remonte d'un palier qu'au
