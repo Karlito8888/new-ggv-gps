@@ -53,7 +53,11 @@ const config: ExpoConfig = {
   },
   android: {
     package: variant.id,
-    adaptiveIcon: { foregroundImage: "./assets/adaptive-icon.png", backgroundColor: "#ffffff" },
+    adaptiveIcon: {
+      foregroundImage: "./assets/adaptive-icon.png",
+      backgroundImage: "./assets/android-background.png",
+      monochromeImage: "./assets/android-monochrome.png",
+    },
     predictiveBackGestureEnabled: false,
   },
   plugins: [

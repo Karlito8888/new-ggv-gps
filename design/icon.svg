@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-256 -256 1536 1536" width="1536" height="1536">
+  <!--
+    App icon master. The canvas is the Android adaptive icon (108 dp); the iOS icon is its
+    centre 0..1024 square (72 dp). Each top-level layer is one output: design/render-icons.sh
+    shows one layer at a time. Text needs the Madimi One font file passed to resvg.
+  -->
+  <defs>
+    <radialGradient id="sky" cx="0.5" cy="0.38" r="0.75">
+      <stop offset="0" stop-color="#FFE45C"/><stop offset="0.6" stop-color="#FFCC00"/><stop offset="1" stop-color="#F2B400"/>
+    </radialGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#84DD95"/><stop offset="0.35" stop-color="#4CC764"/><stop offset="1" stop-color="#2A9D43"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.55"/><stop offset="0.5" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="asphalt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5A5A5A"/><stop offset="1" stop-color="#343434"/>
+    </linearGradient>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="18"/></filter>
+
+    <text id="word" x="512" y="450" font-family="Madimi One" font-size="250" text-anchor="middle" letter-spacing="-4">MyGGV</text>
+    <text id="gps" x="512" y="612" font-family="Madimi One" font-size="80" text-anchor="middle" letter-spacing="8">GPS</text>
+    <rect id="pill" x="382" y="528" width="260" height="104" rx="52"/>
+    <path id="road" fill="none" d="M -456 1154 L -60 1000 C 300 860, 700 1020, 1090 820 L 1480 620"/>
+
+    <!-- Yellow ground and the asphalt road, full bleed. -->
+    <g id="scene">
+      <rect x="-256" y="-256" width="1536" height="1536" fill="url(#sky)"/>
+      <use href="#road" stroke="#000" stroke-width="150" opacity="0.28" filter="url(#blur)" transform="translate(10 56)"/>
+      <g stroke="#1D1D1D" stroke-width="150">
+        <use href="#road" transform="translate(0 40)"/><use href="#road" transform="translate(0 30)"/>
+        <use href="#road" transform="translate(0 20)"/><use href="#road" transform="translate(0 10)"/>
+      </g>
+      <use href="#road" stroke="url(#asphalt)" stroke-width="150"/>
+      <use href="#road" stroke="url(#gloss)" stroke-width="132" opacity="0.6"/>
+      <use href="#road" stroke="#FFCC00" stroke-width="14" stroke-dasharray="45 36"/>
+    </g>
+
+    <!-- "MyGGV" in glossy green relief over a "GPS" pill, like the MyGGV app icon. -->
+    <g id="badge">
+      <use href="#word" fill="#000" opacity="0.3" filter="url(#blur)" transform="translate(8 44)"/>
+      <g fill="#1C7031">
+        <use href="#word" y="26"/><use href="#word" y="22"/><use href="#word" y="18"/><use href="#word" y="14"/>
+        <use href="#word" y="10"/><use href="#word" y="6"/><use href="#word" y="2"/>
+      </g>
+      <use href="#word" fill="url(#green)"/>
+      <use href="#word" fill="url(#gloss)" opacity="0.7"/>
+      <use href="#pill" fill="#1C7031" y="10"/>
+      <use href="#pill" fill="#343434"/>
+      <use href="#gps" fill="#FFCC00"/>
+    </g>
+
+    <mask id="gps-cut"><rect x="-256" y="-256" width="1536" height="1536" fill="#fff"/><use href="#gps" fill="#000"/></mask>
+  </defs>
+
+  <!-- iOS icon and web "any" icons: crop the centre 1024 square. -->
+  <g id="ios"><use href="#scene"/><use href="#badge"/></g>
+
+  <!-- Android adaptive layers. The badge shrinks to fit the 66 dp safe circle. -->
+  <g id="android-background" display="none"><use href="#scene"/></g>
+  <g id="android-foreground" display="none">
+    <use href="#badge" transform="translate(512 512) scale(0.96) translate(-512 -470)"/>
+  </g>
+  <g id="android-monochrome" display="none" fill="#fff" transform="translate(512 512) scale(0.96) translate(-512 -470)">
+    <use href="#word"/><use href="#pill" mask="url(#gps-cut)"/>
+  </g>
+
+  <!-- Web maskable icon: the badge fits the 80 % safe circle of the 1024 square. -->
+  <g id="maskable" display="none">
+    <use href="#scene"/>
+    <use href="#badge" transform="translate(512 512) scale(0.84) translate(-512 -470)"/>
+  </g>
+</svg>

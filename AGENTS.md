@@ -11,6 +11,7 @@ l'entrée du village) et une app native Expo / React Native (`apps/mobile`, cart
 | `apps/web`        | The PWA. Everything below that says `src/…` without a prefix lives in `apps/web/src/`.  |
 | `apps/mobile`     | Expo SDK 57 app, `com.myggv.gps` (+ `.dev`, `.preview` variants via `APP_VARIANT`).     |
 | `packages/shared` | `@ggv/shared`: platform-neutral navigation core, runs on web and React Native (Hermes). |
+| `design`          | `icon.svg`, the app icon master; `render-icons.sh` writes all mobile and web icons.     |
 | repo root         | `scripts/`, CI, `vite.config.ts` (Vite+ lint and format), `bunfig.toml`, this file.     |
 
 `@ggv/shared` holds what both renderers share: `useNavigationFlow` (the 4-state machine),
