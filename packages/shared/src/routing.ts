@@ -42,8 +42,13 @@ export const OSRM_HOSTS = [
   "https://routing.openstreetmap.de/routed-foot/route/v1/foot",
 ] as const;
 
-/** Request timeout (3 seconds to fail fast). Internal: only `fetchWithTimeout` reads it. */
-const REQUEST_TIMEOUT_MS = 3000;
+/**
+ * Per-host request timeout. Measured on a Galaxy A16 in the village (Wi-Fi, ~300 ms RTT to the
+ * OSRM machine in Germany): answers take 2 to 3 s, so the former 3 s limit sent most requests
+ * to the direct line. 8 s keeps a margin and still cuts a stalled connection (one never
+ * answered in 10 s) so the next host, then the direct line, can take over.
+ */
+const REQUEST_TIMEOUT_MS = 8000;
 
 /**
  * Route recalculation threshold. It is also the API rate limit: a walker covers 30 m in

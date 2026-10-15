@@ -233,7 +233,7 @@ export function useRouting(
 
     // Off-route: vibrate + force recalculation, with a cooldown so the same answer does not
     // loop, and never while a request is in flight. Forcing one every 3 s aborted the OSRM
-    // cascade (two hosts, 3 s timeout each) before the second host or the direct-line fallback
+    // cascade (two hosts, each with its own timeout) before the second host or the direct-line fallback
     // could answer: "Recalculating..." for as long as the first host stayed slow.
     if (projection.deviationDistance > OFF_ROUTE_THRESHOLD_M) {
       const now = Date.now();
