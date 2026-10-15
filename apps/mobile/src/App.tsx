@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, Linking, Platform, StyleSheet, View } from "react-native";
+import Constants from "expo-constants";
 import {
   Camera,
   GeoJSONSource,
@@ -38,8 +39,8 @@ import {
 } from "@ggv/shared";
 import basemapLayers from "@ggv/shared/basemap-layers";
 import * as Sentry from "@sentry/react-native";
-import { COPY, inline } from "@ggv/shared";
-import { CONVEX_URL, SENTRY_DSN } from "./config";
+import { COPY, inline, isBelowVersion } from "@ggv/shared";
+import { APP_CONFIG_URL, CONVEX_URL, SENTRY_DSN, STORE_URL } from "./config";
 import { ensureMapAssets, type MapAssetUrls } from "./map/mapAssets";
 import { buildMobileStyle } from "./map/mobileStyle";
 import { useDeviceLocation } from "./useDeviceLocation";
@@ -244,10 +245,21 @@ function AppContent() {
   const [assets, setAssets] = useState<MapAssetUrls | null>(null);
   // Setting state to a thrown value lets the render below rethrow it to the error boundary.
   const [error, setError] = useState<unknown>(null);
+  const [updateRequired, setUpdateRequired] = useState(false);
   useEffect(() => {
     ensureMapAssets().then(setAssets, setError);
+    // Offline or unreachable floor: skipped. It must never stand between a user and the map.
+    fetch(`${APP_CONFIG_URL}?t=${Date.now()}`)
+      .then((response) => response.json())
+      .then((floor: { minIos?: string; minAndroid?: string }) => {
+        const min = Platform.OS === "ios" ? floor.minIos : floor.minAndroid;
+        const version = Constants.expoConfig?.version;
+        if (min && version && isBelowVersion(version, min)) setUpdateRequired(true);
+      })
+      .catch(() => {});
   }, []);
   if (error) throw error;
+  if (updateRequired) return <UpdateRequired />;
   if (!assets) return null;
 
   return (
@@ -267,6 +279,22 @@ function ErrorFallback({ onRetry }: { onRetry: () => void }) {
         <Body en={COPY.error.unexpected.en} />
         <Body en={COPY.error.reloadPrompt.en} tl={COPY.error.reloadPrompt.tl} />
         <Button label={inline(COPY.error.retry)} onPress={onRetry} />
+      </Modal>
+    </View>
+  );
+}
+
+/** No way past it but the store: a version below the floor has lost its backend contract. */
+function UpdateRequired() {
+  return (
+    <View style={styles.errorScreen}>
+      <Modal>
+        <Title en={COPY.forceUpdate.title.en} tl={COPY.forceUpdate.title.tl} />
+        <Body en={COPY.forceUpdate.body.en} tl={COPY.forceUpdate.body.tl} />
+        <Button
+          label={inline(COPY.forceUpdate.button)}
+          onPress={() => Linking.openURL(Platform.OS === "ios" ? STORE_URL.ios : STORE_URL.android)}
+        />
       </Modal>
     </View>
   );

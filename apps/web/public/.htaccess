@@ -85,6 +85,13 @@ AddType application/vnd.pmtiles .pmtiles
   </FilesMatch>
 </IfModule>
 
+# Mobile version floor: read at every app launch, a stale copy would defeat it
+<IfModule mod_headers.c>
+  <FilesMatch "^app-config\.json$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
 # Service Worker: must NEVER be cached by HTTP cache
 <IfModule mod_headers.c>
   <FilesMatch "^sw\.js$">

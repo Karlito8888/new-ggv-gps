@@ -99,4 +99,12 @@ export const COPY = {
     ready: { en: "App ready to work offline", tl: "Handa na offline" },
     ok: { en: "OK", tl: "Sige" },
   },
+  forceUpdate: {
+    title: { en: "Update required", tl: "Kailangan ng update" },
+    body: {
+      en: "This version of MyGGV GPS is no longer supported. Install the latest version to keep navigating.",
+      tl: "Hindi na suportado ang bersyong ito. I-install ang pinakabagong bersyon.",
+    },
+    button: { en: "Update", tl: "I-update" },
+  },
 } as const;

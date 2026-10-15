@@ -26,3 +26,4 @@ export { hasCoords, useDestinationChoice, type LotData } from "./useDestinationC
 export { useNavigationFlow } from "./useNavigationFlow";
 export { useRouting } from "./useRouting";
 export { MAP_INITIAL_ZOOM, VILLAGE_BOUNDS, VILLAGE_CENTER } from "./village";
+export { isBelowVersion } from "./version";
