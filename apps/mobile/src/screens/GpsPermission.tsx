@@ -24,12 +24,13 @@ export function GpsPermission({
     if (result === "granted") onGrant();
   };
 
-  const blocked = status === "blocked";
+  // Both statuses are fixed only in the system Settings.
+  const toSettings = status === "blocked" || status === "approximate";
   const label = !isMapReady
     ? inline(COPY.gps.wait)
     : status === "requesting"
       ? inline(COPY.gps.requesting)
-      : blocked
+      : toSettings
         ? inline(COPY.gps.openSettings)
         : inline(COPY.gps.enable);
 
@@ -38,15 +39,17 @@ export function GpsPermission({
       <Modal style={styles.modal}>
         <Title en={COPY.gps.title.en} tl={COPY.gps.title.tl} />
         <Body en={COPY.gps.description.en} tl={COPY.gps.description.tl} />
-        {status === "denied" || blocked ? (
+        {status === "approximate" ? (
+          <Text style={styles.error}>{inline(COPY.gps.precise)}</Text>
+        ) : status === "denied" || status === "blocked" ? (
           <Text style={styles.error}>{inline(COPY.gps.retry)}</Text>
         ) : null}
         <Button
           label={label}
           disabled={!isMapReady || status === "requesting"}
-          // Back from Settings, the next tap must ask again: "blocked" is not a terminal state.
+          // Back from Settings, the next tap must ask again: neither status is terminal.
           onPress={
-            blocked
+            toSettings
               ? () => {
                   setStatus("idle");
                   Linking.openSettings();

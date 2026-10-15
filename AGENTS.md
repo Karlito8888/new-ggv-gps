@@ -77,7 +77,13 @@ them after any re-run.
   request shows Google's "Location Accuracy" dialog. A debug dev-client build holds a screen
   wake lock by itself, and `stay_on_while_plugged_in` defaults to on: judge keep-awake on a
   release build with `settings put global stay_on_while_plugged_in 0`.
-- `expo-location` is requested in foreground only (no background keys).
+- `expo-location` is requested in foreground only (no background keys): the plugin's default
+  "Always" and motion purpose strings are set to `false`, so the only iOS location key is
+  `NSLocationWhenInUseUsageDescription`. Approximate location (iOS "Precise: Off", Android
+  "Approximate") is refused with a Settings button: `useDeviceLocation` returns `"approximate"`.
+  `android.blockedPermissions` removes the prebuild template's `SYSTEM_ALERT_WINDOW` and storage
+  permissions. Test the approximate path on a device with
+  `pm revoke <pkg> android.permission.ACCESS_FINE_LOCATION` while coarse stays granted.
 - Sentry project `myggv-gps` (org `charles-bourgault`, region `de`); events are sent from
   release builds only.
 

@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import * as Location from "expo-location";
 import type { UserLocation } from "@ggv/shared";
 
-export type LocationStatus = "idle" | "requesting" | "granted" | "denied" | "blocked";
+export type LocationStatus =
+  | "idle"
+  | "requesting"
+  | "granted"
+  | "denied"
+  | "blocked"
+  | "approximate";
 
 /**
  * Foreground GPS, 1 Hz. `start` asks for the permission (system dialog) and, once granted,
@@ -26,6 +32,11 @@ export function useDeviceLocation() {
     const permission = await Location.requestForegroundPermissionsAsync();
     if (!permission.granted) {
       return permission.canAskAgain === false ? "blocked" : "denied";
+    }
+    // Approximate location (iOS "Precise: Off", Android "Approximate") is kilometres wide:
+    // useless for guiding someone to a lot, so it is refused until the user turns precision on.
+    if (permission.ios?.accuracy === "reduced" || permission.android?.accuracy === "coarse") {
+      return "approximate";
     }
     // Idempotent across retries and double taps.
     if (!watching.current) {

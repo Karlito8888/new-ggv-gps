@@ -25,6 +25,10 @@ export const COPY = {
       tl: "Kailangan ng MyGGV GPS ang iyong lokasyon para gabayan ka sa village.",
     },
     retry: { en: "Please try again", tl: "Subukan muli" },
+    precise: {
+      en: "Turn on precise location in Settings",
+      tl: "I-on ang precise location sa Settings",
+    },
     wait: { en: "Please wait, map is loading...", tl: "Naglo-load ang mapa..." },
     requesting: { en: "Requesting...", tl: "Humihiling..." },
     enable: { en: "Enable GPS", tl: "I-enable ang GPS" },
