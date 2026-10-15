@@ -17,7 +17,7 @@
  *
  * jsdom is declared per file so the four pure-function suites keep running in node.
  */
-import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi, type Mock } from "vite-plus/test";
 import { renderHook, cleanup, act } from "@testing-library/react";
 import { useRouting } from "../useRouting";
 import type { UserLocation, Destination } from "../types";

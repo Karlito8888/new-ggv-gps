@@ -12,9 +12,9 @@
   "scripts": {
     "gate": "bun run typecheck && bun run lint && bun run format:check && bun run test && bun run check:sprites",
     "typecheck": "bun run --filter @ggv/shared typecheck && bun run --filter @ggv/web typecheck && bun run --filter @ggv/mobile typecheck",
-    "lint": "eslint . && bun run --filter @ggv/mobile lint",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "vp lint . && bun run --filter @ggv/mobile lint",
+    "format": "vp fmt .",
+    "format:check": "vp fmt --check .",
     "test": "bun run --filter @ggv/shared test && bun run --filter @ggv/web test",
     "check:sprites": "cmp apps/web/public/sprites/light.png apps/mobile/assets/map/sprites/light-1x.png && cmp apps/web/public/sprites/light@2x.png apps/mobile/assets/map/sprites/light-2x.png",
     "dev": "bun run --filter @ggv/web dev",
@@ -23,12 +23,14 @@
     "snapshot:lots": "bun run --filter @ggv/mobile snapshot:lots"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
-    "eslint": "^9.39.5",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.4.26",
-    "globals": "^16.5.0",
-    "prettier": "^3.9.6",
-    "typescript-eslint": "^8.65.0"
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "catalog": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
+    "vite-plus": "1.1.0"
+  },
+  "overrides": {
+    "vite": "catalog:"
   }
 }
