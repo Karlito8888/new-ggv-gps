@@ -11,7 +11,7 @@ l'entrée du village) et une app native Expo / React Native (`apps/mobile`, cart
 | `apps/web`        | The PWA. Everything below that says `src/…` without a prefix lives in `apps/web/src/`.  |
 | `apps/mobile`     | Expo SDK 57 app, `com.myggv.gps` (+ `.dev`, `.preview` variants via `APP_VARIANT`).     |
 | `packages/shared` | `@ggv/shared`: platform-neutral navigation core, runs on web and React Native (Hermes). |
-| repo root         | `scripts/`, CI, `eslint.config.js`, `.prettierrc.json`, `bunfig.toml`, this file.       |
+| repo root         | `scripts/`, CI, `vite.config.ts` (Vite+ lint and format), `bunfig.toml`, this file.     |
 
 `@ggv/shared` holds what both renderers share: `useNavigationFlow` (the 4-state machine),
 `useRouting` (OSRM cascade; the abort/generation contract below and its test live here),
@@ -22,12 +22,23 @@ basemap layers JSON (`@ggv/shared/basemap-layers`). Moved files, old to new: `li
 `hooks/useCourseUpCamera.ts`, `types/*`, `data/blocks.ts` → `packages/shared/src/`;
 `lib/routing.ts` is split: pure half in shared `routing.ts`, map drawing in
 `apps/web/src/lib/routeLayers.ts`. Shared code must not touch `window`/`document`/`navigator`/
-`location` (ESLint enforces it) and must not read `import.meta.env`.
+`location` (Oxlint `no-restricted-globals`, root `vite.config.ts`) and must not read `import.meta.env`.
 
-Root scripts fan out: `bun run gate` = typecheck + lint + prettier + tests of shared, web and
+Root scripts fan out: `bun run gate` = typecheck + lint + format check + tests of shared, web and
 mobile. `apps/web` deploys by FTP on pushes to `main` that touch `apps/web`, `packages/shared`,
 `package.json`, `bun.lock` or `bunfig.toml`. `bunfig.toml` pins `minimumReleaseAge` (Semgrep
 gate): a fresh release that cannot wait goes in `minimumReleaseAgeExcludes`, for that package only.
+
+Web and shared tooling is **Vite+** (`vite-plus`, `vp` CLI): Vite, Rolldown, Vitest, Oxlint and
+Oxfmt at the versions `vite-plus` pins exactly. The root `vite.config.ts` holds the `lint` and
+`fmt` blocks for the whole repo; `apps/web/vite.config.ts` keeps the build and test config. `vite`
+resolves to `@voidzero-dev/vite-plus-core` through the root `catalog` and `overrides`: bump
+`vite-plus` and that alias together. A `vite-plus` release pins tool versions published days
+before it, so it clears `minimumReleaseAge` only when its whole tree does: check every package,
+not only `vite-plus`. Lint is type-aware (`typeAware` + `typeCheck`), which also type-checks files
+`tsc` skips, such as `vite.config.ts`. The mobile app stays on ESLint through `expo lint` and its
+own `apps/mobile/eslint.config.js`: `vp migrate` deletes that config and its dependencies, restore
+them after any re-run.
 
 ## Mobile app (`apps/mobile`)
 
@@ -79,7 +90,7 @@ gate): a fresh release that cannot wait goes in `minimumReleaseAgeExcludes`, for
 
 ## Stack — web (`apps/web`)
 
-Vite `^8.1.5` · React `^19.2.7` · Convex `^1.42.3` (client seul, `convex/react`) · `maplibre-gl`
+Vite+ `1.1.0` (Vite `8.3.3`, Vitest `5.0.3`) · React `^19.2.7` · Convex `^1.42.3` (client seul, `convex/react`) · `maplibre-gl`
 `^5.24.0` (bibliothèque **web** de MapLibre, pas le binding React Native) · TypeScript `^5.9.3` ·
 `vite-plugin-pwa` (Workbox) pour le mode hors-ligne.
 
@@ -232,9 +243,9 @@ Restent sans test : `App.tsx`, `useMapSetup.ts` et `useCourseUpCamera.ts`. Un ga
 prouve donc toujours pas que la navigation ou la requête Convex fonctionnent — contrôle réel sur
 appareil, § suivant.
 
-`.prettierignore` doit garder `archon-out/` et `flow-out/` : ces dossiers portent leur propre
-`.gitignore` (`*`) que prettier ne lit jamais — sans ces lignes le gate rougit sur les rapports
-d'audit.
+Report folders (`archon-out/`, `flow-out/`, `revue-out/`, `frise-out/`) carry their own `*`
+`.gitignore`, and Oxfmt skips git-ignored files: they need no entry in `fmt.ignorePatterns`
+(measured: an unformatted `.ts` dropped in `frise-out/` is not checked).
 
 **Vérifier dans un navigateur exige de purger le service worker d'abord.** `bun run preview`
 sert `dist/`, mais la PWA précache ses assets : un onglet qui a déjà visité l'app rejoue

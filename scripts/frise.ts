@@ -17,9 +17,9 @@
  * bun scripts/frise.ts --in=/tmp/trace.json     # → frise-out/frise.html
  * ```
  *
- * La page va dans `frise-out/`, qui porte son propre `.gitignore` à `*` — même convention que
- * `flow-out/` et `archon-out/`. Le dossier est aussi dans `.prettierignore` : un `.html` généré
- * échoue `prettier --check`, donc sans cette ligne le gate rougirait au repos.
+ * The page goes to `frise-out/`, which carries its own `*` `.gitignore`, same convention as
+ * `flow-out/` and `archon-out/`. Oxfmt skips git-ignored files, so `vp fmt --check` never sees
+ * the generated `.html`.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";

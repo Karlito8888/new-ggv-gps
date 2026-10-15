@@ -1,5 +1,5 @@
-/// <reference types="vitest" />
-import { defineConfig } from "vite";
+/// <reference types="vite-plus/test" />
+import { defineConfig, lazyPlugins } from "vite-plus";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import { readFileSync } from "node:fs";
@@ -33,7 +33,7 @@ export default defineConfig({
       },
     },
   },
-  plugins: [
+  plugins: lazyPlugins(() => [
     react(),
     VitePWA({
       strategies: "injectManifest",
@@ -58,7 +58,7 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },
     }),
-  ],
+  ]),
   preview: {
     port: 5173,
     strictPort: true,

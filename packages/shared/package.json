@@ -9,7 +9,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vp test run"
   },
   "peerDependencies": {
     "convex": "^1.42.3",
@@ -23,6 +23,6 @@
     "jsdom": "^30.0.1",
     "react-dom": "19.2.3",
     "typescript": "~6.0.3",
-    "vitest": "^4.1.10"
+    "vite-plus": "catalog:"
   }
 }

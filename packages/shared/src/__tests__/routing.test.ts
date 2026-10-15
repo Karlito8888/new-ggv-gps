@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { parseManeuver } from "../routing";
 
 function maneuver(type: string, modifier?: string, location: [number, number] = [0, 0]) {

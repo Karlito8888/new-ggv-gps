@@ -220,7 +220,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
       }
       loadedLibs?.removeProtocol("pmtiles");
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**

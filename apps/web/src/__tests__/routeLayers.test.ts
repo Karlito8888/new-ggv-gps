@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vite-plus/test";
 import { setRouteData } from "../lib/routeLayers";
 import type { Map as MaplibreMap } from "maplibre-gl";
 
