@@ -1,4 +1,4 @@
-name: Deploy to Hostinger
+name: Deploy to Cloudflare
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
       - "bunfig.toml"
       - ".github/workflows/deploy.yml"
 
-# One FTP upload at a time: two close pushes queued, never interleaved on the same server-dir.
+# One deploy at a time, in push order: the last push is the version left live.
 concurrency:
   group: deploy
   cancel-in-progress: false
@@ -39,28 +39,14 @@ jobs:
 
       - run: bun run build
 
-      - name: Deploy to Hostinger via FTP
-        id: ftp
-        continue-on-error: true
-        uses: SamKirkland/FTP-Deploy-Action@fe9c9aad1198372d80a77c8dace63cbe48b69eac # v4.3.6
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./apps/web/dist/
-          server-dir: ./domains/charlesbourgault.com/public_html/myggvgps/
-
-      # Hostinger's control socket times out intermittently; the action keeps its sync state on
-      # the server, so a retry uploads only what the first attempt missed.
-      - name: Retry FTP deploy once
-        if: steps.ftp.outcome == 'failure'
-        uses: SamKirkland/FTP-Deploy-Action@fe9c9aad1198372d80a77c8dace63cbe48b69eac # v4.3.6
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./apps/web/dist/
-          server-dir: ./domains/charlesbourgault.com/public_html/myggvgps/
+      # Workers static assets plus the `/tiles/*` byte-range Worker (apps/web/wrangler.jsonc).
+      # The token is `charlesbourgault-setup-deploy`, scoped to this account and zone.
+      - name: Deploy to Cloudflare Workers
+        working-directory: apps/web
+        run: bunx wrangler@4.158.0 deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
 
       # A green upload is not proof: production must serve the bundle this run built.
       - name: Verify the served bundle

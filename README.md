@@ -68,8 +68,8 @@ That is the only variable. Routing uses public OSRM hosts and needs no key.
 
 ## Deployment
 
-Pushing to `main` builds the app and uploads `dist/` to Hostinger over FTP
-(`.github/workflows/deploy.yml`).
+Pushing to `main` builds the app and deploys `dist/` to Cloudflare Workers with Wrangler
+(`.github/workflows/deploy.yml`, `apps/web/wrangler.jsonc`).
 
 ```bash
 bun run build    # → dist/

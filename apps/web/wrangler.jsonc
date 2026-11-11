@@ -1,0 +1,14 @@
+{
+  "name": "myggvgps",
+  "main": "./src/rangeWorker.ts",
+  "compatibility_date": "2026-11-11",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/tiles/*"],
+  },
+  "routes": [{ "pattern": "myggvgps.charlesbourgault.com", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false,
+}

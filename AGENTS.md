@@ -26,8 +26,8 @@ basemap layers JSON (`@ggv/shared/basemap-layers`). Moved files, old to new: `li
 `location` (Oxlint `no-restricted-globals`, root `vite.config.ts`) and must not read `import.meta.env`.
 
 Root scripts fan out: `bun run gate` = typecheck + lint + format check + tests of shared, web and
-mobile. `apps/web` deploys by FTP on pushes to `main` that touch `apps/web`, `packages/shared`,
-`package.json`, `bun.lock` or `bunfig.toml`.
+mobile. `apps/web` deploys to Cloudflare Workers on pushes to `main` that touch `apps/web`,
+`packages/shared`, `package.json`, `bun.lock` or `bunfig.toml`.
 
 Web and shared tooling is **Vite+** (`vite-plus`, `vp` CLI): Vite, Rolldown, Vitest, Oxlint and
 Oxfmt at the versions `vite-plus` pins exactly. The root `vite.config.ts` holds the `lint` and
@@ -242,8 +242,8 @@ bun run gate
 ```
 
 = typecheck (shared, web, mobile) + lint + `format:check` + tests vitest (shared, web ; mobile n'a
-pas de tests). Vert, ~20 s, **56 tests** : 53 dans `packages/shared/src/__tests__/` (6 fichiers) et 3 dans
-`apps/web/src/__tests__/routeLayers.test.ts`. Cinq fichiers shared couvrent les fonctions pures
+pas de tests). Vert, ~20 s, **60 tests** : 53 dans `packages/shared/src/__tests__/` (6 fichiers) et 7 dans
+`apps/web/src/__tests__/` (`routeLayers.test.ts`, `rangeWorker.test.ts`). Cinq fichiers shared couvrent les fonctions pures
 (`arrival`, `course`, `geo`, `routing`, `version`) ; le sixième, `useRouting.test.ts`, couvre
 **l'effet** — c'est le seul test du dépôt qui monte un composant React.
 
@@ -366,13 +366,38 @@ Un pilote GPS injecté pour un test précédent continue de répondre à la plac
 observé ici, avec des « fixes réels » qui étaient synthétiques. Pour repasser en GPS réel :
 fermer la cible (`/json/close/<id>`), relancer l'app, se rattacher.
 
-## Déploiement
+## Deployment
 
-⚠️ **Un push vert ne garantit PAS que la prod a bougé.** Le déploiement FTP échoue par
-intermittence — `Error: Timeout (control socket)`, vu les 2026-08-22 et 2026-08-23 — surtout après
-plusieurs déploiements rapprochés. `Code Quality` passe, `Deploy` non, et la prod reste
-**silencieusement** une version en retard. Remède qui marche : `gh run rerun <id> --failed`.
-Toujours **vérifier le bundle servi**, jamais le déduire :
+`deploy.yml` (push to `main`): gate, `bun run build`, `bunx wrangler@4.158.0 deploy` from
+`apps/web`, then a step that polls production until it serves the `index-*.js` this run built.
+The host is the Cloudflare Worker `myggvgps` (account `cb.dweb49@gmail.com`, id
+`18c8ae8a5d2ecced60a363bba044c702`) on the custom domain `myggvgps.charlesbourgault.com`, in the
+`charlesbourgault.com` zone. `apps/web/wrangler.jsonc` serves `dist/` as static assets with
+`not_found_handling: "single-page-application"`; `apps/web/public/_headers` carries the security
+headers and the `immutable` cache of `/assets/*` and `/tiles/*`. The HTTP to HTTPS redirect and
+HSTS (6 months, no subdomains) are zone settings, not files of this repo.
+
+⚠️ **`/tiles/*` goes through a Worker script, nothing else does.** Workers static assets answer a
+`Range` request with `200` and the whole file (developers.cloudflare.com, Static Assets § Billing
+and Limitations), and pmtiles throws on that ("HTTP Byte Serving", `pmtiles/src/index.ts`).
+`run_worker_first: ["/tiles/*"]` sends those requests to `apps/web/src/rangeWorker.ts`, which
+slices the asset into a `206`. Measured 2026-11-12 with the service worker bypassed: five tile
+reads, all `206`, map drawn; `/sprites/light.json` with a `Range` header answers `200` and the
+whole file. Without the Worker, every visit the service worker does not yet control loses the
+map. Static asset requests are free; only tile reads invoke the Worker and count against the
+plan's daily request quota.
+
+CI credentials: GitHub secret `CLOUDFLARE_API_TOKEN` (token `charlesbourgault-setup-deploy`, the
+one charlesbourgault-website deploys with, `CHARLESBOURGAULT_CLOUDFLARE_API_TOKEN` in
+`~/.config/omp-secrets.env`) and variable `CLOUDFLARE_ACCOUNT_ID`. ⚠️ On this workstation the
+ambient `CLOUDFLARE_API_TOKEN` is another token (`myggv-zone-dns`): a local deploy sets both:
+
+```bash
+cd apps/web && CLOUDFLARE_API_TOKEN="$CHARLESBOURGAULT_CLOUDFLARE_API_TOKEN" \
+  CLOUDFLARE_ACCOUNT_ID=18c8ae8a5d2ecced60a363bba044c702 bunx wrangler@4.158.0 deploy
+```
+
+Checking by hand that production serves the local build:
 
 ```bash
 LIVE=$(curl -s "https://myggvgps.charlesbourgault.com/?cb=$RANDOM" \
@@ -381,10 +406,8 @@ curl -s "https://myggvgps.charlesbourgault.com/$LIVE" -o /tmp/prod.js
 cmp /tmp/prod.js "apps/web/dist/${LIVE}"
 ```
 
-`deploy.yml` (push sur `main`) : `bun run build` → FTP vers Hostinger
-(`myggvgps.charlesbourgault.com`, LiteSpeed, `public/.htaccess` gère le SPA fallback et les
-en-têtes de sécurité). `quality.yml` fait tourner le gate plus un scan Semgrep
-(`p/owasp-top-ten`, `p/security-audit`, `p/typescript`, `p/react`) sur chaque push/PR vers `main`.
+`quality.yml` runs the gate plus a Semgrep scan (`p/owasp-top-ten`, `p/security-audit`,
+`p/typescript`, `p/react`) on every push and PR to `main`.
 
 ## Mise à jour de la PWA — `autoUpdate`, et le `skipWaiting` obligatoire
 
