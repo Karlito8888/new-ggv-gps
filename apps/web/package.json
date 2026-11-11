@@ -19,14 +19,14 @@
     "convex": "^1.42.3",
     "maplibre-gl": "^5.24.0",
     "pmtiles": "^4.4.1",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "@ggv/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.0.3",
     "typescript": "~6.0.3",
     "vite": "catalog:",

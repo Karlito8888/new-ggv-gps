@@ -9,7 +9,7 @@ l'entrée du village) et une app native Expo / React Native (`apps/mobile`, cart
 | Path              | What                                                                                    |
 | ----------------- | --------------------------------------------------------------------------------------- |
 | `apps/web`        | The PWA. Everything below that says `src/…` without a prefix lives in `apps/web/src/`.  |
-| `apps/mobile`     | Expo SDK 57 app, `com.myggv.gps` (+ `.dev`, `.preview` variants via `APP_VARIANT`).     |
+| `apps/mobile`     | Expo SDK 58 app, `com.myggv.gps` (+ `.dev`, `.preview` variants via `APP_VARIANT`).     |
 | `packages/shared` | `@ggv/shared`: platform-neutral navigation core, runs on web and React Native (Hermes). |
 | `design`          | `icon.svg`, the app icon master; `render-icons.sh` writes all mobile and web icons.     |
 | repo root         | `scripts/`, CI, `vite.config.ts` (Vite+ lint and format), `bunfig.toml`, this file.     |
@@ -29,6 +29,10 @@ Root scripts fan out: `bun run gate` = typecheck + lint + format check + tests o
 mobile. `apps/web` deploys by FTP on pushes to `main` that touch `apps/web`, `packages/shared`,
 `package.json`, `bun.lock` or `bunfig.toml`. `bunfig.toml` pins `minimumReleaseAge` (Semgrep
 gate): a fresh release that cannot wait goes in `minimumReleaseAgeExcludes`, for that package only.
+`expo install --fix` aligns on the newest SDK patch published online, which the age rule refuses
+for its first 7 days (`blocked by minimum-release-age`): `EXPO_OFFLINE=1 bunx expo install --fix`
+aligns on the installed `expo`'s own `expo/bundledNativeModules.json` instead, and `expo-doctor`
+keeps listing the newer patches as mismatches until they are old enough to install.
 
 Web and shared tooling is **Vite+** (`vite-plus`, `vp` CLI): Vite, Rolldown, Vitest, Oxlint and
 Oxfmt at the versions `vite-plus` pins exactly. The root `vite.config.ts` holds the `lint` and
@@ -46,15 +50,18 @@ them after any re-run.
 - **Map assets ship in the app** and are copied once to `Paths.document/map-<version>/` by
   `src/map/mapAssets.ts` (MapLibre Native reads `file://`, not bundle assets; `asset://` is broken
   for `.pmtiles` on Android, maplibre-native#4360). Tileset, sprite JSONs: relative requires into
-  `apps/web/public`. Sprite PNGs and glyph PBFs are copies under `apps/mobile/assets/map/`
-  (Metro reads `light@2x.png` as a density variant of `light.png`). Bump `MAP_ASSETS_VERSION` when
-  they change; rename the tileset `require` together with `TILESET_FILE`.
+  `apps/web/public`. Sprite PNGs and glyph PBFs are copies under `apps/mobile/assets/map/`; the
+  sprite PNGs are named `.sprite` (`check:sprites` compares them with the web files), because Metro
+  treats a `.png` as an image: an Android release build packs it as a drawable, `Asset.localUri` is
+  then a resource name that `File.copy` rejects (`URI is not absolute`), and `light@2x.png` would
+  read as a density variant. Bump `MAP_ASSETS_VERSION` when they change; rename the tileset
+  `require` together with `TILESET_FILE`.
 - **Village snapshot** (`assets/data/village-snapshot.json`): blocks and lots with coordinates,
   so Welcome works offline. Regenerate with `bun run snapshot:lots` (reads the same two public
   Convex queries as web). OSRM stays online; offline falls back to the direct line.
 - **Block and lot selectors** (`src/select/`) are the web `<select>` of `WelcomeOverlay`: the
   closed field is React Native with the `.welcome-select` values (`SelectField.tsx`), and the
-  menu it opens is native through `@expo/ui` (≥ 57.0.23), a Compose `DropdownMenu` on Android
+  menu it opens is native through `@expo/ui`, a Compose `DropdownMenu` on Android
   (`Select.android.tsx`) and a SwiftUI `Menu` on iOS (`Select.ios.tsx`), both taking the field as
   trigger via `RNHostView matchContents={{ vertical: true }}` (width from the host, height from
   the field). `Select.d.ts` gives `tsc` the platform-resolved module. Placeholder and `enabled`
@@ -63,8 +70,7 @@ them after any re-run.
   menu; Material sizes the menu on its content's intrinsic width (a `fillMaxWidth` there is
   zero), so the items `Column` gets a fixed `width` measured on the outer `View`; Material drops
   the menu below the field only if it fits above the navigation bar, else centres it on the
-  field, which is why `MENU_HEIGHT` is 200 dp. `@expo/ui` 57.0.22 crashes on any numeric
-  `width()` modifier (`FieldCastException`, expo/expo#51322), hence the `bunfig.toml` exclusion.
+  field, which is why `MENU_HEIGHT` is 200 dp.
   A Compose `Host` follows the device colour scheme unless `colorScheme="light"`. iOS not yet seen.
 - **Metro in this monorepo** serves bundles under `/apps/mobile/…`: fetch the launch URL from
   the manifest (`curl -H "expo-platform: android" localhost:<port>/ | jq .launchAsset.url`), not
@@ -105,7 +111,7 @@ them after any re-run.
 
 ## Stack — web (`apps/web`)
 
-Vite+ `1.1.0` (Vite `8.3.3`, Vitest `5.0.3`) · React `19.2.3` (exact pin) · Convex `^1.42.3` (client seul, `convex/react`) · `maplibre-gl`
+Vite+ `1.1.0` (Vite `8.3.3`, Vitest `5.0.3`) · React `19.3.0` (exact pin) · Convex `^1.42.3` (client seul, `convex/react`) · `maplibre-gl`
 `^5.24.0` (bibliothèque **web** de MapLibre, pas le binding React Native) · TypeScript `~6.0.3` ·
 `vite-plugin-pwa` (Workbox) pour le mode hors-ligne.
 

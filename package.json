@@ -16,7 +16,7 @@
     "format": "vp fmt .",
     "format:check": "vp fmt --check .",
     "test": "bun run --filter @ggv/shared test && bun run --filter @ggv/web test",
-    "check:sprites": "cmp apps/web/public/sprites/light.png apps/mobile/assets/map/sprites/light-1x.png && cmp apps/web/public/sprites/light@2x.png apps/mobile/assets/map/sprites/light-2x.png",
+    "check:sprites": "cmp apps/web/public/sprites/light.png apps/mobile/assets/map/sprites/light-1x.sprite && cmp apps/web/public/sprites/light@2x.png apps/mobile/assets/map/sprites/light-2x.sprite",
     "dev": "bun run --filter @ggv/web dev",
     "build": "bun run --filter @ggv/web build",
     "preview": "bun run --filter @ggv/web preview",

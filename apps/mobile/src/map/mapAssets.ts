@@ -15,7 +15,8 @@ import { TILESET_FILE } from "@ggv/shared";
 
 /** Bump to re-copy every asset on the next launch (the old `map-*` directory is deleted). */
 // 2: the copy became atomic (staging + rename); a 1 left by an interrupted copy may be truncated.
-const MAP_ASSETS_VERSION = 2;
+// 3: a 2 written by an Android release build lacks both sprite PNGs (see the sprite entries).
+const MAP_ASSETS_VERSION = 3;
 
 type Entry = { path: string; asset: number } | { path: string; json: object };
 
@@ -26,11 +27,12 @@ const ENTRIES: Entry[] = [
     path: `tiles/${TILESET_FILE}`,
     asset: require("../../../web/public/tiles/ggv-20261013.pmtiles"),
   },
-  // Byte copies of apps/web/public/sprites/light{,@2x}.png (keep in step with them): Metro reads
-  // the `@2x` suffix as a density variant of `light.png`, so `light@2x.png` cannot be required
-  // by name. The JSON sprites below carry no such suffix problem (they are modules, not assets).
-  { path: "sprites/light.png", asset: require("../../assets/map/sprites/light-1x.png") },
-  { path: "sprites/light@2x.png", asset: require("../../assets/map/sprites/light-2x.png") },
+  // Byte copies of apps/web/public/sprites/light{,@2x}.png (keep in step with them), named
+  // `.sprite` so Metro ships them as plain assets: a `.png` is an image, which an Android release
+  // build packs as a drawable whose `localUri` is a resource name, not a file `copy` can read (and
+  // Metro would read `@2x` as a density variant). The JSON sprites below are modules, not assets.
+  { path: "sprites/light.png", asset: require("../../assets/map/sprites/light-1x.sprite") },
+  { path: "sprites/light@2x.png", asset: require("../../assets/map/sprites/light-2x.sprite") },
   { path: "sprites/light.json", json: require("../../../web/public/sprites/light.json") },
   { path: "sprites/light@2x.json", json: require("../../../web/public/sprites/light@2x.json") },
   ...glyphs("noto-sans-regular", [
@@ -82,11 +84,11 @@ export async function ensureMapAssets(): Promise<MapAssetUrls> {
       const target = new File(staging, entry.path);
       target.parentDirectory.create({ intermediates: true, idempotent: true });
       if ("json" in entry) {
-        target.write(JSON.stringify(entry.json));
+        await target.write(JSON.stringify(entry.json));
       } else {
         const [asset] = await Asset.loadAsync(entry.asset);
         if (!asset.localUri) throw new Error(`map asset ${entry.path} has no local file`);
-        new File(asset.localUri).copy(target);
+        await new File(asset.localUri).copy(target);
       }
     }
     staging.rename(rootName);
