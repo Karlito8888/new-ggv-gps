@@ -327,11 +327,13 @@ Le poste pilote le téléphone via `adb` + CDP, et l'outil navigateur s'y attach
 adb forward tcp:9222 localabstract:chrome_devtools_remote   # onglets Chrome ET PWA installée
 curl -s http://localhost:9222/json/list | jq -r '.[]|[.type,.id,.url]|@tsv'
 adb reverse tcp:5173 tcp:5173                               # servir un build local au téléphone
-adb shell monkey -p org.chromium.webapk.aef3138b3cf6909f6_v2 -c android.intent.category.LAUNCHER 1
+adb shell monkey -p org.chromium.webapk.ac6c45a09c9c03eb1_v2 -c android.intent.category.LAUNCHER 1
 ```
 
-La PWA installée est un WebAPK (`org.chromium.webapk.aef3138b3cf6909f6_v2`) : elle apparaît dans
-la même liste de cibles, `display-mode: standalone` le confirme depuis la page.
+La PWA installée est un WebAPK (`org.chromium.webapk.ac6c45a09c9c03eb1_v2` sur l'A16 ; l'identifiant
+change si la PWA est réinstallée, `adb shell pm list packages | grep webapk` puis le libellé
+`MyGGV-GPS` dans `aapt2 dump badging` le retrouvent) : elle apparaît dans la même liste de cibles,
+`display-mode: standalone` le confirme depuis la page.
 
 Quatre choses à injecter, sinon la mesure ne reproduit rien :
 
