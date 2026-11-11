@@ -104,8 +104,8 @@ dependencies, restore them after any re-run.
 
 ## Stack — web (`apps/web`)
 
-Vite+ `1.1.0` (Vite `8.3.3`, Vitest `5.0.3`) · React `19.3.0` (exact pin) · Convex `^1.42.3` (client seul, `convex/react`) · `maplibre-gl`
-`^5.24.0` (bibliothèque **web** de MapLibre, pas le binding React Native) · TypeScript `~6.0.3` ·
+Vite+ `1.6.0` (Vite `8.3.7`, Vitest `5.1.0`) · React `19.3.0` (exact pin) · Convex `^1.49.0` (client seul, `convex/react`) · `maplibre-gl`
+`^6.17.0` (bibliothèque **web** de MapLibre, pas le binding React Native) · TypeScript `~6.0.3` ·
 `vite-plugin-pwa` (Workbox) pour le mode hors-ligne.
 
 `src/vite-env.d.ts` ne fait que **référencer** les types livrés par les paquets — `vite/client`
@@ -145,7 +145,7 @@ donc `tsc` ne peut pas attraper une signature qui change côté serveur) :
 
 **Si `myggv/convex/locations.ts` ajoute une garde d'authentification sur l'une de ces deux
 fonctions**, cette app casse — mais **bruyamment**, pas en silence : `requireIdentity` lève un
-`ConvexError`, et `useQuery` **relance l'erreur depuis son call site** (`convex@1.42.3`,
+`ConvexError`, et `useQuery` **relance l'erreur depuis son call site** (`convex@1.49.0`,
 `dist/esm/react/client.js:464-465` : `if (result instanceof Error) throw result;` — c'est aussi
 ce que documente `docs.convex.dev/functions/error-handling.md`). L'`ErrorBoundary` de
 `src/main.tsx` l'attrape donc et affiche « Something went wrong ». Convex ne réessaie jamais
@@ -221,14 +221,14 @@ affame au-delà de 2 Hz, et le seuil de 30 m plafonne déjà la cadence des requ
 (`addRouteLayers`, `addArrivalZoneLayer`), avec des données vides ; ensuite tout passe par
 `setData`. C'est structurel, pas cosmétique : `addSource`/`addLayer` passent par `_checkLoaded()`
 et lèvent « Style is not done loading. », `setData` **n'a aucune vérification d'état**. Deux
-pièges vérifiés dans les sources installées de `maplibre-gl` 5.24 :
+pièges vérifiés dans les sources installées de `maplibre-gl` 6.17 :
 
 - `_checkLoaded()` teste `Style._loaded`, qui ne repasse **jamais** à faux — contrairement à
   `map.isStyleLoaded()`, qui lui inclut les tuiles. Un `addSource` ne peut donc échouer
   qu'**avant** le parse du style, ce que la garde `isMapReady` exclut déjà : diagnostiquer une
   ligne manquante par ce throw était une erreur.
 - réessayer sur `map.once('idle')` **ne peut pas fonctionner en navigation** : `idle` exige
-  « no camera transitions in progress » (JSDoc des typings), et `useCourseUpCamera` lance un
+  « No camera transitions are in progress » (JSDoc des typings), et `useCourseUpCamera` lance un
   `easeTo` de 1 s à chaque fix GPS.
 
 Corollaire : ne jamais remettre un `if (!map.isStyleLoaded()) return;` devant un dessin. Il

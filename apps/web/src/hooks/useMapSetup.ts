@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, type RefObject } from "react";
+import type * as MaplibreGL from "maplibre-gl";
 import type {
   Map as MaplibreMap,
   GeoJSONSource,
   Marker,
-  MapStyleImageMissingEvent,
   CircleLayerSpecification,
   ErrorEvent as MapErrorEvent,
 } from "maplibre-gl";
+// maplibre-gl 6 needs its worker URL set under a bundler; `?worker&url` is the documented Vite form.
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import type { FeatureCollection } from "geojson";
 import {
   ARRIVAL_ZONE_PAINT,
@@ -34,27 +36,12 @@ interface UseMapSetupReturn {
   userMarkerRef: React.RefObject<Marker | null>;
 }
 
-interface MaplibreModule {
-  Map: typeof import("maplibre-gl").Map;
-  Marker: typeof import("maplibre-gl").Marker;
-  addProtocol: (protocol: string, handler: unknown) => void;
-  removeProtocol: (protocol: string) => void;
-}
-
 // Eagerly start downloading map libraries at module parse time
 // (overlaps with React render cycle instead of waiting for useEffect).
-//
-// maplibre-gl 5.24 ships CJS only — no `module` and no `exports` field in its package.json — so
-// the namespace shape depends on the bundler's interop: sometimes the module itself, sometimes
-// wrapped in `default`. Normalised once here so no call site has to know or repeat the cast.
 const mapLibsPromise = Promise.all([import("maplibre-gl"), import("pmtiles")]).then(
   ([maplibregl, pmtiles]) => {
-    // `in` narrows, so this read is checked rather than asserted.
-    const resolved = "default" in maplibregl ? maplibregl.default : maplibregl;
-    // Single named assertion: the namespace type cannot express "CJS module or its default",
-    // and both branches carry the same runtime surface.
-    const MapLibre = resolved as MaplibreModule;
-    return [MapLibre, pmtiles] as const;
+    maplibregl.setWorkerUrl(maplibreWorkerUrl);
+    return [maplibregl, pmtiles] as const;
   }
 );
 
@@ -96,22 +83,11 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
     if (!containerRef.current) return;
 
     let mapInstance: MaplibreMap | null = null;
-    let loadedLibs: MaplibreModule | null = null;
+    let loadedLibs: typeof MaplibreGL | null = null;
     let isCancelled = false;
 
-    // Named handler for proper cleanup
-    const onStyleImageMissing = (e: MapStyleImageMissingEvent) => {
-      if (mapInstance && !mapInstance.hasImage(e.id)) {
-        mapInstance.addImage(e.id, {
-          width: 1,
-          height: 1,
-          data: new Uint8Array(4),
-        });
-      }
-    };
-
     const initMap = async () => {
-      // Await pre-started map library downloads (initiated at module level, already interop-resolved)
+      // Await the map libraries whose download started at module parse time
       const [MapLibre, { Protocol }] = await mapLibsPromise;
 
       if (isCancelled) return;
@@ -156,8 +132,13 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
         ], // Village bounds + margin (limits tile loading)
       });
 
-      // Fix: Create transparent placeholder for missing sprite images
-      mapInstance.on("styleimagemissing", onStyleImageMissing);
+      // Transparent placeholder for icons the sprite lacks. maplibre-gl 6 only takes a missing
+      // image through this resolver; an `addImage` from `styleimagemissing` no longer resolves it.
+      mapInstance.setMissingStyleImageResolver((id) => {
+        if (!mapInstance!.hasImage(id)) {
+          mapInstance!.addImage(id, { width: 1, height: 1, data: new Uint8Array(4) });
+        }
+      });
 
       // No message filtering here. This used to swallow every error whose text contained
       // "Expected value to be of type" — the style-spec assertion failure — on the assumption
@@ -214,10 +195,7 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
     return () => {
       isCancelled = true;
       stopGeolocate();
-      if (mapInstance) {
-        mapInstance.off("styleimagemissing", onStyleImageMissing);
-        mapInstance.remove();
-      }
+      mapInstance?.remove();
       loadedLibs?.removeProtocol("pmtiles");
     };
     // oxlint-disable-next-line react-hooks/exhaustive-deps
@@ -311,7 +289,7 @@ export function updateDestinationMarker(
   }
 
   const zone = map.getSource(ARRIVAL_ZONE_SOURCE) as GeoJSONSource | undefined;
-  zone?.setData(
+  void zone?.setData(
     destination
       ? {
           type: "FeatureCollection",

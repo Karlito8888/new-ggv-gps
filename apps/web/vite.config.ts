@@ -12,7 +12,7 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
   build: {
-    chunkSizeWarningLimit: 1100, // MapLibre chunk is inherently ~1MB
+    chunkSizeWarningLimit: 1150, // MapLibre chunk is inherently ~1.1MB
     target: "esnext", // Optimize for modern smartphones
     modulePreload: {
       polyfill: false, // Modern browsers support modulepreload natively
@@ -27,7 +27,7 @@ export default defineConfig({
             { name: "vendor", test: /node_modules\/react(-dom)?\// },
             // MapLibre + PMTiles JS - lazy loaded together. JS only: the CSS imported
             // statically by useMapSetup must stay out, or the entry imports this chunk eagerly.
-            { name: "maps", test: /node_modules\/(maplibre-gl|pmtiles)\/.*\.js$/ },
+            { name: "maps", test: /node_modules\/(maplibre-gl|pmtiles)\/.*\.m?js$/ },
           ],
         },
       },

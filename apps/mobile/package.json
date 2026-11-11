@@ -16,7 +16,7 @@
     "@ggv/shared": "workspace:*",
     "@maplibre/maplibre-react-native": "11.5.1",
     "@sentry/react-native": "~8.28.0",
-    "convex": "1.42.3",
+    "convex": "1.49.0",
     "expo": "~58.0.24",
     "expo-asset": "~58.0.21",
     "expo-audio": "~58.0.12",

@@ -51,7 +51,7 @@ function createRouteArrowImage(): ImageData {
  * instructions appeared without a blue line.
  *
  * Retrying such a failure on the map's `idle` event cannot work while navigating: `idle`
- * requires "no camera transitions in progress" (maplibre-gl 5.24 typings), and the course-up
+ * requires "No camera transitions are in progress" (maplibre-gl 6 typings), and the course-up
  * camera issues a 1 s `easeTo` on every GPS fix. Removing the failure beats retrying it.
  */
 export function addRouteLayers(map: MaplibreMap): void {
@@ -77,8 +77,8 @@ export function addRouteLayers(map: MaplibreMap): void {
     paint: { ...ROUTE_LINE_PAINT },
   });
 
-  // Before the layer that references it: a missing icon fires `styleimagemissing`, whose
-  // handler installs a 1×1 transparent placeholder that would then win forever.
+  // Before the layer that references it: a missing icon goes to the missing-image resolver,
+  // which installs a 1×1 transparent placeholder that would then win forever.
   if (!map.hasImage("route-arrow")) {
     map.addImage("route-arrow", createRouteArrowImage(), { sdf: false });
   }
@@ -95,5 +95,6 @@ export function addRouteLayers(map: MaplibreMap): void {
 /** Show a route, or erase it with `null`. No-op before the style has loaded its layers. */
 export function setRouteData(map: MaplibreMap, geometry: RouteGeometry | null): void {
   const source = map.getSource(ROUTE_SOURCE) as GeoJSONSource | undefined;
-  source?.setData(geometry ?? EMPTY_ROUTE);
+  // maplibre-gl 6 returns a promise; nothing waits on the redraw.
+  void source?.setData(geometry ?? EMPTY_ROUTE);
 }
