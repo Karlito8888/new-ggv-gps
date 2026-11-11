@@ -49,6 +49,8 @@ export default defineConfig({
       injectManifest: {
         globPatterns: [
           "**/*.{js,css,html}",
+          // Imported assets (logo, arrival bell): a custom globPatterns must list every type.
+          "assets/**/*.{png,mp3}",
           "sprites/**/*.{json,png}",
           "icons/**/*.{png,webp}",
           "screenshots/**/*.webp",
