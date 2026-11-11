@@ -242,13 +242,13 @@ bun run gate
 ```
 
 = typecheck (shared, web, mobile) + lint + `format:check` + tests vitest (shared, web ; mobile n'a
-pas de tests). Vert, ~20 s, **51 tests** : 48 dans `packages/shared/src/__tests__/` (5 fichiers) et 3 dans
-`apps/web/src/__tests__/routeLayers.test.ts`. Quatre fichiers shared couvrent les fonctions pures
-(`arrival`, `course`, `geo`, `routing`) ; le cinquième, `useRouting.test.ts`, couvre
+pas de tests). Vert, ~20 s, **56 tests** : 53 dans `packages/shared/src/__tests__/` (6 fichiers) et 3 dans
+`apps/web/src/__tests__/routeLayers.test.ts`. Cinq fichiers shared couvrent les fonctions pures
+(`arrival`, `course`, `geo`, `routing`, `version`) ; le sixième, `useRouting.test.ts`, couvre
 **l'effet** — c'est le seul test du dépôt qui monte un composant React.
 
 Il tourne en **jsdom déclaré par fichier** (docblock `@vitest-environment jsdom`, documenté par
-vitest) : la config globale reste en `node`, donc les quatre suites pures ne paient pas le
+vitest) : la config globale reste en `node`, donc les cinq suites pures ne paient pas le
 démarrage du DOM. `@testing-library/react` + `jsdom` sont là pour ce seul fichier, et c'est
 assumé : la course à l'`abort` est partie en production **trois fois** sans qu'un test puisse la
 voir.
