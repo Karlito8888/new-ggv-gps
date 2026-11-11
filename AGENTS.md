@@ -27,23 +27,16 @@ basemap layers JSON (`@ggv/shared/basemap-layers`). Moved files, old to new: `li
 
 Root scripts fan out: `bun run gate` = typecheck + lint + format check + tests of shared, web and
 mobile. `apps/web` deploys by FTP on pushes to `main` that touch `apps/web`, `packages/shared`,
-`package.json`, `bun.lock` or `bunfig.toml`. `bunfig.toml` pins `minimumReleaseAge` (Semgrep
-gate): a fresh release that cannot wait goes in `minimumReleaseAgeExcludes`, for that package only.
-`expo install --fix` aligns on the newest SDK patch published online, which the age rule refuses
-for its first 7 days (`blocked by minimum-release-age`): `EXPO_OFFLINE=1 bunx expo install --fix`
-aligns on the installed `expo`'s own `expo/bundledNativeModules.json` instead, and `expo-doctor`
-keeps listing the newer patches as mismatches until they are old enough to install.
+`package.json`, `bun.lock` or `bunfig.toml`.
 
 Web and shared tooling is **Vite+** (`vite-plus`, `vp` CLI): Vite, Rolldown, Vitest, Oxlint and
 Oxfmt at the versions `vite-plus` pins exactly. The root `vite.config.ts` holds the `lint` and
 `fmt` blocks for the whole repo; `apps/web/vite.config.ts` keeps the build and test config. `vite`
 resolves to `@voidzero-dev/vite-plus-core` through the root `catalog` and `overrides`: bump
-`vite-plus` and that alias together. A `vite-plus` release pins tool versions published days
-before it, so it clears `minimumReleaseAge` only when its whole tree does: check every package,
-not only `vite-plus`. Lint is type-aware (`typeAware` + `typeCheck`), which also type-checks files
-`tsc` skips, such as `vite.config.ts`. The mobile app stays on ESLint through `expo lint` and its
-own `apps/mobile/eslint.config.js`: `vp migrate` deletes that config and its dependencies, restore
-them after any re-run.
+`vite-plus` and that alias together. Lint is type-aware (`typeAware` + `typeCheck`), which also
+type-checks files `tsc` skips, such as `vite.config.ts`. The mobile app stays on ESLint through
+`expo lint` and its own `apps/mobile/eslint.config.js`: `vp migrate` deletes that config and its
+dependencies, restore them after any re-run.
 
 ## Mobile app (`apps/mobile`)
 
