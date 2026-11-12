@@ -29,7 +29,7 @@ try {
   console.error("Convex client could not be created", error);
   root.render(
     <div className="overlay">
-      <div className="modal error-modal">
+      <div className="modal">
         <h1>Configuration error</h1>
         <p className="overlay-tagalog">(May problema sa configuration)</p>
         <p className="overlay-description">

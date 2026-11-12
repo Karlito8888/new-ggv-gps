@@ -5,11 +5,13 @@ import {
   remainingAlongRoute,
   turnLabel,
   type Destination,
+  type IconName,
   type RouteGeometry,
   type RouteSourceType,
   type RouteStep,
   type UserLocation,
 } from "@ggv/shared";
+import { Icon } from "./Icon";
 
 interface NavigationOverlayProps {
   distanceRemaining: number;
@@ -43,57 +45,51 @@ export function NavigationOverlay({
   );
   const label = turnLabel(currentStep);
 
+  // What the turn card shows: arrow, distance to read while walking, instruction if any.
+  const card: { icon: IconName; distance: string; text?: { en: string; tl: string } } =
+    isRecalculating
+      ? { icon: "spinner", distance: "…", text: COPY.nav.recalculating }
+      : currentStep
+        ? {
+            icon: currentStep.icon,
+            distance: formatDistance(currentStep.distanceToStep),
+            text: label,
+          }
+        : routeSource === "direct"
+          ? {
+              icon: "navigate",
+              distance: formatDistance(distanceRemaining),
+              text: COPY.nav.headToward,
+            }
+          : { icon: "straight", distance: formatDistance(distanceRemaining) };
+
   return (
     <>
-      {/* Top pill — turn instruction + distance + cancel */}
       <nav className="nav-top-pill" aria-label={COPY.nav.infoAria.en}>
-        <div className="nav-turn">
-          {isRecalculating ? (
-            <>
-              <span className="nav-turn-icon nav-recalc-spin">↻</span>
-              <span className="nav-turn-text" aria-live="polite">
-                {COPY.nav.recalculating.en}
-                <span className="tagalog-inline">({COPY.nav.recalculating.tl})</span>
-              </span>
-            </>
-          ) : currentStep ? (
-            <>
-              <span className="nav-turn-icon">{currentStep.icon}</span>
-              <span className="nav-turn-text" aria-live="polite">
-                {label.en}
-                <span className="tagalog-inline">({label.tl})</span>
-              </span>
-            </>
-          ) : routeSource === "direct" ? (
-            <span className="nav-turn-text" aria-live="polite">
-              {COPY.nav.headToward.en}
-              <span className="tagalog-inline">({COPY.nav.headToward.tl})</span>
-            </span>
-          ) : (
-            <span className="nav-turn-icon">↑</span>
+        <div className="nav-turn-icon">
+          <Icon name={card.icon} className={isRecalculating ? "spin" : undefined} />
+        </div>
+
+        <div className="nav-turn-body">
+          <div className="nav-turn-dist" aria-live="off">
+            {card.distance}
+          </div>
+          {card.text && (
+            <div className="nav-turn-text" aria-live="polite">
+              {card.text.en}
+              <span className="nav-turn-gloss">({card.text.tl})</span>
+            </div>
           )}
         </div>
 
-        <div className="nav-turn-dist" aria-live="off">
-          {isRecalculating
-            ? "..."
-            : currentStep
-              ? formatDistance(currentStep.distanceToStep)
-              : formatDistance(distanceRemaining)}
-        </div>
-
         <button className="nav-cancel-btn" onClick={onCancel} aria-label={COPY.nav.cancelAria.en}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          <Icon name="close" />
         </button>
       </nav>
 
-      {/* Bottom strip — destination + compass/distance */}
       <nav className="nav-bottom-strip" aria-label={COPY.nav.destinationAria(destination?.name)}>
         <div className="nav-dest-name">
-          <span className="nav-dest-icon">📍</span>
+          <Icon name="pin" className="nav-dest-icon" />
           <span className="nav-dest-text">{destination?.name || COPY.nav.navigating.en}</span>
         </div>
 

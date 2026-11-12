@@ -36,10 +36,10 @@
   --ggv-color-success: #34d399;
   --ggv-color-error: #ef4444;
 
-  /* Overlay & utility */
-  --ggv-color-overlay-bg: rgba(0, 0, 0, 0.7);
+  /* Overlay & utility. The scrim dims the live map behind every full-screen card, in both
+     modes; a green-tinted near-black, not pure black, so the map keeps its warmth. */
+  --ggv-color-overlay-bg: rgba(10, 16, 12, 0.64);
   --ggv-color-gray: #6b7280;
-  --ggv-color-disabled: #888888;
   --ggv-color-amber: #fbbf24;
 
   /* Glass-morphism */
@@ -64,21 +64,13 @@
     var(--ggv-color-primary),
     var(--ggv-color-secondary)
   );
-  --ggv-gradient-overlay: linear-gradient(
+  --ggv-gradient-success: linear-gradient(
     135deg,
-    rgba(80, 170, 97, 0.75) 0%,
-    rgba(243, 197, 73, 0.7) 100%
-  );
-  --ggv-gradient-accent-bar: linear-gradient(
-    90deg,
     var(--ggv-color-primary),
-    var(--ggv-color-secondary)
+    var(--ggv-color-success)
   );
-  --ggv-gradient-exit-overlay: linear-gradient(
-    135deg,
-    rgba(243, 197, 73, 0.8) 0%,
-    rgba(251, 191, 36, 0.75) 100%
-  );
+  --ggv-gradient-exit: linear-gradient(135deg, var(--ggv-color-secondary), var(--ggv-color-amber));
+  --ggv-gradient-error: linear-gradient(135deg, var(--ggv-color-error), var(--ggv-color-secondary));
 
   /* =================================================================
      SPACING
@@ -113,7 +105,10 @@
      TYPOGRAPHY
      ================================================================= */
 
+  /* Madimi One is the brand voice: titles, buttons, numbers. Paragraphs and form fields use
+     the system face, which reads better at body size and costs no download. */
   --ggv-font-primary: "Madimi One", cursive, sans-serif;
+  --ggv-font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --ggv-font-size-xs: 0.75rem;
   --ggv-font-size-sm: 0.875rem;
   --ggv-font-size-base: 1rem;
@@ -131,35 +126,31 @@
   --ggv-radius-lg: 1rem;
   --ggv-radius-xl: 1.5rem;
   --ggv-radius-full: 50%;
+  --ggv-radius-pill: 999px;
 
   /* =================================================================
      SHADOWS
      ================================================================= */
 
-  --ggv-shadow-text: 0 1px 2px rgba(0, 0, 0, 0.15);
-  --ggv-shadow-button: 0 4px 15px rgba(80, 170, 97, 0.4);
-  --ggv-shadow-button-hover: 0 8px 25px rgba(80, 170, 97, 0.5);
-  --ggv-shadow-dialog: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  --ggv-shadow-strong: 0 8px 25px rgba(0, 0, 0, 0.2);
+  --ggv-shadow-button: 0 6px 16px rgba(41, 92, 52, 0.28);
+  --ggv-shadow-dialog: 0 24px 48px -16px rgba(0, 0, 0, 0.45);
+  --ggv-shadow-disc: 0 8px 20px rgba(0, 0, 0, 0.16);
   --ggv-shadow-pill: 0 2px 12px rgba(0, 0, 0, 0.15);
 
   /* =================================================================
      TRANSITIONS
      ================================================================= */
 
-  --ggv-transition-fast: 0.15s ease;
-  --ggv-transition-normal: 0.2s ease;
+  /* Entrances: a strong ease-out. Presses and colour changes stay at or under 200 ms. */
+  --ggv-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ggv-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ggv-duration-press: 160ms;
+  --ggv-duration-card: 420ms;
 
-  /* Spring curves, ported 1:1 from the framer-motion variants they replaced (damping 25).
-     Duration is part of the port — each curve was sampled for it, so durations are unchanged.
-
-     Was 86 lines of linear() samples. linear() needs Safari/iOS 17.2, and iPhone X / 8 / 8 Plus
-     are capped at iOS 16.7 for good: there the whole declaration resolves to `unset`, i.e. the
-     initial `ease`, and no cascade fallback can catch it. Each curve below is a least-squares
-     fit of the control points to the samples it replaces. Deviation over the full curve —
-     modal RMS 0.76% / worst 2.37%, slide 0.58% / 1.62%, pill 1.49% / 5.22% (4.2px of 80px). */
-  --ggv-spring-modal-duration: 1350ms;
-  --ggv-spring-modal: cubic-bezier(0.21, 0.53, 0.07, 1.06);
+  /* Spring curves, ported from the framer-motion variants they replaced (damping 25), as
+     least-squares cubic-bezier fits: linear() needs Safari/iOS 17.2, and iPhone X / 8 / 8 Plus
+     are capped at iOS 16.7, where it resolves to `ease`. Deviation over the full curve —
+     slide RMS 0.58% / worst 1.62%, pill 1.49% / 5.22% (4.2px of 80px). */
   --ggv-spring-slide-duration: 500ms;
   --ggv-spring-slide: cubic-bezier(0.26, 0.3, 0.18, 1.11);
   --ggv-spring-pill-duration: 550ms;
@@ -169,7 +160,6 @@
      OPACITY
      ================================================================= */
 
-  --ggv-opacity-overlay-text: 0.7;
   --ggv-opacity-disabled: 0.6;
   --ggv-opacity-border: 0.15;
 }
@@ -205,22 +195,9 @@
     --ggv-color-text-tint: rgba(232, 232, 232, 0.08);
     --ggv-color-text-tint-hover: rgba(232, 232, 232, 0.12);
 
-    /* Gradients — adjusted for dark backgrounds */
-    --ggv-gradient-overlay: linear-gradient(
-      135deg,
-      rgba(80, 170, 97, 0.6) 0%,
-      rgba(243, 197, 73, 0.55) 100%
-    );
-    --ggv-gradient-exit-overlay: linear-gradient(
-      135deg,
-      rgba(243, 197, 73, 0.7) 0%,
-      rgba(251, 191, 36, 0.65) 100%
-    );
-
     /* Shadows — darker for depth on dark surfaces */
-    --ggv-shadow-text: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --ggv-shadow-dialog: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    --ggv-shadow-strong: 0 8px 25px rgba(0, 0, 0, 0.4);
+    --ggv-shadow-dialog: 0 24px 48px -16px rgba(0, 0, 0, 0.6);
+    --ggv-shadow-disc: 0 8px 20px rgba(0, 0, 0, 0.4);
     --ggv-shadow-pill: 0 2px 12px rgba(0, 0, 0, 0.3);
   }
 }

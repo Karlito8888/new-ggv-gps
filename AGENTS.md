@@ -17,7 +17,8 @@ l'entrée du village) et une app native Expo / React Native (`apps/mobile`, cart
 `@ggv/shared` holds what both renderers share: `useNavigationFlow` (the 4-state machine),
 `useRouting` (OSRM cascade; the abort/generation contract below and its test live here),
 `useCourseUpCamera` (behind a `CameraDriver` interface), `useDestinationChoice`, `turnGuidance`,
-`COPY` (all user-visible strings), `map/layers.ts` (paint/layout of the app's own layers) and the
+`COPY` (all user-visible strings), `ICONS` (every icon's stroke paths), `map/layers.ts`
+(paint/layout of the app's own layers) and the
 basemap layers JSON (`@ggv/shared/basemap-layers`). Moved files, old to new: `lib/geo.ts`,
 `lib/course.ts`, `lib/trace.ts`, `hooks/useNavigation.ts` (now `arrival.ts`), `hooks/useRouting.ts`,
 `hooks/useCourseUpCamera.ts`, `types/*`, `data/blocks.ts` → `packages/shared/src/`;
@@ -452,11 +453,22 @@ déclencher. Ne pas y remettre de bouton « Update ».
 natif, état local (`useState`), pas de gestion d'état globale.
 
 **Aucune bibliothèque d'animation** non plus. Les animations d'entrée sont des `@keyframes`
-CSS dans `app.css`, et les trois courbes de ressort (`--ggv-spring-modal|slide|pill`) sont les
-anciens ressorts framer-motion, ajustés par moindres carrés en `cubic-bezier()` — durées
-inchangées, écart mesuré ≤ 5,2 % de la course (détail dans `design-tokens.css`). Il n'y a **pas**
-d'animation de sortie : elle exigerait `@starting-style`, qui demande Safari 17.5
-(MDN browser-compat-data).
+CSS dans `app.css` : la carte entre en 420 ms (`--ggv-ease-out`, depuis `translateY(12px)
+scale(0.97)`), son contenu monte ensuite 40 ms par enfant, et les boutons s'enfoncent à 97 % à
+l'appui. Les deux courbes de ressort restantes (`--ggv-spring-slide|pill`, cartes d'arrivée et
+pilules de navigation) sont les anciens ressorts framer-motion, ajustés par moindres carrés en
+`cubic-bezier()` (écart ≤ 5,2 % de la course, détail dans `design-tokens.css`). Rien ne pulse à
+l'infini sauf l'anneau de l'écran GPS **pendant** la demande de position, et le spinner. Il n'y
+a **pas** d'animation de sortie : elle exigerait `@starting-style`, qui demande Safari 17.5
+(MDN browser-compat-data). Côté mobile, `Animated` de React Native porte le spinner et l'anneau ;
+pas d'entrée de carte.
+
+**Une seule source d'icônes** : `packages/shared/src/icons.ts`, des tracés 24×24 dessinés en
+`<svg>` par le web (`components/Icon.tsx`) et par `react-native-svg` sur mobile (`src/Icon.tsx`).
+`RouteStep.icon` est un nom de cette table, jamais un caractère : aucun emoji ni flèche Unicode
+dans l'interface. **Deux polices** : Madimi One pour titres, boutons et nombres, police système
+pour paragraphes, champs et consignes de virage (`--ggv-font-body` ; sur mobile, pas de
+`fontFamily`).
 
 ⚠️ Le plancher navigateur de cette app n'est **pas** fixé par `build.target: "esnext"` —
 `esnext` est une cible de transpilation (« ne rien abaisser »), pas une matrice de support, et il
@@ -490,9 +502,8 @@ sombre à 2,22:1 sur un dégradé vert foncé. (3) Une `opacity` sur du texte de
 `.tagalog-inline` dans un bouton** : cette classe force `--ggv-color-primary-text`, soit du vert
 sur le dégradé vert du CTA — mesuré **1,24:1** en clair, **1,80:1** en sombre. Dans un bouton, la
 glose tagalog est du texte inline qui **hérite** la couleur du bouton. (5) Chercher la règle qui
-**gagne** avant de mesurer : l'icône de `.nav-cancel-btn` prend sa couleur de
-`.nav-cancel-btn svg` (le `<svg>` trace en `currentColor`), pas du bouton — un `color` posé sur le
-bouton y est mort.
+**gagne** avant de mesurer : une icône trace en `currentColor`, donc sa couleur vient de la règle
+la plus spécifique qui touche le `<svg>` ou son parent, pas forcément de celle qu'on lit.
 
 Toute nouvelle couleur de texte se calcule contre le **pire fond réel**, pilule de verre
 composée sur une carte sombre (`#d9d9d9`) ou claire (`#343434`) comprise, pas contre

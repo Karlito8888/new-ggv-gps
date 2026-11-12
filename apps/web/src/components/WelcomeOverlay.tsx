@@ -1,4 +1,5 @@
 import { COPY, inline, useDestinationChoice, type Destination } from "@ggv/shared";
+import { Icon } from "./Icon";
 
 interface WelcomeOverlayProps {
   blocks: string[];
@@ -23,27 +24,10 @@ export function WelcomeOverlay({
   } = useDestinationChoice(onSelectDestination);
 
   return (
-    <div
-      className="overlay welcome-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-label={COPY.welcome.aria.en}
-    >
+    <div className="overlay" role="dialog" aria-modal="true" aria-label={COPY.welcome.aria.en}>
       <div className="modal welcome-modal">
-        {/* Destination Icon */}
         <div className="overlay-icon-wrapper">
-          <svg
-            className="overlay-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
+          <Icon name="pin" className="overlay-icon" />
         </div>
 
         <h1>{COPY.welcome.title.en}</h1>
@@ -124,17 +108,7 @@ export function WelcomeOverlay({
           onClick={navigate}
           disabled={!selectedBlock || !effectiveLot || isLoadingLots}
         >
-          <svg
-            className="overlay-btn-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polygon points="3 11 22 2 13 21 11 13 3 11" />
-          </svg>
+          <Icon name="navigate" className="overlay-btn-icon" />
           {inline(COPY.welcome.navigate)}
         </button>
       </div>
