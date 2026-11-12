@@ -19,14 +19,3 @@ export const STORE_URL = {
   ios: "https://apps.apple.com/app/id6822344962",
   android: "https://play.google.com/store/apps/details?id=com.myggv.gps",
 };
-
-/** Store listings point here too (`store/asc/app-info/en-US.json`). */
-export const PRIVACY_URL = "https://myggv.com/gps-privacy-policy";
-
-/**
- * The FOSSGIS routing servers require the OpenStreetMap credit and a "fix the map" link
- * (routing.openstreetmap.de/about.html). The map's ⓘ dialog shows only the tileset's
- * "© OpenStreetMap" (observed on the A16), so the Welcome screen carries both links.
- */
-export const OSM_COPYRIGHT_URL = "https://www.openstreetmap.org/copyright";
-export const OSM_FIX_URL = "https://www.openstreetmap.org/fixthemap";

@@ -23,6 +23,7 @@ export const ICONS = {
   ],
   check: ["M20 6 9 17l-5-5"],
   close: ["M18 6 6 18", "M6 6l12 12"],
+  info: ["M22 12a10 10 0 1 1-20 0a10 10 0 1 1 20 0", "M12 16v-4", "M12 8h.01"],
   spinner: ["M21 12a9 9 0 1 1-6.22-8.56"],
   // Turn arrows, one per OSRM modifier (TURN_ICONS), plus the roundabout.
   straight: ["M12 19V5", "M5 12l7-7 7 7"],

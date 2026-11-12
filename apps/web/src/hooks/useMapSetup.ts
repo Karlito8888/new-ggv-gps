@@ -130,6 +130,9 @@ export function useMapSetup(containerRef: RefObject<HTMLDivElement | null>): Use
           [VILLAGE_BOUNDS.west, VILLAGE_BOUNDS.south],
           [VILLAGE_BOUNDS.east, VILLAGE_BOUNDS.north],
         ], // Village bounds + margin (limits tile loading)
+        // The credit lives in the navigation strip's ⓘ (NavigationOverlay), with the "fix the
+        // map" and privacy links this control cannot carry next to the tileset's attribution.
+        attributionControl: false,
       });
 
       // Transparent placeholder for icons the sprite lacks. maplibre-gl 6 only takes a missing

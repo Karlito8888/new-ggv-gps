@@ -4,6 +4,9 @@ import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   COPY,
+  OSM_COPYRIGHT_URL,
+  OSM_FIX_URL,
+  PRIVACY_URL,
   currentTurn,
   formatDistance,
   remainingAlongRoute,
@@ -14,10 +17,11 @@ import {
   type RouteSourceType,
   type RouteStep,
   type UserLocation,
+  useCreditsBubble,
 } from "@ggv/shared";
 import { Icon } from "../Icon";
 import { theme } from "../theme";
-import { Spin } from "../ui";
+import { Link, Spin } from "../ui";
 
 /** The vibration fires once per turn, this close to it. */
 const TURN_ALERT_M = 30;
@@ -47,6 +51,7 @@ export function Navigation({
   onEnableGps: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const credits = useCreditsBubble();
   const routeCoords = routeGeoJSON?.coordinates ?? null;
   const turn = currentTurn(steps, userLocation, routeCoords);
   const total = remainingAlongRoute(userLocation, destination, routeCoords, distanceRemaining);
@@ -109,24 +114,48 @@ export function Navigation({
         </Pressable>
       </View>
 
-      <View
-        style={[styles.bottom, { bottom: insets.bottom + 16 }]}
-        accessibilityLabel={COPY.nav.destinationAria(destination?.name)}
-      >
-        <Icon name="pin" size={20} color={theme.primaryText} />
-        <Text style={styles.destName} numberOfLines={1}>
-          {destination?.name || COPY.nav.navigating.en}
-        </Text>
-        {userLocation ? <Text style={styles.destDist}>{formatDistance(total)}</Text> : null}
+      {/* The strip and the credits bubble above it: one stack, so the bubble's links stay inside
+          their parent's bounds, where Android delivers touches. */}
+      <View style={[styles.bottomStack, { bottom: insets.bottom + 16 }]} pointerEvents="box-none">
+        {credits.open ? (
+          <View style={styles.bubble}>
+            <Text style={styles.bubbleText}>
+              <Link label={COPY.credits.osm.en} url={OSM_COPYRIGHT_URL} />
+              {"  ·  "}
+              <Link label={COPY.credits.fixMap.en} url={OSM_FIX_URL} />
+              {credits.open === "manual" ? (
+                <>
+                  {"  ·  "}
+                  <Link label={COPY.credits.privacy.en} url={PRIVACY_URL} />
+                </>
+              ) : null}
+            </Text>
+          </View>
+        ) : null}
+        <View
+          style={styles.bottom}
+          accessibilityLabel={COPY.nav.destinationAria(destination?.name)}
+        >
+          <Icon name="pin" size={20} color={theme.primaryText} />
+          <Text style={styles.destName} numberOfLines={1}>
+            {destination?.name || COPY.nav.navigating.en}
+          </Text>
+          {userLocation ? <Text style={styles.destDist}>{formatDistance(total)}</Text> : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={COPY.credits.aria.en}
+            onPress={credits.toggle}
+            hitSlop={12}
+          >
+            <Icon name="info" size={20} color={theme.textMuted} />
+          </Pressable>
+        </View>
       </View>
     </>
   );
 }
 
 const pill = {
-  position: "absolute" as const,
-  left: 16,
-  right: 16,
   flexDirection: "row" as const,
   alignItems: "center" as const,
   backgroundColor: theme.glass,
@@ -137,7 +166,14 @@ const pill = {
 
 const styles = StyleSheet.create({
   // Below the logo, with a small margin.
-  top: { ...pill, top: theme.logoTop + theme.logoHeight + 8, borderRadius: theme.radiusCard },
+  top: {
+    ...pill,
+    position: "absolute",
+    left: 16,
+    right: 16,
+    top: theme.logoTop + theme.logoHeight + 8,
+    borderRadius: theme.radiusCard,
+  },
   turn: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
   tile: {
     width: 48,
@@ -160,6 +196,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   pressed: { transform: [{ scale: 0.97 }] },
+  bottomStack: { position: "absolute", left: 16, right: 16, gap: 8 },
+  bubble: {
+    alignSelf: "flex-end",
+    backgroundColor: theme.glass,
+    boxShadow: theme.shadow.pill,
+    borderRadius: theme.radiusPill,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  bubbleText: { fontSize: 13, color: theme.textMuted },
   bottom: { ...pill, paddingHorizontal: 16, borderRadius: theme.radiusPill },
   destName: { flex: 1, fontSize: 15, fontWeight: "600", color: theme.text },
   destDist: { fontFamily: theme.font, fontSize: 18, color: theme.primaryText },

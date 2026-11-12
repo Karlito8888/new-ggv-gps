@@ -31,10 +31,6 @@ export const COPY = {
       tl: "Para maiguhit ang ruta, ipinapadala ang iyong posisyon sa isang pampublikong routing server ng OpenStreetMap.",
     },
     skip: { en: "Continue without GPS", tl: "Magpatuloy nang walang GPS" },
-    privacy: { en: "Privacy Policy", tl: "Patakaran sa Privacy" },
-    /** Map and routing credit; names, no gloss. */
-    osm: { en: "© OpenStreetMap contributors" },
-    fixMap: { en: "Fix the map" },
     precise: {
       en: "Turn on precise location in Settings",
       tl: "I-on ang precise location sa Settings",
@@ -76,6 +72,17 @@ export const COPY = {
       en: "Location is off. Tap to enable GPS",
       tl: "Naka-off ang lokasyon. I-tap para sa GPS",
     },
+  },
+  /**
+   * The map credit (OpenStreetMap guideline: shown when navigation starts, then behind ⓘ),
+   * the "fix the map" link the FOSSGIS routing servers require, and the privacy policy.
+   * Link labels are names: no gloss, except the privacy link on the GPS screen.
+   */
+  credits: {
+    aria: { en: "Map credits and privacy" },
+    osm: { en: "© OpenStreetMap" },
+    fixMap: { en: "Fix the map" },
+    privacy: { en: "Privacy Policy", tl: "Patakaran sa Privacy" },
   },
   arrived: {
     aria: { en: "You have arrived at your destination" },

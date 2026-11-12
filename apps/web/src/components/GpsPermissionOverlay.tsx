@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { COPY, inline } from "@ggv/shared";
+import { COPY, inline, PRIVACY_URL } from "@ggv/shared";
 import { Icon } from "./Icon";
 
 interface GpsPermissionOverlayProps {
@@ -45,6 +45,15 @@ export function GpsPermissionOverlay({
         <p className="overlay-description">
           {COPY.gps.description.en}
           <span className="tagalog-inline">{COPY.gps.description.tl}</span>
+        </p>
+
+        {/* Where the position goes, before the browser asks for it; the privacy policy at its end. */}
+        <p className="gps-note">
+          {COPY.gps.routing.en}
+          <span className="tagalog-inline">{COPY.gps.routing.tl}</span>
+          <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
+            {inline(COPY.credits.privacy)}
+          </a>
         </p>
 
         {error && <div className="error-message">{error}</div>}

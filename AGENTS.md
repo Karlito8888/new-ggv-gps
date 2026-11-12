@@ -92,11 +92,15 @@ dependencies, restore them after any re-run.
   After a refusal or an approximate grant, "Continue without GPS" leads to Welcome anyway (Apple
   5.1.2(i): the app may not require location services to be used); navigation then frames the
   destination and its top pill offers to turn GPS on. `useDeviceLocation().active` tells the two
-  apart. Store-policy surfaces, all mobile only: the privacy policy link (GPS and Welcome
-  screens), the routing-server disclosure (GPS screen and the iOS purpose string), and the
-  OpenStreetMap credit with its "Fix the map" link on Welcome, required by the FOSSGIS routing
-  servers' terms. The map's ⓘ dialog shows only the tileset's own attribution: neither the
-  style's `attribution` nor an extra style source reached it (A16, 2026-11-12).
+  apart. Legal surfaces, on both clients, kept to two places. (1) The GPS screen's quiet note
+  under the description: the routing-server disclosure (Apple 5.1.2(i), before the permission
+  ask; also the iOS purpose string) ending on the privacy policy link (Apple 5.1.1(i), Play User
+  Data). (2) The ⓘ at the end of the navigation strip (`useCreditsBubble`, `@ggv/shared`): its
+  bubble opens by itself for five seconds when navigation starts with "© OpenStreetMap" and
+  "Fix the map" (OSMF attribution guideline, which allows that collapse; FOSSGIS routing terms),
+  and a tap reopens it with the privacy link too. The map's own attribution button is off on
+  both (`attribution={false}`, `attributionControl: false`): the native dialog showed only the
+  tileset's attribution, without the links (A16, 2026-11-12).
   `android.blockedPermissions` removes the prebuild template's `SYSTEM_ALERT_WINDOW` and storage
   permissions. Test the approximate path on a device with
   `pm revoke <pkg> android.permission.ACCESS_FINE_LOCATION` while coarse stays granted.

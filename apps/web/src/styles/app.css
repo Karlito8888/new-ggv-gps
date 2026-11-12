@@ -78,21 +78,6 @@ textarea {
 }
 
 /* ===================================================================
-   MAPLIBRE OVERRIDES
-   =================================================================== */
-
-/* Attribution control - fermé par défaut */
-.maplibregl-ctrl-attrib.maplibregl-compact-show:not(:focus):not(:hover) {
-  padding: 2px 24px 2px 0;
-  visibility: visible;
-}
-
-.maplibregl-ctrl-attrib.maplibregl-compact-show:not(:focus):not(:hover)
-  .maplibregl-ctrl-attrib-inner {
-  display: none;
-}
-
-/* ===================================================================
    ACCESSIBILITY HELPERS
    =================================================================== */
 
@@ -158,12 +143,6 @@ textarea {
   z-index: var(--ggv-z-logo);
   height: var(--ggv-space-2xl);
   pointer-events: none;
-}
-
-/* MapLibre attribution control, bottom right */
-.maplibregl-ctrl-bottom-right {
-  bottom: var(--ggv-space-xl);
-  right: 0.75rem;
 }
 
 /* iOS Safari specific fixes */
@@ -387,6 +366,27 @@ textarea {
 /* ===================================================================
    GPS PERMISSION OVERLAY
    =================================================================== */
+
+/* Third-party disclosure and privacy link: one quiet note under the description. */
+.gps-note {
+  margin: calc(-1 * var(--ggv-space-sm)) 0 var(--ggv-space-lg);
+  font-family: var(--ggv-font-body);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--ggv-color-text) 72%, transparent);
+}
+
+.gps-note a,
+.nav-credits a {
+  color: var(--ggv-color-primary-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gps-note a {
+  display: inline-block;
+  margin-top: 0.375rem;
+}
 
 .gps-version {
   margin-top: var(--ggv-space-md);
@@ -700,6 +700,7 @@ textarea {
 }
 
 .nav-dest-name {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: var(--ggv-space-sm);
@@ -729,6 +730,52 @@ textarea {
   color: var(--ggv-color-primary-text);
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* ⓘ: 32 px drawn, 44 px to the finger. */
+.nav-credits-btn {
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--ggv-radius-full);
+  background: none;
+  color: color-mix(in srgb, var(--ggv-color-text) 72%, transparent);
+  cursor: pointer;
+}
+
+.nav-credits-btn::after {
+  content: "";
+  position: absolute;
+  inset: -0.375rem;
+}
+
+.nav-credits-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Credits bubble above the strip: open for five seconds when navigation starts, then on ⓘ. */
+.nav-credits {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--ggv-space-sm));
+  padding: 0.5rem 0.875rem;
+  background: var(--ggv-glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--ggv-radius-pill);
+  box-shadow: var(--ggv-shadow-pill);
+  font-family: var(--ggv-font-body);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--ggv-color-text) 72%, transparent);
+  animation: rise 240ms var(--ggv-ease-out) both;
 }
 
 /* ===================================================================

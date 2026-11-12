@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Linking, ScrollView, StyleSheet, Text } from "react-native";
 import Constants from "expo-constants";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COPY, inline } from "@ggv/shared";
+import { COPY, inline, PRIVACY_URL } from "@ggv/shared";
 import type { LocationStatus } from "../useDeviceLocation";
 import { theme } from "../theme";
-import { Body, Button, IconDisc, Modal, PrivacyLink, Title } from "../ui";
+import { Body, Button, IconDisc, Link, Modal, Title } from "../ui";
 
 /** `onContinue` leaves for Welcome, with the location granted or without it. */
 export function GpsPermission({
@@ -48,7 +48,13 @@ export function GpsPermission({
         <IconDisc name="gps" searching={status === "requesting"} />
         <Title en={COPY.gps.title.en} tl={COPY.gps.title.tl} />
         <Body en={COPY.gps.description.en} tl={COPY.gps.description.tl} />
-        <Body en={COPY.gps.routing.en} tl={COPY.gps.routing.tl} />
+        {/* Apple 5.1.2(i): where the position goes, before the system dialog asks for it. One
+            quiet note, with the privacy policy (Apple 5.1.1(i), Play User Data) at its end. */}
+        <Text style={styles.note}>
+          {COPY.gps.routing.en}
+          <Text style={styles.gloss}>{`\n${COPY.gps.routing.tl}\n`}</Text>
+          <Link label={inline(COPY.credits.privacy)} url={PRIVACY_URL} />
+        </Text>
         {status === "approximate" ? (
           <Text style={styles.error}>{inline(COPY.gps.precise)}</Text>
         ) : status === "denied" || status === "blocked" ? (
@@ -71,7 +77,6 @@ export function GpsPermission({
         {toSettings || status === "denied" ? (
           <Button label={inline(COPY.gps.skip)} secondary onPress={onContinue} />
         ) : null}
-        <PrivacyLink />
         <Text style={styles.version}>v{Constants.expoConfig?.version}</Text>
       </Modal>
     </ScrollView>
@@ -87,6 +92,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   modal: { alignSelf: "stretch" },
+  note: { marginTop: 8, fontSize: 13, lineHeight: 19, color: theme.textMuted, textAlign: "center" },
+  gloss: { color: theme.primaryText },
   error: { marginTop: 8, fontSize: 14, color: theme.text, textAlign: "center" },
   version: { fontSize: 12, color: theme.gray },
 });

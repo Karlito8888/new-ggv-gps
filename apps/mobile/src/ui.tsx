@@ -10,8 +10,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { COPY, inline, type IconName } from "@ggv/shared";
-import { OSM_COPYRIGHT_URL, OSM_FIX_URL, PRIVACY_URL } from "./config";
+import type { IconName } from "@ggv/shared";
 import { Icon } from "./Icon";
 import { theme } from "./theme";
 
@@ -123,31 +122,12 @@ export function Button({
   );
 }
 
-/** Both stores require the privacy policy to be reachable from inside the app. */
-export function PrivacyLink() {
+/** An inline link: nest it in a `Text` so it flows with the sentence around it. */
+export function Link({ label, url }: { label: string; url: string }) {
   return (
-    <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PRIVACY_URL)} hitSlop={8}>
-      <Text style={styles.link}>{inline(COPY.gps.privacy)}</Text>
-    </Pressable>
-  );
-}
-
-/** OpenStreetMap credit and "fix the map": the FOSSGIS routing servers' usage terms. */
-export function OsmCredit() {
-  return (
-    <View style={styles.credit}>
-      <Pressable
-        accessibilityRole="link"
-        onPress={() => Linking.openURL(OSM_COPYRIGHT_URL)}
-        hitSlop={8}
-      >
-        <Text style={[styles.creditText, styles.underline]}>{COPY.gps.osm.en}</Text>
-      </Pressable>
-      <Text style={styles.creditText}>·</Text>
-      <Pressable accessibilityRole="link" onPress={() => Linking.openURL(OSM_FIX_URL)} hitSlop={8}>
-        <Text style={[styles.creditText, styles.underline]}>{COPY.gps.fixMap.en}</Text>
-      </Pressable>
-    </View>
+    <Text accessibilityRole="link" style={styles.link} onPress={() => Linking.openURL(url)}>
+      {label}
+    </Text>
   );
 }
 
@@ -229,13 +209,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   buttonTextSecondary: { fontSize: 16, color: theme.text },
-  link: {
-    fontSize: 13,
-    color: theme.primaryText,
-    textDecorationLine: "underline",
-    marginTop: 8,
-  },
-  credit: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 6 },
-  creditText: { fontSize: 12, color: theme.gray },
-  underline: { textDecorationLine: "underline" },
+  link: { color: theme.primaryText, textDecorationLine: "underline" },
 });

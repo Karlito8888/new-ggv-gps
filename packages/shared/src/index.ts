@@ -6,6 +6,7 @@
  */
 export { blockLabelsGeoJSON } from "./blocks";
 export { COPY, inline } from "./copy";
+export { OSM_COPYRIGHT_URL, OSM_FIX_URL, PRIVACY_URL, useCreditsBubble } from "./credits";
 export { ICONS, type IconName } from "./icons";
 export {
   ARRIVAL_ZONE_PAINT,

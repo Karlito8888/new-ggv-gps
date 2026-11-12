@@ -1,5 +1,8 @@
 import {
   COPY,
+  OSM_COPYRIGHT_URL,
+  OSM_FIX_URL,
+  PRIVACY_URL,
   currentTurn,
   formatDistance,
   remainingAlongRoute,
@@ -10,6 +13,7 @@ import {
   type RouteSourceType,
   type RouteStep,
   type UserLocation,
+  useCreditsBubble,
 } from "@ggv/shared";
 import { Icon } from "./Icon";
 
@@ -44,6 +48,7 @@ export function NavigationOverlay({
     distanceRemaining
   );
   const label = turnLabel(currentStep);
+  const credits = useCreditsBubble();
 
   // What the turn card shows: arrow, distance to read while walking, instruction if any.
   const card: { icon: IconName; distance: string; text?: { en: string; tl: string } } =
@@ -88,6 +93,26 @@ export function NavigationOverlay({
       </nav>
 
       <nav className="nav-bottom-strip" aria-label={COPY.nav.destinationAria(destination?.name)}>
+        {credits.open && (
+          <p className="nav-credits">
+            <a href={OSM_COPYRIGHT_URL} target="_blank" rel="noopener noreferrer">
+              {COPY.credits.osm.en}
+            </a>
+            {" · "}
+            <a href={OSM_FIX_URL} target="_blank" rel="noopener noreferrer">
+              {COPY.credits.fixMap.en}
+            </a>
+            {credits.open === "manual" && (
+              <>
+                {" · "}
+                <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
+                  {COPY.credits.privacy.en}
+                </a>
+              </>
+            )}
+          </p>
+        )}
+
         <div className="nav-dest-name">
           <Icon name="pin" className="nav-dest-icon" />
           <span className="nav-dest-text">{destination?.name || COPY.nav.navigating.en}</span>
@@ -96,6 +121,15 @@ export function NavigationOverlay({
         <div className="nav-compass-text" aria-live="off">
           {formatDistance(totalDistanceRemaining)}
         </div>
+
+        <button
+          className="nav-credits-btn"
+          onClick={credits.toggle}
+          aria-label={COPY.credits.aria.en}
+          aria-expanded={credits.open !== null}
+        >
+          <Icon name="info" />
+        </button>
       </nav>
     </>
   );

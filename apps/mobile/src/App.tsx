@@ -147,6 +147,9 @@ function Root({ assets }: { assets: MapAssetUrls }) {
         mapStyle={style}
         compass={false}
         logo={false}
+        // The credit lives in the navigation strip's ⓘ (Navigation.tsx): the native dialog could
+        // show only the tileset's "© OpenStreetMap", without the links the terms require.
+        attribution={false}
         touchRotate={false}
         onDidFinishLoadingStyle={() => setMapReady(true)}
         onRegionWillChange={(e) => {
