@@ -1,4 +1,4 @@
-import { COPY, inline, useDestinationChoice, type Destination } from "@ggv/shared";
+import { COPY, inline, PRIVACY_URL, useDestinationChoice, type Destination } from "@ggv/shared";
 import { Icon } from "./Icon";
 
 interface WelcomeOverlayProps {
@@ -111,6 +111,15 @@ export function WelcomeOverlay({
           <Icon name="navigate" className="overlay-btn-icon" />
           {inline(COPY.welcome.navigate)}
         </button>
+
+        {/* Navigate is the tap that sends the position out: say where, at that very spot. */}
+        <p className="route-note">
+          {COPY.welcome.routing.en}
+          <span className="tagalog-inline">{COPY.welcome.routing.tl}</span>
+          <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
+            {inline(COPY.credits.privacy)}
+          </a>
+        </p>
       </div>
     </div>
   );

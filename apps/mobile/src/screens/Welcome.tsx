@@ -1,8 +1,8 @@
-import { StyleSheet, View } from "react-native";
-import { COPY, inline, useDestinationChoice, type Destination } from "@ggv/shared";
+import { StyleSheet, Text, View } from "react-native";
+import { COPY, inline, PRIVACY_URL, useDestinationChoice, type Destination } from "@ggv/shared";
 import { Select } from "../select/Select";
 import { theme } from "../theme";
-import { Button, IconDisc, Modal, Title } from "../ui";
+import { Button, IconDisc, Link, Modal, Title } from "../ui";
 import { villageSnapshot } from "../villageSnapshot";
 
 /** `blocks` is the live Convex list, or the bundled snapshot while it has not answered. */
@@ -59,6 +59,12 @@ export function Welcome({
           disabled={!selectedBlock || !effectiveLot}
           onPress={navigate}
         />
+        {/* Navigate is the tap that sends the position out: say where, at that very spot. */}
+        <Text style={styles.note}>
+          {COPY.welcome.routing.en}
+          <Text style={styles.gloss}>{`\n${COPY.welcome.routing.tl}\n`}</Text>
+          <Link label={inline(COPY.credits.privacy)} url={PRIVACY_URL} />
+        </Text>
       </Modal>
     </View>
   );
@@ -75,4 +81,7 @@ const styles = StyleSheet.create({
   // `.welcome-block-selector`: 16 above the first field, 8 between fields (with the card's gap).
   selector: { alignSelf: "stretch" },
   firstSelector: { marginTop: 8 },
+  // `.route-note`
+  note: { marginTop: 8, fontSize: 13, lineHeight: 19, color: theme.textMuted, textAlign: "center" },
+  gloss: { color: theme.primaryText },
 });

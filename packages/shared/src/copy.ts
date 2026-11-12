@@ -25,11 +25,6 @@ export const COPY = {
       tl: "Kailangan ng MyGGV GPS ang iyong lokasyon para gabayan ka sa village.",
     },
     retry: { en: "Please try again", tl: "Subukan muli" },
-    /** Store policies: say where the position goes before the system dialog asks for it. */
-    routing: {
-      en: "To draw your route, your position is sent to a public OpenStreetMap routing server.",
-      tl: "Para maiguhit ang ruta, ipinapadala ang iyong posisyon sa isang pampublikong routing server ng OpenStreetMap.",
-    },
     skip: { en: "Continue without GPS", tl: "Magpatuloy nang walang GPS" },
     precise: {
       en: "Turn on precise location in Settings",
@@ -56,6 +51,15 @@ export const COPY = {
     },
     reload: { en: "Reload", tl: "I-reload" },
     navigate: { en: "Navigate", tl: "Mag-navigate" },
+    /**
+     * Under Navigate, the tap that sends the position to the routing server (useRouting needs a
+     * destination): Apple 5.1.2(i) disclosure before the sharing, and Play's "user-initiated
+     * action" basis for declaring no sharing. iOS also says it in the location purpose string.
+     */
+    routing: {
+      en: "To draw your route, your position is sent to a public OpenStreetMap routing server.",
+      tl: "Para maiguhit ang ruta, ipinapadala ang iyong posisyon sa isang pampublikong routing server ng OpenStreetMap.",
+    },
     block: (block: string) => `Block ${block}`,
     lot: (lot: string) => `Lot ${lot}`,
     destinationName: (block: string, lot: string) => `Block ${block}, Lot ${lot}`,

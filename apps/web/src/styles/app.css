@@ -367,27 +367,6 @@ textarea {
    GPS PERMISSION OVERLAY
    =================================================================== */
 
-/* Third-party disclosure and privacy link: one quiet note under the description. */
-.gps-note {
-  margin: calc(-1 * var(--ggv-space-sm)) 0 var(--ggv-space-lg);
-  font-family: var(--ggv-font-body);
-  font-size: 0.8125rem;
-  line-height: 1.45;
-  color: color-mix(in srgb, var(--ggv-color-text) 72%, transparent);
-}
-
-.gps-note a,
-.nav-credits a {
-  color: var(--ggv-color-primary-text);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.gps-note a {
-  display: inline-block;
-  margin-top: 0.375rem;
-}
-
 .gps-version {
   margin-top: var(--ggv-space-md);
   font-family: var(--ggv-font-body);
@@ -399,6 +378,27 @@ textarea {
 /* ===================================================================
    WELCOME OVERLAY
    =================================================================== */
+
+/* Under Navigate: where the position goes, and the privacy link. One quiet note. */
+.route-note {
+  margin-top: var(--ggv-space-md);
+  font-family: var(--ggv-font-body);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--ggv-color-text) 72%, transparent);
+}
+
+.route-note a,
+.nav-credits a {
+  color: var(--ggv-color-primary-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.route-note a {
+  display: inline-block;
+  margin-top: 0.375rem;
+}
 
 /* Offline notice on the destination picker. Uses --ggv-color-text, not the brand green:
    brand text is only legible via --ggv-color-primary-text, and this sits on the modal

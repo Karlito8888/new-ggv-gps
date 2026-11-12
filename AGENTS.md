@@ -92,10 +92,13 @@ dependencies, restore them after any re-run.
   After a refusal or an approximate grant, "Continue without GPS" leads to Welcome anyway (Apple
   5.1.2(i): the app may not require location services to be used); navigation then frames the
   destination and its top pill offers to turn GPS on. `useDeviceLocation().active` tells the two
-  apart. Legal surfaces, on both clients, kept to two places. (1) The GPS screen's quiet note
-  under the description: the routing-server disclosure (Apple 5.1.2(i), before the permission
-  ask; also the iOS purpose string) ending on the privacy policy link (Apple 5.1.1(i), Play User
-  Data). (2) The ⓘ at the end of the navigation strip (`useCreditsBubble`, `@ggv/shared`): its
+  apart. Legal surfaces, on both clients, kept to two places. (1) A quiet note under Welcome's
+  Navigate button, the tap that sends the position to the routing server (`useRouting` needs a
+  destination): the routing-server disclosure (Apple 5.1.2(i), before the sharing; Play's
+  "user-initiated action" basis for declaring no sharing; iOS also says it in the location
+  purpose string) ending on the privacy policy link (Apple 5.1.1(i), Play User Data). The GPS
+  screen carries no legal text. (2) The ⓘ at the end of the navigation strip
+  (`useCreditsBubble`, `@ggv/shared`): its
   bubble opens by itself for five seconds when navigation starts with "© OpenStreetMap" and
   "Fix the map" (OSMF attribution guideline, which allows that collapse; FOSSGIS routing terms),
   and a tap reopens it with the privacy link too. The map's own attribution button is off on
