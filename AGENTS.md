@@ -201,6 +201,14 @@ interactive (GPS, caméra course-up et gestes continuent).
 
 **Le routage ne consomme aucune clé d'API**, donc aucun secret CI : les deux hôtes sont publics.
 
+Both hosts are FOSSGIS e.V. servers, bound by its usage terms
+(`fossgis.de/arbeitsgruppen/osm-server/nutzungsbedingungen/`): at most one request per second,
+no substantial commercial use, OpenStreetMap attribution plus a link to
+`openstreetmap.org/fixthemap`, an operator e-mail on the app's site and store entries, and a
+User-Agent naming the application. The native app passes its own (`OSRM_HEADERS`,
+`apps/mobile/src/App.tsx`, through `useRouting`'s `requestHeaders`); the web app passes none,
+since a custom header would trigger a CORS preflight and a browser's User-Agent is accepted.
+
 **Délai par hôte : `REQUEST_TIMEOUT_MS` (8 s).** Mesuré sur l'A16 au village, 7 requêtes : 5
 réponses entre 2,0 et 2,9 s, 2 connexions jamais répondues (coupées au délai, l'autre hôte a
 pris le relais). Avec 3 s, les 2 navigations observées avant le changement ont fini en ligne

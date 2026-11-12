@@ -35,13 +35,17 @@ interface UseRoutingReturn {
  * `enabled` gates the hook (web: the map exists; mobile: the map is ready). The renderer is
  * reached only through two callbacks: `onRouteDisplay` draws (or erases, with `null`) the line,
  * `onOffRoute` gives the user feedback (vibration), debounced here to once per 5 s.
+ * `requestHeaders` go with every OSRM request: the native app sends its own User-Agent, which
+ * the FOSSGIS routing servers' terms require; a browser's own User-Agent already satisfies them.
+ * Pass a stable object: it is an effect dependency.
  */
 export function useRouting(
   enabled: boolean,
   origin: UserLocation | null,
   destination: Destination | null,
   onRouteDisplay: (geometry: RouteGeometry | null) => void,
-  onOffRoute: () => void
+  onOffRoute: () => void,
+  requestHeaders?: Record<string, string>
 ): UseRoutingReturn {
   // Effect events: the latest callbacks without making their identity re-run the effects below.
   const displayRoute = useEffectEvent(onRouteDisplay);
@@ -161,7 +165,15 @@ export function useRouting(
       for (const host of OSRM_HOSTS) {
         if (signal.aborted) return;
         try {
-          const route = await fetchOSRM(host, originLng!, originLat!, destLng!, destLat!, signal);
+          const route = await fetchOSRM(
+            host,
+            originLng!,
+            originLat!,
+            destLng!,
+            destLat!,
+            signal,
+            requestHeaders
+          );
           if (route) {
             console.info(`Route: OSRM (${new URL(host).hostname})`);
             trace("route:osrm", { host: new URL(host).hostname });
@@ -211,7 +223,7 @@ export function useRouting(
     // generation token. The remaining aborts are the ones that mean it: a newer fetch
     // superseding this one (below), navigation stopping, and unmount.
     fetchRoute();
-  }, [hasValidParams, originLat, originLng, destLat, destLng]);
+  }, [hasValidParams, originLat, originLng, destLat, destLng, requestHeaders]);
 
   // Derive off-route status (pure computation — no state, no effect)
   const isOffRoute = (() => {

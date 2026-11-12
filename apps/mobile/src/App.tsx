@@ -65,6 +65,10 @@ const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
 const ROUTE_ARROW = require("../assets/map/route-arrow.png");
 const LOGO = require("../../web/src/assets/img/ggv.png");
 const BELL = require("../../web/src/assets/audio/arrival-bell.mp3");
+/** The FOSSGIS routing servers' terms: a User-Agent naming the app, not the HTTP library's. */
+const OSRM_HEADERS = {
+  "User-Agent": `MyGGV-GPS/${Constants.expoConfig?.version} (${Platform.OS}; +https://myggv.com/gps-support)`,
+};
 
 /** Keeps the screen on for as long as it is mounted (rendered only while navigating). */
 function NavigationKeepAwake() {
@@ -107,7 +111,8 @@ function Root({ assets }: { assets: MapAssetUrls }) {
     userLocation,
     destination,
     setRouteLine,
-    () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
+    () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning),
+    OSRM_HEADERS
   );
 
   const driver = useMemo<CameraDriver | null>(

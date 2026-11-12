@@ -166,7 +166,11 @@ export function parseManeuver(maneuver: OSRMManeuver): RouteStep | null {
  * Built on a plain AbortController rather than `AbortSignal.timeout`/`AbortSignal.any`, whose
  * support in React Native's Hermes runtime is unverified.
  */
-async function fetchJsonWithTimeout<T>(url: string, signal?: AbortSignal): Promise<T> {
+async function fetchJsonWithTimeout<T>(
+  url: string,
+  signal?: AbortSignal,
+  headers?: Record<string, string>
+): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   if (signal) {
@@ -175,7 +179,7 @@ async function fetchJsonWithTimeout<T>(url: string, signal?: AbortSignal): Promi
   }
   try {
     // The timer covers the body read too, as `AbortSignal.timeout` did.
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(url, { signal: controller.signal, headers });
     return (await res.json()) as T;
   } finally {
     clearTimeout(timer);
@@ -189,10 +193,11 @@ export async function fetchOSRM(
   originLat: number,
   destLng: number,
   destLat: number,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  headers?: Record<string, string>
 ): Promise<RouteResult | null> {
   const url = `${host}/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
-  const data = await fetchJsonWithTimeout<OSRMResponse>(url, signal);
+  const data = await fetchJsonWithTimeout<OSRMResponse>(url, signal, headers);
 
   // A route needs at least two points to be drawn or projected onto; a public router that
   // answers "Ok" without them must fall through to the next host, not reach the map.
