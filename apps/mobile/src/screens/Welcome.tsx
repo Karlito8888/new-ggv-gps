@@ -2,7 +2,7 @@ import { StyleSheet, View } from "react-native";
 import { COPY, inline, useDestinationChoice, type Destination } from "@ggv/shared";
 import { Select } from "../select/Select";
 import { theme } from "../theme";
-import { Button, Modal, Title } from "../ui";
+import { Button, Modal, OsmCredit, PrivacyLink, Title } from "../ui";
 import { villageSnapshot } from "../villageSnapshot";
 
 /** `blocks` is the live Convex list, or the bundled snapshot while it has not answered. */
@@ -57,6 +57,8 @@ export function Welcome({
           disabled={!selectedBlock || !effectiveLot}
           onPress={navigate}
         />
+        <PrivacyLink />
+        <OsmCredit />
       </Modal>
     </View>
   );

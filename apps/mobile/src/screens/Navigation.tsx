@@ -28,6 +28,8 @@ export function Navigation({
   userLocation,
   isRecalculating,
   onCancel,
+  gpsOn,
+  onEnableGps,
 }: {
   distanceRemaining: number;
   destination: Destination | null;
@@ -37,6 +39,9 @@ export function Navigation({
   userLocation: UserLocation | null;
   isRecalculating: boolean;
   onCancel: () => void;
+  /** False when the user continued without GPS: the turn slot then offers to turn it on. */
+  gpsOn: boolean;
+  onEnableGps: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const routeCoords = routeGeoJSON?.coordinates ?? null;
@@ -59,7 +64,12 @@ export function Navigation({
     <>
       <View style={styles.top} accessibilityLabel={COPY.nav.infoAria.en}>
         <View style={styles.turn}>
-          {isRecalculating ? (
+          {!gpsOn ? (
+            <Text style={styles.turnText} accessibilityRole="button" onPress={onEnableGps}>
+              {COPY.nav.noLocation.en}
+              <Text style={styles.gloss}>{`\n(${COPY.nav.noLocation.tl})`}</Text>
+            </Text>
+          ) : isRecalculating ? (
             <>
               <Text style={styles.icon}>↻</Text>
               <Text style={styles.turnText}>
@@ -84,13 +94,15 @@ export function Navigation({
             <Text style={styles.icon}>↑</Text>
           )}
         </View>
-        <Text style={styles.dist}>
-          {isRecalculating
-            ? "..."
-            : turn
-              ? formatDistance(turn.distanceToStep)
-              : formatDistance(distanceRemaining)}
-        </Text>
+        {userLocation ? (
+          <Text style={styles.dist}>
+            {isRecalculating
+              ? "..."
+              : turn
+                ? formatDistance(turn.distanceToStep)
+                : formatDistance(distanceRemaining)}
+          </Text>
+        ) : null}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={COPY.nav.cancelAria.en}
@@ -106,7 +118,7 @@ export function Navigation({
         accessibilityLabel={COPY.nav.destinationAria(destination?.name)}
       >
         <Text style={styles.destName}>📍 {destination?.name || COPY.nav.navigating.en}</Text>
-        <Text style={styles.destDist}>{formatDistance(total)}</Text>
+        {userLocation ? <Text style={styles.destDist}>{formatDistance(total)}</Text> : null}
       </View>
     </>
   );

@@ -72,7 +72,7 @@ export function useNavigationFlow(userLocation: UserLocation | null, onArrive: (
     destination,
     showArrivedModal,
     distanceRemaining,
-    grantGps: () => setNavState("welcome"),
+    showWelcome: () => setNavState("welcome"),
     selectDestination: (dest: Destination) => {
       setDestination(dest);
       setNavState("navigating");

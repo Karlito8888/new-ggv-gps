@@ -88,6 +88,14 @@ dependencies, restore them after any re-run.
   Connect rejected build 5 without it (ITMS-90683), because the library references the motion
   API even though the app never calls it. Approximate location (iOS "Precise: Off", Android
   "Approximate") is refused with a Settings button: `useDeviceLocation` returns `"approximate"`.
+  After a refusal or an approximate grant, "Continue without GPS" leads to Welcome anyway (Apple
+  5.1.2(i): the app may not require location services to be used); navigation then frames the
+  destination and its top pill offers to turn GPS on. `useDeviceLocation().active` tells the two
+  apart. Store-policy surfaces, all mobile only: the privacy policy link (GPS and Welcome
+  screens), the routing-server disclosure (GPS screen and the iOS purpose string), and the
+  OpenStreetMap credit with its "Fix the map" link on Welcome, required by the FOSSGIS routing
+  servers' terms. The map's ⓘ dialog shows only the tileset's own attribution: neither the
+  style's `attribution` nor an extra style source reached it (A16, 2026-11-12).
   `android.blockedPermissions` removes the prebuild template's `SYSTEM_ALERT_WINDOW` and storage
   permissions. Test the approximate path on a device with
   `pm revoke <pkg> android.permission.ACCESS_FINE_LOCATION` while coarse stays granted.

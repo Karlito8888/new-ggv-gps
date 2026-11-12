@@ -119,7 +119,7 @@ export default function App() {
       {/* Conditional overlays based on navState */}
       {navState === "gps-permission" ? (
         <GpsPermissionOverlay
-          onGrant={flow.grantGps}
+          onGrant={flow.showWelcome}
           triggerGeolocate={triggerGeolocate}
           isMapReady={isMapReady}
         />

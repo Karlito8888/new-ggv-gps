@@ -17,6 +17,8 @@ export type LocationStatus =
  */
 export function useDeviceLocation() {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  /** True once the watch is open: false means GPS skipped, refused or stopped. */
+  const [active, setActive] = useState(false);
   const subscription = useRef<Location.LocationSubscription | null>(null);
   const watching = useRef(false);
 
@@ -25,6 +27,7 @@ export function useDeviceLocation() {
     subscription.current?.remove();
     subscription.current = null;
     watching.current = false;
+    setActive(false);
   };
   useEffect(() => stop, []);
 
@@ -57,6 +60,7 @@ export function useDeviceLocation() {
             });
           }
         );
+        setActive(true);
       } catch {
         // The device refused the request (e.g. its location settings are unsatisfied): let the
         // user retry instead of leaving the button on "Requesting...".
@@ -67,5 +71,5 @@ export function useDeviceLocation() {
     return "granted";
   };
 
-  return { userLocation, start, stop };
+  return { userLocation, active, start, stop };
 }

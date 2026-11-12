@@ -4,16 +4,17 @@ import Constants from "expo-constants";
 import { COPY, inline } from "@ggv/shared";
 import type { LocationStatus } from "../useDeviceLocation";
 import { theme } from "../theme";
-import { Body, Button, Modal, Title } from "../ui";
+import { Body, Button, Modal, PrivacyLink, Title } from "../ui";
 
+/** `onContinue` leaves for Welcome, with the location granted or without it. */
 export function GpsPermission({
   isMapReady,
   start,
-  onGrant,
+  onContinue,
 }: {
   isMapReady: boolean;
   start: () => Promise<LocationStatus>;
-  onGrant: () => void;
+  onContinue: () => void;
 }) {
   const [status, setStatus] = useState<LocationStatus>("idle");
 
@@ -21,7 +22,7 @@ export function GpsPermission({
     setStatus("requesting");
     const result = await start();
     setStatus(result);
-    if (result === "granted") onGrant();
+    if (result === "granted") onContinue();
   };
 
   // Both statuses are fixed only in the system Settings.
@@ -39,6 +40,7 @@ export function GpsPermission({
       <Modal style={styles.modal}>
         <Title en={COPY.gps.title.en} tl={COPY.gps.title.tl} />
         <Body en={COPY.gps.description.en} tl={COPY.gps.description.tl} />
+        <Body en={COPY.gps.routing.en} tl={COPY.gps.routing.tl} />
         {status === "approximate" ? (
           <Text style={styles.error}>{inline(COPY.gps.precise)}</Text>
         ) : status === "denied" || status === "blocked" ? (
@@ -57,6 +59,11 @@ export function GpsPermission({
               : enable
           }
         />
+        {/* Apple 5.1.1(iv): an alternative for whoever refuses or keeps location approximate. */}
+        {toSettings || status === "denied" ? (
+          <Button label={inline(COPY.gps.skip)} secondary onPress={onContinue} />
+        ) : null}
+        <PrivacyLink />
         <Text style={styles.version}>v{Constants.expoConfig?.version}</Text>
       </Modal>
     </View>
@@ -72,5 +79,5 @@ const styles = StyleSheet.create({
   },
   modal: { alignSelf: "stretch" },
   error: { fontFamily: theme.font, color: theme.error, textAlign: "center" },
-  version: { fontFamily: theme.font, fontSize: 12, color: theme.gray, marginTop: 8 },
+  version: { fontFamily: theme.font, fontSize: 12, color: theme.gray },
 });

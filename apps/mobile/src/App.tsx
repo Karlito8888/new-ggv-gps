@@ -23,6 +23,7 @@ import {
   BLOCK_LABEL_LAYOUT,
   BLOCK_LABEL_PAINT,
   MAP_INITIAL_ZOOM,
+  NAV_ZOOM,
   ROUTE_ARROW_LAYOUT,
   ROUTE_LINE_LAYOUT,
   ROUTE_LINE_PAINT,
@@ -81,7 +82,12 @@ function Root({ assets }: { assets: MapAssetUrls }) {
   const cameraRef = useRef<CameraRef>(null);
   const panListeners = useRef(new Set<() => void>());
 
-  const { userLocation, start, stop: stopLocation } = useDeviceLocation();
+  const { userLocation, active: gpsOn, start, stop: stopLocation } = useDeviceLocation();
+  /** From the navigation pill, after the user first continued without GPS. */
+  const enableGps = async () => {
+    const status = await start();
+    if (status === "blocked" || status === "approximate") Linking.openSettings();
+  };
   const bell = useAudioPlayer(BELL);
 
   const flow = useNavigationFlow(userLocation, () => {
@@ -121,6 +127,11 @@ function Root({ assets }: { assets: MapAssetUrls }) {
     [mapReady]
   );
   useCourseUpCamera(driver, navigating, userLocation);
+  // Without GPS nothing follows the user: frame the destination instead.
+  useEffect(() => {
+    if (!driver || !navigating || gpsOn || !destination) return;
+    driver.jumpTo({ center: destination.coordinates, bearing: 0, pitch: 0, zoom: NAV_ZOOM });
+  }, [driver, navigating, gpsOn, destination]);
 
   const liveBlocks = useQuery(anyApi.locations.blocks) as string[] | undefined;
 
@@ -209,7 +220,7 @@ function Root({ assets }: { assets: MapAssetUrls }) {
       {navigating ? <NavigationKeepAwake /> : null}
 
       {navState === "gps-permission" ? (
-        <GpsPermission isMapReady={mapReady} start={start} onGrant={flow.grantGps} />
+        <GpsPermission isMapReady={mapReady} start={start} onContinue={flow.showWelcome} />
       ) : null}
       {navState === "welcome" ? (
         <Welcome
@@ -227,6 +238,8 @@ function Root({ assets }: { assets: MapAssetUrls }) {
           userLocation={userLocation}
           isRecalculating={isRecalculating}
           onCancel={flow.cancelNavigation}
+          gpsOn={gpsOn}
+          onEnableGps={enableGps}
         />
       ) : null}
       {navState === "exit-complete" ? <ExitComplete /> : null}

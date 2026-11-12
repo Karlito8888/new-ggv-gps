@@ -21,7 +21,7 @@ export { TILESET_FILE } from "./tileset";
 export { startTrace, trace, type TraceEvent } from "./trace";
 export { currentTurn, formatDistance, remainingAlongRoute, turnLabel } from "./turnGuidance";
 export type { Destination, UserLocation } from "./types";
-export { useCourseUpCamera, type CameraDriver } from "./useCourseUpCamera";
+export { NAV_ZOOM, useCourseUpCamera, type CameraDriver } from "./useCourseUpCamera";
 export { hasCoords, useDestinationChoice, type LotData } from "./useDestinationChoice";
 export { useNavigationFlow } from "./useNavigationFlow";
 export { useRouting } from "./useRouting";

@@ -75,7 +75,7 @@ const config: ExpoConfig = {
       "expo-location",
       {
         locationWhenInUsePermission:
-          "MyGGV GPS uses your location to guide you to your destination inside Garden Grove Village.",
+          "MyGGV GPS uses your location while the app is open to guide you inside Garden Grove Village. To draw your route, your position is sent to a public OpenStreetMap routing server.",
         locationAlwaysAndWhenInUsePermission: false,
         locationAlwaysPermission: false,
         motionUsagePermission:

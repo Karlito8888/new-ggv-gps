@@ -25,6 +25,16 @@ export const COPY = {
       tl: "Kailangan ng MyGGV GPS ang iyong lokasyon para gabayan ka sa village.",
     },
     retry: { en: "Please try again", tl: "Subukan muli" },
+    /** Store policies: say where the position goes before the system dialog asks for it. */
+    routing: {
+      en: "To draw your route, your position is sent to a public OpenStreetMap routing server.",
+      tl: "Para maiguhit ang ruta, ipinapadala ang iyong posisyon sa isang pampublikong routing server ng OpenStreetMap.",
+    },
+    skip: { en: "Continue without GPS", tl: "Magpatuloy nang walang GPS" },
+    privacy: { en: "Privacy Policy", tl: "Patakaran sa Privacy" },
+    /** Map and routing credit; names, no gloss. */
+    osm: { en: "© OpenStreetMap contributors" },
+    fixMap: { en: "Fix the map" },
     precise: {
       en: "Turn on precise location in Settings",
       tl: "I-on ang precise location sa Settings",
@@ -61,6 +71,11 @@ export const COPY = {
     recalculating: { en: "Recalculating...", tl: "Kinakalkula muli..." },
     headToward: { en: "Head toward destination", tl: "Tumungo sa destinasyon" },
     navigating: { en: "Navigating..." },
+    /** Shown instead of the turn when the user chose to continue without location. */
+    noLocation: {
+      en: "Location is off. Tap to enable GPS",
+      tl: "Naka-off ang lokasyon. I-tap para sa GPS",
+    },
   },
   arrived: {
     aria: { en: "You have arrived at your destination" },

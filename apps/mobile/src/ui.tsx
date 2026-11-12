@@ -1,5 +1,15 @@
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import {
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
+import { COPY, inline } from "@ggv/shared";
+import { OSM_COPYRIGHT_URL, OSM_FIX_URL, PRIVACY_URL } from "./config";
 import { theme } from "./theme";
 
 /** A white rounded card, the shape of every web `.modal`. */
@@ -54,6 +64,34 @@ export function Button({
   );
 }
 
+/** Both stores require the privacy policy to be reachable from inside the app. */
+export function PrivacyLink() {
+  return (
+    <Pressable accessibilityRole="link" onPress={() => Linking.openURL(PRIVACY_URL)} hitSlop={8}>
+      <Text style={styles.link}>{inline(COPY.gps.privacy)}</Text>
+    </Pressable>
+  );
+}
+
+/** OpenStreetMap credit and "fix the map": the FOSSGIS routing servers' usage terms. */
+export function OsmCredit() {
+  return (
+    <View style={styles.credit}>
+      <Pressable
+        accessibilityRole="link"
+        onPress={() => Linking.openURL(OSM_COPYRIGHT_URL)}
+        hitSlop={8}
+      >
+        <Text style={[styles.creditText, styles.underline]}>{COPY.gps.osm.en}</Text>
+      </Pressable>
+      <Text style={styles.creditText}>·</Text>
+      <Pressable accessibilityRole="link" onPress={() => Linking.openURL(OSM_FIX_URL)} hitSlop={8}>
+        <Text style={[styles.creditText, styles.underline]}>{COPY.gps.fixMap.en}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   modal: {
     backgroundColor: theme.surface,
@@ -89,4 +127,14 @@ const styles = StyleSheet.create({
   buttonDisabled: { opacity: 0.5 },
   buttonText: { fontFamily: theme.font, fontSize: 17, color: theme.onCta, textAlign: "center" },
   buttonTextSecondary: { color: theme.primaryText },
+  link: {
+    fontFamily: theme.font,
+    fontSize: 13,
+    color: theme.primaryText,
+    textDecorationLine: "underline",
+    marginTop: 8,
+  },
+  credit: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 6 },
+  creditText: { fontFamily: theme.font, fontSize: 12, color: theme.gray },
+  underline: { textDecorationLine: "underline" },
 });
