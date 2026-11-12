@@ -24,7 +24,11 @@ export function Arrived({
         />
       </Modal>
       <Modal style={styles.actions}>
-        <Button icon="navigate" label={inline(COPY.arrived.again)} onPress={onNavigateAgain} />
+        <Button
+          icon="navigate"
+          label={`${COPY.arrived.again.en}\n(${COPY.arrived.again.tl})`}
+          onPress={onNavigateAgain}
+        />
         <Button icon="exit" secondary label={inline(COPY.arrived.exit)} onPress={onExitVillage} />
       </Modal>
     </View>

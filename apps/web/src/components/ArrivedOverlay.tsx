@@ -41,7 +41,10 @@ export function ArrivedOverlay({
       <div className="modal arrived-bottom-modal">
         <button className="overlay-btn-primary" onClick={onNavigateAgain}>
           <Icon name="navigate" className="overlay-btn-icon" />
-          {inline(COPY.arrived.again)}
+          <span>
+            {COPY.arrived.again.en}
+            <br />({COPY.arrived.again.tl})
+          </span>
         </button>
 
         <button className="overlay-btn-secondary" onClick={onExitVillage}>
