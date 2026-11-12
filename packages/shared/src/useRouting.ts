@@ -206,7 +206,7 @@ export function useRouting(
               [destLng!, destLat!],
             ],
           },
-          steps: [{ type: "straight", icon: "↑" }],
+          steps: [{ type: "straight", icon: "straight" }],
         },
         "direct"
       );

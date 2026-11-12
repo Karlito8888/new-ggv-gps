@@ -6,6 +6,7 @@
  */
 export { blockLabelsGeoJSON } from "./blocks";
 export { COPY, inline } from "./copy";
+export { ICONS, type IconName } from "./icons";
 export {
   ARRIVAL_ZONE_PAINT,
   BLOCK_LABEL_LAYOUT,

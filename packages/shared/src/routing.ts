@@ -3,6 +3,7 @@
  * The map-drawing half lives with each renderer (web: routeLayers.ts).
  */
 
+import type { IconName } from "./icons";
 import type { OSRMResponse, OSRMManeuver } from "./osrm-types";
 
 // ---------------------------------------------------------------------------
@@ -11,7 +12,7 @@ import type { OSRMResponse, OSRMManeuver } from "./osrm-types";
 
 export interface RouteStep {
   type: string;
-  icon: string;
+  icon: IconName;
   modifier?: string | null;
   isSignificant?: boolean;
   location?: [number, number];
@@ -67,15 +68,15 @@ export const TRIM_MIN_MOVEMENT_M = 3;
 // Turn icon mapping
 // ---------------------------------------------------------------------------
 
-export const TURN_ICONS: Record<string, string> = {
-  uturn: "↩",
-  "sharp left": "↰",
-  left: "←",
-  "slight left": "↖",
-  straight: "↑",
-  "slight right": "↗",
-  right: "→",
-  "sharp right": "↱",
+export const TURN_ICONS: Record<string, IconName> = {
+  uturn: "uturn",
+  "sharp left": "sharpLeft",
+  left: "left",
+  "slight left": "slightLeft",
+  straight: "straight",
+  "slight right": "slightRight",
+  right: "right",
+  "sharp right": "sharpRight",
 };
 
 /**
@@ -114,7 +115,7 @@ export function parseManeuver(maneuver: OSRMManeuver): RouteStep | null {
   if (type === "arrive") {
     return {
       type: "arrive",
-      icon: "📍",
+      icon: "pin",
       modifier: null,
       isSignificant: true,
     };
@@ -124,7 +125,7 @@ export function parseManeuver(maneuver: OSRMManeuver): RouteStep | null {
   if (type === "roundabout" || type === "rotary") {
     return {
       type: "roundabout",
-      icon: "⟳",
+      icon: "roundabout",
       modifier,
       isSignificant: true,
     };
@@ -138,7 +139,7 @@ export function parseManeuver(maneuver: OSRMManeuver): RouteStep | null {
     type === "continue" ||
     type === "new name"
   ) {
-    const icon = (modifier && TURN_ICONS[modifier]) || "↑";
+    const icon = (modifier && TURN_ICONS[modifier]) || "straight";
     const isSignificant = !!modifier && modifier !== "straight";
     return {
       type: modifier || "straight",
@@ -151,7 +152,7 @@ export function parseManeuver(maneuver: OSRMManeuver): RouteStep | null {
   // Default: straight
   return {
     type: "straight",
-    icon: "↑",
+    icon: "straight",
     modifier: null,
     isSignificant: false,
   };

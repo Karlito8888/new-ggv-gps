@@ -14,7 +14,7 @@ describe("parseManeuver", () => {
     const result = parseManeuver(maneuver("arrive"));
     expect(result).toEqual({
       type: "arrive",
-      icon: "📍",
+      icon: "pin",
       modifier: null,
       isSignificant: true,
     });
@@ -24,7 +24,7 @@ describe("parseManeuver", () => {
     const result = parseManeuver(maneuver("roundabout"));
     expect(result).not.toBeNull();
     expect(result!.type).toBe("roundabout");
-    expect(result!.icon).toBe("⟳");
+    expect(result!.icon).toBe("roundabout");
     expect(result!.isSignificant).toBe(true);
   });
 
@@ -38,38 +38,38 @@ describe("parseManeuver", () => {
     const result = parseManeuver(maneuver("turn", "left"));
     expect(result).not.toBeNull();
     expect(result!.type).toBe("left");
-    expect(result!.icon).toBe("←");
+    expect(result!.icon).toBe("left");
     expect(result!.isSignificant).toBe(true);
   });
 
   test("parses right turn", () => {
     const result = parseManeuver(maneuver("turn", "right"));
     expect(result).not.toBeNull();
-    expect(result!.icon).toBe("→");
+    expect(result!.icon).toBe("right");
   });
 
   test("parses slight right", () => {
     const result = parseManeuver(maneuver("turn", "slight right"));
     expect(result).not.toBeNull();
-    expect(result!.icon).toBe("↗");
+    expect(result!.icon).toBe("slightRight");
   });
 
   test("parses sharp left", () => {
     const result = parseManeuver(maneuver("turn", "sharp left"));
     expect(result).not.toBeNull();
-    expect(result!.icon).toBe("↰");
+    expect(result!.icon).toBe("sharpLeft");
   });
 
   test("parses uturn", () => {
     const result = parseManeuver(maneuver("turn", "uturn"));
     expect(result).not.toBeNull();
-    expect(result!.icon).toBe("↩");
+    expect(result!.icon).toBe("uturn");
   });
 
   test("straight modifier is not significant", () => {
     const result = parseManeuver(maneuver("continue", "straight"));
     expect(result).not.toBeNull();
-    expect(result!.icon).toBe("↑");
+    expect(result!.icon).toBe("straight");
     expect(result!.isSignificant).toBe(false);
   });
 
@@ -77,14 +77,14 @@ describe("parseManeuver", () => {
     const result = parseManeuver(maneuver("turn"));
     expect(result).not.toBeNull();
     expect(result!.type).toBe("straight");
-    expect(result!.icon).toBe("↑");
+    expect(result!.icon).toBe("straight");
   });
 
   test("parses 'end of road' with modifier", () => {
     const result = parseManeuver(maneuver("end of road", "right"));
     expect(result).not.toBeNull();
     expect(result!.type).toBe("right");
-    expect(result!.icon).toBe("→");
+    expect(result!.icon).toBe("right");
   });
 
   test("parses 'fork' with modifier", () => {
@@ -103,7 +103,7 @@ describe("parseManeuver", () => {
     const result = parseManeuver(maneuver("notification"));
     expect(result).not.toBeNull();
     expect(result!.type).toBe("straight");
-    expect(result!.icon).toBe("↑");
+    expect(result!.icon).toBe("straight");
     expect(result!.isSignificant).toBe(false);
   });
 });
