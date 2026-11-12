@@ -1,6 +1,6 @@
 import { StyleSheet, View } from "react-native";
 import { COPY, inline, type Destination } from "@ggv/shared";
-import { Body, Button, Modal, Title } from "../ui";
+import { Body, Button, IconDisc, Modal, Title } from "../ui";
 
 /** Floats over the live map, as on web: the map stays interactive underneath. */
 export function Arrived({
@@ -16,15 +16,16 @@ export function Arrived({
   return (
     <View style={styles.overlay} pointerEvents="box-none">
       <Modal>
+        <IconDisc name="arrived" gradient="success" />
         <Title en={COPY.arrived.title.en} tl={COPY.arrived.title.tl} />
         <Body
           en={`${COPY.arrived.reached.en} ${name || COPY.arrived.yourDestination.en}.`}
           tl={`${COPY.arrived.reached.tl} ${name || COPY.arrived.yourDestination.tl}.`}
         />
       </Modal>
-      <Modal>
-        <Button label={inline(COPY.arrived.again)} onPress={onNavigateAgain} />
-        <Button secondary label={inline(COPY.arrived.exit)} onPress={onExitVillage} />
+      <Modal style={styles.actions}>
+        <Button icon="navigate" label={inline(COPY.arrived.again)} onPress={onNavigateAgain} />
+        <Button icon="exit" secondary label={inline(COPY.arrived.exit)} onPress={onExitVillage} />
       </Modal>
     </View>
   );
@@ -38,4 +39,6 @@ const styles = StyleSheet.create({
     paddingTop: 80,
     paddingBottom: 40,
   },
+  // `.arrived-bottom-modal`: the buttons sit closer to the card edge.
+  actions: { padding: 16, paddingTop: 8 },
 });

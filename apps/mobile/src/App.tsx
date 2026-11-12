@@ -51,7 +51,7 @@ import { Welcome } from "./screens/Welcome";
 import { Navigation } from "./screens/Navigation";
 import { Arrived } from "./screens/Arrived";
 import { ExitComplete } from "./screens/ExitComplete";
-import { Body, Button, Modal, Title } from "./ui";
+import { Body, Button, IconDisc, Modal, Title } from "./ui";
 import { theme } from "./theme";
 
 // Events are only sent from release builds; `Sentry.wrap` below adds the touch breadcrumbs.
@@ -293,6 +293,7 @@ function ErrorFallback({ onRetry }: { onRetry: () => void }) {
   return (
     <View style={styles.errorScreen}>
       <Modal>
+        <IconDisc name="alert" gradient="error" />
         <Title en={COPY.error.title.en} tl={COPY.error.title.tl} />
         <Body en={COPY.error.unexpected.en} />
         <Body en={COPY.error.reloadPrompt.en} tl={COPY.error.reloadPrompt.tl} />
@@ -307,6 +308,7 @@ function UpdateRequired() {
   return (
     <View style={styles.errorScreen}>
       <Modal>
+        <IconDisc name="alert" gradient="exit" />
         <Title en={COPY.forceUpdate.title.en} tl={COPY.forceUpdate.title.tl} />
         <Body en={COPY.forceUpdate.body.en} tl={COPY.forceUpdate.body.tl} />
         <Button
@@ -330,7 +332,7 @@ export default Sentry.wrap(App);
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  errorScreen: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: theme.overlay },
+  errorScreen: { flex: 1, justifyContent: "center", padding: 16, backgroundColor: theme.overlay },
   logo: {
     position: "absolute",
     top: theme.logoTop,

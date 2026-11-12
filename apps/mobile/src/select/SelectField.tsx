@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
+import { Icon } from "../Icon";
 import { theme } from "../theme";
 
 export type SelectOption = { label: string; value: string };
@@ -35,7 +36,7 @@ export function SelectField({
       <Text style={styles.label} numberOfLines={1}>
         {label}
       </Text>
-      <View style={styles.chevron} />
+      <Icon name="chevron" size={16} color={theme.text} />
     </Pressable>
   );
 }
@@ -43,27 +44,18 @@ export function SelectField({
 const styles = StyleSheet.create({
   field: {
     width: "100%",
+    minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 14,
+    gap: 12,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: "rgba(18, 18, 18, 0.15)",
-    borderRadius: 12,
+    borderRadius: theme.radiusField,
     backgroundColor: theme.surface,
   },
   disabled: { opacity: 0.6 },
-  label: { flexShrink: 1, fontFamily: theme.font, fontSize: 16, color: theme.text },
-  // The web chevron is a 16 px stroked polyline; two borders of a rotated square draw the same.
-  chevron: {
-    width: 9,
-    height: 9,
-    marginTop: -5,
-    marginLeft: 12,
-    borderRightWidth: 2,
-    borderBottomWidth: 2,
-    borderColor: theme.text,
-    transform: [{ rotate: "45deg" }],
-  },
+  label: { flexShrink: 1, fontSize: 16, color: theme.text },
 });

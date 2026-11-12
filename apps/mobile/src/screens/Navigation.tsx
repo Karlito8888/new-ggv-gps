@@ -9,12 +9,15 @@ import {
   remainingAlongRoute,
   turnLabel,
   type Destination,
+  type IconName,
   type RouteGeometry,
   type RouteSourceType,
   type RouteStep,
   type UserLocation,
 } from "@ggv/shared";
+import { Icon } from "../Icon";
 import { theme } from "../theme";
+import { Spin } from "../ui";
 
 /** The vibration fires once per turn, this close to it. */
 const TURN_ALERT_M = 30;
@@ -60,56 +63,49 @@ export function Navigation({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
   }, [turnKey, distanceToTurn]);
 
+  // The web turn card, line for line: arrow tile, distance to the turn, instruction if any.
+  const card: { icon: IconName; distance: string; text?: { en: string; tl: string } } = !gpsOn
+    ? { icon: "gps", distance: "", text: COPY.nav.noLocation }
+    : isRecalculating
+      ? { icon: "spinner", distance: "…", text: COPY.nav.recalculating }
+      : turn
+        ? { icon: turn.icon, distance: formatDistance(turn.distanceToStep), text: label }
+        : routeSource === "direct"
+          ? {
+              icon: "navigate",
+              distance: formatDistance(distanceRemaining),
+              text: COPY.nav.headToward,
+            }
+          : { icon: "straight", distance: formatDistance(distanceRemaining) };
+  const arrow = <Icon name={card.icon} size={28} color={theme.onCta} />;
+
   return (
     <>
       <View style={styles.top} accessibilityLabel={COPY.nav.infoAria.en}>
-        <View style={styles.turn}>
-          {!gpsOn ? (
-            <Text style={styles.turnText} accessibilityRole="button" onPress={onEnableGps}>
-              {COPY.nav.noLocation.en}
-              <Text style={styles.gloss}>{`\n(${COPY.nav.noLocation.tl})`}</Text>
-            </Text>
-          ) : isRecalculating ? (
-            <>
-              <Text style={styles.icon}>↻</Text>
-              <Text style={styles.turnText}>
-                {COPY.nav.recalculating.en}
-                <Text style={styles.gloss}>{`\n(${COPY.nav.recalculating.tl})`}</Text>
+        <Pressable
+          style={styles.turn}
+          disabled={gpsOn}
+          onPress={onEnableGps}
+          accessibilityRole={gpsOn ? undefined : "button"}
+        >
+          <View style={styles.tile}>{isRecalculating ? <Spin>{arrow}</Spin> : arrow}</View>
+          <View style={styles.turnBody}>
+            {userLocation ? <Text style={styles.dist}>{card.distance}</Text> : null}
+            {card.text ? (
+              <Text style={styles.turnText} numberOfLines={gpsOn ? 1 : undefined}>
+                {card.text.en}
+                <Text style={styles.gloss}> ({card.text.tl})</Text>
               </Text>
-            </>
-          ) : turn ? (
-            <>
-              <Text style={styles.icon}>{turn.icon}</Text>
-              <Text style={styles.turnText}>
-                {label.en}
-                <Text style={styles.gloss}>{`\n(${label.tl})`}</Text>
-              </Text>
-            </>
-          ) : routeSource === "direct" ? (
-            <Text style={styles.turnText}>
-              {COPY.nav.headToward.en}
-              <Text style={styles.gloss}>{`\n(${COPY.nav.headToward.tl})`}</Text>
-            </Text>
-          ) : (
-            <Text style={styles.icon}>↑</Text>
-          )}
-        </View>
-        {userLocation ? (
-          <Text style={styles.dist}>
-            {isRecalculating
-              ? "..."
-              : turn
-                ? formatDistance(turn.distanceToStep)
-                : formatDistance(distanceRemaining)}
-          </Text>
-        ) : null}
+            ) : null}
+          </View>
+        </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={COPY.nav.cancelAria.en}
           onPress={onCancel}
-          style={styles.cancel}
+          style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}
         >
-          <Text style={styles.cancelText}>✕</Text>
+          <Icon name="close" size={20} color={theme.text} />
         </Pressable>
       </View>
 
@@ -117,7 +113,10 @@ export function Navigation({
         style={[styles.bottom, { bottom: insets.bottom + 16 }]}
         accessibilityLabel={COPY.nav.destinationAria(destination?.name)}
       >
-        <Text style={styles.destName}>📍 {destination?.name || COPY.nav.navigating.en}</Text>
+        <Icon name="pin" size={20} color={theme.primaryText} />
+        <Text style={styles.destName} numberOfLines={1}>
+          {destination?.name || COPY.nav.navigating.en}
+        </Text>
         {userLocation ? <Text style={styles.destDist}>{formatDistance(total)}</Text> : null}
       </View>
     </>
@@ -126,35 +125,42 @@ export function Navigation({
 
 const pill = {
   position: "absolute" as const,
-  left: 12,
-  right: 12,
+  left: 16,
+  right: 16,
   flexDirection: "row" as const,
   alignItems: "center" as const,
   backgroundColor: theme.glass,
-  borderRadius: theme.radiusPill,
-  paddingVertical: 10,
-  paddingHorizontal: 16,
+  boxShadow: theme.shadow.pill,
+  padding: 12,
   gap: 12,
 };
 
 const styles = StyleSheet.create({
   // Below the logo, with a small margin.
-  top: { ...pill, top: theme.logoTop + theme.logoHeight + 8, justifyContent: "space-between" },
-  turn: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 },
-  icon: { fontSize: 30, color: theme.primaryText },
-  turnText: { flexShrink: 1, fontFamily: theme.font, fontSize: 16, color: theme.text },
-  gloss: { fontSize: 12, color: theme.primaryText },
-  dist: { fontFamily: theme.font, fontSize: 18, color: theme.text },
+  top: { ...pill, top: theme.logoTop + theme.logoHeight + 8, borderRadius: theme.radiusCard },
+  turn: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
+  tile: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundImage: theme.gradient.cta,
+  },
+  turnBody: { flex: 1 },
+  dist: { fontFamily: theme.font, fontSize: 24, lineHeight: 27, color: theme.primaryText },
+  turnText: { fontSize: 15, fontWeight: "600", color: theme.text },
+  gloss: { fontSize: 13, fontWeight: "400", color: theme.primaryText },
   cancel: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.textTint,
     alignItems: "center",
     justifyContent: "center",
   },
-  cancelText: { fontSize: 18, color: theme.text },
-  bottom: { ...pill, justifyContent: "space-between" },
-  destName: { flex: 1, fontFamily: theme.font, fontSize: 16, color: theme.text },
+  pressed: { transform: [{ scale: 0.97 }] },
+  bottom: { ...pill, paddingHorizontal: 16, borderRadius: theme.radiusPill },
+  destName: { flex: 1, fontSize: 15, fontWeight: "600", color: theme.text },
   destDist: { fontFamily: theme.font, fontSize: 18, color: theme.primaryText },
 });

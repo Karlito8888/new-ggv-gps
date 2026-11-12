@@ -1,12 +1,13 @@
 import { StyleSheet, View } from "react-native";
 import { COPY } from "@ggv/shared";
 import { theme } from "../theme";
-import { Body, Modal, Title } from "../ui";
+import { Body, IconDisc, Modal, Title } from "../ui";
 
 export function ExitComplete() {
   return (
     <View style={styles.overlay}>
       <Modal>
+        <IconDisc name="car" gradient="exit" />
         <Title en={COPY.exit.title.en} tl={COPY.exit.title.tl} />
         <Body
           en={`${COPY.exit.exited.en}\n${COPY.exit.thanks.en}`}
@@ -22,6 +23,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     backgroundColor: theme.overlay,
     justifyContent: "center",
-    padding: 24,
+    padding: 16,
   },
 });

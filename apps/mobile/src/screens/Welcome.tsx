@@ -2,7 +2,7 @@ import { StyleSheet, View } from "react-native";
 import { COPY, inline, useDestinationChoice, type Destination } from "@ggv/shared";
 import { Select } from "../select/Select";
 import { theme } from "../theme";
-import { Button, Modal, OsmCredit, PrivacyLink, Title } from "../ui";
+import { Button, IconDisc, Modal, OsmCredit, PrivacyLink, Title } from "../ui";
 import { villageSnapshot } from "../villageSnapshot";
 
 /** `blocks` is the live Convex list, or the bundled snapshot while it has not answered. */
@@ -28,9 +28,10 @@ export function Welcome({
   return (
     <View style={styles.overlay}>
       <Modal style={styles.modal}>
+        <IconDisc name="pin" />
         <Title en={COPY.welcome.title.en} tl={COPY.welcome.title.tl} />
 
-        <View style={styles.selector}>
+        <View style={[styles.selector, styles.firstSelector]}>
           <Select
             value={selectedBlock}
             placeholder={inline(COPY.welcome.selectBlock)}
@@ -53,6 +54,7 @@ export function Welcome({
         ) : null}
 
         <Button
+          icon="navigate"
           label={inline(COPY.welcome.navigate)}
           disabled={!selectedBlock || !effectiveLot}
           onPress={navigate}
@@ -72,6 +74,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   modal: { alignSelf: "stretch" },
-  // `.welcome-block-selector { margin-bottom: var(--ggv-space-lg) }`
-  selector: { alignSelf: "stretch", marginBottom: 24 },
+  // `.welcome-block-selector`: 16 above the first field, 8 between fields (with the card's gap).
+  selector: { alignSelf: "stretch" },
+  firstSelector: { marginTop: 8 },
 });

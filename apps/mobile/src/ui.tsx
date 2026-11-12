@@ -1,5 +1,7 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
+  Animated,
+  Easing,
   Linking,
   Pressable,
   StyleSheet,
@@ -8,22 +10,74 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { COPY, inline } from "@ggv/shared";
+import { COPY, inline, type IconName } from "@ggv/shared";
 import { OSM_COPYRIGHT_URL, OSM_FIX_URL, PRIVACY_URL } from "./config";
+import { Icon } from "./Icon";
 import { theme } from "./theme";
 
-/** A white rounded card, the shape of every web `.modal`. */
+/** The card of every overlay, the web `.modal`. */
 export function Modal({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.modal, style]}>{children}</View>;
+}
+
+/** A 0 → 1 value that repeats for as long as the component is mounted. */
+function useLoop(duration: number) {
+  const [value] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(value, {
+        toValue: 1,
+        duration,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [value, duration]);
+  return value;
+}
+
+/** Turns its child continuously: the spinner of the web `.spin`. */
+export function Spin({ children }: { children: ReactNode }) {
+  const t = useLoop(800);
+  const rotate = t.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
+  return <Animated.View style={{ transform: [{ rotate }] }}>{children}</Animated.View>;
+}
+
+/** The dashed ring of the web `.is-searching`: "looking for your position". */
+function SearchRing() {
+  const t = useLoop(1600);
+  const scale = t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.08, 1] });
+  const opacity = t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.35, 0.7, 0.35] });
+  return <Animated.View style={[styles.ring, { opacity, transform: [{ scale }] }]} />;
+}
+
+/** The gradient disc at the top of a card, the web `.overlay-icon-wrapper`. */
+export function IconDisc({
+  name,
+  gradient = "brand",
+  searching,
+}: {
+  name: IconName;
+  gradient?: keyof typeof theme.gradient;
+  searching?: boolean;
+}) {
+  return (
+    <View style={[styles.disc, { backgroundImage: theme.gradient[gradient] }]}>
+      {searching ? <SearchRing /> : null}
+      <Icon name={name} size={36} color="#ffffff" />
+    </View>
+  );
 }
 
 /** A heading with its Tagalog gloss underneath. */
 export function Title({ en, tl }: { en: string; tl?: string }) {
   return (
-    <>
+    <View>
       <Text style={styles.title}>{en}</Text>
       {tl ? <Text style={styles.titleGloss}>({tl})</Text> : null}
-    </>
+    </View>
   );
 }
 
@@ -42,23 +96,28 @@ export function Button({
   onPress,
   disabled,
   secondary,
+  icon,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   secondary?: boolean;
+  icon?: IconName;
 }) {
+  const color = secondary ? theme.text : theme.onCta;
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
       disabled={disabled}
-      style={[
+      style={({ pressed }) => [
         styles.button,
         secondary ? styles.buttonSecondary : styles.buttonPrimary,
         disabled && styles.buttonDisabled,
+        pressed && styles.pressed,
       ]}
     >
+      {icon ? <Icon name={icon} size={20} color={color} /> : null}
       <Text style={[styles.buttonText, secondary && styles.buttonTextSecondary]}>{label}</Text>
     </Pressable>
   );
@@ -95,46 +154,88 @@ export function OsmCredit() {
 const styles = StyleSheet.create({
   modal: {
     backgroundColor: theme.surface,
-    borderRadius: theme.radiusModal,
-    padding: 24,
+    borderRadius: theme.radiusCard,
+    paddingTop: 32,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
     alignItems: "center",
     gap: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
+    boxShadow: theme.shadow.card,
   },
-  title: { fontFamily: theme.font, fontSize: 24, color: theme.text, textAlign: "center" },
-  titleGloss: {
-    fontFamily: theme.font,
-    fontSize: 14,
-    color: theme.gray,
-    textAlign: "center",
-  },
-  body: { fontFamily: theme.font, fontSize: 15, color: theme.text, textAlign: "center" },
-  bodyGloss: { color: theme.primaryText },
-  button: {
-    minHeight: 56,
-    borderRadius: theme.radiusModal,
-    paddingHorizontal: 20,
-    alignSelf: "stretch",
+  disc: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 8,
+    boxShadow: theme.shadow.disc,
+  },
+  ring: {
+    position: "absolute",
+    top: -8,
+    left: -8,
+    right: -8,
+    bottom: -8,
+    borderRadius: 44,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: "#50aa61",
+  },
+  title: {
+    fontFamily: theme.font,
+    fontSize: 26,
+    lineHeight: 29,
+    letterSpacing: -0.26,
+    color: theme.text,
+    textAlign: "center",
+  },
+  titleGloss: {
+    marginTop: 4,
+    fontFamily: theme.font,
+    fontSize: 16,
+    color: theme.primaryText,
+    textAlign: "center",
+  },
+  body: {
+    marginTop: 8,
+    fontSize: 16,
+    lineHeight: 24,
+    color: theme.textMuted,
+    textAlign: "center",
+  },
+  bodyGloss: { fontSize: 15, color: theme.primaryText },
+  button: {
+    minHeight: 56,
+    borderRadius: theme.radiusPill,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    alignSelf: "stretch",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
     marginTop: 8,
   },
-  buttonPrimary: { backgroundColor: theme.cta },
-  buttonSecondary: { backgroundColor: "#fff", borderWidth: 2, borderColor: theme.cta },
-  buttonDisabled: { opacity: 0.5 },
-  buttonText: { fontFamily: theme.font, fontSize: 17, color: theme.onCta, textAlign: "center" },
-  buttonTextSecondary: { color: theme.primaryText },
-  link: {
+  buttonPrimary: { backgroundImage: theme.gradient.cta, boxShadow: theme.shadow.button },
+  buttonSecondary: { minHeight: 44, backgroundColor: theme.textTint },
+  buttonDisabled: { opacity: 0.6 },
+  pressed: { transform: [{ scale: 0.97 }] },
+  buttonText: {
+    flexShrink: 1,
     fontFamily: theme.font,
+    fontSize: 18,
+    color: theme.onCta,
+    textAlign: "center",
+  },
+  buttonTextSecondary: { fontSize: 16, color: theme.text },
+  link: {
     fontSize: 13,
     color: theme.primaryText,
     textDecorationLine: "underline",
     marginTop: 8,
   },
   credit: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 6 },
-  creditText: { fontFamily: theme.font, fontSize: 12, color: theme.gray },
+  creditText: { fontSize: 12, color: theme.gray },
   underline: { textDecorationLine: "underline" },
 });

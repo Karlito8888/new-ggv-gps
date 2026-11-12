@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Linking, StyleSheet, Text, View } from "react-native";
+import { Linking, ScrollView, StyleSheet, Text } from "react-native";
 import Constants from "expo-constants";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COPY, inline } from "@ggv/shared";
 import type { LocationStatus } from "../useDeviceLocation";
 import { theme } from "../theme";
-import { Body, Button, Modal, PrivacyLink, Title } from "../ui";
+import { Body, Button, IconDisc, Modal, PrivacyLink, Title } from "../ui";
 
 /** `onContinue` leaves for Welcome, with the location granted or without it. */
 export function GpsPermission({
@@ -17,6 +18,7 @@ export function GpsPermission({
   onContinue: () => void;
 }) {
   const [status, setStatus] = useState<LocationStatus>("idle");
+  const insets = useSafeAreaInsets();
 
   const enable = async () => {
     setStatus("requesting");
@@ -36,8 +38,14 @@ export function GpsPermission({
         : inline(COPY.gps.enable);
 
   return (
-    <View style={styles.overlay}>
+    // The longest card (store disclosures, refusal buttons): it stays below the logo and scrolls
+    // on a short screen instead of running off it.
+    <ScrollView
+      style={styles.overlay}
+      contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 16 }]}
+    >
       <Modal style={styles.modal}>
+        <IconDisc name="gps" searching={status === "requesting"} />
         <Title en={COPY.gps.title.en} tl={COPY.gps.title.tl} />
         <Body en={COPY.gps.description.en} tl={COPY.gps.description.tl} />
         <Body en={COPY.gps.routing.en} tl={COPY.gps.routing.tl} />
@@ -66,18 +74,19 @@ export function GpsPermission({
         <PrivacyLink />
         <Text style={styles.version}>v{Constants.expoConfig?.version}</Text>
       </Modal>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: theme.overlay,
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: theme.overlay },
+  content: {
+    flexGrow: 1,
     justifyContent: "center",
-    padding: 24,
+    paddingTop: theme.logoTop + theme.logoHeight + 8,
+    paddingHorizontal: 16,
   },
   modal: { alignSelf: "stretch" },
-  error: { fontFamily: theme.font, color: theme.error, textAlign: "center" },
-  version: { fontFamily: theme.font, fontSize: 12, color: theme.gray },
+  error: { marginTop: 8, fontSize: 14, color: theme.text, textAlign: "center" },
+  version: { fontSize: 12, color: theme.gray },
 });
