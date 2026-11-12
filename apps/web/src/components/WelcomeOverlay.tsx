@@ -1,4 +1,11 @@
-import { COPY, inline, PRIVACY_URL, useDestinationChoice, type Destination } from "@ggv/shared";
+import {
+  COPY,
+  inline,
+  OSM_COPYRIGHT_URL,
+  PRIVACY_URL,
+  useDestinationChoice,
+  type Destination,
+} from "@ggv/shared";
 import { Icon } from "./Icon";
 
 interface WelcomeOverlayProps {
@@ -121,6 +128,11 @@ export function WelcomeOverlay({
           </a>
         </p>
       </div>
+
+      {/* The map shows dimmed behind the card: its credit, in the corner (OSMF guideline). */}
+      <a className="map-credit" href={OSM_COPYRIGHT_URL} target="_blank" rel="noopener noreferrer">
+        {COPY.credits.osm.en}
+      </a>
     </div>
   );
 }

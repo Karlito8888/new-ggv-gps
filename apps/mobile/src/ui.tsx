@@ -8,6 +8,7 @@ import {
   Text,
   View,
   type StyleProp,
+  type TextStyle,
   type ViewStyle,
 } from "react-native";
 import type { IconName } from "@ggv/shared";
@@ -123,9 +124,13 @@ export function Button({
 }
 
 /** An inline link: nest it in a `Text` so it flows with the sentence around it. */
-export function Link({ label, url }: { label: string; url: string }) {
+export function Link({ label, url, style }: { label: string; url: string; style?: TextStyle }) {
   return (
-    <Text accessibilityRole="link" style={styles.link} onPress={() => Linking.openURL(url)}>
+    <Text
+      accessibilityRole="link"
+      style={[styles.link, style]}
+      onPress={() => Linking.openURL(url)}
+    >
       {label}
     </Text>
   );

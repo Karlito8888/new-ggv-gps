@@ -1,5 +1,13 @@
 import { StyleSheet, Text, View } from "react-native";
-import { COPY, inline, PRIVACY_URL, useDestinationChoice, type Destination } from "@ggv/shared";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  COPY,
+  inline,
+  OSM_COPYRIGHT_URL,
+  PRIVACY_URL,
+  useDestinationChoice,
+  type Destination,
+} from "@ggv/shared";
 import { Select } from "../select/Select";
 import { theme } from "../theme";
 import { Button, IconDisc, Link, Modal, Title } from "../ui";
@@ -16,6 +24,7 @@ export function Welcome({
   // The snapshot always answers, so there is no offline message here.
   const { selectedBlock, setBlock, effectiveLot, setLot, lotList, isLoadingLots, navigate } =
     useDestinationChoice(onSelectDestination, villageSnapshot.lotsByBlock);
+  const insets = useSafeAreaInsets();
 
   // Same two selects as the web WelcomeOverlay: the lot select only exists once a block is
   // chosen, and its placeholder text and disabled conditions match the web line for line.
@@ -66,6 +75,11 @@ export function Welcome({
           <Link label={inline(COPY.credits.privacy)} url={PRIVACY_URL} />
         </Text>
       </Modal>
+
+      {/* The map shows dimmed behind the card: its credit, in the corner (OSMF guideline). */}
+      <Text style={[styles.mapCredit, { bottom: insets.bottom + 16 }]}>
+        <Link label={COPY.credits.osm.en} url={OSM_COPYRIGHT_URL} style={styles.mapCreditLink} />
+      </Text>
     </View>
   );
 }
@@ -84,4 +98,7 @@ const styles = StyleSheet.create({
   // `.route-note`
   note: { marginTop: 8, fontSize: 13, lineHeight: 19, color: theme.textMuted, textAlign: "center" },
   gloss: { color: theme.primaryText },
+  // `.map-credit`: white at 90 % over the dimmed map (5.10:1 measured on the web backdrop).
+  mapCredit: { position: "absolute", right: 16, fontSize: 12 },
+  mapCreditLink: { color: "rgba(255,255,255,0.9)" },
 });
