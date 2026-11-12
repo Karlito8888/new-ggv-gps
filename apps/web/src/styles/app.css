@@ -400,12 +400,16 @@ textarea {
   margin-top: 0.375rem;
 }
 
-/* Map credit in the screen corner, over the dimmed map behind the Welcome card. White at 90 %:
-   5.10:1 on the lightest backdrop pixel under it (80 % measured 4.41:1). */
+/* Map credit in the screen corner, over the dimmed map behind the Welcome card. Light roads can
+   pass under it (lightest backdrop pixel measured: #626664 on web, #939594 on the A16, where
+   white text alone gave 2.74:1), so it sits on its own dark pill: 5.55:1 or more on both. */
 .map-credit {
   position: absolute;
   right: var(--ggv-space-md);
   bottom: calc(env(safe-area-inset-bottom, 0px) + var(--ggv-space-md));
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--ggv-radius-pill);
+  background: rgba(10, 16, 12, 0.4);
   font-family: var(--ggv-font-body);
   font-size: var(--ggv-font-size-xs);
   color: rgba(255, 255, 255, 0.9);

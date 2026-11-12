@@ -77,9 +77,11 @@ export function Welcome({
       </Modal>
 
       {/* The map shows dimmed behind the card: its credit, in the corner (OSMF guideline). */}
-      <Text style={[styles.mapCredit, { bottom: insets.bottom + 16 }]}>
-        <Link label={COPY.credits.osm.en} url={OSM_COPYRIGHT_URL} style={styles.mapCreditLink} />
-      </Text>
+      <View style={[styles.mapCredit, { bottom: insets.bottom + 16 }]}>
+        <Text style={styles.mapCreditText}>
+          <Link label={COPY.credits.osm.en} url={OSM_COPYRIGHT_URL} style={styles.mapCreditLink} />
+        </Text>
+      </View>
     </View>
   );
 }
@@ -98,7 +100,15 @@ const styles = StyleSheet.create({
   // `.route-note`
   note: { marginTop: 8, fontSize: 13, lineHeight: 19, color: theme.textMuted, textAlign: "center" },
   gloss: { color: theme.primaryText },
-  // `.map-credit`: white at 90 % over the dimmed map (5.10:1 measured on the web backdrop).
-  mapCredit: { position: "absolute", right: 16, fontSize: 12 },
+  // `.map-credit`: white at 90 % on its own dark pill, since light roads pass under it.
+  mapCredit: {
+    position: "absolute",
+    right: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: theme.radiusPill,
+    backgroundColor: "rgba(10,16,12,0.4)",
+  },
+  mapCreditText: { fontSize: 12 },
   mapCreditLink: { color: "rgba(255,255,255,0.9)" },
 });

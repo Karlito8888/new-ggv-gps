@@ -98,7 +98,8 @@ dependencies, restore them after any re-run.
   "user-initiated action" basis for declaring no sharing; iOS also says it in the location
   purpose string) ending on the privacy policy link (Apple 5.1.1(i), Play User Data). The GPS
   screen carries no legal text. Welcome also shows "© OpenStreetMap" in the bottom-right corner,
-  over the dimmed map, white at 90 % (5.10:1 on the lightest backdrop pixel, measured on web).
+  over the dimmed map, white at 90 % on its own dark pill: light roads pass under that corner
+  (white text alone measured 2.74:1 on the A16).
   (2) The ⓘ at the end of the navigation strip
   (`useCreditsBubble`, `@ggv/shared`): its
   bubble opens by itself for five seconds when navigation starts with "© OpenStreetMap" and
