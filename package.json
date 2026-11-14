@@ -9,18 +9,21 @@
   "engines": {
     "node": ">=22.13.0"
   },
+  "devEngines": {
+    "packageManager": {
+      "name": "bun",
+      "version": "1.4.4",
+      "onFail": "download"
+    }
+  },
   "scripts": {
-    "gate": "bun run typecheck && bun run lint && bun run format:check && bun run test && bun run check:sprites",
-    "typecheck": "bun run --filter @ggv/shared typecheck && bun run --filter @ggv/web typecheck && bun run --filter @ggv/mobile typecheck",
-    "lint": "vp lint . && bun run --filter @ggv/mobile lint",
-    "format": "vp fmt .",
-    "format:check": "vp fmt --check .",
-    "test": "bun run --filter @ggv/shared test && bun run --filter @ggv/web test",
+    "gate": "vp check && vp run -r typecheck && vp run -r test && vp run check:sprites",
     "check:sprites": "cmp apps/web/public/sprites/light.png apps/mobile/assets/map/sprites/light-1x.sprite && cmp apps/web/public/sprites/light@2x.png apps/mobile/assets/map/sprites/light-2x.sprite",
-    "dev": "bun run --filter @ggv/web dev",
-    "build": "bun run --filter @ggv/web build",
-    "preview": "bun run --filter @ggv/web preview",
-    "snapshot:lots": "bun run --filter @ggv/mobile snapshot:lots"
+    "dev": "vp run --filter @ggv/web dev",
+    "build": "vp run --filter @ggv/web build",
+    "preview": "vp run --filter @ggv/web preview",
+    "snapshot:lots": "vp run --filter @ggv/mobile snapshot:lots",
+    "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && vp config --no-agent || true"
   },
   "devDependencies": {
     "vite": "catalog:",

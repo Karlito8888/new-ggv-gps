@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Renders every app icon (iOS, Android adaptive layers, web) from design/icon.svg.
-# Needs resvg and ImageMagick 7 (apt). Run from the repo root after `bun install` (the font).
+# Needs resvg and ImageMagick 7 (apt). Run from the repo root after `vp install` (the font).
 set -euo pipefail
 font=node_modules/@expo-google-fonts/madimi-one/400Regular/MadimiOne_400Regular.ttf
 mobile=apps/mobile/assets

@@ -10,31 +10,18 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  lint:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - uses: voidzero-dev/setup-vp@cab1ab9eaff52d4857875f4f2c016e36af8f2c76 # v1.22.0
         with:
-          bun-version: 1.4.2
+          node-version: "24"
+          cache: true
 
-      - run: bun install --frozen-lockfile
-
-      - name: Lint (Oxlint, expo lint)
-        run: bun run lint
-
-      - name: Format (Oxfmt)
-        run: bun run format:check
-
-      - name: TypeScript
-        run: bun run typecheck
-
-      - name: Unit Tests
-        run: bun run test
-
-      - name: Map sprite copies match web
-        run: bun run check:sprites
+      # Oxlint + Oxfmt + type check, typecheck and tests of every workspace, sprite copies.
+      - run: vp run gate
 
   semgrep:
     runs-on: ubuntu-latest

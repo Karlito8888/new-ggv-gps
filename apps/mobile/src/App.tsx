@@ -22,6 +22,7 @@ import {
   ARRIVAL_ZONE_PAINT,
   BLOCK_LABEL_LAYOUT,
   BLOCK_LABEL_PAINT,
+  COPY,
   MAP_INITIAL_ZOOM,
   NAV_ZOOM,
   ROUTE_ARROW_LAYOUT,
@@ -32,6 +33,8 @@ import {
   VILLAGE_BOUNDS,
   VILLAGE_CENTER,
   blockLabelsGeoJSON,
+  inline,
+  isBelowVersion,
   useCourseUpCamera,
   useNavigationFlow,
   useRouting,
@@ -40,7 +43,6 @@ import {
 } from "@ggv/shared";
 import basemapLayers from "@ggv/shared/basemap-layers";
 import * as Sentry from "@sentry/react-native";
-import { COPY, inline, isBelowVersion } from "@ggv/shared";
 import { APP_CONFIG_URL, CONVEX_URL, SENTRY_DSN, STORE_URL } from "./config";
 import { ensureMapAssets, type MapAssetUrls } from "./map/mapAssets";
 import { buildMobileStyle } from "./map/mobileStyle";

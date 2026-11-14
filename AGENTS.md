@@ -25,18 +25,18 @@ basemap layers JSON (`@ggv/shared/basemap-layers`). Moved files, old to new: `li
 `apps/web/src/lib/routeLayers.ts`. Shared code must not touch `window`/`document`/`navigator`/
 `location` (Oxlint `no-restricted-globals`, root `vite.config.ts`) and must not read `import.meta.env`.
 
-Root scripts fan out: `bun run gate` = typecheck + lint + format check + tests of shared, web and
-mobile. `apps/web` deploys to Cloudflare Workers on pushes to `main` that touch `apps/web`,
-`packages/shared`, `package.json`, `bun.lock` or `bunfig.toml`.
+Root scripts fan out through `vp run -r`: `vp run gate` = `vp check` + typecheck + tests of shared
+and web + `check:sprites`. `apps/web` deploys to Cloudflare Workers on pushes to `main` that touch
+`apps/web`, `packages/shared`, `package.json`, `bun.lock` or `bunfig.toml`.
 
 Web and shared tooling is **Vite+** (`vite-plus`, `vp` CLI): Vite, Rolldown, Vitest, Oxlint and
 Oxfmt at the versions `vite-plus` pins exactly. The root `vite.config.ts` holds the `lint` and
 `fmt` blocks for the whole repo; `apps/web/vite.config.ts` keeps the build and test config. `vite`
 resolves to `@voidzero-dev/vite-plus-core` through the root `catalog` and `overrides`: bump
 `vite-plus` and that alias together. Lint is type-aware (`typeAware` + `typeCheck`), which also
-type-checks files `tsc` skips, such as `vite.config.ts`. The mobile app stays on ESLint through
-`expo lint` and its own `apps/mobile/eslint.config.js`: `vp migrate` deletes that config and its
-dependencies, restore them after any re-run.
+type-checks files `tsc` skips, such as `vite.config.ts`. The mobile app is linted by the same root
+config: the `apps/mobile/**` override ports `eslint-config-expo` (rules, React Native globals,
+`eslint-plugin-expo`, `eslint-plugin-react-hooks` for `react-hooks-js/immutability` and `purity`).
 
 ## Mobile app (`apps/mobile`)
 
@@ -50,7 +50,7 @@ dependencies, restore them after any re-run.
   read as a density variant. Bump `MAP_ASSETS_VERSION` when they change; rename the tileset
   `require` together with `TILESET_FILE`.
 - **Village snapshot** (`assets/data/village-snapshot.json`): blocks and lots with coordinates,
-  so Welcome works offline. Regenerate with `bun run snapshot:lots` (reads the same two public
+  so Welcome works offline. Regenerate with `vp run snapshot:lots` (reads the same two public
   Convex queries as web). OSRM stays online; offline falls back to the direct line.
 - **Block and lot selectors** (`src/select/`) are the web `<select>` of `WelcomeOverlay`: the
   closed field is React Native with the `.welcome-select` values (`SelectField.tsx`), and the
@@ -254,11 +254,11 @@ le pin de destination en même temps que son cercle d'arrivée.
 ## Gate
 
 ```bash
-bun run gate
+vp run gate
 ```
 
-= typecheck (shared, web, mobile) + lint + `format:check` + tests vitest (shared, web ; mobile n'a
-pas de tests). Vert, ~20 s, **60 tests** : 53 dans `packages/shared/src/__tests__/` (6 fichiers) et 7 dans
+= `vp check` (Oxlint type-aware + Oxfmt, whole repo) + typecheck (shared, web, mobile) + tests vitest
+(shared, web ; mobile n'a pas de tests) + `check:sprites`. Vert, ~20 s, **60 tests** : 53 dans `packages/shared/src/__tests__/` (6 fichiers) et 7 dans
 `apps/web/src/__tests__/` (`routeLayers.test.ts`, `rangeWorker.test.ts`). Cinq fichiers shared couvrent les fonctions pures
 (`arrival`, `course`, `geo`, `routing`, `version`) ; le sixième, `useRouting.test.ts`, couvre
 **l'effet** — c'est le seul test du dépôt qui monte un composant React.
@@ -284,7 +284,7 @@ Report folders (`archon-out/`, `flow-out/`, `revue-out/`, `frise-out/`) carry th
 `.gitignore`, and Oxfmt skips git-ignored files: they need no entry in `fmt.ignorePatterns`
 (measured: an unformatted `.ts` dropped in `frise-out/` is not checked).
 
-**Vérifier dans un navigateur exige de purger le service worker d'abord.** `bun run preview`
+**Vérifier dans un navigateur exige de purger le service worker d'abord.** `vp run preview`
 sert `dist/`, mais la PWA précache ses assets : un onglet qui a déjà visité l'app rejoue
 l'**ancien** bundle depuis `workbox-precache-v2-*`, sans le dire. La mesure porte alors sur la
 version précédente. Avant chaque contrôle :
@@ -384,7 +384,7 @@ fermer la cible (`/json/close/<id>`), relancer l'app, se rattacher.
 
 ## Deployment
 
-`deploy.yml` (push to `main`): gate, `bun run build`, `bunx wrangler@4.158.0 deploy` from
+`deploy.yml` (push to `main`): gate, `vp run build`, `vpx wrangler@4.158.0 deploy` from
 `apps/web`, then a step that polls production until it serves the `index-*.js` this run built.
 The host is the Cloudflare Worker `myggvgps` (account `cb.dweb49@gmail.com`, id
 `18c8ae8a5d2ecced60a363bba044c702`) on the custom domain `myggvgps.charlesbourgault.com`, in the
@@ -410,7 +410,7 @@ ambient `CLOUDFLARE_API_TOKEN` is another token (`myggv-zone-dns`): a local depl
 
 ```bash
 cd apps/web && CLOUDFLARE_API_TOKEN="$CHARLESBOURGAULT_CLOUDFLARE_API_TOKEN" \
-  CLOUDFLARE_ACCOUNT_ID=18c8ae8a5d2ecced60a363bba044c702 bunx wrangler@4.158.0 deploy
+  CLOUDFLARE_ACCOUNT_ID=18c8ae8a5d2ecced60a363bba044c702 vpx wrangler@4.158.0 deploy
 ```
 
 Checking by hand that production serves the local build:

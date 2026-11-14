@@ -7,8 +7,7 @@
     "start": "expo start",
     "android": "expo run:android",
     "typecheck": "tsc --noEmit",
-    "lint": "expo lint",
-    "snapshot:lots": "bun scripts/snapshot-lots.ts"
+    "snapshot:lots": "vpx scripts/snapshot-lots.ts"
   },
   "dependencies": {
     "@expo-google-fonts/madimi-one": "0.4.0",
@@ -36,8 +35,8 @@
     "@types/geojson": "^7946.0.16",
     "@types/react": "~19.3.0",
     "babel-plugin-react-compiler": "^1.0.0",
-    "eslint": "^9.39.5",
-    "eslint-config-expo": "~58.0.4",
+    "eslint-plugin-expo": "1.2.1",
+    "eslint-plugin-react-hooks": "7.1.1",
     "typescript": "~6.0.3"
   }
 }

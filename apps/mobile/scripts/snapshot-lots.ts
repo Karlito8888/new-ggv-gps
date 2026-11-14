@@ -3,7 +3,7 @@
  * Snapshot of the village (blocks and the lots that have coordinates), bundled into the app so
  * the Welcome screen works with no network. Regenerate when the village data changes:
  *
- *   bun run snapshot:lots
+ *   vp run snapshot:lots
  *
  * Reads the same two public Convex queries as the web app (see AGENTS.md § Backend externe).
  */
