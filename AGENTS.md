@@ -108,7 +108,7 @@ config: the `apps/mobile/**` override ports `eslint-config-expo` (rules, React N
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | Règles de travail générales — vérifier avant d'affirmer, DRY/KISS/YAGNI, périmètre, échelle de doc officielle, outils obligatoires, git, accord explicite | `~/.omp/agent/RULES.md`            |
 | Le poste, les graphes de code, les workflows                                                                                                              | `~/.omp/agent/AGENTS.md`           |
-| Faits durables du projet — versions, gate mesuré, dettes, points ouverts                                                                                  | `~/.omp/agent/bank/new-ggv-gps.md` |
+| Project identity and structural decisions | `~/.omp/agent/bank/new-ggv-gps/index.md` |
 
 ## Stack — web (`apps/web`)
 
