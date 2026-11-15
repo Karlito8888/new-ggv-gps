@@ -115,11 +115,11 @@ dependencies, restore them after any re-run.
 
 ## Ce qui n'est PAS ici
 
-| Quoi                                                                                                                                                      | Où                                 |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| Règles de travail générales — vérifier avant d'affirmer, DRY/KISS/YAGNI, périmètre, échelle de doc officielle, outils obligatoires, git, accord explicite | `~/.omp/agent/RULES.md`            |
-| Le poste, les graphes de code, les workflows                                                                                                              | `~/.omp/agent/AGENTS.md`           |
-| Project identity and structural decisions | `~/.omp/agent/bank/new-ggv-gps/index.md` |
+| Quoi                                                                                                                                                      | Où                                       |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Règles de travail générales — vérifier avant d'affirmer, DRY/KISS/YAGNI, périmètre, échelle de doc officielle, outils obligatoires, git, accord explicite | `~/.omp/agent/RULES.md`                  |
+| Le poste, les graphes de code, les workflows                                                                                                              | `~/.omp/agent/AGENTS.md`                 |
+| Project identity and structural decisions                                                                                                                 | `~/.omp/agent/bank/new-ggv-gps/index.md` |
 
 ## Stack — web (`apps/web`)
 
