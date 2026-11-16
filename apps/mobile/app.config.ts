@@ -44,7 +44,7 @@ const config: ExpoConfig = {
   name: variant.name,
   slug: "myggv-gps",
   owner: "charles88888",
-  version: "1.0.0",
+  version: "1.1.0",
   orientation: "portrait",
   platforms: ["ios", "android"],
   userInterfaceStyle: "light",
