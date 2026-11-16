@@ -5,101 +5,60 @@
    =================================================================== */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
   /* =================================================================
      COLORS
      ================================================================= */
 
-  /* Brand colors.
-     `primary` is a DECORATIVE FILL ONLY — borders, icon gradients, the brand ramp. It is not
-     legible as text on either surface (2.05:1 on the light glass pill), so text uses
-     `primary-text` and the CTA gradient carries its own stops. Every value here was solved
-     against WCAG 2.2 SC 1.4.3 (4.5:1 — the 18px bold CTA is below the 18.66px large-text
-     threshold, so the 3:1 exemption does not apply) for the worst background it actually
-     lands on, glass composited over a dark map (#d9d9d9) or a light one (#343434) included. */
-  --ggv-color-primary: #50aa61;
-  --ggv-color-primary-text: #326b3d;
-  --ggv-color-cta: #3b7d47;
-  --ggv-color-cta-dark: #295c34;
-  --ggv-color-on-cta: #ffffff;
-  --ggv-color-secondary: #f3c549;
-  --ggv-color-secondary-dark: #d97706;
+  /* Signpost: opaque paper cards, so text contrast is computed against paper or sign green only.
+     Every text value clears WCAG 2.2 SC 1.4.3 (4.5:1) on the background it lands on; `secondary`
+     (sun) is a fill, never text. */
+  --ggv-color-surface: #f7f5f0; /* paper: cards, chips, strip */
+  --ggv-color-text: #161a17; /* ink */
+  --ggv-color-muted: #5d625e; /* eyebrow, notes, version, ⓘ: 5.71:1 on paper */
+  --ggv-color-primary-text: #326b3d; /* glosses, links: 5.83:1 on paper */
+  --ggv-color-cta: #1f5a2e; /* sign green: CTA, plates, turn sign */
+  --ggv-color-on-cta: #ffffff; /* 8.2:1 on sign green */
+  --ggv-color-on-cta-gloss: #cfe8d3; /* Tagalog on sign green: 6.3:1 */
+  --ggv-color-secondary: #f3c549; /* sun: diamond, eyebrow dot, check badge; never text */
+  --ggv-color-map: #cccccc; /* basemap `background` layer: the page before tiles draw */
 
-  /* Surface & background */
-  --ggv-color-surface: #f4f4f4;
+  /* Semi-transparent ink */
+  --ggv-color-text-tint: rgba(22, 26, 23, 0.06);
+  --ggv-color-outline: rgba(22, 26, 23, 0.18);
+  --ggv-color-dashed: rgba(22, 26, 23, 0.3);
 
-  /* Text */
-  --ggv-color-text: #121212;
-
-  /* Semantic colors */
-  --ggv-color-success: #34d399;
-  --ggv-color-error: #ef4444;
-
-  /* Overlay & utility. The scrim dims the live map behind every full-screen card, in both
-     modes; a green-tinted near-black, not pure black, so the map keeps its warmth. */
-  --ggv-color-overlay-bg: rgba(10, 16, 12, 0.64);
-  --ggv-color-gray: #6b7280;
-  --ggv-color-amber: #fbbf24;
-
-  /* Glass-morphism */
-  --ggv-glass-bg: rgba(255, 255, 255, 0.85);
-  --ggv-glass-bg-fallback: rgba(255, 255, 255, 0.95);
-
-  /* Semi-transparent tints */
-  --ggv-color-text-tint: rgba(18, 18, 18, 0.08);
-  --ggv-color-text-tint-hover: rgba(18, 18, 18, 0.12);
-
-  /* =================================================================
-     GRADIENTS
-     ================================================================= */
-
-  --ggv-gradient-primary: linear-gradient(
-    135deg,
-    var(--ggv-color-cta) 0%,
-    var(--ggv-color-cta-dark) 100%
+  /* The paper fade behind every bottom card: the map stays visible at the top of the screen. */
+  --ggv-fade-paper: linear-gradient(
+    to top,
+    rgba(247, 245, 240, 0.9) 20%,
+    rgba(247, 245, 240, 0) 58%
   );
-  --ggv-gradient-brand: linear-gradient(
-    135deg,
-    var(--ggv-color-primary),
-    var(--ggv-color-secondary)
-  );
-  --ggv-gradient-success: linear-gradient(
-    135deg,
-    var(--ggv-color-primary),
-    var(--ggv-color-success)
-  );
-  --ggv-gradient-exit: linear-gradient(135deg, var(--ggv-color-secondary), var(--ggv-color-amber));
-  --ggv-gradient-error: linear-gradient(135deg, var(--ggv-color-error), var(--ggv-color-secondary));
 
   /* =================================================================
      SPACING
      ================================================================= */
 
-  --ggv-space-xs: 0.25rem;
   --ggv-space-sm: 0.5rem;
-  --ggv-space-pill-y: 0.625rem;
   --ggv-space-pill-inset: 0.75rem;
   --ggv-space-md: 1rem;
   --ggv-space-lg: 1.5rem;
-  --ggv-space-xl: 2rem;
-  --ggv-space-2xl: 3rem;
 
   /* =================================================================
      TOUCH TARGETS (WCAG 2.1 Level A)
      ================================================================= */
 
   --ggv-touch-target-min: 2.75rem;
-  --ggv-touch-target-cta: 3.5rem;
 
   /* =================================================================
      Z-INDEX
      ================================================================= */
 
   --ggv-z-map: 0;
-  --ggv-z-logo: 800;
   --ggv-z-nav: 900;
   --ggv-z-overlay: 1000;
+  --ggv-z-logo: 1100; /* above the overlay's paper fade, which would wash it out */
 
   /* =================================================================
      TYPOGRAPHY
@@ -112,30 +71,30 @@
   --ggv-font-size-xs: 0.75rem;
   --ggv-font-size-sm: 0.875rem;
   --ggv-font-size-base: 1rem;
-  --ggv-font-size-lg: 1.125rem;
-  --ggv-font-size-xl: 1.5rem;
   --ggv-font-weight-semibold: 600;
-  --ggv-font-weight-bold: 700;
 
   /* =================================================================
      BORDER RADIUS
      ================================================================= */
 
   --ggv-radius-sm: 0.5rem;
-  --ggv-radius-md: 0.75rem;
-  --ggv-radius-lg: 1rem;
   --ggv-radius-xl: 1.5rem;
   --ggv-radius-full: 50%;
   --ggv-radius-pill: 999px;
+  --ggv-radius-card: 2rem;
+  --ggv-radius-sign: 1.125rem;
 
   /* =================================================================
-     SHADOWS
+     SHADOWS & RINGS
      ================================================================= */
 
-  --ggv-shadow-button: 0 6px 16px rgba(41, 92, 52, 0.28);
-  --ggv-shadow-dialog: 0 24px 48px -16px rgba(0, 0, 0, 0.45);
-  --ggv-shadow-disc: 0 8px 20px rgba(0, 0, 0, 0.16);
-  --ggv-shadow-pill: 0 2px 12px rgba(0, 0, 0, 0.15);
+  --ggv-shadow-card: 0 24px 60px -16px rgba(40, 36, 20, 0.4);
+  --ggv-shadow-chip: 0 6px 16px rgba(40, 36, 20, 0.16);
+  --ggv-shadow-sign: 0 10px 22px -10px rgba(31, 90, 46, 0.7);
+  --ggv-shadow-diamond: 0 12px 24px -8px rgba(0, 0, 0, 0.35);
+  --ggv-ring-hairline: inset 0 0 0 1px rgba(22, 26, 23, 0.06);
+  /* The white rule inset in every street sign. */
+  --ggv-ring-sign: inset 0 0 0 4px var(--ggv-color-cta), inset 0 0 0 6px rgba(255, 255, 255, 0.9);
 
   /* =================================================================
      TRANSITIONS
@@ -145,59 +104,12 @@
   --ggv-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ggv-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ggv-duration-press: 160ms;
-  --ggv-duration-card: 420ms;
-
-  /* Spring curves, ported from the framer-motion variants they replaced (damping 25), as
-     least-squares cubic-bezier fits: linear() needs Safari/iOS 17.2, and iPhone X / 8 / 8 Plus
-     are capped at iOS 16.7, where it resolves to `ease`. Deviation over the full curve —
-     slide RMS 0.58% / worst 1.62%, pill 1.49% / 5.22% (4.2px of 80px). */
-  --ggv-spring-slide-duration: 500ms;
-  --ggv-spring-slide: cubic-bezier(0.26, 0.3, 0.18, 1.11);
-  --ggv-spring-pill-duration: 550ms;
-  --ggv-spring-pill: cubic-bezier(0.38, 1.06, 0.08, 1.08);
+  --ggv-duration-card: 560ms;
+  --ggv-duration-sign: 700ms;
 
   /* =================================================================
      OPACITY
      ================================================================= */
 
   --ggv-opacity-disabled: 0.6;
-  --ggv-opacity-border: 0.15;
-}
-
-/* ===================================================================
-   DARK MODE — OS preference via prefers-color-scheme
-   Only color tokens are overridden. Spacing, typography, layout
-   tokens remain unchanged.
-   =================================================================== */
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Brand text — brightened, since it now sits on a dark surface. The CTA tokens are NOT
-       overridden: `on-cta` must stay light in both modes, and `surface` flipping to #1a1a1a
-       is exactly what used to put dark text on the dark-green gradient (2.22:1). */
-    --ggv-color-primary-text: #52ae63;
-
-    /* Surface & background */
-    --ggv-color-surface: #1a1a1a;
-
-    /* Text */
-    --ggv-color-text: #e8e8e8;
-
-    /* Semantic colors — slightly brighter for dark bg contrast */
-    --ggv-color-success: #4ade80;
-    --ggv-color-error: #f87171;
-
-    /* Glass-morphism — darker glass */
-    --ggv-glass-bg: rgba(30, 30, 30, 0.9);
-    --ggv-glass-bg-fallback: rgba(30, 30, 30, 0.95);
-
-    /* Semi-transparent tints */
-    --ggv-color-text-tint: rgba(232, 232, 232, 0.08);
-    --ggv-color-text-tint-hover: rgba(232, 232, 232, 0.12);
-
-    /* Shadows — darker for depth on dark surfaces */
-    --ggv-shadow-dialog: 0 24px 48px -16px rgba(0, 0, 0, 0.6);
-    --ggv-shadow-disc: 0 8px 20px rgba(0, 0, 0, 0.4);
-    --ggv-shadow-pill: 0 2px 12px rgba(0, 0, 0, 0.3);
-  }
 }

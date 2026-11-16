@@ -5,12 +5,13 @@ export function ExitCompleteOverlay() {
   return (
     <div className="overlay" role="dialog" aria-modal="true" aria-label={COPY.exit.aria.en}>
       <div className="modal">
-        <div className="overlay-icon-wrapper exit-icon-wrapper">
+        <div className="overlay-icon-wrapper">
           <Icon name="car" className="overlay-icon" />
         </div>
 
+        <p className="overlay-eyebrow">{COPY.brand.village.en}</p>
         <h1>{COPY.exit.title.en}</h1>
-        <p className="overlay-tagalog">({COPY.exit.title.tl})</p>
+        <p className="overlay-tagalog">{COPY.exit.title.tl}</p>
 
         <p className="overlay-description">
           {COPY.exit.exited.en}

@@ -15,8 +15,9 @@ export function AppOfferOverlay({ storeUrl, onClose }: AppOfferOverlayProps) {
           <Icon name="navigate" className="overlay-icon" />
         </div>
 
+        <p className="overlay-eyebrow">{COPY.brand.village.en}</p>
         <h1>{COPY.appOffer.title.en}</h1>
-        <p className="overlay-tagalog">({COPY.appOffer.title.tl})</p>
+        <p className="overlay-tagalog">{COPY.appOffer.title.tl}</p>
 
         <p className="overlay-description">
           {COPY.appOffer.free.en}
@@ -29,11 +30,12 @@ export function AppOfferOverlay({ storeUrl, onClose }: AppOfferOverlayProps) {
           </span>
         </p>
 
-        <a className="overlay-btn-primary app-offer-store" href={storeUrl} onClick={onClose}>
+        <a className="overlay-btn-primary" href={storeUrl} onClick={onClose}>
           {COPY.appOffer.install.en}
+          <Icon name="right" className="overlay-btn-icon" />
         </a>
 
-        <button className="overlay-btn-secondary app-offer-web" onClick={onClose}>
+        <button className="overlay-btn-secondary" onClick={onClose}>
           {COPY.appOffer.web.en}
         </button>
       </div>

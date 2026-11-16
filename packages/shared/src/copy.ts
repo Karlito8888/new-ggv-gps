@@ -18,6 +18,8 @@ export function inline(c: Required<Bilingual>): string {
 }
 
 export const COPY = {
+  /** The eyebrow over every bottom card. */
+  brand: { village: { en: "Garden Grove Village" } },
   /** Web only, on a phone before the GPS screen: the native app's store, or the web app. */
   appOffer: {
     aria: { en: "Get the MyGGV GPS app" },
@@ -54,6 +56,9 @@ export const COPY = {
     title: { en: "Choose Destination", tl: "Pumili ng Destinasyon" },
     selectBlockLabel: { en: "Select Block" },
     selectLotLabel: { en: "Select Lot" },
+    /** The small label on each destination plate. */
+    plateBlock: { en: "Block" },
+    plateLot: { en: "Lot" },
     noConnection: { en: "No connection", tl: "Walang koneksyon" },
     loading: { en: "Loading...", tl: "Nag-lo-load..." },
     selectBlock: { en: "Select Block", tl: "Pumili ng Block" },

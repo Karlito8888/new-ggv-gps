@@ -82,7 +82,7 @@ export function NavigationOverlay({
           {card.text && (
             <div className="nav-turn-text" aria-live="polite">
               {card.text.en}
-              <span className="nav-turn-gloss">({card.text.tl})</span>
+              <span className="nav-turn-gloss">{card.text.tl}</span>
             </div>
           )}
         </div>
@@ -114,7 +114,6 @@ export function NavigationOverlay({
         )}
 
         <div className="nav-dest-name">
-          <Icon name="pin" className="nav-dest-icon" />
           <span className="nav-dest-text">{destination?.name || COPY.nav.navigating.en}</span>
         </div>
 
