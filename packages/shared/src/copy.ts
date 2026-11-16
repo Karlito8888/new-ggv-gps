@@ -17,6 +17,17 @@ export function inline(c: Required<Bilingual>): string {
 }
 
 export const COPY = {
+  /** Web only, on a phone before the GPS screen: the native app's store, or the web app. */
+  appOffer: {
+    aria: { en: "Get the MyGGV GPS app" },
+    title: { en: "Get the App", tl: "Kunin ang App" },
+    description: {
+      en: "MyGGV GPS is also a free app. The village map stays on your phone, even without signal.",
+      tl: "Libreng app din ang MyGGV GPS. Nasa phone mo ang mapa ng village, kahit walang signal.",
+    },
+    install: { en: "Install the App", tl: "I-install ang App" },
+    web: { en: "Continue on Web", tl: "Magpatuloy sa Web" },
+  },
   gps: {
     aria: { en: "Enable GPS Location" },
     title: { en: "Enable Location", tl: "I-enable ang Lokasyon" },

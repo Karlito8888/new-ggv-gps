@@ -14,8 +14,3 @@ export const SENTRY_DSN =
  * below its platform's floor shows a blocking update screen; raise a floor only to retire a version.
  */
 export const APP_CONFIG_URL = "https://myggvgps.charlesbourgault.com/app-config.json";
-
-export const STORE_URL = {
-  ios: "https://apps.apple.com/app/id6822344962",
-  android: "https://play.google.com/store/apps/details?id=com.myggv.gps",
-};

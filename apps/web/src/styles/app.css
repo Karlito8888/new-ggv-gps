@@ -376,6 +376,19 @@ textarea {
 }
 
 /* ===================================================================
+   APP OFFER OVERLAY
+   =================================================================== */
+
+/* The store link wears the primary button, without the link underline. */
+.app-offer-store {
+  text-decoration: none;
+}
+
+.app-offer-web {
+  margin-top: var(--ggv-space-sm);
+}
+
+/* ===================================================================
    WELCOME OVERLAY
    =================================================================== */
 

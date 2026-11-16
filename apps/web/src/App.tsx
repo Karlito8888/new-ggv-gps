@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCourseUpCamera, useNavigationFlow, useRouting, type CameraDriver } from "@ggv/shared";
 import { useMapSetup, updateDestinationMarker } from "./hooks/useMapSetup";
 import { setRouteData } from "./lib/routeLayers";
+import { storeUrlFor } from "./lib/appOffer";
 import { useQuery } from "convex/react";
 import { anyApi } from "convex/server";
 import ggvLogo from "./assets/img/ggv.png";
+import { AppOfferOverlay } from "./components/AppOfferOverlay";
 import { GpsPermissionOverlay } from "./components/GpsPermissionOverlay";
 import { WelcomeOverlay } from "./components/WelcomeOverlay";
 import { NavigationOverlay } from "./components/NavigationOverlay";
@@ -23,6 +25,11 @@ export default function App() {
   // Initialize map and GPS tracking
   const { map, userLocation, isMapReady, triggerGeolocate, stopGeolocate, userMarkerRef } =
     useMapSetup(mapContainerRef);
+
+  // On a phone the native app is offered first, on every visit; a desktop has no app to install.
+  const [storeUrl, setStoreUrl] = useState(() =>
+    storeUrlFor(navigator.userAgent, navigator.maxTouchPoints)
+  );
 
   // iOS Safari lets an <audio> element play outside a gesture only once it has played inside one:
   // the Navigate tap unlocks this element, arrival replays it.
@@ -117,7 +124,9 @@ export default function App() {
       <img src={ggvLogo} alt="GGV" className="ggv-logo" />
 
       {/* Conditional overlays based on navState */}
-      {navState === "gps-permission" ? (
+      {storeUrl ? <AppOfferOverlay storeUrl={storeUrl} onClose={() => setStoreUrl(null)} /> : null}
+
+      {navState === "gps-permission" && !storeUrl ? (
         <GpsPermissionOverlay
           onGrant={flow.showWelcome}
           triggerGeolocate={triggerGeolocate}

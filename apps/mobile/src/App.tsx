@@ -30,6 +30,7 @@ import {
   ROUTE_LINE_PAINT,
   ROUTE_OUTLINE_LAYOUT,
   ROUTE_OUTLINE_PAINT,
+  STORE_URL,
   VILLAGE_BOUNDS,
   VILLAGE_CENTER,
   blockLabelsGeoJSON,
@@ -43,7 +44,7 @@ import {
 } from "@ggv/shared";
 import basemapLayers from "@ggv/shared/basemap-layers";
 import * as Sentry from "@sentry/react-native";
-import { APP_CONFIG_URL, CONVEX_URL, SENTRY_DSN, STORE_URL } from "./config";
+import { APP_CONFIG_URL, CONVEX_URL, SENTRY_DSN } from "./config";
 import { ensureMapAssets, type MapAssetUrls } from "./map/mapAssets";
 import { buildMobileStyle } from "./map/mobileStyle";
 import { useDeviceLocation } from "./useDeviceLocation";

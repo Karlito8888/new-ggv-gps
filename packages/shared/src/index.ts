@@ -19,6 +19,7 @@ export {
   ROUTE_OUTLINE_PAINT,
 } from "./map/layers";
 export type { RouteGeometry, RouteSourceType, RouteStep } from "./routing";
+export { STORE_URL } from "./stores";
 export { TILESET_FILE } from "./tileset";
 export { startTrace, trace, type TraceEvent } from "./trace";
 export { currentTurn, formatDistance, remainingAlongRoute, turnLabel } from "./turnGuidance";
