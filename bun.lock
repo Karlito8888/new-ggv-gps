@@ -47,7 +47,7 @@
     },
     "apps/web": {
       "name": "@ggv/web",
-      "version": "5.4.1",
+      "version": "5.5.0",
       "dependencies": {
         "@ggv/shared": "workspace:*",
         "convex": "^1.49.0",

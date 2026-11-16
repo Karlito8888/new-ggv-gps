@@ -1,7 +1,7 @@
 {
   "name": "@ggv/web",
   "private": true,
-  "version": "5.4.1",
+  "version": "5.5.0",
   "description": "MyGGV GPS - Optimized GPS navigation for Garden Grove Village, Philippines with MapLibre native APIs",
   "type": "module",
   "scripts": {
