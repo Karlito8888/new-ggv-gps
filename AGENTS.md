@@ -111,6 +111,25 @@ config: the `apps/mobile/**` override ports `eslint-config-expo` (rules, React N
   `pm revoke <pkg> android.permission.ACCESS_FINE_LOCATION` while coarse stays granted.
 - Sentry project `myggv-gps` (org `charles-bourgault`, region `de`); events are sent from
   release builds only.
+- **EAS Update** (`expo-updates`, from 1.1.0): the runtime version is the app `version`
+  (`appVersion` policy), and each build profile has its own channel (`development`, `preview`,
+  `production`, eas.json). Builds before 1.1.0 have no update client. A native change (new
+  native module, config plugin, SDK bump) needs a `version` bump and new builds, never an update.
+  An update that changes a map file also bumps `MAP_ASSETS_VERSION`; copying a map file shipped
+  by an update rather than the build is untested. Publish from `apps/mobile`, naming the variant
+  (without `APP_VARIANT` the config resolves to the development app), then upload the update's
+  source maps (`SENTRY_AUTH_TOKEN` in the environment) and delete `dist/`:
+
+  ```bash
+  APP_VARIANT=preview eas update --channel preview --environment preview --message "…"
+  SENTRY_URL=https://de.sentry.io/ vpx @sentry/expo-upload-sourcemaps dist
+  ```
+
+  A release build downloads the update on one launch and runs it on the next (two relaunches).
+  In `adb logcat -s dev.expo.updates`, the first launch logs "Update available" and the second
+  "No update available": each check sends the running update's id (`Expo-Current-Update-ID`,
+  `expo-updates` `FileDownloader.kt`), so a build still on its embedded bundle would be offered
+  the update again.
 
 ## Ce qui n'est PAS ici
 
