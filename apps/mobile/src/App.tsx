@@ -53,7 +53,7 @@ import { Welcome } from "./screens/Welcome";
 import { Navigation } from "./screens/Navigation";
 import { Arrived } from "./screens/Arrived";
 import { ExitComplete } from "./screens/ExitComplete";
-import { Body, Button, IconDisc, Modal, Title } from "./ui";
+import { Body, Button, Diamond, Eyebrow, Modal, Title } from "./ui";
 import { theme } from "./theme";
 
 // Events are only sent from release builds; `Sentry.wrap` below adds the touch breadcrumbs.
@@ -225,8 +225,6 @@ function Root({ assets }: { assets: MapAssetUrls }) {
         ) : null}
       </Map>
 
-      <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-
       {navigating ? <NavigationKeepAwake /> : null}
 
       {navState === "gps-permission" ? (
@@ -259,6 +257,13 @@ function Root({ assets }: { assets: MapAssetUrls }) {
           onNavigateAgain={flow.navigateAgain}
           onExitVillage={flow.exitVillage}
         />
+      ) : null}
+      {/* After the overlays, so their paper fade never covers it; the turn sign and the arrival
+          card take its place while navigating. */}
+      {!navigating ? (
+        <View pointerEvents="none" style={styles.logo}>
+          <Image source={LOGO} style={styles.logoImage} resizeMode="contain" />
+        </View>
       ) : null}
     </View>
   );
@@ -298,7 +303,8 @@ function ErrorFallback({ onRetry }: { onRetry: () => void }) {
   return (
     <View style={styles.errorScreen}>
       <Modal>
-        <IconDisc name="alert" gradient="error" />
+        <Diamond name="alert" />
+        <Eyebrow />
         <Title en={COPY.error.title.en} tl={COPY.error.title.tl} />
         <Body en={COPY.error.unexpected.en} />
         <Body en={COPY.error.reloadPrompt.en} tl={COPY.error.reloadPrompt.tl} />
@@ -313,7 +319,8 @@ function UpdateRequired() {
   return (
     <View style={styles.errorScreen}>
       <Modal>
-        <IconDisc name="alert" gradient="exit" />
+        <Diamond name="alert" />
+        <Eyebrow />
         <Title en={COPY.forceUpdate.title.en} tl={COPY.forceUpdate.title.tl} />
         <Body en={COPY.forceUpdate.body.en} tl={COPY.forceUpdate.body.tl} />
         <Button
@@ -337,14 +344,26 @@ export default Sentry.wrap(App);
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  errorScreen: { flex: 1, justifyContent: "center", padding: 16, backgroundColor: theme.overlay },
+  errorScreen: {
+    flex: 1,
+    justifyContent: "flex-end",
+    padding: 10,
+    paddingBottom: 34,
+    backgroundColor: theme.map,
+  },
   logo: {
     position: "absolute",
     top: theme.logoTop,
     alignSelf: "center",
-    height: theme.logoHeight,
-    width: 145,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.hairline,
+    boxShadow: theme.shadow.chip,
   },
+  logoImage: { width: 97, height: 32 },
   userDot: {
     width: 28,
     height: 28,

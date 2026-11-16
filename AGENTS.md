@@ -97,9 +97,8 @@ config: the `apps/mobile/**` override ports `eslint-config-expo` (rules, React N
   destination): the routing-server disclosure (Apple 5.1.2(i), before the sharing; Play's
   "user-initiated action" basis for declaring no sharing; iOS also says it in the location
   purpose string) ending on the privacy policy link (Apple 5.1.1(i), Play User Data). The GPS
-  screen carries no legal text. Welcome also shows "© OpenStreetMap" in the bottom-right corner,
-  over the dimmed map, white at 90 % on its own dark pill: light roads pass under that corner
-  (white text alone measured 2.74:1 on the A16).
+  screen carries no legal text. Welcome also shows "© OpenStreetMap" on its own paper chip just
+  above the card: ink on paper, so its contrast does not depend on the map under it.
   (2) The ⓘ at the end of the navigation strip
   (`useCreditsBubble`, `@ggv/shared`): its
   bubble opens by itself for five seconds when navigation starts with "© OpenStreetMap" and
@@ -462,16 +461,15 @@ déclencher. Ne pas y remettre de bouton « Update ».
 `react-map-gl`, `@turf/turf`, `react-router-dom`, `Context`/`Redux`/`Zustand` — 100 % MapLibre
 natif, état local (`useState`), pas de gestion d'état globale.
 
-**Aucune bibliothèque d'animation** non plus. Les animations d'entrée sont des `@keyframes`
-CSS dans `app.css` : la carte entre en 420 ms (`--ggv-ease-out`, depuis `translateY(12px)
-scale(0.97)`), son contenu monte ensuite 40 ms par enfant, et les boutons s'enfoncent à 97 % à
-l'appui. Les deux courbes de ressort restantes (`--ggv-spring-slide|pill`, cartes d'arrivée et
-pilules de navigation) sont les anciens ressorts framer-motion, ajustés par moindres carrés en
-`cubic-bezier()` (écart ≤ 5,2 % de la course, détail dans `design-tokens.css`). Rien ne pulse à
-l'infini sauf l'anneau de l'écran GPS **pendant** la demande de position, et le spinner. Il n'y
-a **pas** d'animation de sortie : elle exigerait `@starting-style`, qui demande Safari 17.5
-(MDN browser-compat-data). Côté mobile, `Animated` de React Native porte le spinner et l'anneau ;
-pas d'entrée de carte.
+**No animation library** either. Web entrances are CSS `@keyframes` in `app.css`: the bottom
+card rises 48 px in 560 ms (`--ggv-ease-out`), its children follow 60 ms apart (the title with a
+blur), green signs (filled plates, turn sign, arrival plate) swing down from their top edge
+(`sign-flip`, 700 ms), the road diamond pops in, and buttons press to 97 %. Nothing loops forever
+except the dashed ring of the GPS screen **during** the position request, the spinner and the
+destination pin pulse. There is **no** exit animation: it would need `@starting-style`, which
+needs Safari 17.5 (MDN browser-compat-data). On mobile, React Native `Animated` carries the same
+card and sign entrances (`useEntrance` in `ui.tsx`, skipped when the OS asks for reduced motion),
+the spinner and the ring.
 
 **Une seule source d'icônes** : `packages/shared/src/icons.ts`, des tracés 24×24 dessinés en
 `<svg>` par le web (`components/Icon.tsx`) et par `react-native-svg` sur mobile (`src/Icon.tsx`).
@@ -489,36 +487,31 @@ pour de bon — c'est ce qui condamnait `linear()` (Safari/iOS 17.2).
 
 `@media (prefers-reduced-motion: reduce)` (`app.css`) les neutralise toutes.
 
-## Couleurs — trois rôles, à ne pas confondre
+## Colours: Signpost roles
 
-Le vert de marque servait à la fois de **remplissage** et de **texte**, sur des fonds qui passent
-du quasi-blanc (`rgba(255,255,255,0.85)`, pilule de verre en clair) au quasi-noir
-(`rgba(30,30,30,0.9)`, la même en sombre). Aucune luminosité ne satisfait les deux : à 4,5:1 près,
-`--ggv-color-primary` tombait à **2,05:1** sur la pilule claire et **4,31:1** sur la sombre. Les
-rôles sont donc séparés, et il faut les garder séparés :
+Every card, chip and strip is opaque paper (`--ggv-color-surface`) and every sign is opaque green
+(`--ggv-color-cta`): text contrast is computed against one of those two, never against the map.
+WCAG 2.2 SC 1.4.3 (4.5:1), values computed from the tokens:
 
-| Token                           | Rôle                                                                             |
-| ------------------------------- | -------------------------------------------------------------------------------- |
-| `--ggv-color-primary`           | **remplissage décoratif SEULEMENT** — bordures, dégradés d'icône, ramp de marque |
-| `--ggv-color-primary-text`      | tout texte ou icône de couleur marque ; a une valeur par mode                    |
-| `--ggv-color-cta` / `-cta-dark` | les deux arrêts du dégradé de CTA                                                |
-| `--ggv-color-on-cta`            | texte du CTA — **fixe dans les deux modes**                                      |
+| Token                         | Role                                                       |
+| ----------------------------- | ---------------------------------------------------------- |
+| `--ggv-color-text`            | ink, text on paper (16.1:1)                                |
+| `--ggv-color-muted`           | eyebrow, notes, version, ⓘ (5.71:1 on paper)               |
+| `--ggv-color-primary-text`    | Tagalog glosses and links on paper (5.83:1)                |
+| `--ggv-color-cta`             | sign fill: CTA, plates, turn sign, arrival plate           |
+| `--ggv-color-on-cta`          | text on a sign (8.2:1)                                     |
+| `--ggv-color-on-cta-gloss`    | Tagalog on a sign (6.3:1)                                  |
+| `--ggv-color-secondary` (sun) | diamond, eyebrow dot, check badges: a fill, **never text** |
 
-⚠️ **Cinq pièges vérifiés.** (1) `color: var(--ggv-color-primary)` ne doit réapparaître nulle
-part — c'était la cause de la panne. (2) `--ggv-color-on-cta` ne doit **pas** suivre
-`--ggv-color-surface`, qui bascule à `#1a1a1a` en mode sombre : c'est ce qui mettait du texte
-sombre à 2,22:1 sur un dégradé vert foncé. (3) Une `opacity` sur du texte de marque le refait
-échouer — c'est pour ça que les trois règles tagalog n'en ont plus. (4) **Ne jamais mettre
-`.tagalog-inline` dans un bouton** : cette classe force `--ggv-color-primary-text`, soit du vert
-sur le dégradé vert du CTA — mesuré **1,24:1** en clair, **1,80:1** en sombre. Un bouton ne porte
-d'ailleurs aucune glose tagalog (§ _Langues_). (5) Chercher la règle qui
-**gagne** avant de mesurer : une icône trace en `currentColor`, donc sa couleur vient de la règle
-la plus spécifique qui touche le `<svg>` ou son parent, pas forcément de celle qu'on lit.
+⚠️ **Pitfalls.** (1) Brand-green text never goes on a sign: `.tagalog-inline` forces
+`--ggv-color-primary-text`, green on green inside a button, and a button carries no gloss anyway
+(§ _Langues_). (2) An `opacity` on text drops it below 4.5:1: secondary text is dimmed by colour.
+(3) Find the rule that **wins** before measuring: an icon strokes in `currentColor`, so its colour
+comes from the most specific rule touching the `<svg>` or its parent. (4) The web is light-only,
+like the map and the mobile app: there is no dark-mode token set.
 
-Toute nouvelle couleur de texte se calcule contre le **pire fond réel**, pilule de verre
-composée sur une carte sombre (`#d9d9d9`) ou claire (`#343434`) comprise, pas contre
-`--ggv-color-surface` seul. Valeurs et marges mesurées : commentaire en tête de
-`design-tokens.css`.
+Any new text colour is computed against paper or sign green. Mobile copies the values in
+`apps/mobile/src/theme.ts`.
 
 ## Hôtes externes — il n'en reste que deux
 
@@ -538,8 +531,10 @@ de style et `vite.config.ts`, puis zéro violation mesurée sur A16 avec tuiles,
 ## Langues
 
 - **Communication avec le dev** : français.
-- **Contenu de l'app** : anglais **+ traduction tagalog courte** (public : résidents philippins
-  de Garden Grove Village), ex. `<h1>Enable Location</h1><p>(I-enable ang Lokasyon)</p>`.
+- **App content**: English **plus a short Tagalog gloss** (audience: Filipino residents of
+  Garden Grove Village), e.g. `<h1>Enable Location</h1><p>I-enable ang Lokasyon</p>`. A gloss on
+  its own line or in its own colour has no parentheses; `inline()` (same line, same colour:
+  placeholders, error lines, the privacy link) keeps them.
 - Les **instructions de navigation** passent par `TURN_LABELS` (`packages/shared/src/routing.ts`), une table
   `{en, tl}` de 8 entrées clée sur le `modifier` OSRM — vocabulaire clos et garanti par l'API
   (le `type`, lui, est ouvert : « new identifiers might be introduced without API change »).

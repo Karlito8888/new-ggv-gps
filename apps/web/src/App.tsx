@@ -120,8 +120,8 @@ export default function App() {
       {/* Map container - always rendered */}
       <div ref={mapContainerRef} className="map-container" />
 
-      {/* GGV Logo - top center */}
-      <img src={ggvLogo} alt="GGV" className="ggv-logo" />
+      {/* GGV Logo - top center; the turn sign and the arrival card take that space. */}
+      {navState !== "navigating" && <img src={ggvLogo} alt="GGV" className="ggv-logo" />}
 
       {/* Conditional overlays based on navState */}
       {storeUrl ? <AppOfferOverlay storeUrl={storeUrl} onClose={() => setStoreUrl(null)} /> : null}

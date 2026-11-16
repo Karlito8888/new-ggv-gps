@@ -31,7 +31,7 @@ try {
     <div className="overlay">
       <div className="modal">
         <h1>Configuration error</h1>
-        <p className="overlay-tagalog">(May problema sa configuration)</p>
+        <p className="overlay-tagalog">May problema sa configuration</p>
         <p className="overlay-description">
           MyGGV GPS is missing its backend address, so it cannot load the village map data.
           <span className="tagalog-inline">

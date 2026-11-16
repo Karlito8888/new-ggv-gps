@@ -35,12 +35,7 @@ body {
   height: 100svh;
   min-height: -webkit-fill-available;
   font-family: var(--ggv-font-primary);
-  background: linear-gradient(
-    135deg,
-    var(--ggv-color-primary),
-    var(--ggv-color-secondary),
-    var(--ggv-color-primary)
-  );
+  background: var(--ggv-color-map);
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -134,15 +129,20 @@ textarea {
   z-index: var(--ggv-z-map);
 }
 
-/* GGV Logo - top center */
+/* GGV Logo: a paper chip, top center. Hidden while navigating (App.tsx). */
 .ggv-logo {
   position: absolute;
-  top: var(--ggv-space-md);
+  top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--ggv-z-logo);
-  height: var(--ggv-space-2xl);
+  height: 2.75rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.875rem;
+  background: var(--ggv-color-surface);
+  box-shadow: var(--ggv-ring-hairline), var(--ggv-shadow-chip);
   pointer-events: none;
+  animation: logo-drop 600ms var(--ggv-ease-out) both;
 }
 
 /* iOS Safari specific fixes */
@@ -152,63 +152,82 @@ textarea {
   }
 }
 
-/* Overlay base: the live map, dimmed, behind one centred card. */
+/* Overlay base: the live map, under a paper fade, with one card anchored at the bottom. */
 .overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--ggv-color-overlay-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  inset: 0;
   z-index: var(--ggv-z-overlay);
-  padding: var(--ggv-space-md);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 4.25rem) 0.625rem
+    calc(env(safe-area-inset-bottom, 0px) + 0.625rem);
+  background: var(--ggv-fade-paper);
   animation: overlay-fade-in 240ms ease-out;
 }
 
-/* Modal card (shared base for all overlay modals) */
+/* Modal card (shared base for all overlay modals). `margin-top: auto` anchors it at the bottom
+   yet keeps the overlay scrollable on short screens. */
 .modal {
-  background: var(--ggv-color-surface);
-  border-radius: var(--ggv-radius-xl);
-  padding: var(--ggv-space-xl) var(--ggv-space-lg) var(--ggv-space-lg);
-  max-width: 100%;
-  width: 100%;
-  box-shadow: var(--ggv-shadow-dialog);
-  text-align: center;
   position: relative;
+  width: 100%;
+  margin-top: auto;
+  padding: 1.625rem 1.5rem 1.875rem;
+  border-radius: var(--ggv-radius-card);
+  background: var(--ggv-color-surface);
+  box-shadow: var(--ggv-ring-hairline), var(--ggv-shadow-card);
+  text-align: left;
   animation: card-in var(--ggv-duration-card) var(--ggv-ease-out) both;
 }
 
-/* Content rises in after the card, 40 ms apart: icon, title, gloss, text, controls. */
+/* Content rises in after the card, 60 ms apart: eyebrow, title, gloss, text, controls. */
 .modal > * {
-  animation: rise 360ms var(--ggv-ease-out) both;
+  animation: rise 640ms var(--ggv-ease-out) both;
 }
 
 .modal > :nth-child(1) {
-  animation-delay: 60ms;
-}
-.modal > :nth-child(2) {
-  animation-delay: 100ms;
-}
-.modal > :nth-child(3) {
   animation-delay: 140ms;
 }
-.modal > :nth-child(4) {
-  animation-delay: 180ms;
+.modal > :nth-child(2) {
+  animation-delay: 200ms;
 }
-.modal > :nth-child(n + 5) {
-  animation-delay: 220ms;
+.modal > :nth-child(3) {
+  animation-delay: 260ms;
+}
+.modal > :nth-child(4) {
+  animation-delay: 320ms;
+}
+.modal > :nth-child(5) {
+  animation-delay: 380ms;
+}
+.modal > :nth-child(6) {
+  animation-delay: 440ms;
+}
+.modal > :nth-child(7) {
+  animation-delay: 500ms;
+}
+.modal > :nth-child(n + 8) {
+  animation-delay: 560ms;
+}
+
+/* Longhands only, so the stagger delay above survives. */
+.modal > h1 {
+  animation-name: blur-rise;
+  animation-duration: 800ms;
 }
 
 .modal h1 {
+  margin-top: 1rem;
   font-family: var(--ggv-font-primary);
-  font-size: 1.625rem;
+  font-size: clamp(1.875rem, 9.6vw, 2.375rem);
   font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  line-height: 1.02;
+  letter-spacing: -0.015em;
   color: var(--ggv-color-text);
+}
+
+.modal h1:first-child {
+  margin-top: 0;
 }
 
 /* No `.modal p` rule: its (0,1,1) specificity beat every single-class paragraph rule below, so
@@ -216,27 +235,51 @@ textarea {
    spans inside `.overlay-description` to ~3:1. Secondary text is dimmed by colour, never by
    opacity, so a brand-coloured child keeps its own contrast. */
 
-/* Shared overlay icon disc: the one brand gradient of the card. */
-.overlay-icon-wrapper {
-  width: 4.5rem;
-  height: 4.5rem;
-  margin: 0 auto var(--ggv-space-md);
-  background: var(--ggv-gradient-brand);
-  border-radius: var(--ggv-radius-full);
+/* "GARDEN GROVE VILLAGE" over every bottom card, after a sun dot. */
+.overlay-eyebrow {
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: var(--ggv-shadow-disc);
-  position: relative;
+  gap: 0.5625rem;
+  font: 700 0.6875rem/1 var(--ggv-font-body);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ggv-color-muted);
 }
 
-/* The pulsing ring means "looking for your position": GPS screen, while the request runs. */
+.overlay-eyebrow::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--ggv-color-secondary);
+  box-shadow: 0 0 0 3px rgba(243, 197, 73, 0.3);
+}
+
+/* The road diamond: a yellow warning sign straddling the card's top-right edge. */
+.overlay-icon-wrapper {
+  position: absolute;
+  top: -1.875rem;
+  right: 1.75rem;
+  width: 3.75rem;
+  height: 3.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: var(--ggv-color-secondary);
+  box-shadow:
+    inset 0 0 0 3px var(--ggv-color-secondary),
+    inset 0 0 0 5px var(--ggv-color-text),
+    var(--ggv-shadow-diamond);
+  transform: rotate(45deg);
+}
+
+/* The dashed ring means "looking for your position": GPS screen, while the request runs. */
 .overlay-icon-wrapper.is-searching::after {
   content: "";
   position: absolute;
-  inset: -8px;
-  border: 2px dashed var(--ggv-color-primary);
-  border-radius: var(--ggv-radius-full);
+  inset: -0.5rem;
+  border: 2px dashed var(--ggv-color-text);
+  border-radius: 1rem;
   animation: gps-pulse 1.6s ease-in-out infinite;
 }
 
@@ -253,21 +296,22 @@ textarea {
 }
 
 .overlay-icon {
-  width: 2.25rem;
-  height: 2.25rem;
-  color: #ffffff;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--ggv-color-text);
+  transform: rotate(-45deg);
 }
 
 /* Shared overlay tagalog subtitle */
 .overlay-tagalog {
-  margin-top: var(--ggv-space-xs);
-  font-size: var(--ggv-font-size-base);
+  margin-top: 0.375rem;
+  font: 400 1.0625rem/1.2 var(--ggv-font-primary);
   color: var(--ggv-color-primary-text);
 }
 
 /* Shared overlay description text, dimmed by colour so inline Tagalog keeps its own. */
 .overlay-description {
-  margin: var(--ggv-space-md) 0 var(--ggv-space-lg);
+  margin: 0.875rem 0 0;
   font-family: var(--ggv-font-body);
   font-size: var(--ggv-font-size-base);
   line-height: 1.5;
@@ -282,24 +326,25 @@ textarea {
   color: var(--ggv-color-primary-text);
 }
 
-/* Shared overlay primary button */
+/* Shared overlay primary button: a green street sign, label left, icon trailing. */
 .overlay-btn-primary {
   width: 100%;
-  min-height: var(--ggv-touch-target-cta);
-  padding: 0.875rem var(--ggv-space-lg);
-  background: var(--ggv-gradient-primary);
-  color: var(--ggv-color-on-cta);
-  font-family: var(--ggv-font-primary);
-  font-size: var(--ggv-font-size-lg);
-  line-height: 1.2;
-  border: none;
-  border-radius: var(--ggv-radius-pill);
-  cursor: pointer;
-  box-shadow: var(--ggv-shadow-button);
+  min-height: 4rem;
+  margin-top: 1.375rem;
+  padding: 0.75rem 1.375rem 0.75rem 1.5rem;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.625rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: none;
+  border-radius: var(--ggv-radius-sign);
+  background: var(--ggv-color-cta);
+  color: var(--ggv-color-on-cta);
+  font: 400 1.25rem/1.2 var(--ggv-font-primary);
+  text-align: left;
+  text-decoration: none;
+  box-shadow: var(--ggv-ring-sign), var(--ggv-shadow-sign);
+  cursor: pointer;
   transition:
     transform var(--ggv-duration-press) ease-out,
     opacity var(--ggv-duration-press) ease-out;
@@ -315,25 +360,27 @@ textarea {
 .overlay-btn-primary:disabled {
   opacity: var(--ggv-opacity-disabled);
   cursor: not-allowed;
-  box-shadow: none;
+  box-shadow: var(--ggv-ring-sign);
 }
 
-/* Shared overlay secondary button */
+/* Shared overlay secondary button: an outline, icon before the label. */
 .overlay-btn-secondary {
   width: 100%;
-  min-height: var(--ggv-touch-target-min);
+  min-height: 3.375rem;
+  margin-top: 0.625rem;
   padding: 0.75rem var(--ggv-space-lg);
-  background: var(--ggv-color-text-tint);
+  background: transparent;
   color: var(--ggv-color-text);
   font-family: var(--ggv-font-primary);
-  font-size: var(--ggv-font-size-base);
+  font-size: 1.0625rem;
   border: none;
-  border-radius: var(--ggv-radius-pill);
+  border-radius: var(--ggv-radius-sign);
+  box-shadow: inset 0 0 0 1.5px var(--ggv-color-outline);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--ggv-space-sm);
+  gap: 0.625rem;
   transition:
     transform var(--ggv-duration-press) ease-out,
     background-color var(--ggv-duration-press) ease-out;
@@ -341,14 +388,19 @@ textarea {
 
 @media (hover: hover) and (pointer: fine) {
   .overlay-btn-secondary:hover {
-    background: var(--ggv-color-text-tint-hover);
+    background: var(--ggv-color-text-tint);
   }
 }
 
 .overlay-btn-icon {
+  width: 1.625rem;
+  height: 1.625rem;
+  flex-shrink: 0;
+}
+
+.overlay-btn-secondary .overlay-btn-icon {
   width: 1.25rem;
   height: 1.25rem;
-  flex-shrink: 0;
 }
 
 .spin {
@@ -357,7 +409,7 @@ textarea {
 
 /* Error message */
 .error-message {
-  margin: calc(-1 * var(--ggv-space-sm)) 0 var(--ggv-space-md);
+  margin: 0.75rem 0 0;
   font-family: var(--ggv-font-body);
   font-size: var(--ggv-font-size-sm);
   color: var(--ggv-color-text);
@@ -368,24 +420,11 @@ textarea {
    =================================================================== */
 
 .gps-version {
-  margin-top: var(--ggv-space-md);
-  font-family: var(--ggv-font-body);
-  font-size: var(--ggv-font-size-xs);
-  /* 65 %, measured on the build: 5.6:1 on the surface, 5.2:1 on the glass over a dark map. */
-  color: color-mix(in srgb, var(--ggv-color-text) 65%, transparent);
-}
-
-/* ===================================================================
-   APP OFFER OVERLAY
-   =================================================================== */
-
-/* The store link wears the primary button, without the link underline. */
-.app-offer-store {
-  text-decoration: none;
-}
-
-.app-offer-web {
-  margin-top: var(--ggv-space-sm);
+  margin-top: 0.875rem;
+  font: 600 0.6875rem/1 var(--ggv-font-body);
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: var(--ggv-color-muted);
 }
 
 /* ===================================================================
@@ -394,11 +433,12 @@ textarea {
 
 /* Under Navigate: where the position goes, and the privacy link. One quiet note. */
 .route-note {
-  margin-top: var(--ggv-space-md);
+  margin: 0.875rem 0.25rem 0;
   font-family: var(--ggv-font-body);
-  font-size: 0.8125rem;
+  font-size: 0.78125rem;
   line-height: 1.45;
-  color: color-mix(in srgb, var(--ggv-color-text) 72%, transparent);
+  text-align: center;
+  color: var(--ggv-color-muted);
 }
 
 .route-note a,
@@ -411,23 +451,26 @@ textarea {
 .route-note a {
   display: inline-block;
   margin-top: 0.375rem;
+  font-weight: 600;
 }
 
-/* Map credit in the screen corner, over the dimmed map behind the Welcome card. Light roads can
-   pass under it (lightest backdrop pixel measured: #626664 on web, #939594 on the A16, where
-   white text alone gave 2.74:1), so it sits on its own dark pill: 5.55:1 or more on both. */
+/* Map credit (OSMF guideline): ink on its own paper chip, just above the card, so its contrast
+   does not depend on the map under it. */
 .map-credit {
-  position: absolute;
-  right: var(--ggv-space-md);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--ggv-space-md));
-  padding: 0.125rem 0.5rem;
+  align-self: flex-end;
+  margin: auto 0.25rem 0.5rem 0;
+  padding: 0.4375rem 0.625rem;
   border-radius: var(--ggv-radius-pill);
-  background: rgba(10, 16, 12, 0.4);
-  font-family: var(--ggv-font-body);
-  font-size: var(--ggv-font-size-xs);
-  color: rgba(255, 255, 255, 0.9);
+  background: var(--ggv-color-surface);
+  box-shadow: var(--ggv-ring-hairline), var(--ggv-shadow-chip);
+  font: 600 0.6875rem/1 var(--ggv-font-body);
+  color: var(--ggv-color-text);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.map-credit + .modal {
+  margin-top: 0;
 }
 
 /* Offline notice on the destination picker. Uses --ggv-color-text, not the brand green:
@@ -446,102 +489,181 @@ textarea {
   line-height: 1.5;
 }
 
-.welcome-block-selector {
-  margin-top: var(--ggv-space-md);
-  text-align: left;
+/* Destination plates: one plate is full width, two share the row. */
+.welcome-plates {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0.625rem;
+  margin-top: 1.25rem;
 }
 
-.welcome-block-selector + .welcome-block-selector {
-  margin-top: var(--ggv-space-sm);
-}
-
-.welcome-modal .overlay-btn-primary {
-  margin-top: var(--ggv-space-lg);
-}
-
-.welcome-select {
-  width: 100%;
-  min-height: 3.25rem;
-  padding: 0.75rem 2.75rem 0.75rem var(--ggv-space-md);
-  border: 1.5px solid rgba(18, 18, 18, var(--ggv-opacity-border));
-  border-radius: var(--ggv-radius-lg);
-  font-family: var(--ggv-font-body);
-  font-size: var(--ggv-font-size-base);
+/* Empty: a dashed outline. Chosen: a green street sign that flips down into place. */
+.welcome-plate {
+  position: relative;
+  min-height: 6.125rem;
+  padding: 1rem 1.125rem;
+  border: 2px dashed var(--ggv-color-dashed);
+  border-radius: var(--ggv-radius-sign);
   color: var(--ggv-color-text);
-  background-color: var(--ggv-color-surface);
-  cursor: pointer;
+}
+
+.welcome-plate.is-filled {
+  border-color: transparent;
+  background: var(--ggv-color-cta);
+  color: var(--ggv-color-on-cta);
+  box-shadow: var(--ggv-ring-sign), var(--ggv-shadow-sign);
+  transform-origin: 50% 0;
+  animation: sign-flip var(--ggv-duration-sign) var(--ggv-ease-out) both;
+}
+
+.welcome-plate.is-disabled {
+  opacity: var(--ggv-opacity-disabled);
+}
+
+.welcome-plate:focus-within {
+  outline: 2px solid var(--ggv-color-text);
+  outline-offset: 3px;
+}
+
+.welcome-plate-caption,
+.arrived-plate-caption {
+  display: block;
+  font: 700 0.6875rem/1 var(--ggv-font-body);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ggv-color-muted);
+}
+
+.welcome-plate.is-filled .welcome-plate-caption,
+.arrived-plate-caption {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.welcome-plate-value {
+  display: block;
+  margin-top: 0.625rem;
+  font: 400 2.875rem/0.9 var(--ggv-font-primary);
+  letter-spacing: -0.02em;
+  animation: rise 360ms var(--ggv-ease-out) both;
+}
+
+.welcome-plate-placeholder {
+  display: block;
+  margin-top: 0.625rem;
+  font: 400 0.875rem/1.3 var(--ggv-font-body);
+}
+
+.welcome-plate-placeholder span {
+  display: block;
+  color: var(--ggv-color-primary-text);
+}
+
+.welcome-plate-chevron {
+  position: absolute;
+  top: 0.875rem;
+  right: 0.875rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--ggv-color-muted);
+}
+
+.welcome-plate.is-filled .welcome-plate-chevron {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* The native <select> covers the whole plate, invisible: the OS picker does the choosing. */
+.welcome-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23121212' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right var(--ggv-space-md) center;
-  background-size: var(--ggv-space-md);
-  transition:
-    border-color var(--ggv-duration-press) ease-out,
-    box-shadow var(--ggv-duration-press) ease-out;
+  border: 0;
+  cursor: pointer;
 }
 
 .welcome-select:disabled {
-  opacity: var(--ggv-opacity-disabled);
   cursor: not-allowed;
 }
 
-.welcome-select:focus {
-  outline: none;
-  border-color: var(--ggv-color-primary);
-  box-shadow: 0 0 0 3px rgba(80, 170, 97, 0.15);
-}
-
-/* The whole focus indicator above is a box-shadow, and CSS Color Adjust 1 § 3.1 forces
-   box-shadow to `none` in forced-colors mode — leaving no indicator at all, since `outline`
-   was removed. Restore a real outline there; its colour is forced to the system palette,
-   so none is specified. */
-@media (forced-colors: active) {
-  .welcome-select:focus {
-    outline: 2px solid;
-    outline-offset: 2px;
-  }
-}
-
 /* ===================================================================
-   ARRIVED OVERLAY — two cards over the live map
+   ARRIVED OVERLAY — two cards over the live map, the centre left clear
    =================================================================== */
 
 .arrived-overlay {
-  background: transparent;
-  pointer-events: none;
-  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
+  background: none;
+  pointer-events: none;
   overflow: hidden;
-  padding: var(--ggv-space-lg) var(--ggv-space-md);
-  padding-top: calc(var(--ggv-space-lg) + env(safe-area-inset-top, 0px));
-  padding-bottom: calc(var(--ggv-space-lg) + env(safe-area-inset-bottom, 0px));
+  padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
 }
 
 .arrived-overlay .modal {
   pointer-events: auto;
+  margin-top: 0;
 }
 
 .arrived-top-modal {
-  animation: slide-in-from-top var(--ggv-spring-slide-duration) var(--ggv-spring-slide) both;
+  padding: 1.375rem 1.375rem 1.125rem;
+  animation-name: card-drop;
 }
 
-.arrived-top-modal .overlay-description {
-  margin-bottom: 0;
+.arrived-top-modal h1 {
+  font-size: clamp(1.75rem, 8.7vw, 2.125rem);
 }
 
 .arrived-bottom-modal {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ggv-space-sm);
-  padding: var(--ggv-space-md);
-  animation: slide-in-from-bottom var(--ggv-spring-slide-duration) var(--ggv-spring-slide) both;
+  padding: 0.75rem 0.75rem 1.5rem;
 }
 
-/* The disc pops in on its own curve, so it opts out of the shared `rise`. */
-.modal > .arrived-icon-wrapper {
-  background: var(--ggv-gradient-success);
-  animation: success-pop 500ms var(--ggv-ease-pop) 120ms both;
+.arrived-bottom-modal .overlay-btn-primary {
+  margin-top: 0;
+}
+
+.arrived-plate {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.125rem 1.25rem;
+  border-radius: 1.25rem;
+  background: var(--ggv-color-cta);
+  color: var(--ggv-color-on-cta);
+  box-shadow: var(--ggv-ring-sign), var(--ggv-shadow-sign);
+  transform-origin: 50% 0;
+}
+
+.arrived-plate-name {
+  display: block;
+  margin-top: 0.5rem;
+  font: 400 2.125rem/0.95 var(--ggv-font-primary);
+  letter-spacing: -0.01em;
+}
+
+.arrived-plate-check {
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ggv-color-secondary);
+  color: var(--ggv-color-text);
+  animation: success-pop 500ms var(--ggv-ease-pop) 700ms both;
+}
+
+.arrived-plate-check svg {
+  width: 1.625rem;
+  height: 1.625rem;
+}
+
+.arrived-gloss {
+  margin-top: 0.625rem;
+  font: 400 0.9375rem/1.45 var(--ggv-font-body);
+  color: var(--ggv-color-primary-text);
 }
 
 @keyframes success-pop {
@@ -555,46 +677,26 @@ textarea {
   }
 }
 
-/* One ring that leaves the disc once, as the check lands. */
-.arrived-icon-wrapper::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border: 2px solid var(--ggv-color-primary);
-  border-radius: var(--ggv-radius-full);
-  opacity: 0;
-  animation: success-ring 900ms ease-out 420ms;
+/* Per-child entrances that replace the shared `rise`: declared after the stagger rules, which
+   share their specificity. */
+.modal > .overlay-icon-wrapper {
+  animation: diamond-in 600ms var(--ggv-ease-pop) 420ms both;
 }
 
-@keyframes success-ring {
-  from {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  to {
-    transform: scale(1.5);
-    opacity: 0;
-  }
+.modal > .arrived-plate {
+  animation: sign-flip var(--ggv-duration-sign) var(--ggv-ease-out) 300ms both;
 }
 
 /* ===================================================================
-   EXIT COMPLETE / ERROR — icon disc colours
+   ERROR BOUNDARY
    =================================================================== */
-
-.exit-icon-wrapper {
-  background: var(--ggv-gradient-exit);
-}
-
-.error-icon-wrapper {
-  background: var(--ggv-gradient-error);
-}
 
 .error-details {
   text-align: left;
-  margin-bottom: var(--ggv-space-lg);
+  margin: 0.875rem 0 0;
   font-family: var(--ggv-font-body);
   font-size: var(--ggv-font-size-xs);
-  color: var(--ggv-color-gray);
+  color: var(--ggv-color-muted);
 }
 
 .error-details summary {
@@ -612,58 +714,44 @@ textarea {
 }
 
 /* ===================================================================
-   NAVIGATION — Floating Pills (NavTopPill + NavBottomStrip)
+   NAVIGATION — turn sign (top) and destination strip (bottom)
    =================================================================== */
 
 .nav-top-pill,
 .nav-bottom-strip {
   position: fixed;
-  left: var(--ggv-space-md);
-  right: var(--ggv-space-md);
+  left: 0.625rem;
+  right: 0.625rem;
   z-index: var(--ggv-z-nav);
   display: flex;
   align-items: center;
-  background: var(--ggv-glass-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: var(--ggv-shadow-pill);
-  color: var(--ggv-color-text);
 }
 
-@supports not (backdrop-filter: blur(10px)) {
-  .nav-top-pill,
-  .nav-bottom-strip {
-    background: var(--ggv-glass-bg-fallback);
-  }
-}
-
-/* Turn card: arrow tile, distance to the turn (the number read while walking), instruction. */
+/* Turn sign: arrow, distance to the turn (the number read while walking), instruction. */
 .nav-top-pill {
-  /* Below the logo (.ggv-logo: top md, height 2xl), with a small margin. */
-  top: calc(
-    env(safe-area-inset-top, 0px) + var(--ggv-space-md) + var(--ggv-space-2xl) + var(--ggv-space-sm)
-  );
-  gap: var(--ggv-space-pill-inset);
-  padding: var(--ggv-space-pill-inset);
+  top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+  gap: 1rem;
+  padding: 1.125rem 0.875rem 1.125rem 1.25rem;
   border-radius: var(--ggv-radius-xl);
-  animation: pill-in-from-top var(--ggv-spring-pill-duration) var(--ggv-spring-pill) both;
+  background: var(--ggv-color-cta);
+  color: var(--ggv-color-on-cta);
+  box-shadow: var(--ggv-ring-sign), var(--ggv-shadow-sign);
+  transform-origin: 50% 0;
+  animation: sign-flip var(--ggv-duration-sign) var(--ggv-ease-out) both;
 }
 
 .nav-turn-icon {
-  width: 3rem;
-  height: 3rem;
+  width: 2.75rem;
+  height: 2.75rem;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--ggv-radius-lg);
-  background: var(--ggv-gradient-primary);
-  color: var(--ggv-color-on-cta);
 }
 
 .nav-turn-icon svg {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 .nav-turn-body {
@@ -672,16 +760,15 @@ textarea {
 }
 
 .nav-turn-dist {
-  font-family: var(--ggv-font-primary);
-  font-size: 1.5rem;
-  line-height: 1.1;
+  font: 400 2.625rem/0.95 var(--ggv-font-primary);
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  color: var(--ggv-color-primary-text);
 }
 
 .nav-turn-text {
+  margin-top: 0.375rem;
   font-family: var(--ggv-font-body);
-  font-size: 0.9375rem;
+  font-size: 1.0625rem;
   font-weight: var(--ggv-font-weight-semibold);
   line-height: 1.3;
   white-space: nowrap;
@@ -691,14 +778,15 @@ textarea {
 
 .nav-turn-gloss {
   margin-left: 0.375rem;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 400;
-  color: var(--ggv-color-primary-text);
+  color: var(--ggv-color-on-cta-gloss);
 }
 
-/* Cancel: neutral, NOT --ggv-color-error. Cancelling navigation is not a failure, and spending
+/* Cancel: neutral, NOT an error colour. Cancelling navigation is not a failure, and spending
    the error colour here would leave the app nothing louder for a real one. */
 .nav-cancel-btn {
+  align-self: flex-start;
   width: var(--ggv-touch-target-min);
   height: var(--ggv-touch-target-min);
   flex-shrink: 0;
@@ -708,8 +796,8 @@ textarea {
   padding: 0;
   border: none;
   border-radius: var(--ggv-radius-full);
-  background: var(--ggv-color-text-tint);
-  color: var(--ggv-color-text);
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--ggv-color-on-cta);
   cursor: pointer;
   transition: transform var(--ggv-duration-press) ease-out;
 }
@@ -719,14 +807,18 @@ textarea {
   height: 1.25rem;
 }
 
-/* Destination strip */
+/* Destination strip: paper, with the destination on a mini sign. */
 .nav-bottom-strip {
-  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--ggv-space-pill-inset));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
   justify-content: space-between;
-  gap: var(--ggv-space-pill-inset);
-  padding: var(--ggv-space-pill-inset) var(--ggv-space-md);
-  border-radius: var(--ggv-radius-pill);
-  animation: pill-in-from-bottom var(--ggv-spring-pill-duration) var(--ggv-spring-pill) both;
+  gap: 0.75rem;
+  min-height: 4.125rem;
+  padding: 0.625rem;
+  border-radius: 1.375rem;
+  background: var(--ggv-color-surface);
+  box-shadow: var(--ggv-ring-hairline), var(--ggv-shadow-card);
+  color: var(--ggv-color-text);
+  animation: card-in var(--ggv-duration-card) var(--ggv-ease-out) both;
 }
 
 .nav-dest-name {
@@ -737,17 +829,16 @@ textarea {
   min-width: 0;
 }
 
-.nav-dest-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  flex-shrink: 0;
-  color: var(--ggv-color-primary-text);
-}
-
 .nav-dest-text {
-  font-family: var(--ggv-font-body);
-  font-size: 0.9375rem;
-  font-weight: var(--ggv-font-weight-semibold);
+  max-width: 100%;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.75rem;
+  background: var(--ggv-color-cta);
+  color: var(--ggv-color-on-cta);
+  font: 400 1rem/1 var(--ggv-font-primary);
+  box-shadow:
+    inset 0 0 0 3px var(--ggv-color-cta),
+    inset 0 0 0 4.5px rgba(255, 255, 255, 0.9);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -755,9 +846,9 @@ textarea {
 
 .nav-compass-text {
   font-family: var(--ggv-font-primary);
-  font-size: var(--ggv-font-size-lg);
+  font-size: 1.375rem;
   font-variant-numeric: tabular-nums;
-  color: var(--ggv-color-primary-text);
+  color: var(--ggv-color-text);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -775,7 +866,7 @@ textarea {
   border: none;
   border-radius: var(--ggv-radius-full);
   background: none;
-  color: color-mix(in srgb, var(--ggv-color-text) 72%, transparent);
+  color: var(--ggv-color-muted);
   cursor: pointer;
 }
 
@@ -795,40 +886,37 @@ textarea {
   position: absolute;
   right: 0;
   bottom: calc(100% + var(--ggv-space-sm));
-  padding: 0.5rem 0.875rem;
-  background: var(--ggv-glass-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  padding: 0.5625rem 0.875rem;
+  background: var(--ggv-color-surface);
   border-radius: var(--ggv-radius-pill);
-  box-shadow: var(--ggv-shadow-pill);
+  box-shadow: var(--ggv-ring-hairline), var(--ggv-shadow-chip);
   font-family: var(--ggv-font-body);
   font-size: 0.8125rem;
   white-space: nowrap;
-  color: color-mix(in srgb, var(--ggv-color-text) 72%, transparent);
+  color: var(--ggv-color-muted);
   animation: rise 240ms var(--ggv-ease-out) both;
 }
 
 /* ===================================================================
-   UPDATE TOAST (offline-ready notice)
+   UPDATE TOAST (offline-ready notice), at the top, below the logo
    =================================================================== */
 
 .update-toast {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--ggv-space-lg));
-  left: var(--ggv-space-md);
-  right: var(--ggv-space-md);
+  top: calc(env(safe-area-inset-top, 0px) + 4.25rem);
+  bottom: auto;
+  left: 0.625rem;
+  right: 0.625rem;
   z-index: var(--ggv-z-overlay);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--ggv-space-md);
-  padding: var(--ggv-space-pill-inset);
-  background: var(--ggv-glass-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: var(--ggv-radius-xl);
-  box-shadow: var(--ggv-shadow-pill);
-  animation: pill-in-from-bottom var(--ggv-spring-pill-duration) var(--ggv-spring-pill) both;
+  padding: 0.75rem;
+  background: var(--ggv-color-surface);
+  border-radius: 1.25rem;
+  box-shadow: var(--ggv-ring-hairline), var(--ggv-shadow-chip);
+  animation: card-drop var(--ggv-duration-card) var(--ggv-ease-out) both;
 }
 
 .update-toast-content {
@@ -846,8 +934,8 @@ textarea {
   align-items: center;
   justify-content: center;
   border-radius: var(--ggv-radius-full);
-  background: var(--ggv-gradient-success);
-  color: #ffffff;
+  background: var(--ggv-color-secondary);
+  color: var(--ggv-color-text);
 }
 
 .update-toast-icon svg {
@@ -874,8 +962,9 @@ textarea {
   min-height: var(--ggv-touch-target-min);
   padding: 0.5rem 1.125rem;
   border: none;
-  border-radius: var(--ggv-radius-pill);
-  background: var(--ggv-color-text-tint);
+  border-radius: 0.875rem;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--ggv-color-outline);
   color: var(--ggv-color-text);
   font-family: var(--ggv-font-primary);
   font-size: var(--ggv-font-size-sm);
@@ -889,19 +978,26 @@ textarea {
    =================================================================== */
 
 @media (min-width: 641px) {
-  .modal {
-    padding: 2.5rem var(--ggv-space-xl) var(--ggv-space-xl);
-    max-width: 400px;
+  .overlay {
+    align-items: center;
   }
 
-  .modal h1 {
-    font-size: 1.875rem;
+  .modal {
+    max-width: 26.25rem;
+  }
+
+  /* Right edge of the centred card, not of the screen. */
+  .map-credit {
+    margin-right: calc(50% - 13.125rem + 0.25rem);
   }
 
   .nav-top-pill,
-  .nav-bottom-strip {
-    left: var(--ggv-space-lg);
-    right: var(--ggv-space-lg);
+  .nav-bottom-strip,
+  .update-toast {
+    left: 50%;
+    right: auto;
+    width: 26.25rem;
+    margin-left: -13.125rem;
   }
 }
 
@@ -920,42 +1016,55 @@ textarea {
 @keyframes card-in {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.97);
+    transform: translateY(48px);
+  }
+}
+
+@keyframes card-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-48px);
   }
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(14px);
   }
 }
 
-@keyframes slide-in-from-top {
+@keyframes blur-rise {
   from {
     opacity: 0;
-    transform: translateY(-100%);
+    transform: translateY(18px);
+    filter: blur(8px);
   }
 }
 
-@keyframes slide-in-from-bottom {
+/* A street sign swinging down from its top edge. */
+@keyframes sign-flip {
   from {
     opacity: 0;
-    transform: translateY(100%);
+    transform: perspective(600px) rotateX(-70deg);
   }
 }
 
-@keyframes pill-in-from-top {
+@keyframes diamond-in {
   from {
     opacity: 0;
-    transform: translateY(-80px);
+    transform: rotate(45deg) scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(45deg) scale(1);
   }
 }
 
-@keyframes pill-in-from-bottom {
+@keyframes logo-drop {
   from {
     opacity: 0;
-    transform: translateY(80px);
+    transform: translate(-50%, -24px);
   }
 }
 
@@ -1030,27 +1139,5 @@ textarea {
   }
   100% {
     box-shadow: 0 0 0 0 rgba(234, 67, 53, 0);
-  }
-}
-
-/* ===================================================================
-   DARK MODE OVERRIDES — elements not fully covered by design tokens
-   =================================================================== */
-
-@media (prefers-color-scheme: dark) {
-  /* Select dropdown arrow — invert stroke for dark bg */
-  .welcome-select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23e8e8e8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    border-color: rgba(232, 232, 232, var(--ggv-opacity-border));
-  }
-
-  /* Fix focus ring contrast */
-  .welcome-select:focus {
-    box-shadow: 0 0 0 3px rgba(80, 170, 97, 0.25);
-  }
-
-  /* Destination marker pin — slightly lighter in dark mode */
-  .dest-marker-pin {
-    filter: brightness(1.1);
   }
 }

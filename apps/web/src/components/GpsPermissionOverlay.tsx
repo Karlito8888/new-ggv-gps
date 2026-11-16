@@ -39,8 +39,9 @@ export function GpsPermissionOverlay({
           <Icon name="gps" className="overlay-icon" />
         </div>
 
+        <p className="overlay-eyebrow">{COPY.brand.village.en}</p>
         <h1>{COPY.gps.title.en}</h1>
-        <p className="overlay-tagalog">({COPY.gps.title.tl})</p>
+        <p className="overlay-tagalog">{COPY.gps.title.tl}</p>
 
         <p className="overlay-description">
           {COPY.gps.description.en}
@@ -54,12 +55,12 @@ export function GpsPermissionOverlay({
           onClick={handleEnableGPS}
           disabled={isRequesting || !isMapReady}
         >
-          {!isMapReady && <Icon name="spinner" className="overlay-btn-icon spin" />}
           {!isMapReady
             ? COPY.gps.wait.en
             : isRequesting
               ? COPY.gps.requesting.en
               : COPY.gps.enable.en}
+          {!isMapReady && <Icon name="spinner" className="overlay-btn-icon spin" />}
         </button>
 
         <p className="gps-version">v{__APP_VERSION__}</p>

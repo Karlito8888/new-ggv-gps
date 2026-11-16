@@ -9,8 +9,9 @@ import {
   type Destination,
 } from "@ggv/shared";
 import { Select } from "../select/Select";
+import { SHADOW_ROOM } from "../select/SelectField";
 import { theme } from "../theme";
-import { Button, IconDisc, Link, Modal, Title } from "../ui";
+import { Button, Eyebrow, Link, Modal, Title } from "../ui";
 import { villageSnapshot } from "../villageSnapshot";
 
 /** `blocks` is the live Convex list, or the bundled snapshot while it has not answered. */
@@ -26,7 +27,7 @@ export function Welcome({
     useDestinationChoice(onSelectDestination, villageSnapshot.lotsByBlock);
   const insets = useSafeAreaInsets();
 
-  // Same two selects as the web WelcomeOverlay: the lot select only exists once a block is
+  // Same two plates as the web WelcomeOverlay: the lot plate only exists once a block is
   // chosen, and its placeholder text and disabled conditions match the web line for line.
   const lotPlaceholder = isLoadingLots
     ? COPY.welcome.loading
@@ -35,32 +36,42 @@ export function Welcome({
       : COPY.welcome.selectLot;
 
   return (
-    <View style={styles.overlay}>
-      <Modal style={styles.modal}>
-        <IconDisc name="pin" />
+    <View style={[styles.overlay, { paddingBottom: insets.bottom + 10 }]}>
+      {/* The map shows behind the card: its credit, just above the card (OSMF guideline). */}
+      <View style={styles.mapCredit}>
+        <Text>
+          <Link label={COPY.credits.osm.en} url={OSM_COPYRIGHT_URL} style={styles.mapCreditLink} />
+        </Text>
+      </View>
+
+      <Modal>
+        <Eyebrow />
         <Title en={COPY.welcome.title.en} tl={COPY.welcome.title.tl} />
 
-        <View style={[styles.selector, styles.firstSelector]}>
-          <Select
-            value={selectedBlock}
-            placeholder={inline(COPY.welcome.selectBlock)}
-            options={blocks.map((block) => ({ label: COPY.welcome.block(block), value: block }))}
-            onChange={setBlock}
-            enabled
-          />
-        </View>
-
-        {selectedBlock ? (
-          <View style={styles.selector}>
+        <View style={styles.plates}>
+          <View style={styles.plate}>
             <Select
-              value={effectiveLot}
-              placeholder={inline(lotPlaceholder)}
-              options={lotList.map((l) => ({ label: COPY.welcome.lot(l.lot), value: l.lot }))}
-              onChange={setLot}
-              enabled={!isLoadingLots && lotList.length > 0}
+              caption={COPY.welcome.plateBlock.en}
+              value={selectedBlock}
+              placeholder={COPY.welcome.selectBlock}
+              options={blocks.map((block) => ({ label: COPY.welcome.block(block), value: block }))}
+              onChange={setBlock}
+              enabled
             />
           </View>
-        ) : null}
+          {selectedBlock ? (
+            <View style={styles.plate}>
+              <Select
+                caption={COPY.welcome.plateLot.en}
+                value={effectiveLot}
+                placeholder={lotPlaceholder}
+                options={lotList.map((l) => ({ label: COPY.welcome.lot(l.lot), value: l.lot }))}
+                onChange={setLot}
+                enabled={!isLoadingLots && lotList.length > 0}
+              />
+            </View>
+          ) : null}
+        </View>
 
         <Button
           icon="navigate"
@@ -72,16 +83,9 @@ export function Welcome({
         <Text style={styles.note}>
           {COPY.welcome.routing.en}
           <Text style={styles.gloss}>{`\n${COPY.welcome.routing.tl}\n`}</Text>
-          <Link label={inline(COPY.credits.privacy)} url={PRIVACY_URL} />
+          <Link label={inline(COPY.credits.privacy)} url={PRIVACY_URL} style={styles.noteLink} />
         </Text>
       </Modal>
-
-      {/* The map shows dimmed behind the card: its credit, in the corner (OSMF guideline). */}
-      <View style={[styles.mapCredit, { bottom: insets.bottom + 16 }]}>
-        <Text style={styles.mapCreditText}>
-          <Link label={COPY.credits.osm.en} url={OSM_COPYRIGHT_URL} style={styles.mapCreditLink} />
-        </Text>
-      </View>
     </View>
   );
 }
@@ -89,26 +93,30 @@ export function Welcome({
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: theme.overlay,
-    justifyContent: "center",
-    padding: 16,
+    backgroundImage: theme.fade,
+    justifyContent: "flex-end",
+    paddingHorizontal: 10,
+    paddingTop: theme.logoTop + theme.logoHeight + 12,
   },
-  modal: { alignSelf: "stretch" },
-  // `.welcome-block-selector`: 16 above the first field, 8 between fields (with the card's gap).
-  selector: { alignSelf: "stretch" },
-  firstSelector: { marginTop: 8 },
+  // `.welcome-plates`: one plate is full width, two share the row.
+  plates: { flexDirection: "row", gap: 10, marginTop: 20, marginBottom: -SHADOW_ROOM },
+  plate: { flex: 1 },
   // `.route-note`
-  note: { marginTop: 8, fontSize: 13, lineHeight: 19, color: theme.textMuted, textAlign: "center" },
+  note: { marginTop: 14, fontSize: 12.5, lineHeight: 18, color: theme.muted, textAlign: "center" },
+  noteLink: { fontWeight: "600" },
   gloss: { color: theme.primaryText },
-  // `.map-credit`: white at 90 % on its own dark pill, since light roads pass under it.
+  // `.map-credit`: ink on its own paper chip, so its contrast does not depend on the map.
   mapCredit: {
-    position: "absolute",
-    right: 16,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    alignSelf: "flex-end",
+    marginBottom: 8,
+    marginRight: 4,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
     borderRadius: theme.radiusPill,
-    backgroundColor: "rgba(10,16,12,0.4)",
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.hairline,
+    boxShadow: theme.shadow.chip,
   },
-  mapCreditText: { fontSize: 12 },
-  mapCreditLink: { color: "rgba(255,255,255,0.9)" },
+  mapCreditLink: { fontSize: 11, fontWeight: "600", color: theme.text },
 });

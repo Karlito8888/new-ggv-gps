@@ -40,12 +40,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return (
         <div className="overlay">
           <div className="modal">
-            <div className="overlay-icon-wrapper error-icon-wrapper">
+            <div className="overlay-icon-wrapper">
               <Icon name="alert" className="overlay-icon" />
             </div>
 
+            <p className="overlay-eyebrow">{COPY.brand.village.en}</p>
             <h1>{COPY.error.title.en}</h1>
-            <p className="overlay-tagalog">({COPY.error.title.tl})</p>
+            <p className="overlay-tagalog">{COPY.error.title.tl}</p>
             <p className="overlay-description">
               {COPY.error.unexpected.en}
               <br />

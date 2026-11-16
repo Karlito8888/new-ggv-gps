@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   COPY,
   inline,
@@ -32,38 +33,62 @@ export function WelcomeOverlay({
 
   return (
     <div className="overlay" role="dialog" aria-modal="true" aria-label={COPY.welcome.aria.en}>
-      <div className="modal welcome-modal">
-        <div className="overlay-icon-wrapper">
-          <Icon name="pin" className="overlay-icon" />
-        </div>
+      {/* The map shows behind the card: its credit, just above the card (OSMF guideline). */}
+      <a className="map-credit" href={OSM_COPYRIGHT_URL} target="_blank" rel="noopener noreferrer">
+        {COPY.credits.osm.en}
+      </a>
 
+      <div className="modal">
+        <p className="overlay-eyebrow">{COPY.brand.village.en}</p>
         <h1>{COPY.welcome.title.en}</h1>
-        <p className="overlay-tagalog">({COPY.welcome.title.tl})</p>
+        <p className="overlay-tagalog">{COPY.welcome.title.tl}</p>
 
-        <div className="welcome-block-selector">
-          <label htmlFor="block-select" className="sr-only">
-            {COPY.welcome.selectBlockLabel.en}
-          </label>
-          <select
+        <div className="welcome-plates">
+          <Plate
             id="block-select"
+            caption={COPY.welcome.plateBlock.en}
+            label={COPY.welcome.selectBlockLabel.en}
             value={selectedBlock}
-            onChange={(e) => setBlock(e.target.value)}
-            className="welcome-select"
-            disabled={isLoadingBlocks}
-          >
-            <option value="" disabled>
-              {isOffline
-                ? inline(COPY.welcome.noConnection)
+            placeholder={
+              isOffline
+                ? COPY.welcome.noConnection
                 : isLoadingBlocks
-                  ? inline(COPY.welcome.loading)
-                  : inline(COPY.welcome.selectBlock)}
-            </option>
+                  ? COPY.welcome.loading
+                  : COPY.welcome.selectBlock
+            }
+            disabled={isLoadingBlocks}
+            onChange={setBlock}
+          >
             {blocks.map((block) => (
               <option key={block} value={block}>
                 {COPY.welcome.block(block)}
               </option>
             ))}
-          </select>
+          </Plate>
+
+          {selectedBlock && (
+            <Plate
+              id="lot-select"
+              caption={COPY.welcome.plateLot.en}
+              label={COPY.welcome.selectLotLabel.en}
+              value={effectiveLot}
+              placeholder={
+                isLoadingLots
+                  ? COPY.welcome.loading
+                  : lotList.length === 0
+                    ? COPY.welcome.noLots
+                    : COPY.welcome.selectLot
+              }
+              disabled={isLoadingLots || lotList.length === 0}
+              onChange={setLot}
+            >
+              {lotList.map((l) => (
+                <option key={l.lot} value={l.lot}>
+                  {COPY.welcome.lot(l.lot)}
+                </option>
+              ))}
+            </Plate>
+          )}
         </div>
 
         {isOffline && (
@@ -82,41 +107,13 @@ export function WelcomeOverlay({
           </div>
         )}
 
-        {selectedBlock && (
-          <div className="welcome-block-selector">
-            <label htmlFor="lot-select" className="sr-only">
-              {COPY.welcome.selectLotLabel.en}
-            </label>
-            <select
-              id="lot-select"
-              value={effectiveLot}
-              onChange={(e) => setLot(e.target.value)}
-              className="welcome-select"
-              disabled={isLoadingLots || lotList.length === 0}
-            >
-              <option value="" disabled>
-                {isLoadingLots
-                  ? inline(COPY.welcome.loading)
-                  : lotList.length === 0
-                    ? inline(COPY.welcome.noLots)
-                    : inline(COPY.welcome.selectLot)}
-              </option>
-              {lotList.map((l) => (
-                <option key={l.lot} value={l.lot}>
-                  {COPY.welcome.lot(l.lot)}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
         <button
           className="overlay-btn-primary"
           onClick={navigate}
           disabled={!selectedBlock || !effectiveLot || isLoadingLots}
         >
-          <Icon name="navigate" className="overlay-btn-icon" />
           {COPY.welcome.navigate.en}
+          <Icon name="navigate" className="overlay-btn-icon" />
         </button>
 
         {/* Navigate is the tap that sends the position out: say where, at that very spot. */}
@@ -128,11 +125,64 @@ export function WelcomeOverlay({
           </a>
         </p>
       </div>
+    </div>
+  );
+}
 
-      {/* The map shows dimmed behind the card: its credit, in the corner (OSMF guideline). */}
-      <a className="map-credit" href={OSM_COPYRIGHT_URL} target="_blank" rel="noopener noreferrer">
-        {COPY.credits.osm.en}
-      </a>
+/**
+ * A destination plate: dashed while empty, a green street sign once chosen. The native
+ * <select> covers it, invisible, so the OS picker does the choosing and keyboard focus works.
+ */
+function Plate({
+  id,
+  caption,
+  label,
+  value,
+  placeholder,
+  disabled,
+  onChange,
+  children,
+}: {
+  id: string;
+  caption: string;
+  label: string;
+  value: string;
+  placeholder: { en: string; tl: string };
+  disabled: boolean;
+  onChange: (value: string) => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`welcome-plate${value ? " is-filled" : ""}${disabled ? " is-disabled" : ""}`}>
+      <label htmlFor={id} className="sr-only">
+        {label}
+      </label>
+      <span className="welcome-plate-caption" aria-hidden="true">
+        {caption}
+      </span>
+      {value ? (
+        <span key={value} className="welcome-plate-value" aria-hidden="true">
+          {value}
+        </span>
+      ) : (
+        <span className="welcome-plate-placeholder" aria-hidden="true">
+          {placeholder.en}
+          <span>({placeholder.tl})</span>
+        </span>
+      )}
+      <Icon name="chevron" className="welcome-plate-chevron" />
+      <select
+        id={id}
+        className="welcome-select"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+      >
+        <option value="" disabled>
+          {inline(placeholder)}
+        </option>
+        {children}
+      </select>
     </div>
   );
 }

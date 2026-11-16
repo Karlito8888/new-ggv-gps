@@ -24,7 +24,7 @@ The app runs entirely in the browser. Works on Android Chrome and iOS Safari.
 - **Offline-capable** — a service worker caches the map tiles, the app assets and the UI font; map labels are rendered on-device, so no font is fetched from the network at all
 - **No third-party runtime dependency** — the only hosts the app talks to are its Convex backend and the two public OSRM routers
 - **Bilingual UI** — English with Tagalog translations, turn-by-turn instructions included
-- **WCAG 2.2 AA contrast** — every text surface verified in both light and dark mode
+- **WCAG 2.2 AA contrast**: every text colour verified against the opaque paper cards and green signs it sits on
 - **Self-updating** — a new deployment is picked up on the next launch, with nothing to tap
 
 ## Quick Start

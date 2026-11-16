@@ -33,7 +33,7 @@ export function UpdateToast() {
         </span>
         <span className="update-toast-text">
           {COPY.update.ready.en}
-          <span className="update-toast-tagalog">({COPY.update.ready.tl})</span>
+          <span className="update-toast-tagalog">{COPY.update.ready.tl}</span>
         </span>
       </div>
       <button className="update-toast-btn" onClick={() => setOfflineReady(false)}>
