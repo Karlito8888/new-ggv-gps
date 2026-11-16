@@ -42,12 +42,18 @@ const madimi = "@expo-google-fonts/madimi-one/400Regular/MadimiOne_400Regular.tt
  * - `expo-build-properties` turns on resource shrinking (and states R8, which the template already
  *   enables) for Play's DEX code optimization finding; assets the JS requires survive it through
  *   the `res/raw/keep.xml` React Native writes at bundle time.
+ * - Updates (EAS Update): the runtime version is the app `version`, so an update only reaches
+ *   builds of the same version. Any native change (a new native module, a plugin, an SDK bump)
+ *   needs a `version` bump and new builds before the next update. The channel of each build is
+ *   its profile name, set in eas.json.
  */
 const config: ExpoConfig = {
   name: variant.name,
   slug: "myggv-gps",
   owner: "charles88888",
   version: "1.1.0",
+  runtimeVersion: { policy: "appVersion" },
+  updates: { url: "https://u.expo.dev/9e1644f0-44ba-4e4d-bb14-792ab39cb3b5" },
   orientation: "portrait",
   platforms: ["ios", "android"],
   userInterfaceStyle: "light",
