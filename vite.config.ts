@@ -1,6 +1,9 @@
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
+  staged: {
+    "*.{ts,tsx,js,jsx,cjs,mjs,json}": "vp check --fix",
+  },
   lint: {
     plugins: ["oxc", "typescript", "unicorn"],
     categories: {
@@ -15,8 +18,10 @@ export default defineConfig({
       "build",
       "**/node_modules",
       ".netlify",
-      // Expo's own ESLint config governs the mobile app (`expo lint`).
-      "apps/mobile/**",
+      // Native and generated trees of the Expo app.
+      "**/android/**",
+      "**/ios/**",
+      "**/.expo/**",
     ],
     overrides: [
       {
@@ -134,6 +139,97 @@ export default defineConfig({
           "no-restricted-globals": ["error", "window", "document", "navigator", "location"],
         },
       },
+      {
+        // Expo app: eslint-config-expo ported to Oxlint (reference: ~/Bureau/myggv/vite.config.ts).
+        // Later than the `**/*.{js,jsx,ts,tsx}` override above, so these values win in apps/mobile.
+        files: ["apps/mobile/**"],
+        plugins: ["import", "react"],
+        // React Native globals, as declared by `eslint-config-expo`.
+        env: {
+          builtin: true,
+          es2022: true,
+          browser: true,
+          commonjs: true,
+        },
+        globals: {
+          __DEV__: "readonly",
+          ErrorUtils: "readonly",
+          clearImmediate: "readonly",
+          process: "readonly",
+          setImmediate: "readonly",
+        },
+        rules: {
+          // eslint-config-expo: core and import.
+          "import/named": "error",
+          "import/namespace": "error",
+          "import/default": "error",
+          "import/export": "error",
+          "import/no-named-as-default": "warn",
+          "import/no-named-as-default-member": "warn",
+          "import/no-duplicates": "warn",
+          "import/first": "warn",
+          eqeqeq: ["warn", "smart"],
+          "no-extend-native": "warn",
+          "no-extra-bind": "warn",
+          "unicode-bom": ["warn", "never"],
+          "no-unused-vars": [
+            "warn",
+            {
+              vars: "all",
+              args: "none",
+              ignoreRestSiblings: true,
+              caughtErrors: "all",
+              caughtErrorsIgnorePattern: "^_",
+            },
+          ],
+          "no-unused-expressions": ["warn", { allowShortCircuit: true, enforceForJSX: true }],
+          "no-useless-constructor": "warn",
+          // eslint-config-expo: typescript.
+          "typescript/array-type": ["warn", { default: "array" }],
+          "typescript/no-empty-object-type": "warn",
+          "typescript/no-wrapper-object-types": "warn",
+          "typescript/consistent-type-assertions": [
+            "warn",
+            { assertionStyle: "as", objectLiteralTypeAssertions: "allow" },
+          ],
+          "typescript/no-extra-non-null-assertion": "warn",
+          // Metro resolves assets through static `require(...)`: there is no import form for them.
+          "typescript/no-require-imports": "off",
+          // eslint-config-expo: expo.
+          "expo/use-dom-exports": "error",
+          "expo/no-env-var-destructuring": "error",
+          "expo/no-dynamic-env-var": "error",
+          // eslint-config-expo: react.
+          "react/display-name": "error",
+          "react/jsx-key": "error",
+          "react/jsx-no-comment-textnodes": "error",
+          "react/jsx-no-duplicate-props": "error",
+          "react/jsx-no-undef": "error",
+          "react/no-children-prop": "error",
+          "react/no-danger-with-children": "error",
+          "react/no-direct-mutation-state": "error",
+          "react/no-find-dom-node": "error",
+          "react/no-is-mounted": "error",
+          "react/no-render-return-value": "error",
+          "react/no-string-refs": "error",
+          "react/no-unescaped-entities": "error",
+          "react/no-unknown-property": "warn",
+          "react/no-unsafe": "off",
+          "react/require-render-return": "error",
+          // `react/immutability` and `react/purity` diverge from ESLint's `react-hooks/*` rules
+          // (as in myggv), so the ESLint rule runs for those two.
+          "react/immutability": "off",
+          "react-hooks-js/immutability": "error",
+          "react/purity": "off",
+          "react-hooks-js/purity": "error",
+          // Not enforced by the former `expo lint` (it reported none of them):
+          // fire-and-forget Haptics/Linking/audio calls, `Sentry.ErrorBoundary`'s render prop,
+          // and the module-level components of App.tsx.
+          "typescript/no-floating-promises": "off",
+          "typescript/unbound-method": "off",
+          "react/only-export-components": "off",
+        },
+      },
     ],
     options: {
       typeAware: true,
@@ -144,6 +240,9 @@ export default defineConfig({
         name: "vite-plus",
         specifier: "vite-plus/oxlint-plugin",
       },
+      "eslint-plugin-expo",
+      // ESLint's react-hooks rules, for the two whose native port diverges (see apps/mobile below).
+      { name: "react-hooks-js", specifier: "eslint-plugin-react-hooks" },
     ],
     rules: {
       "vite-plus/prefer-vite-plus-imports": "error",

@@ -1,0 +1,4 @@
+# core.hooksPath points at the Vite+ dispatcher, so git no longer runs .git/hooks:
+# delegate to this clone's own hook (graphify's graph rebuild) when there is one.
+h="$(git rev-parse --git-common-dir)/hooks/$(basename "$0")"
+[ ! -x "$h" ] || "$h" "$@"

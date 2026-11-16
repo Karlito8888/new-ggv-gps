@@ -29,13 +29,13 @@ The app runs entirely in the browser. Works on Android Chrome and iOS Safari.
 
 ## Quick Start
 
-**Prerequisites:** [Bun](https://bun.sh) (>= 1.0), Node.js (>= 20)
+**Prerequisites:** [Vite+](https://viteplus.dev) (`vp`; Bun is the package manager underneath), Node.js (>= 22)
 
 ```bash
 git clone https://github.com/Karlito8888/new-ggv-gps.git
 cd new-ggv-gps
-bun install
-bun run dev
+vp install
+vp run dev
 ```
 
 Open `http://localhost:5173` on your phone (LAN accessible).
@@ -72,7 +72,7 @@ Pushing to `main` builds the app and deploys `dist/` to Cloudflare Workers with 
 (`.github/workflows/deploy.yml`, `apps/web/wrangler.jsonc`).
 
 ```bash
-bun run build    # → dist/
+vp run build    # → dist/
 ```
 
 Live at: https://myggvgps.charlesbourgault.com/
