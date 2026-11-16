@@ -39,6 +39,9 @@ const madimi = "@expo-google-fonts/madimi-one/400Regular/MadimiOne_400Regular.tt
  * - `blockedPermissions` drops what the prebuild template declares and this app never uses.
  * - `platforms` is pinned to the native targets: unset, `web` is added whenever `react-dom` is
  *   installed, and the hoisted `node_modules` holds the copy `apps/web` depends on.
+ * - `expo-build-properties` turns on resource shrinking (and states R8, which the template already
+ *   enables) for Play's DEX code optimization finding; assets the JS requires survive it through
+ *   the `res/raw/keep.xml` React Native writes at bundle time.
  */
 const config: ExpoConfig = {
   name: variant.name,
@@ -96,6 +99,12 @@ const config: ExpoConfig = {
       { url: "https://de.sentry.io/", organization: "charles-bourgault", project: "myggv-gps" },
     ],
     "@maplibre/maplibre-react-native",
+    [
+      "expo-build-properties",
+      {
+        android: { enableMinifyInReleaseBuilds: true, enableShrinkResourcesInReleaseBuilds: true },
+      },
+    ],
   ],
   experiments: { reactCompiler: true },
   extra: { eas: { projectId: "9e1644f0-44ba-4e4d-bb14-792ab39cb3b5" } },
