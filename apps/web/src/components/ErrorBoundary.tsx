@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { COPY, inline } from "@ggv/shared";
+import { COPY } from "@ggv/shared";
 import { Icon } from "./Icon";
 
 interface ErrorBoundaryProps {
@@ -61,7 +61,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             )}
 
             <button className="overlay-btn-primary" onClick={this.handleReload}>
-              {inline(COPY.error.reload)}
+              {COPY.error.reload.en}
             </button>
 
             <p className="gps-version">v{__APP_VERSION__}</p>

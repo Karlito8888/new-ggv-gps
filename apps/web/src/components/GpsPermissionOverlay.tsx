@@ -56,10 +56,10 @@ export function GpsPermissionOverlay({
         >
           {!isMapReady && <Icon name="spinner" className="overlay-btn-icon spin" />}
           {!isMapReady
-            ? inline(COPY.gps.wait)
+            ? COPY.gps.wait.en
             : isRequesting
-              ? inline(COPY.gps.requesting)
-              : inline(COPY.gps.enable)}
+              ? COPY.gps.requesting.en
+              : COPY.gps.enable.en}
         </button>
 
         <p className="gps-version">v{__APP_VERSION__}</p>

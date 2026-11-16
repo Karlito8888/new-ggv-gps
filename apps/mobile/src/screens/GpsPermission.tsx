@@ -30,12 +30,12 @@ export function GpsPermission({
   // Both statuses are fixed only in the system Settings.
   const toSettings = status === "blocked" || status === "approximate";
   const label = !isMapReady
-    ? inline(COPY.gps.wait)
+    ? COPY.gps.wait.en
     : status === "requesting"
-      ? inline(COPY.gps.requesting)
+      ? COPY.gps.requesting.en
       : toSettings
-        ? inline(COPY.gps.openSettings)
-        : inline(COPY.gps.enable);
+        ? COPY.gps.openSettings.en
+        : COPY.gps.enable.en;
 
   return (
     // With the refusal buttons the card outgrows a short screen: it stays below the logo and
@@ -68,7 +68,7 @@ export function GpsPermission({
         />
         {/* Apple 5.1.1(iv): an alternative for whoever refuses or keeps location approximate. */}
         {toSettings || status === "denied" ? (
-          <Button label={inline(COPY.gps.skip)} secondary onPress={onContinue} />
+          <Button label={COPY.gps.skip.en} secondary onPress={onContinue} />
         ) : null}
         <Text style={styles.version}>v{Constants.expoConfig?.version}</Text>
       </Modal>

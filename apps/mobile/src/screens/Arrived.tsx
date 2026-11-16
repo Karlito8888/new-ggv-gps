@@ -1,5 +1,5 @@
 import { StyleSheet, View } from "react-native";
-import { COPY, inline, type Destination } from "@ggv/shared";
+import { COPY, type Destination } from "@ggv/shared";
 import { Body, Button, IconDisc, Modal, Title } from "../ui";
 
 /** Floats over the live map, as on web: the map stays interactive underneath. */
@@ -24,12 +24,8 @@ export function Arrived({
         />
       </Modal>
       <Modal style={styles.actions}>
-        <Button
-          icon="navigate"
-          label={`${COPY.arrived.again.en}\n(${COPY.arrived.again.tl})`}
-          onPress={onNavigateAgain}
-        />
-        <Button icon="exit" secondary label={inline(COPY.arrived.exit)} onPress={onExitVillage} />
+        <Button icon="navigate" label={COPY.arrived.again.en} onPress={onNavigateAgain} />
+        <Button icon="exit" secondary label={COPY.arrived.exit.en} onPress={onExitVillage} />
       </Modal>
     </View>
   );

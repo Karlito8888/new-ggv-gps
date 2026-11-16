@@ -1,4 +1,4 @@
-import { COPY, inline, type Destination } from "@ggv/shared";
+import { COPY, type Destination } from "@ggv/shared";
 import { Icon } from "./Icon";
 
 interface ArrivedOverlayProps {
@@ -41,15 +41,12 @@ export function ArrivedOverlay({
       <div className="modal arrived-bottom-modal">
         <button className="overlay-btn-primary" onClick={onNavigateAgain}>
           <Icon name="navigate" className="overlay-btn-icon" />
-          <span>
-            {COPY.arrived.again.en}
-            <br />({COPY.arrived.again.tl})
-          </span>
+          {COPY.arrived.again.en}
         </button>
 
         <button className="overlay-btn-secondary" onClick={onExitVillage}>
           <Icon name="exit" className="overlay-btn-icon" />
-          {inline(COPY.arrived.exit)}
+          {COPY.arrived.exit.en}
         </button>
       </div>
     </div>

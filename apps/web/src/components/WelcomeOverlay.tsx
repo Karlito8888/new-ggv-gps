@@ -77,7 +77,7 @@ export function WelcomeOverlay({
               className="overlay-btn-secondary"
               onClick={() => window.location.reload()}
             >
-              {inline(COPY.welcome.reload)}
+              {COPY.welcome.reload.en}
             </button>
           </div>
         )}
@@ -116,7 +116,7 @@ export function WelcomeOverlay({
           disabled={!selectedBlock || !effectiveLot || isLoadingLots}
         >
           <Icon name="navigate" className="overlay-btn-icon" />
-          {inline(COPY.welcome.navigate)}
+          {COPY.welcome.navigate.en}
         </button>
 
         {/* Navigate is the tap that sends the position out: say where, at that very spot. */}

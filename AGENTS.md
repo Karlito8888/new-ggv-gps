@@ -510,8 +510,8 @@ part — c'était la cause de la panne. (2) `--ggv-color-on-cta` ne doit **pas**
 sombre à 2,22:1 sur un dégradé vert foncé. (3) Une `opacity` sur du texte de marque le refait
 échouer — c'est pour ça que les trois règles tagalog n'en ont plus. (4) **Ne jamais mettre
 `.tagalog-inline` dans un bouton** : cette classe force `--ggv-color-primary-text`, soit du vert
-sur le dégradé vert du CTA — mesuré **1,24:1** en clair, **1,80:1** en sombre. Dans un bouton, la
-glose tagalog est du texte inline qui **hérite** la couleur du bouton. (5) Chercher la règle qui
+sur le dégradé vert du CTA — mesuré **1,24:1** en clair, **1,80:1** en sombre. Un bouton ne porte
+d'ailleurs aucune glose tagalog (§ _Langues_). (5) Chercher la règle qui
 **gagne** avant de mesurer : une icône trace en `currentColor`, donc sa couleur vient de la règle
 la plus spécifique qui touche le `<svg>` ou son parent, pas forcément de celle qu'on lit.
 
@@ -545,10 +545,9 @@ de style et `vite.config.ts`, puis zéro violation mesurée sur A16 avec tuiles,
   (le `type`, lui, est ouvert : « new identifiers might be introduced without API change »).
   Toute autre chaîne affichée se met dans `COPY` (`packages/shared/src/copy.ts`), pas en dur dans
   le composant.
-- **Libellés de boutons** : la glose va **inline entre parenthèses dans le libellé même**
-  (`Navigate (Mag-navigate)`), jamais dans un `<span className="tagalog-inline">` — voir le piège
-  (4) de la section _Couleurs_. Couvert partout : Welcome, Arrived (2 boutons), UpdateToast
-  (bouton unique `OK (Sige)`), ErrorBoundary, l'écran hors ligne, et les 3 états du bouton GPS.
+- **Libellés de boutons** : anglais seul, **aucune glose tagalog**, sur web comme sur mobile.
+  `inline()` sert aux placeholders des sélecteurs, aux lignes d'erreur et au lien de
+  confidentialité, jamais à un bouton.
 
 ## Données du village
 

@@ -1,4 +1,4 @@
-import { COPY, inline } from "@ggv/shared";
+import { COPY } from "@ggv/shared";
 import { Icon } from "./Icon";
 
 interface AppOfferOverlayProps {
@@ -19,16 +19,22 @@ export function AppOfferOverlay({ storeUrl, onClose }: AppOfferOverlayProps) {
         <p className="overlay-tagalog">({COPY.appOffer.title.tl})</p>
 
         <p className="overlay-description">
-          {COPY.appOffer.description.en}
-          <span className="tagalog-inline">{COPY.appOffer.description.tl}</span>
+          {COPY.appOffer.free.en}
+          <br />
+          {COPY.appOffer.offline.en}
+          <span className="tagalog-inline">
+            {COPY.appOffer.free.tl}
+            <br />
+            {COPY.appOffer.offline.tl}
+          </span>
         </p>
 
         <a className="overlay-btn-primary app-offer-store" href={storeUrl} onClick={onClose}>
-          {inline(COPY.appOffer.install)}
+          {COPY.appOffer.install.en}
         </a>
 
         <button className="overlay-btn-secondary app-offer-web" onClick={onClose}>
-          {inline(COPY.appOffer.web)}
+          {COPY.appOffer.web.en}
         </button>
       </div>
     </div>

@@ -1,6 +1,7 @@
 /**
  * Every user-visible string of the app, English with a short Tagalog gloss (the audience is
- * Filipino residents of Garden Grove Village). Keys are `<screen>.<role>`.
+ * Filipino residents of Garden Grove Village). Button labels are English only, no gloss. Keys are
+ * `<screen>.<role>`.
  *
  * Markup stays with each renderer; the words live here. Navigation instructions are the
  * exception: they are `TURN_LABELS` in routing.ts, keyed on the OSRM `modifier`.
@@ -11,7 +12,7 @@ export interface Bilingual {
   tl?: string;
 }
 
-/** Button-label form: the gloss goes inline in parentheses, `Navigate (Mag-navigate)`. */
+/** One-line form for a field placeholder, an error line or a link: `Select Block (Pumili ng Block)`. */
 export function inline(c: Required<Bilingual>): string {
   return `${c.en} (${c.tl})`;
 }
@@ -21,12 +22,14 @@ export const COPY = {
   appOffer: {
     aria: { en: "Get the MyGGV GPS app" },
     title: { en: "Get the App", tl: "Kunin ang App" },
-    description: {
-      en: "MyGGV GPS is also a free app. The village map stays on your phone, even without signal.",
-      tl: "Libreng app din ang MyGGV GPS. Nasa phone mo ang mapa ng village, kahit walang signal.",
+    // Two lines on screen: the offer, then why the app beats the web.
+    free: { en: "MyGGV GPS is also a free app.", tl: "Libreng app din ang MyGGV GPS." },
+    offline: {
+      en: "The village map stays on your phone, even without signal.",
+      tl: "Nasa phone mo ang mapa ng village, kahit walang signal.",
     },
-    install: { en: "Install the App", tl: "I-install ang App" },
-    web: { en: "Continue on Web", tl: "Magpatuloy sa Web" },
+    install: { en: "Install the App" },
+    web: { en: "Continue on Web" },
   },
   gps: {
     aria: { en: "Enable GPS Location" },
@@ -36,15 +39,15 @@ export const COPY = {
       tl: "Kailangan ng MyGGV GPS ang iyong lokasyon para gabayan ka sa village.",
     },
     retry: { en: "Please try again", tl: "Subukan muli" },
-    skip: { en: "Continue without GPS", tl: "Magpatuloy nang walang GPS" },
+    skip: { en: "Continue without GPS" },
     precise: {
       en: "Turn on precise location in Settings",
       tl: "I-on ang precise location sa Settings",
     },
-    wait: { en: "Please wait, map is loading...", tl: "Naglo-load ang mapa..." },
-    requesting: { en: "Requesting...", tl: "Humihiling..." },
-    enable: { en: "Enable GPS", tl: "I-enable ang GPS" },
-    openSettings: { en: "Open Settings", tl: "Buksan ang Settings" },
+    wait: { en: "Please wait, map is loading..." },
+    requesting: { en: "Requesting..." },
+    enable: { en: "Enable GPS" },
+    openSettings: { en: "Open Settings" },
   },
   welcome: {
     aria: { en: "Choose Destination" },
@@ -60,8 +63,8 @@ export const COPY = {
       en: "No connection to the village map data. Check your signal, then reload.",
       tl: "Walang koneksyon sa datos ng village. Tingnan ang signal, pagkatapos i-reload.",
     },
-    reload: { en: "Reload", tl: "I-reload" },
-    navigate: { en: "Navigate", tl: "Mag-navigate" },
+    reload: { en: "Reload" },
+    navigate: { en: "Navigate" },
     /**
      * Under Navigate, the tap that sends the position to the routing server (useRouting needs a
      * destination): Apple 5.1.2(i) disclosure before the sharing, and Play's "user-initiated
@@ -104,8 +107,8 @@ export const COPY = {
     title: { en: "You've Arrived!", tl: "Nakarating ka na!" },
     reached: { en: "You have reached", tl: "Nakarating ka na sa" },
     yourDestination: { en: "your destination", tl: "iyong destinasyon" },
-    again: { en: "Navigate Somewhere Else", tl: "Sa ibang lugar" },
-    exit: { en: "Exit Village", tl: "Lumabas sa Village" },
+    again: { en: "Navigate Somewhere Else" },
+    exit: { en: "Exit Village" },
   },
   exit: {
     aria: { en: "You have exited the village" },
@@ -129,12 +132,12 @@ export const COPY = {
       tl: "May nangyaring hindi inaasahan. I-reload ang app.",
     },
     details: { en: "Error details" },
-    reload: { en: "Reload App", tl: "I-reload ang App" },
-    retry: { en: "Try again", tl: "Subukan muli" },
+    reload: { en: "Reload App" },
+    retry: { en: "Try again" },
   },
   update: {
     ready: { en: "App ready to work offline", tl: "Handa na offline" },
-    ok: { en: "OK", tl: "Sige" },
+    ok: { en: "OK" },
   },
   forceUpdate: {
     title: { en: "Update required", tl: "Kailangan ng update" },
@@ -142,6 +145,6 @@ export const COPY = {
       en: "This version of MyGGV GPS is no longer supported. Install the latest version to keep navigating.",
       tl: "Hindi na suportado ang bersyong ito. I-install ang pinakabagong bersyon.",
     },
-    button: { en: "Update", tl: "I-update" },
+    button: { en: "Update" },
   },
 } as const;

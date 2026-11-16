@@ -1,5 +1,5 @@
 import { useRegisterSW } from "virtual:pwa-register/react";
-import { COPY, inline } from "@ggv/shared";
+import { COPY } from "@ggv/shared";
 import { Icon } from "./Icon";
 
 /**
@@ -37,7 +37,7 @@ export function UpdateToast() {
         </span>
       </div>
       <button className="update-toast-btn" onClick={() => setOfflineReady(false)}>
-        {inline(COPY.update.ok)}
+        {COPY.update.ok.en}
       </button>
     </div>
   );

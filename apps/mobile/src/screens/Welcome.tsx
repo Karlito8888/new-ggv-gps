@@ -64,7 +64,7 @@ export function Welcome({
 
         <Button
           icon="navigate"
-          label={inline(COPY.welcome.navigate)}
+          label={COPY.welcome.navigate.en}
           disabled={!selectedBlock || !effectiveLot}
           onPress={navigate}
         />

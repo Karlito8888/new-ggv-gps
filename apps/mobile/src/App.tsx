@@ -34,7 +34,6 @@ import {
   VILLAGE_BOUNDS,
   VILLAGE_CENTER,
   blockLabelsGeoJSON,
-  inline,
   isBelowVersion,
   useCourseUpCamera,
   useNavigationFlow,
@@ -303,7 +302,7 @@ function ErrorFallback({ onRetry }: { onRetry: () => void }) {
         <Title en={COPY.error.title.en} tl={COPY.error.title.tl} />
         <Body en={COPY.error.unexpected.en} />
         <Body en={COPY.error.reloadPrompt.en} tl={COPY.error.reloadPrompt.tl} />
-        <Button label={inline(COPY.error.retry)} onPress={onRetry} />
+        <Button label={COPY.error.retry.en} onPress={onRetry} />
       </Modal>
     </View>
   );
@@ -318,7 +317,7 @@ function UpdateRequired() {
         <Title en={COPY.forceUpdate.title.en} tl={COPY.forceUpdate.title.tl} />
         <Body en={COPY.forceUpdate.body.en} tl={COPY.forceUpdate.body.tl} />
         <Button
-          label={inline(COPY.forceUpdate.button)}
+          label={COPY.forceUpdate.button.en}
           onPress={() => Linking.openURL(Platform.OS === "ios" ? STORE_URL.ios : STORE_URL.android)}
         />
       </Modal>
