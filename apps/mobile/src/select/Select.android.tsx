@@ -21,11 +21,10 @@ import { theme } from "../theme";
 const MENU_HEIGHT = 200;
 
 /** The web `<select>`: our field as the trigger, a Material 3 dropdown as the menu. */
-export function Select({ value, placeholder, options, onChange, enabled }: SelectProps) {
+export function Select({ caption, value, placeholder, options, onChange, enabled }: SelectProps) {
   const [open, setOpen] = useState(false);
   // The popup is a separate window: it cannot fill the field, so it gets the field's width.
   const [width, setWidth] = useState(0);
-  const label = options.find((o) => o.value === value)?.label ?? placeholder;
   return (
     <View style={styles.host} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       {/* The app is light-only; a Compose host follows the device scheme unless told otherwise. */}
@@ -34,7 +33,13 @@ export function Select({ value, placeholder, options, onChange, enabled }: Selec
           <DropdownMenu.Trigger>
             {/* Width from the host, height from the field. */}
             <RNHostView matchContents={{ vertical: true }} modifiers={[fillMaxWidth()]}>
-              <SelectField label={label} enabled={enabled} onPress={() => setOpen(true)} />
+              <SelectField
+                caption={caption}
+                value={value}
+                placeholder={placeholder}
+                enabled={enabled}
+                onPress={() => setOpen(true)}
+              />
             </RNHostView>
           </DropdownMenu.Trigger>
           <DropdownMenu.Items>

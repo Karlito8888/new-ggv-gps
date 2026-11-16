@@ -1,40 +1,45 @@
 /**
- * Token values copied from apps/web/src/styles/design-tokens.css (the colour-role rules of
- * AGENTS.md § Couleurs apply unchanged): brand-coloured text uses `primaryText`, never the
- * decorative `--ggv-color-primary` fill, which only appears inside the gradients below.
+ * Token values copied from apps/web/src/styles/design-tokens.css (Signpost: opaque paper cards,
+ * green street signs, a sun-yellow road diamond). Text contrast is computed against paper or sign
+ * green only; `sun` is a fill, never text.
  */
 export const theme = {
   primaryText: "#326b3d",
-  cta: "#3b7d47",
+  /** Sign green: the CTA, plates and the turn sign. */
+  cta: "#1f5a2e",
   onCta: "#ffffff",
-  surface: "#f4f4f4",
-  text: "#121212",
+  /** Tagalog on sign green. */
+  onCtaGloss: "#cfe8d3",
+  sun: "#f3c549",
+  /** Paper: cards, chips, strip. */
+  surface: "#f7f5f0",
+  text: "#161a17",
   /** `.overlay-description`: secondary text dimmed by colour, never by opacity. */
-  textMuted: "rgba(18,18,18,0.72)",
-  textTint: "rgba(18,18,18,0.08)",
-  glass: "rgba(255,255,255,0.85)",
-  overlay: "rgba(10,16,12,0.64)",
+  textMuted: "rgba(22,26,23,0.72)",
+  /** Eyebrow, notes, version, ⓘ. */
+  muted: "#5d625e",
+  hairline: "rgba(22,26,23,0.06)",
+  outline: "rgba(22,26,23,0.18)",
+  dashed: "rgba(22,26,23,0.3)",
+  /** The white rule inset in every street sign. */
+  signRule: "rgba(255,255,255,0.9)",
+  /** The basemap `background` layer: the page before tiles draw. */
+  map: "#cccccc",
   error: "#ef4444",
-  gray: "#6b7280",
-  gradient: {
-    cta: "linear-gradient(135deg, #3b7d47, #295c34)",
-    brand: "linear-gradient(135deg, #50aa61, #f3c549)",
-    success: "linear-gradient(135deg, #50aa61, #34d399)",
-    exit: "linear-gradient(135deg, #f3c549, #fbbf24)",
-    error: "linear-gradient(135deg, #ef4444, #f3c549)",
-  },
+  /** The paper fade behind every bottom card. */
+  fade: "linear-gradient(to top, rgba(247,245,240,0.9) 20%, rgba(247,245,240,0) 58%)",
   shadow: {
-    card: "0 24px 48px -16px rgba(0,0,0,0.45)",
-    disc: "0 8px 20px rgba(0,0,0,0.16)",
-    button: "0 6px 16px rgba(41,92,52,0.28)",
-    pill: "0 2px 12px rgba(0,0,0,0.15)",
+    card: "0 24px 60px -16px rgba(40,36,20,0.4)",
+    chip: "0 6px 16px rgba(40,36,20,0.16)",
+    sign: "0 10px 22px -10px rgba(31,90,46,0.7)",
+    diamond: "0 12px 24px -8px rgba(0,0,0,0.35)",
   },
-  radiusCard: 24,
-  radiusField: 16,
+  radiusCard: 32,
+  radiusSign: 18,
   radiusPill: 999,
   /** Madimi One: titles, buttons, numbers. Body text and fields use the system face. */
   font: "Madimi One",
-  /** The logo sits at the top centre of every screen; overlays stack below it. */
+  /** The logo chip sits at the top centre; overlays stack below it. Hidden while navigating. */
   logoTop: 48,
-  logoHeight: 48,
+  logoHeight: 44,
 } as const;

@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
+  AccessibilityInfo,
   Animated,
   Easing,
   Linking,
@@ -11,13 +12,101 @@ import {
   type TextStyle,
   type ViewStyle,
 } from "react-native";
-import type { IconName } from "@ggv/shared";
+import { COPY, type IconName } from "@ggv/shared";
 import { Icon } from "./Icon";
 import { theme } from "./theme";
 
-/** The card of every overlay, the web `.modal`. */
-export function Modal({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  return <View style={[styles.modal, style]}>{children}</View>;
+/**
+ * A one-shot entrance, the web keyframes: `bottom` is `card-in`, `top` is `card-drop`, `flip` is
+ * `sign-flip` (a sign swinging down from its top edge). Skipped when the OS asks for reduced
+ * motion, like the web `prefers-reduced-motion` rule.
+ */
+function useEntrance(kind: "bottom" | "top" | "flip" | "none") {
+  const [v] = useState(() => new Animated.Value(kind === "none" ? 1 : 0));
+  useEffect(() => {
+    if (kind === "none") return;
+    let live = true;
+    AccessibilityInfo.isReduceMotionEnabled().then((reduce) => {
+      if (!live) return;
+      if (reduce) v.setValue(1);
+      else
+        Animated.timing(v, {
+          toValue: 1,
+          duration: kind === "flip" ? 700 : 560,
+          easing: Easing.bezier(0.22, 1, 0.36, 1),
+          useNativeDriver: true,
+        }).start();
+    });
+    return () => {
+      live = false;
+    };
+  }, [v, kind]);
+  if (kind === "none") return null;
+  if (kind === "flip")
+    return {
+      opacity: v,
+      transformOrigin: "top",
+      transform: [
+        { perspective: 600 },
+        { rotateX: v.interpolate({ inputRange: [0, 1], outputRange: ["-70deg", "0deg"] }) },
+      ],
+    };
+  const from = kind === "bottom" ? 48 : -48;
+  return {
+    opacity: v,
+    transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [from, 0] }) }],
+  };
+}
+
+/** The paper card of every overlay, the web `.modal`. */
+export function Modal({
+  children,
+  style,
+  enter = "bottom",
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  enter?: "bottom" | "top";
+}) {
+  const entrance = useEntrance(enter);
+  return <Animated.View style={[styles.modal, entrance, style]}>{children}</Animated.View>;
+}
+
+/** A green street sign with its inset white rule: CTA, plates, turn sign. */
+export function Sign({
+  children,
+  style,
+  radius = theme.radiusSign,
+  flip = false,
+  compact = false,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  radius?: number;
+  flip?: boolean;
+  compact?: boolean;
+}) {
+  const entrance = useEntrance(flip ? "flip" : "none");
+  const inset = compact ? 3 : 4;
+  return (
+    <Animated.View style={[styles.sign, { borderRadius: radius }, entrance, style]}>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.signRule,
+          {
+            top: inset,
+            left: inset,
+            right: inset,
+            bottom: inset,
+            borderRadius: radius - inset,
+            borderWidth: compact ? 1.5 : 2,
+          },
+        ]}
+      />
+      {children}
+    </Animated.View>
+  );
 }
 
 /** A 0 → 1 value that repeats for as long as the component is mounted. */
@@ -53,30 +142,35 @@ function SearchRing() {
   return <Animated.View style={[styles.ring, { opacity, transform: [{ scale }] }]} />;
 }
 
-/** The gradient disc at the top of a card, the web `.overlay-icon-wrapper`. */
-export function IconDisc({
-  name,
-  gradient = "brand",
-  searching,
-}: {
-  name: IconName;
-  gradient?: keyof typeof theme.gradient;
-  searching?: boolean;
-}) {
+/** The yellow road diamond on a card's top-right edge, the web `.overlay-icon-wrapper`. */
+export function Diamond({ name, searching }: { name: IconName; searching?: boolean }) {
   return (
-    <View style={[styles.disc, { backgroundImage: theme.gradient[gradient] }]}>
+    <View style={styles.diamond}>
       {searching ? <SearchRing /> : null}
-      <Icon name={name} size={36} color="#ffffff" />
+      <View style={styles.diamondRule} />
+      <View style={styles.diamondIcon}>
+        <Icon name={name} size={28} color={theme.text} />
+      </View>
+    </View>
+  );
+}
+
+/** "GARDEN GROVE VILLAGE" after a sun dot, over every bottom card. */
+export function Eyebrow() {
+  return (
+    <View style={styles.eyebrow}>
+      <View style={styles.eyebrowDot} />
+      <Text style={styles.eyebrowText}>{COPY.brand.village.en}</Text>
     </View>
   );
 }
 
 /** A heading with its Tagalog gloss underneath. */
-export function Title({ en, tl }: { en: string; tl?: string }) {
+export function Title({ en, tl, small }: { en: string; tl?: string; small?: boolean }) {
   return (
     <View>
-      <Text style={styles.title}>{en}</Text>
-      {tl ? <Text style={styles.titleGloss}>({tl})</Text> : null}
+      <Text style={[styles.title, small && styles.titleSmall]}>{en}</Text>
+      {tl ? <Text style={styles.titleGloss}>{tl}</Text> : null}
     </View>
   );
 }
@@ -91,34 +185,55 @@ export function Body({ en, tl }: { en: string; tl?: string }) {
   );
 }
 
+/** Primary: a street sign, label left, icon trailing. Secondary: an outline, icon first. */
 export function Button({
   label,
   onPress,
   disabled,
   secondary,
   icon,
+  style,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   secondary?: boolean;
   icon?: IconName;
+  style?: StyleProp<ViewStyle>;
 }) {
-  const color = secondary ? theme.text : theme.onCta;
+  if (secondary)
+    return (
+      <Pressable
+        accessibilityRole="button"
+        onPress={onPress}
+        disabled={disabled}
+        style={({ pressed }) => [
+          styles.secondary,
+          disabled && styles.disabled,
+          pressed && styles.pressed,
+          style,
+        ]}
+      >
+        {icon ? <Icon name={icon} size={20} color={theme.text} /> : null}
+        <Text style={styles.secondaryText}>{label}</Text>
+      </Pressable>
+    );
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
-        styles.button,
-        secondary ? styles.buttonSecondary : styles.buttonPrimary,
-        disabled && styles.buttonDisabled,
+        styles.primaryPress,
+        disabled && styles.disabled,
         pressed && styles.pressed,
+        style,
       ]}
     >
-      {icon ? <Icon name={icon} size={20} color={color} /> : null}
-      <Text style={[styles.buttonText, secondary && styles.buttonTextSecondary]}>{label}</Text>
+      <Sign style={[styles.primary, { justifyContent: icon ? "space-between" : "flex-start" }]}>
+        <Text style={styles.primaryText}>{label}</Text>
+        {icon ? <Icon name={icon} size={26} color={theme.onCta} /> : null}
+      </Sign>
     </Pressable>
   );
 }
@@ -140,79 +255,117 @@ const styles = StyleSheet.create({
   modal: {
     backgroundColor: theme.surface,
     borderRadius: theme.radiusCard,
-    paddingTop: 32,
+    paddingTop: 26,
     paddingHorizontal: 24,
-    paddingBottom: 24,
-    alignItems: "center",
-    gap: 8,
+    paddingBottom: 30,
+    alignItems: "stretch",
+    // A border, not an inset shadow: the web hairline ring.
+    borderWidth: 1,
+    borderColor: theme.hairline,
     boxShadow: theme.shadow.card,
   },
-  disc: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  sign: { backgroundColor: theme.cta, boxShadow: theme.shadow.sign },
+  signRule: { position: "absolute", borderColor: theme.signRule },
+  diamond: {
+    position: "absolute",
+    top: -30,
+    right: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    backgroundColor: theme.sun,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
-    boxShadow: theme.shadow.disc,
+    transform: [{ rotate: "45deg" }],
+    boxShadow: theme.shadow.diamond,
   },
+  diamondRule: {
+    position: "absolute",
+    top: 3,
+    left: 3,
+    right: 3,
+    bottom: 3,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: theme.text,
+  },
+  diamondIcon: { transform: [{ rotate: "-45deg" }] },
   ring: {
     position: "absolute",
     top: -8,
     left: -8,
     right: -8,
     bottom: -8,
-    borderRadius: 44,
+    borderRadius: 16,
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: "#50aa61",
+    borderColor: theme.text,
+  },
+  eyebrow: { flexDirection: "row", alignItems: "center", gap: 9 },
+  eyebrowDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.sun,
+    boxShadow: "0 0 0 3px rgba(243,197,73,0.3)",
+  },
+  eyebrowText: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    color: theme.muted,
   },
   title: {
+    marginTop: 16,
     fontFamily: theme.font,
-    fontSize: 26,
-    lineHeight: 29,
-    letterSpacing: -0.26,
+    fontSize: 36,
+    lineHeight: 37,
+    letterSpacing: -0.5,
     color: theme.text,
-    textAlign: "center",
+    textAlign: "left",
   },
+  titleSmall: { marginTop: 0, fontSize: 32, lineHeight: 33 },
   titleGloss: {
-    marginTop: 4,
+    marginTop: 6,
     fontFamily: theme.font,
-    fontSize: 16,
+    fontSize: 17,
     color: theme.primaryText,
-    textAlign: "center",
   },
   body: {
-    marginTop: 8,
+    marginTop: 14,
     fontSize: 16,
     lineHeight: 24,
     color: theme.textMuted,
-    textAlign: "center",
+    textAlign: "left",
   },
   bodyGloss: { fontSize: 15, color: theme.primaryText },
-  button: {
-    minHeight: 56,
-    borderRadius: theme.radiusPill,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+  primaryPress: { alignSelf: "stretch", marginTop: 22 },
+  primary: {
+    minHeight: 64,
+    paddingLeft: 24,
+    paddingRight: 22,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  primaryText: { flexShrink: 1, fontFamily: theme.font, fontSize: 20, color: theme.onCta },
+  secondary: {
     alignSelf: "stretch",
+    minHeight: 54,
+    marginTop: 10,
+    paddingHorizontal: 24,
+    borderRadius: theme.radiusSign,
+    borderWidth: 1.5,
+    borderColor: theme.outline,
+    backgroundColor: "transparent",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    marginTop: 8,
   },
-  buttonPrimary: { backgroundImage: theme.gradient.cta, boxShadow: theme.shadow.button },
-  buttonSecondary: { minHeight: 44, backgroundColor: theme.textTint },
-  buttonDisabled: { opacity: 0.6 },
+  secondaryText: { flexShrink: 1, fontFamily: theme.font, fontSize: 17, color: theme.text },
+  disabled: { opacity: 0.6 },
   pressed: { transform: [{ scale: 0.97 }] },
-  buttonText: {
-    flexShrink: 1,
-    fontFamily: theme.font,
-    fontSize: 18,
-    color: theme.onCta,
-    textAlign: "center",
-  },
-  buttonTextSecondary: { fontSize: 16, color: theme.text },
   link: { color: theme.primaryText, textDecorationLine: "underline" },
 });

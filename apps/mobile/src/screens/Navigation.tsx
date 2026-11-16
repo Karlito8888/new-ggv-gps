@@ -21,7 +21,7 @@ import {
 } from "@ggv/shared";
 import { Icon } from "../Icon";
 import { theme } from "../theme";
-import { Link, Spin } from "../ui";
+import { Link, Sign, Spin } from "../ui";
 
 /** The vibration fires once per turn, this close to it. */
 const TURN_ALERT_M = 30;
@@ -68,7 +68,7 @@ export function Navigation({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
   }, [turnKey, distanceToTurn]);
 
-  // The web turn card, line for line: arrow tile, distance to the turn, instruction if any.
+  // The web turn sign, line for line: arrow, distance to the turn, instruction if any.
   const card: { icon: IconName; distance: string; text?: { en: string; tl: string } } = !gpsOn
     ? { icon: "gps", distance: "", text: COPY.nav.noLocation }
     : isRecalculating
@@ -82,41 +82,46 @@ export function Navigation({
               text: COPY.nav.headToward,
             }
           : { icon: "straight", distance: formatDistance(distanceRemaining) };
-  const arrow = <Icon name={card.icon} size={28} color={theme.onCta} />;
+  const arrow = <Icon name={card.icon} size={40} color={theme.onCta} />;
 
   return (
     <>
-      <View style={styles.top} accessibilityLabel={COPY.nav.infoAria.en}>
-        <Pressable
-          style={styles.turn}
-          disabled={gpsOn}
-          onPress={onEnableGps}
-          accessibilityRole={gpsOn ? undefined : "button"}
-        >
-          <View style={styles.tile}>{isRecalculating ? <Spin>{arrow}</Spin> : arrow}</View>
-          <View style={styles.turnBody}>
-            {userLocation ? <Text style={styles.dist}>{card.distance}</Text> : null}
-            {card.text ? (
-              <Text style={styles.turnText} numberOfLines={gpsOn ? 1 : undefined}>
-                {card.text.en}
-                <Text style={styles.gloss}> ({card.text.tl})</Text>
-              </Text>
-            ) : null}
-          </View>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={COPY.nav.cancelAria.en}
-          onPress={onCancel}
-          style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}
-        >
-          <Icon name="close" size={20} color={theme.text} />
-        </Pressable>
+      <View
+        style={[styles.top, { top: insets.top + 12 }]}
+        accessibilityLabel={COPY.nav.infoAria.en}
+      >
+        <Sign flip radius={24} style={styles.sign}>
+          <Pressable
+            style={styles.turn}
+            disabled={gpsOn}
+            onPress={onEnableGps}
+            accessibilityRole={gpsOn ? undefined : "button"}
+          >
+            {isRecalculating ? <Spin>{arrow}</Spin> : arrow}
+            <View style={styles.turnBody}>
+              {userLocation ? <Text style={styles.dist}>{card.distance}</Text> : null}
+              {card.text ? (
+                <Text style={styles.turnText} numberOfLines={gpsOn ? 1 : undefined}>
+                  {card.text.en}
+                  <Text style={styles.gloss}> {card.text.tl}</Text>
+                </Text>
+              ) : null}
+            </View>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={COPY.nav.cancelAria.en}
+            onPress={onCancel}
+            style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}
+          >
+            <Icon name="close" size={20} color={theme.onCta} />
+          </Pressable>
+        </Sign>
       </View>
 
       {/* The strip and the credits bubble above it: one stack, so the bubble's links stay inside
           their parent's bounds, where Android delivers touches. */}
-      <View style={[styles.bottomStack, { bottom: insets.bottom + 16 }]} pointerEvents="box-none">
+      <View style={[styles.bottomStack, { bottom: insets.bottom + 12 }]} pointerEvents="box-none">
         {credits.open ? (
           <View style={styles.bubble}>
             <Text style={styles.bubbleText}>
@@ -136,10 +141,13 @@ export function Navigation({
           style={styles.bottom}
           accessibilityLabel={COPY.nav.destinationAria(destination?.name)}
         >
-          <Icon name="pin" size={20} color={theme.primaryText} />
-          <Text style={styles.destName} numberOfLines={1}>
-            {destination?.name || COPY.nav.navigating.en}
-          </Text>
+          <View style={styles.destSlot}>
+            <Sign compact radius={12} style={styles.destSign}>
+              <Text style={styles.destName} numberOfLines={1}>
+                {destination?.name || COPY.nav.navigating.en}
+              </Text>
+            </Sign>
+          </View>
           {userLocation ? <Text style={styles.destDist}>{formatDistance(total)}</Text> : null}
           <Pressable
             accessibilityRole="button"
@@ -147,7 +155,7 @@ export function Navigation({
             onPress={credits.toggle}
             hitSlop={12}
           >
-            <Icon name="info" size={20} color={theme.textMuted} />
+            <Icon name="info" size={20} color={theme.muted} />
           </Pressable>
         </View>
       </View>
@@ -155,58 +163,56 @@ export function Navigation({
   );
 }
 
-const pill = {
-  flexDirection: "row" as const,
-  alignItems: "center" as const,
-  backgroundColor: theme.glass,
-  boxShadow: theme.shadow.pill,
-  padding: 12,
-  gap: 12,
-};
-
 const styles = StyleSheet.create({
-  // Below the logo, with a small margin.
-  top: {
-    ...pill,
-    position: "absolute",
-    left: 16,
-    right: 16,
-    top: theme.logoTop + theme.logoHeight + 8,
-    borderRadius: theme.radiusCard,
+  top: { position: "absolute", left: 10, right: 10 },
+  // The turn sign: arrow, distance to the turn (the number read while walking), instruction.
+  sign: {
+    flexDirection: "row",
+    gap: 16,
+    paddingVertical: 18,
+    paddingLeft: 20,
+    paddingRight: 14,
   },
-  turn: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
-  tile: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundImage: theme.gradient.cta,
-  },
+  turn: { flex: 1, flexDirection: "row", alignItems: "center", gap: 16 },
   turnBody: { flex: 1 },
-  dist: { fontFamily: theme.font, fontSize: 24, lineHeight: 27, color: theme.primaryText },
-  turnText: { fontSize: 15, fontWeight: "600", color: theme.text },
-  gloss: { fontSize: 13, fontWeight: "400", color: theme.primaryText },
+  dist: { fontFamily: theme.font, fontSize: 42, lineHeight: 40, color: theme.onCta },
+  turnText: { marginTop: 6, fontSize: 17, fontWeight: "600", color: theme.onCta },
+  gloss: { fontSize: 14, fontWeight: "400", color: theme.onCtaGloss },
   cancel: {
+    alignSelf: "flex-start",
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: theme.textTint,
+    backgroundColor: "rgba(255,255,255,0.14)",
     alignItems: "center",
     justifyContent: "center",
   },
   pressed: { transform: [{ scale: 0.97 }] },
-  bottomStack: { position: "absolute", left: 16, right: 16, gap: 8 },
+  bottomStack: { position: "absolute", left: 10, right: 10, gap: 8 },
   bubble: {
     alignSelf: "flex-end",
-    backgroundColor: theme.glass,
-    boxShadow: theme.shadow.pill,
+    backgroundColor: theme.surface,
+    boxShadow: theme.shadow.chip,
     borderRadius: theme.radiusPill,
-    paddingVertical: 8,
+    paddingVertical: 9,
     paddingHorizontal: 14,
   },
-  bubbleText: { fontSize: 13, color: theme.textMuted },
-  bottom: { ...pill, paddingHorizontal: 16, borderRadius: theme.radiusPill },
-  destName: { flex: 1, fontSize: 15, fontWeight: "600", color: theme.text },
-  destDist: { fontFamily: theme.font, fontSize: 18, color: theme.primaryText },
+  bubbleText: { fontSize: 13, color: theme.muted },
+  // The destination strip: paper, with the destination on a mini sign.
+  bottom: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 66,
+    padding: 10,
+    gap: 12,
+    borderRadius: 22,
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.hairline,
+    boxShadow: theme.shadow.card,
+  },
+  destSlot: { flex: 1, flexDirection: "row" },
+  destSign: { flexShrink: 1, paddingVertical: 12, paddingHorizontal: 14 },
+  destName: { fontFamily: theme.font, fontSize: 16, color: theme.onCta },
+  destDist: { fontFamily: theme.font, fontSize: 22, color: theme.text },
 });
