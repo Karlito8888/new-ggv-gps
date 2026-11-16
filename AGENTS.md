@@ -269,8 +269,8 @@ vp run gate
 ```
 
 = `vp check` (Oxlint type-aware + Oxfmt, whole repo) + typecheck (shared, web, mobile) + tests vitest
-(shared, web ; mobile n'a pas de tests) + `check:sprites`. Vert, ~20 s, **60 tests** : 53 dans `packages/shared/src/__tests__/` (6 fichiers) et 7 dans
-`apps/web/src/__tests__/` (`routeLayers.test.ts`, `rangeWorker.test.ts`). Cinq fichiers shared couvrent les fonctions pures
+(shared, web ; mobile n'a pas de tests) + `check:sprites`. Vert, ~20 s, **64 tests** : 53 dans `packages/shared/src/__tests__/` (6 fichiers) et 11 dans
+`apps/web/src/__tests__/` (`routeLayers.test.ts`, `rangeWorker.test.ts`, `appOffer.test.ts`). Cinq fichiers shared couvrent les fonctions pures
 (`arrival`, `course`, `geo`, `routing`, `version`) ; le sixième, `useRouting.test.ts`, couvre
 **l'effet** — c'est le seul test du dépôt qui monte un composant React.
 
