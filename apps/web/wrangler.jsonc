@@ -11,4 +11,12 @@
   "routes": [{ "pattern": "myggvgps.charlesbourgault.com", "custom_domain": true }],
   "workers_dev": false,
   "preview_urls": false,
+  // Only `/tiles/*` invokes the Worker: 10 to 40 invocations a day (GraphQL
+  // workersInvocationsAdaptive, 2026-11-01..23), far under the Free Observability allowance
+  // (0.5 GB/day ingested from 2026-12-01, 200,000 log events/day before), so nothing is sampled out.
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "traces": { "enabled": true, "head_sampling_rate": 1 },
+  },
 }
